@@ -11,10 +11,15 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BiomedicinaRouteImport } from './routes/biomedicina'
+import { Route as BlogRouteImport } from './routes/blog'
+import { Route as ContatoRouteImport } from './routes/contato'
 import { Route as EstruturaRouteImport } from './routes/estrutura'
+import { Route as FaqRouteImport } from './routes/faq'
+import { Route as PoliticaDePrivacidadeRouteImport } from './routes/politica-de-privacidade'
 import { Route as PsicologiaRouteImport } from './routes/psicologia'
 import { Route as ServicosRouteImport } from './routes/servicos'
 import { Route as SobreRouteImport } from './routes/sobre'
+import { Route as TermosDeUsoRouteImport } from './routes/termos-de-uso'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -26,9 +31,29 @@ const BiomedicinaRoute = BiomedicinaRouteImport.update({
   path: '/biomedicina',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContatoRoute = ContatoRouteImport.update({
+  id: '/contato',
+  path: '/contato',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EstruturaRoute = EstruturaRouteImport.update({
   id: '/estrutura',
   path: '/estrutura',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PoliticaDePrivacidadeRoute = PoliticaDePrivacidadeRouteImport.update({
+  id: '/politica-de-privacidade',
+  path: '/politica-de-privacidade',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PsicologiaRoute = PsicologiaRouteImport.update({
@@ -46,56 +71,106 @@ const SobreRoute = SobreRouteImport.update({
   path: '/sobre',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TermosDeUsoRoute = TermosDeUsoRouteImport.update({
+  id: '/termos-de-uso',
+  path: '/termos-de-uso',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/biomedicina': typeof BiomedicinaRoute
+  '/blog': typeof BlogRoute
+  '/contato': typeof ContatoRoute
   '/estrutura': typeof EstruturaRoute
+  '/faq': typeof FaqRoute
+  '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
   '/psicologia': typeof PsicologiaRoute
   '/servicos': typeof ServicosRoute
   '/sobre': typeof SobreRoute
+  '/termos-de-uso': typeof TermosDeUsoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/biomedicina': typeof BiomedicinaRoute
+  '/blog': typeof BlogRoute
+  '/contato': typeof ContatoRoute
   '/estrutura': typeof EstruturaRoute
+  '/faq': typeof FaqRoute
+  '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
   '/psicologia': typeof PsicologiaRoute
   '/servicos': typeof ServicosRoute
   '/sobre': typeof SobreRoute
+  '/termos-de-uso': typeof TermosDeUsoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/biomedicina': typeof BiomedicinaRoute
+  '/blog': typeof BlogRoute
+  '/contato': typeof ContatoRoute
   '/estrutura': typeof EstruturaRoute
+  '/faq': typeof FaqRoute
+  '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
   '/psicologia': typeof PsicologiaRoute
   '/servicos': typeof ServicosRoute
   '/sobre': typeof SobreRoute
+  '/termos-de-uso': typeof TermosDeUsoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/biomedicina' | '/estrutura' | '/psicologia' | '/servicos' | '/sobre'
+    | '/'
+    | '/biomedicina'
+    | '/blog'
+    | '/contato'
+    | '/estrutura'
+    | '/faq'
+    | '/politica-de-privacidade'
+    | '/psicologia'
+    | '/servicos'
+    | '/sobre'
+    | '/termos-de-uso'
   fileRoutesByTo: FileRoutesByTo
   to:
-    '/' | '/biomedicina' | '/estrutura' | '/psicologia' | '/servicos' | '/sobre'
+    | '/'
+    | '/biomedicina'
+    | '/blog'
+    | '/contato'
+    | '/estrutura'
+    | '/faq'
+    | '/politica-de-privacidade'
+    | '/psicologia'
+    | '/servicos'
+    | '/sobre'
+    | '/termos-de-uso'
   id:
     | '__root__'
     | '/'
     | '/biomedicina'
+    | '/blog'
+    | '/contato'
     | '/estrutura'
+    | '/faq'
+    | '/politica-de-privacidade'
     | '/psicologia'
     | '/servicos'
     | '/sobre'
+    | '/termos-de-uso'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BiomedicinaRoute: typeof BiomedicinaRoute
+  BlogRoute: typeof BlogRoute
+  ContatoRoute: typeof ContatoRoute
   EstruturaRoute: typeof EstruturaRoute
+  FaqRoute: typeof FaqRoute
+  PoliticaDePrivacidadeRoute: typeof PoliticaDePrivacidadeRoute
   PsicologiaRoute: typeof PsicologiaRoute
   ServicosRoute: typeof ServicosRoute
   SobreRoute: typeof SobreRoute
+  TermosDeUsoRoute: typeof TermosDeUsoRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -114,11 +189,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BiomedicinaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contato': {
+      id: '/contato'
+      path: '/contato'
+      fullPath: '/contato'
+      preLoaderRoute: typeof ContatoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/estrutura': {
       id: '/estrutura'
       path: '/estrutura'
       fullPath: '/estrutura'
       preLoaderRoute: typeof EstruturaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/politica-de-privacidade': {
+      id: '/politica-de-privacidade'
+      path: '/politica-de-privacidade'
+      fullPath: '/politica-de-privacidade'
+      preLoaderRoute: typeof PoliticaDePrivacidadeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/psicologia': {
@@ -142,16 +245,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SobreRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/termos-de-uso': {
+      id: '/termos-de-uso'
+      path: '/termos-de-uso'
+      fullPath: '/termos-de-uso'
+      preLoaderRoute: typeof TermosDeUsoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BiomedicinaRoute: BiomedicinaRoute,
+  BlogRoute: BlogRoute,
+  ContatoRoute: ContatoRoute,
   EstruturaRoute: EstruturaRoute,
+  FaqRoute: FaqRoute,
+  PoliticaDePrivacidadeRoute: PoliticaDePrivacidadeRoute,
   PsicologiaRoute: PsicologiaRoute,
   ServicosRoute: ServicosRoute,
   SobreRoute: SobreRoute,
+  TermosDeUsoRoute: TermosDeUsoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
