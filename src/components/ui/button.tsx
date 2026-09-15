@@ -10,6 +10,8 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground shadow hover:bg-primary/90",
+        psychology: "bg-psychology text-psychology-foreground shadow hover:bg-psychology/90",
+        biomedicine: "bg-biomedicine text-biomedicine-foreground shadow hover:bg-biomedicine/90",
         destructive: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
         outline:
           "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
