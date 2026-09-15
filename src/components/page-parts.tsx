@@ -1,0 +1,40 @@
+import { Link } from "@tanstack/react-router";
+import { ArrowRight, Check, Image, MapPin, MessageCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { biomedicineServices, faqItems, mapsUrl, psychologyServices, type Service, whatsappUrl } from "@/lib/site-data";
+
+export function Eyebrow({ children, tone = "neutral" }: { children: React.ReactNode; tone?: "neutral" | "psychology" | "biomedicine" }) {
+  return <p className={`eyebrow eyebrow-${tone}`}>{children}</p>;
+}
+
+export function PageIntro({ eyebrow, title, text, tone = "neutral" }: { eyebrow: string; title: string; text: string; tone?: "neutral" | "psychology" | "biomedicine" }) {
+  return <section className={`page-intro page-intro-${tone}`}><div className="container-site max-w-4xl py-16 md:py-24"><Eyebrow tone={tone}>{eyebrow}</Eyebrow><h1 className="mt-5 text-balance font-display text-4xl leading-tight md:text-6xl">{title}</h1><p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">{text}</p></div></section>;
+}
+
+export function ServiceGrid({ services, tone }: { services: Service[]; tone: "psychology" | "biomedicine" }) {
+  return <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{services.map((service) => { const Icon = service.icon; return <article key={service.title} className={`service-card service-card-${tone}`}><span className="service-icon"><Icon /></span><h2 className="mt-5 font-display text-2xl">{service.title}</h2><p className="mt-3 min-h-20 text-sm leading-6 text-muted-foreground">{service.description}</p><a href={whatsappUrl} target="_blank" rel="noreferrer" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold">Saiba mais <ArrowRight className="size-4" /></a></article>; })}</div>;
+}
+
+export function AreaCards() {
+  const psychList = psychologyServices.map((s) => s.title);
+  const bioList = ["Emagrecimento", "Estética corporal e facial", "Protocolos para dores crônicas", "Acupuntura", "Injetáveis personalizados", "Saúde integrativa e bem-estar", "Laserterapia e ILIB", "Microagulhamento", "Toxina botulínica", "Protocolos capilares", "Protocolos de saúde sexual"];
+  return <div className="grid gap-5 lg:grid-cols-2"><AreaCard tone="psychology" title="Psicologia e Saúde Mental" items={psychList} to="/psicologia" button="Conheça Psicologia e Saúde Mental" /><AreaCard tone="biomedicine" title="Biomedicina Integrativa e Estética" items={bioList} to="/biomedicina" button="Conheça Biomedicina Integrativa" /></div>;
+}
+
+function AreaCard({ tone, title, items, to, button }: { tone: "psychology" | "biomedicine"; title: string; items: string[]; to: "/psicologia" | "/biomedicina"; button: string }) {
+  return <article className={`area-card area-card-${tone}`}><span className="text-xs font-bold uppercase tracking-[0.2em]">Área de atuação</span><h3 className="mt-5 max-w-md font-display text-3xl md:text-4xl">{title}</h3><ul className="mt-8 grid gap-x-6 gap-y-3 sm:grid-cols-2">{items.map((item) => <li key={item} className="flex gap-2 text-sm leading-5"><Check className="mt-0.5 size-4 shrink-0" />{item}</li>)}</ul><Button asChild variant={tone === "psychology" ? "psychology" : "biomedicine"} className="mt-9 h-auto min-h-11 whitespace-normal px-5 py-3 text-center"><Link to={to}>{button}<ArrowRight /></Link></Button></article>;
+}
+
+export function Steps() {
+  const steps = [["01", "Agendamento", "Entre em contato pelo WhatsApp e escolha o atendimento desejado."], ["02", "Avaliação", "Realização de avaliação individual conforme a área e a necessidade apresentada."], ["03", "Plano individualizado", "Definição da estratégia de acompanhamento ou procedimento de acordo com a avaliação profissional."], ["04", "Acompanhamento", "Evolução acompanhada de forma individualizada ao longo do atendimento."]];
+  return <div className="grid gap-px overflow-hidden rounded-md border border-border bg-border md:grid-cols-2 xl:grid-cols-4">{steps.map(([n, title, text]) => <article key={n} className="bg-background p-7"><span className="font-display text-3xl text-gold">{n}</span><h3 className="mt-8 text-lg font-semibold">{title}</h3><p className="mt-3 text-sm leading-6 text-muted-foreground">{text}</p></article>)}</div>;
+}
+
+export function FaqList() {
+  return <Accordion type="single" collapsible className="mx-auto max-w-3xl">{faqItems.map((item, i) => <AccordionItem key={item.q} value={`faq-${i}`}><AccordionTrigger className="py-6 text-left text-base md:text-lg">{item.q}</AccordionTrigger><AccordionContent className="pr-8 text-base leading-7 text-muted-foreground">{item.a}</AccordionContent></AccordionItem>)}</Accordion>;
+}
+
+export function LocationBlock({ gallery = false }: { gallery?: boolean }) {
+  return <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr]"><div><Eyebrow>Localização</Eyebrow><h2 className="mt-4 font-display text-4xl">Um espaço no centro de Juiz de Fora</h2><address className="mt-6 not-italic leading-8 text-muted-foreground"><strong className="text-foreground">Espaço de Saúde Integrativa</strong><br />Dr. Frederick Parreira<br />Edifício Europa Central Tower<br />Rua Fernando Lobo, 102 — Sala 704<br />Centro — Juiz de Fora/MG</address><p className="mt-4 text-sm font-semibold">Agendamentos: <a href="tel:+5532991931779">(32) 99193-1779</a></p><div className="mt-7 flex flex-wrap gap-3"><Button asChild><a href={whatsappUrl} target="_blank" rel="noreferrer"><MessageCircle /> Falar pelo WhatsApp</a></Button><Button asChild variant="outline"><a href={mapsUrl} target="_blank" rel="noreferrer"><MapPin /> Como chegar</a></Button></div></div><iframe title="Mapa da localização do Espaço de Saúde Integrativa" loading="lazy" className="h-[420px] w-full rounded-md border border-border" src="https://www.google.com/maps?q=Rua%20Fernando%20Lobo%20102%20Juiz%20de%20Fora%20MG&output=embed" referrerPolicy="no-referrer-when-downgrade" />{gallery && <div className="lg:col-span-2"><h2 className="font-display text-3xl">Conheça a estrutura</h2><div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{["Recepção", "Consultório", "Sala de atendimento", "Estrutura"].map((label) => <div key={label} className="grid aspect-[4/3] place-items-center rounded-md border border-dashed border-border bg-muted/50"><div className="text-center text-muted-foreground"><Image className="mx-auto size-6" /><span className="mt-2 block text-sm">Foto de {label.toLowerCase()} em breve</span></div></div>)}</div></div>}</div>;
+}
