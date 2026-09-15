@@ -10,33 +10,92 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BiomedicinaRouteImport } from './routes/biomedicina'
+import { Route as EstruturaRouteImport } from './routes/estrutura'
+import { Route as PsicologiaRouteImport } from './routes/psicologia'
+import { Route as ServicosRouteImport } from './routes/servicos'
+import { Route as SobreRouteImport } from './routes/sobre'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BiomedicinaRoute = BiomedicinaRouteImport.update({
+  id: '/biomedicina',
+  path: '/biomedicina',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EstruturaRoute = EstruturaRouteImport.update({
+  id: '/estrutura',
+  path: '/estrutura',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PsicologiaRoute = PsicologiaRouteImport.update({
+  id: '/psicologia',
+  path: '/psicologia',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ServicosRoute = ServicosRouteImport.update({
+  id: '/servicos',
+  path: '/servicos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SobreRoute = SobreRouteImport.update({
+  id: '/sobre',
+  path: '/sobre',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/biomedicina': typeof BiomedicinaRoute
+  '/estrutura': typeof EstruturaRoute
+  '/psicologia': typeof PsicologiaRoute
+  '/servicos': typeof ServicosRoute
+  '/sobre': typeof SobreRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/biomedicina': typeof BiomedicinaRoute
+  '/estrutura': typeof EstruturaRoute
+  '/psicologia': typeof PsicologiaRoute
+  '/servicos': typeof ServicosRoute
+  '/sobre': typeof SobreRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/biomedicina': typeof BiomedicinaRoute
+  '/estrutura': typeof EstruturaRoute
+  '/psicologia': typeof PsicologiaRoute
+  '/servicos': typeof ServicosRoute
+  '/sobre': typeof SobreRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    '/' | '/biomedicina' | '/estrutura' | '/psicologia' | '/servicos' | '/sobre'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    '/' | '/biomedicina' | '/estrutura' | '/psicologia' | '/servicos' | '/sobre'
+  id:
+    | '__root__'
+    | '/'
+    | '/biomedicina'
+    | '/estrutura'
+    | '/psicologia'
+    | '/servicos'
+    | '/sobre'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BiomedicinaRoute: typeof BiomedicinaRoute
+  EstruturaRoute: typeof EstruturaRoute
+  PsicologiaRoute: typeof PsicologiaRoute
+  ServicosRoute: typeof ServicosRoute
+  SobreRoute: typeof SobreRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +107,51 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/biomedicina': {
+      id: '/biomedicina'
+      path: '/biomedicina'
+      fullPath: '/biomedicina'
+      preLoaderRoute: typeof BiomedicinaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/estrutura': {
+      id: '/estrutura'
+      path: '/estrutura'
+      fullPath: '/estrutura'
+      preLoaderRoute: typeof EstruturaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/psicologia': {
+      id: '/psicologia'
+      path: '/psicologia'
+      fullPath: '/psicologia'
+      preLoaderRoute: typeof PsicologiaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/servicos': {
+      id: '/servicos'
+      path: '/servicos'
+      fullPath: '/servicos'
+      preLoaderRoute: typeof ServicosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sobre': {
+      id: '/sobre'
+      path: '/sobre'
+      fullPath: '/sobre'
+      preLoaderRoute: typeof SobreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BiomedicinaRoute: BiomedicinaRoute,
+  EstruturaRoute: EstruturaRoute,
+  PsicologiaRoute: PsicologiaRoute,
+  ServicosRoute: ServicosRoute,
+  SobreRoute: SobreRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
