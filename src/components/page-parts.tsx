@@ -24,7 +24,8 @@ export function AreaCards() {
 }
 
 function AreaCard({ tone, title, items, to, button, image, imageAlt }: { tone: "psychology" | "biomedicine"; title: string; items: string[]; to: "/psicologia" | "/biomedicina"; button: string; image?: string; imageAlt?: string }) {
-  return <article className={`area-card area-card-${tone}`}>{image && <img src={image} alt={imageAlt} loading="lazy" width={1024} height={1024} className="area-card-image" />}<span className="text-xs font-bold uppercase tracking-[0.2em]">Área de atuação</span><h3 className="mt-5 max-w-md font-display text-3xl md:text-4xl">{title}</h3><ul className="mt-8 grid gap-x-6 gap-y-3 sm:grid-cols-2">{items.map((item) => <li key={item} className="flex gap-2 text-sm leading-5"><Check className="mt-0.5 size-4 shrink-0" />{item}</li>)}</ul><Button asChild variant={tone === "psychology" ? "psychology" : "biomedicine"} className="mt-9 h-auto min-h-11 whitespace-normal px-5 py-3 text-center"><Link to={to}>{button}<ArrowRight /></Link></Button></article>;
+  const cardClass = tone === "psychology" ? "area-card area-card-psychology" : "area-card area-card-biomedicine";
+  return <article className={cardClass}>{image && <img src={image} alt={imageAlt} loading="lazy" width={1024} height={1024} className="area-card-image" />}<span className="text-xs font-bold uppercase tracking-[0.2em]">Área de atuação</span><h3 className="mt-5 max-w-md font-display text-3xl md:text-4xl">{title}</h3><ul className="mt-8 grid gap-x-6 gap-y-3 sm:grid-cols-2">{items.map((item) => <li key={item} className="flex gap-2 text-sm leading-5"><Check className="mt-0.5 size-4 shrink-0" />{item}</li>)}</ul><Button asChild variant={tone === "psychology" ? "psychology" : "biomedicine"} className="mt-9 h-auto min-h-11 whitespace-normal px-5 py-3 text-center"><Link to={to}>{button}<ArrowRight /></Link></Button></article>;
 }
 
 export function Steps() {
