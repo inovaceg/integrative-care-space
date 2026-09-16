@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowDownLeft, ArrowUpRight, Download, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { AdminLayout, AdminNotice, EmptyState, PageIntro, SectionCard } from "@/components/admin/admin-ui";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -46,7 +46,7 @@ function emptyForm(): EntryForm {
 }
 
 function formFromEntry(entry: FinancialEntry): EntryForm {
-  return { description: entry.description, category: entry.category, transaction_type: entry.transaction_type, amount: String(entry.amount), transaction_date: entry.transaction_date, status: entry.status, notes: entry.notes };
+  return { description: entry.description, category: entry.category, transaction_type: entry.transaction_type, amount: entry.amount.toLocaleString("pt-BR", { useGrouping: false, maximumFractionDigits: 20 }), transaction_date: entry.transaction_date, status: entry.status, notes: entry.notes };
 }
 
 function validDate(value: string) {
@@ -56,10 +56,16 @@ function validDate(value: string) {
 }
 
 function numericAmount(value: string) {
-  const normalized = value.trim().includes(",") ? value.trim().replace(/\./g, "").replace(",", ".") : value.trim();
-  const amount = Number(normalized);
-  if (!normalized || !Number.isFinite(amount) || amount < 0) return null;
+  const normalized = value.trim();
+  if (!normalized || (normalized.includes(".") && !normalized.includes(","))) return null;
+  if (!/^(?:\d+|\d{1,3}(?:\.\d{3})+)(?:,\d+)?$/.test(normalized)) return null;
+  const amount = Number(normalized.replace(/\./g, "").replace(",", "."));
+  if (!Number.isFinite(amount) || amount < 0) return null;
   return amount;
+}
+
+function sortFinancialEntries(entries: FinancialEntry[]) {
+  return [...entries].sort((first, second) => second.transaction_date.localeCompare(first.transaction_date) || second.created_at.localeCompare(first.created_at));
 }
 
 function EntryDialog({ entry, onSaved, trigger }: { entry?: FinancialEntry; onSaved: (entry: FinancialEntry) => void; trigger: ReactNode }) {
@@ -83,10 +89,12 @@ function EntryDialog({ entry, onSaved, trigger }: { entry?: FinancialEntry; onSa
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-    const amount = numericAmount(form.amount);
+    const normalizedAmount = form.amount.trim();
+    const amount = numericAmount(normalizedAmount);
     if (!user) { setError("Sua sessão não está disponível. Entre novamente para continuar."); return; }
     if (!form.description.trim() || !form.category.trim()) { setError("Informe a descrição e a categoria do lançamento."); return; }
-    if (amount === null) { setError("Informe um valor numérico não negativo."); return; }
+    if (normalizedAmount.includes(".") && !normalizedAmount.includes(",")) { setError("Use vírgula para casas decimais; um valor com ponto sem vírgula, como 1.234, é ambíguo."); return; }
+    if (amount === null) { setError("Informe um valor no formato brasileiro, não negativo e sem NaN."); return; }
     if (!validDate(form.transaction_date)) { setError("Informe uma data válida."); return; }
 
     const input: FinancialEntryInput = { description: form.description.trim(), category: form.category.trim(), transaction_type: form.transaction_type, amount, transaction_date: form.transaction_date, status: form.status, notes: form.notes?.trim() || null };
@@ -112,35 +120,57 @@ function FinancePage() {
   const [error, setError] = useState("");
   const [mutating, setMutating] = useState("");
   const [entryToDelete, setEntryToDelete] = useState<FinancialEntry | null>(null);
+  const entriesRequestVersion = useRef(0);
+  const activeUserId = useRef<string | null>(null);
 
+  const currentUserEntries = activeUserId.current === (user?.id ?? null) ? entries : [];
   const periods = useMemo(() => {
     const values = new Set(Array.from({ length: 12 }, (_, index) => { const date = new Date(); date.setDate(1); date.setMonth(date.getMonth() - index); return monthValue(date); }));
-    entries.forEach((entry) => values.add(entry.transaction_date.slice(0, 7)));
+    currentUserEntries.forEach((entry) => values.add(entry.transaction_date.slice(0, 7)));
     return Array.from(values).sort((first, second) => second.localeCompare(first));
-  }, [entries]);
-
-  async function loadEntries() {
-    if (!user) return;
-    setLoading(true);
-    setError("");
-    const { data, error: queryError } = await fetchFinancialEntries(user.id);
-    if (queryError) setError(queryError.message);
-    setEntries((data as FinancialEntry[] | null) ?? []);
-    setLoading(false);
-  }
+  }, [currentUserEntries]);
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!user) { setEntries([]); setLoading(false); return; }
-    void loadEntries();
+    const requestedUserId = user?.id ?? null;
+    const requestVersion = ++entriesRequestVersion.current;
+    activeUserId.current = requestedUserId;
+    setEntries([]);
+    setError("");
+
+    if (authLoading || !requestedUserId) {
+      setLoading(authLoading);
+      return () => { entriesRequestVersion.current += 1; };
+    }
+
+    setLoading(true);
+    void (async () => {
+      const { data, error: queryError } = await fetchFinancialEntries(requestedUserId);
+      if (entriesRequestVersion.current !== requestVersion || activeUserId.current !== requestedUserId) return;
+      if (queryError) setError(queryError.message);
+      const loadedEntries = (data as FinancialEntry[] | null) ?? [];
+      if (loadedEntries.some((entry) => entry.user_id !== requestedUserId)) {
+        setEntries([]);
+        setLoading(false);
+        return;
+      }
+      setEntries(sortFinancialEntries(loadedEntries));
+      setLoading(false);
+    })();
+
+    return () => { entriesRequestVersion.current += 1; };
   }, [authLoading, user?.id]);
 
-  const visibleEntries = useMemo(() => entries.filter((entry) => entry.transaction_date.slice(0, 7) === period && (typeFilter === "all" || entry.transaction_type === typeFilter)), [entries, period, typeFilter]);
+  const visibleEntries = useMemo(() => currentUserEntries.filter((entry) => entry.transaction_date.slice(0, 7) === period && (typeFilter === "all" || entry.transaction_type === typeFilter)), [currentUserEntries, period, typeFilter]);
   const income = visibleEntries.filter((entry) => entry.transaction_type === "income").reduce((sum, entry) => sum + Number(entry.amount), 0);
   const expenses = visibleEntries.filter((entry) => entry.transaction_type === "expense").reduce((sum, entry) => sum + Number(entry.amount), 0);
 
   function handleSaved(savedEntry: FinancialEntry) {
-    setEntries((current) => { const exists = current.some((entry) => entry.id === savedEntry.id); return exists ? current.map((entry) => entry.id === savedEntry.id ? savedEntry : entry) : [savedEntry, ...current]; });
+    if (activeUserId.current !== savedEntry.user_id) return;
+    setEntries((current) => {
+      const exists = current.some((entry) => entry.id === savedEntry.id);
+      const nextEntries = exists ? current.map((entry) => entry.id === savedEntry.id ? savedEntry : entry) : [savedEntry, ...current];
+      return sortFinancialEntries(nextEntries);
+    });
     setError("");
   }
 
