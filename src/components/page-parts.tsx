@@ -8,8 +8,8 @@ export function Eyebrow({ children, tone = "neutral" }: { children: React.ReactN
   return <p className={`eyebrow eyebrow-${tone}`}>{children}</p>;
 }
 
-export function PageIntro({ eyebrow, title, text, tone = "neutral" }: { eyebrow: string; title: string; text: string; tone?: "neutral" | "psychology" | "biomedicine" }) {
-  return <section className={`page-intro page-intro-${tone}`}><div className="container-site max-w-4xl py-16 md:py-24"><Eyebrow tone={tone}>{eyebrow}</Eyebrow><h1 className="mt-5 text-balance font-display text-4xl leading-tight md:text-6xl">{title}</h1><p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">{text}</p></div></section>;
+export function PageIntro({ eyebrow, title, text, tone = "neutral", backgroundImage }: { eyebrow: string; title: string; text: string; tone?: "neutral" | "psychology" | "biomedicine"; backgroundImage?: string }) {
+  return <section className={`page-intro page-intro-${tone} relative overflow-hidden`}>{backgroundImage && <><img src={backgroundImage} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-20" /><div className="absolute inset-0 bg-background/75" aria-hidden="true" /></>}<div className="container-site relative z-10 max-w-4xl py-16 md:py-24"><div className={backgroundImage ? "inline-block rounded-2xl bg-background/85 p-5 shadow-lg backdrop-blur-sm md:p-7" : undefined}><Eyebrow tone={tone}>{eyebrow}</Eyebrow><h1 className="mt-5 text-balance font-display text-4xl leading-tight md:text-6xl">{title}</h1><p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">{text}</p></div></div></section>;
 }
 
 export function ServiceGrid({ services, tone }: { services: Service[]; tone: "psychology" | "biomedicine" }) {
