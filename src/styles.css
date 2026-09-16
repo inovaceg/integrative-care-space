@@ -19,7 +19,7 @@
  */
 
 @theme inline {
-  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-display: "Sora", Arial, sans-serif;
   --font-sans: "Manrope", Arial, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -77,36 +77,36 @@
 }
 
 :root {
-  --radius: 0.5rem;
-  --background: oklch(0.985 0.006 85);
-  --foreground: oklch(0.22 0.025 156);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.34 0.065 157);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.94 0.018 78);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.95 0.01 85);
-  --muted-foreground: oklch(0.48 0.025 157);
-  --accent: oklch(0.93 0.025 157);
-  --accent-foreground: oklch(0.208 0.042 265.755);
+  --radius: 1rem;
+  --background: oklch(0.965 0.004 115);
+  --foreground: oklch(0.258 0.012 245);
+  --card: oklch(0.995 0.002 110);
+  --card-foreground: oklch(0.258 0.012 245);
+  --popover: oklch(0.995 0.002 110);
+  --popover-foreground: oklch(0.258 0.012 245);
+  --primary: oklch(0.66 0.116 184);
+  --primary-foreground: oklch(0.985 0.004 115);
+  --secondary: oklch(0.295 0.012 245);
+  --secondary-foreground: oklch(0.97 0.004 115);
+  --muted: oklch(0.925 0.009 185);
+  --muted-foreground: oklch(0.48 0.018 225);
+  --accent: oklch(0.88 0.045 185);
+  --accent-foreground: oklch(0.258 0.012 245);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.86 0.018 85);
-  --input: oklch(0.82 0.02 85);
-  --ring: oklch(0.58 0.09 157);
-  --psychology: oklch(0.35 0.075 157);
+  --border: oklch(0.84 0.015 200);
+  --input: oklch(0.78 0.02 200);
+  --ring: oklch(0.66 0.116 184);
+  --psychology: oklch(0.33 0.052 184);
   --psychology-foreground: oklch(0.98 0.005 85);
-  --biomedicine: oklch(0.41 0.08 242);
+  --biomedicine: oklch(0.30 0.018 245);
   --biomedicine-foreground: oklch(0.98 0.005 85);
-  --gold: oklch(0.62 0.09 78);
-  --gold-soft: oklch(0.79 0.07 78);
-  --footer: oklch(0.2 0.035 158);
+  --gold: oklch(0.72 0.11 82);
+  --gold-soft: oklch(0.80 0.08 82);
+  --footer: oklch(0.258 0.012 245);
   --footer-foreground: oklch(0.97 0.008 85);
-  --footer-muted: oklch(0.77 0.018 150);
-  --footer-line: oklch(0.31 0.035 158);
+  --footer-muted: oklch(0.77 0.018 190);
+  --footer-line: oklch(0.38 0.02 220);
   --whatsapp: oklch(0.64 0.17 149);
   --whatsapp-foreground: oklch(1 0 0);
   --chart-1: oklch(0.646 0.222 41.116);
@@ -174,9 +174,9 @@
   a, button { outline-offset: 3px; }
 }
 
-@utility container-site { width: min(100% - 2rem, 76rem); margin-inline: auto; }
+@utility container-site { width: min(100% - 2rem, 80rem); margin-inline: auto; }
 @utility section-space { padding-block: clamp(4rem, 8vw, 7rem); }
-@utility eyebrow { font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .18em; color: var(--gold); }
+@utility eyebrow { font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .18em; color: var(--primary); }
 @utility eyebrow-psychology { color: var(--psychology); }
 @utility eyebrow-biomedicine { color: var(--biomedicine); }
 @utility page-intro { border-bottom: 1px solid var(--border); background: color-mix(in oklab, var(--secondary) 45%, var(--background)); }
@@ -186,10 +186,12 @@
 @utility service-card-psychology { border-top: 3px solid var(--psychology); }
 @utility service-card-biomedicine { border-top: 3px solid var(--biomedicine); }
 @utility service-icon { display: grid; width: 2.75rem; height: 2.75rem; place-items: center; border-radius: 50%; background: var(--muted); color: var(--foreground); }
-@utility area-card { border-radius: var(--radius); padding: clamp(1.5rem, 4vw, 3rem); color: var(--primary-foreground); }
+@utility area-card { border-radius: calc(var(--radius) * 1.75); padding: clamp(1.5rem, 4vw, 3rem); color: var(--primary-foreground); box-shadow: 0 18px 50px color-mix(in oklab, var(--foreground) 10%, transparent); }
 @utility area-card-psychology { background: var(--psychology); }
 @utility area-card-biomedicine { background: var(--biomedicine); }
-@utility area-card-image { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: calc(var(--radius) - 2px); margin-block-end: 1.5rem; }
+@utility area-card-image { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radius); margin-block-end: 1.5rem; }
+@utility hero-image { border-radius: 2.5rem 2.5rem 2.5rem .5rem; box-shadow: 0 28px 70px color-mix(in oklab, var(--foreground) 20%, transparent); }
+@utility hero-accent { background: var(--gold); }
 @utility prose-legal { max-width: 52rem; }
 .prose-legal h2 { margin-top: 2.25rem; font-family: var(--font-display); font-size: 1.75rem; }
 .prose-legal p { margin-top: .75rem; line-height: 1.8; color: var(--muted-foreground); }
