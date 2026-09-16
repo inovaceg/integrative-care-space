@@ -3,6 +3,7 @@ import { ArrowRight, Check, Image, MapPin, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { biomedicineServices, faqItems, mapsUrl, psychologyServices, type Service, whatsappUrl } from "@/lib/site-data";
+import psicologiaImg from "@/assets/psicologia-saude-mental.png";
 
 export function Eyebrow({ children, tone = "neutral" }: { children: React.ReactNode; tone?: "neutral" | "psychology" | "biomedicine" }) {
   return <p className={`eyebrow eyebrow-${tone}`}>{children}</p>;
