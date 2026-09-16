@@ -24,6 +24,7 @@ export function Header() {
         <Brand />
         <nav className="hidden items-center gap-1 xl:flex" aria-label="Navegação principal">
           {navItems.map(([label, to]) => <Link key={to} to={to} activeProps={{ className: "text-primary" }} className="px-2.5 py-3 text-sm text-muted-foreground transition-colors hover:text-foreground">{label}</Link>)}
+          <Link to="/admin/login" className="px-2.5 py-3 text-sm text-muted-foreground transition-colors hover:text-foreground">Área administrativa</Link>
           <Button asChild size="lg" className="ml-2"><a href={whatsappUrl} target="_blank" rel="noreferrer"><MessageCircle /> Agende sua consulta</a></Button>
         </nav>
         <div className="flex items-center gap-2 xl:hidden">
@@ -34,6 +35,7 @@ export function Header() {
       {open && <nav className="border-t border-border bg-background px-5 py-4 xl:hidden" aria-label="Navegação móvel">
         <div className="mx-auto grid max-w-xl grid-cols-2 gap-1">
           {navItems.map(([label, to]) => <Link key={to} to={to} onClick={() => setOpen(false)} className="rounded-sm px-3 py-3 text-sm font-medium hover:bg-muted">{label}</Link>)}
+          <Link to="/admin/login" onClick={() => setOpen(false)} className="rounded-sm px-3 py-3 text-sm font-medium hover:bg-muted">Área administrativa</Link>
           <Button asChild className="col-span-2 mt-2"><a href={whatsappUrl} target="_blank" rel="noreferrer"><MessageCircle /> Agende sua consulta</a></Button>
         </div>
       </nav>}

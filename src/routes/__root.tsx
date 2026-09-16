@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { AuthProvider } from "../components/auth/auth-provider";
 import { SiteLayout } from "../components/site-shell";
 
 function NotFoundComponent() {
@@ -126,7 +127,9 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {isAdmin ? <Outlet /> : <SiteLayout><Outlet /></SiteLayout>}
+      <AuthProvider>
+        {isAdmin ? <Outlet /> : <SiteLayout><Outlet /></SiteLayout>}
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
