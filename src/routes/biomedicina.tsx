@@ -46,9 +46,11 @@ function Page() {
               </video>
             </div>
           </div>
-          <p className="mt-8 text-sm leading-6 text-muted-foreground">
-            Para registros em vídeo, recomendamos autorização prévia para uso de imagem. A indicação e a possibilidade de cada procedimento dependem de avaliação profissional. Não há promessa de cura ou garantia de resultados.
-          </p>
+          <div className="mt-8 text-sm leading-7 text-muted-foreground">
+            <h2 className="font-display text-2xl font-semibold text-foreground">Aplicação de Toxina Botulínica</h2>
+            <p className="mt-3">Procedimento realizado pelo Dr. Frederick Parreira, com avaliação individualizada e planejamento dos pontos de aplicação, buscando resultados naturais, harmônicos e adequados às características de cada paciente.</p>
+            <p className="mt-3">Cada tratamento é personalizado, e os resultados podem variar de pessoa para pessoa.</p>
+          </div>
         </div>
       </section>
     </>
