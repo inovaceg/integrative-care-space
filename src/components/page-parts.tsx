@@ -3,6 +3,8 @@ import { ArrowRight, Check, Image, MapPin, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { biomedicineServices, faqItems, mapsUrl, psychologyServices, type Service, whatsappUrl } from "@/lib/site-data";
+import psicologiaImg from "@/assets/psicologia-saude-mental.png";
+import biomedicinaImg from "@/assets/biomedicina-integrativa-estetica.png";
 
 export function Eyebrow({ children, tone = "neutral" }: { children: React.ReactNode; tone?: "neutral" | "psychology" | "biomedicine" }) {
   return <p className={`eyebrow eyebrow-${tone}`}>{children}</p>;
@@ -19,11 +21,12 @@ export function ServiceGrid({ services, tone }: { services: Service[]; tone: "ps
 export function AreaCards() {
   const psychList = psychologyServices.map((s) => s.title);
   const bioList = ["Emagrecimento", "Estética corporal e facial", "Protocolos para dores crônicas", "Acupuntura", "Injetáveis personalizados", "Saúde integrativa e bem-estar", "Laserterapia e ILIB", "Microagulhamento", "Toxina botulínica", "Protocolos capilares", "Protocolos de saúde sexual"];
-  return <div className="grid gap-5 lg:grid-cols-2"><AreaCard tone="psychology" title="Psicologia e Saúde Mental" items={psychList} to="/psicologia" button="Conheça Psicologia e Saúde Mental" /><AreaCard tone="biomedicine" title="Biomedicina Integrativa e Estética" items={bioList} to="/biomedicina" button="Conheça Biomedicina Integrativa" /></div>;
+  return <div className="grid gap-5 lg:grid-cols-2"><AreaCard tone="psychology" title="Psicologia e Saúde Mental" items={psychList} to="/psicologia" button="Conheça Psicologia e Saúde Mental" image={psicologiaImg} imageAlt="Ilustração editorial representando acolhimento, equilíbrio emocional e saúde mental." /><AreaCard tone="biomedicine" title="Biomedicina Integrativa e Estética" items={bioList} to="/biomedicina" button="Conheça Biomedicina Integrativa" image={biomedicinaImg} imageAlt="Ilustração editorial representando saúde integrativa, biomedicina e estética." /></div>;
 }
 
-function AreaCard({ tone, title, items, to, button }: { tone: "psychology" | "biomedicine"; title: string; items: string[]; to: "/psicologia" | "/biomedicina"; button: string }) {
-  return <article className={`area-card area-card-${tone}`}><span className="text-xs font-bold uppercase tracking-[0.2em]">Área de atuação</span><h3 className="mt-5 max-w-md font-display text-3xl md:text-4xl">{title}</h3><ul className="mt-8 grid gap-x-6 gap-y-3 sm:grid-cols-2">{items.map((item) => <li key={item} className="flex gap-2 text-sm leading-5"><Check className="mt-0.5 size-4 shrink-0" />{item}</li>)}</ul><Button asChild variant={tone === "psychology" ? "psychology" : "biomedicine"} className="mt-9 h-auto min-h-11 whitespace-normal px-5 py-3 text-center"><Link to={to}>{button}<ArrowRight /></Link></Button></article>;
+function AreaCard({ tone, title, items, to, button, image, imageAlt }: { tone: "psychology" | "biomedicine"; title: string; items: string[]; to: "/psicologia" | "/biomedicina"; button: string; image?: string; imageAlt?: string }) {
+  const cardClass = tone === "psychology" ? "area-card area-card-psychology" : "area-card area-card-biomedicine";
+  return <article className={cardClass}>{image && <img src={image} alt={imageAlt} loading="lazy" width={1024} height={1024} className="area-card-image" />}<span className="text-xs font-bold uppercase tracking-[0.2em]">Área de atuação</span><h3 className="mt-5 max-w-md font-display text-3xl md:text-4xl">{title}</h3><ul className="mt-8 grid gap-x-6 gap-y-3 sm:grid-cols-2">{items.map((item) => <li key={item} className="flex gap-2 text-sm leading-5"><Check className="mt-0.5 size-4 shrink-0" />{item}</li>)}</ul><Button asChild variant={tone === "psychology" ? "psychology" : "biomedicine"} className="mt-9 h-auto min-h-11 whitespace-normal px-5 py-3 text-center"><Link to={to}>{button}<ArrowRight /></Link></Button></article>;
 }
 
 export function Steps() {
