@@ -12,7 +12,6 @@ import {
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
-  Plus,
   Search,
   Settings,
   Stethoscope,
@@ -25,10 +24,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/auth/auth-provider";
 import type { AppointmentStatus, ProtocolStatus } from "@/lib/admin/types";
@@ -72,7 +69,7 @@ export function AdminSidebar({ collapsed, mobileOpen, onClose, onToggle }: { col
           </nav>
         </div>
         <div className="mt-auto p-4">
-          <div className={cn("rounded-xl border border-white/10 bg-white/5 p-3", collapsed && "lg:hidden")}><div className="flex items-start gap-2"><Activity className="mt-0.5 size-4 text-[#8bd5c4]" /><div><p className="text-xs font-medium">Ambiente de demonstração</p><p className="mt-1 text-[11px] leading-4 text-white/55">Dados fictícios. Nenhuma informação é persistida.</p></div></div></div>
+          <div className={cn("rounded-xl border border-white/10 bg-white/5 p-3", collapsed && "lg:hidden")}><div className="flex items-start gap-2"><Activity className="mt-0.5 size-4 text-[#8bd5c4]" /><div><p className="text-xs font-medium">Ambiente protegido</p><p className="mt-1 text-[11px] leading-4 text-white/55">Operações autorizadas ficam vinculadas à sua conta.</p></div></div></div>
           <button type="button" onClick={onToggle} className="mt-3 hidden w-full items-center justify-center gap-2 rounded-lg py-2 text-xs text-white/50 hover:bg-white/10 hover:text-white lg:flex" aria-label={collapsed ? "Expandir menu" : "Recolher menu"}>{collapsed ? <PanelLeftOpen className="size-4" /> : <><PanelLeftClose className="size-4" /> Recolher menu</>}</button>
         </div>
       </aside>
@@ -84,7 +81,7 @@ export function AdminHeader({ onMenu }: { onMenu: () => void }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const current = pageTitles[pathname] ?? { title: "Painel administrativo", description: "Ambiente de demonstração do espaço de saúde." };
+  const current = pageTitles[pathname] ?? { title: "Painel administrativo", description: "Gerencie seu espaço de saúde com segurança." };
   const email = user?.email ?? "Usuário administrativo";
   const initials = email.slice(0, 2).toUpperCase();
 
@@ -112,8 +109,10 @@ export function DashboardCard({ label, value, trend, note, tone }: { label: stri
 }
 
 export function StatusBadge({ status }: { status: AppointmentStatus | ProtocolStatus | string }) {
+  const labels: Record<string, string> = { pending: "Pendente", confirmed: "Confirmado", completed: "Concluído", cancelled: "Cancelado" };
   const styles: Record<string, string> = { Confirmado: "bg-[#e2f4ed] text-[#277767]", Pendente: "bg-[#fff4dc] text-[#a36c12]", Concluído: "bg-slate-100 text-slate-600", Cancelado: "bg-red-50 text-red-600", Ativo: "bg-[#e2f4ed] text-[#277767]", Rascunho: "bg-[#e7effb] text-[#3d6eaa]", Arquivado: "bg-slate-100 text-slate-500", Recebido: "bg-[#e2f4ed] text-[#277767]", Pago: "bg-slate-100 text-slate-600" };
-  return <Badge className={cn("border-0 font-medium", styles[status] ?? "bg-slate-100 text-slate-600")}>{status}</Badge>;
+  const label = labels[status] ?? status;
+  return <Badge className={cn("border-0 font-medium", styles[label] ?? "bg-slate-100 text-slate-600")}>{label}</Badge>;
 }
 
 export function SearchInput({ value, onChange, placeholder = "Buscar..." }: { value: string; onChange: (value: string) => void; placeholder?: string }) {
@@ -122,14 +121,6 @@ export function SearchInput({ value, onChange, placeholder = "Buscar..." }: { va
 
 export function SectionCard({ title, action, children, className }: { title: string; action?: ReactNode; children: ReactNode; className?: string }) {
   return <Card className={cn("border-slate-200/80 shadow-sm", className)}><CardHeader className="flex-row items-center justify-between space-y-0 border-b border-slate-100 px-5 py-4"><CardTitle className="font-display text-base text-slate-800">{title}</CardTitle>{action}</CardHeader><CardContent className="p-5">{children}</CardContent></Card>;
-}
-
-export function NewAppointmentDialog() {
-  return <Dialog><DialogTrigger asChild><Button className="gap-2 bg-[#2f8f82] text-white hover:bg-[#26796e]"><Plus className="size-4" /> Novo agendamento</Button></DialogTrigger><DialogContent><DialogHeader><DialogTitle>Novo agendamento</DialogTitle><DialogDescription>Esta é uma prévia visual. O agendamento não será salvo neste ambiente.</DialogDescription></DialogHeader><div className="grid gap-4 py-2"><div className="grid gap-2"><Label htmlFor="appointment-patient">Paciente</Label><Select><SelectTrigger id="appointment-patient"><SelectValue placeholder="Selecione um paciente" /></SelectTrigger><SelectContent><SelectItem value="marina">Marina Souza</SelectItem><SelectItem value="rafael">Rafael Mendes</SelectItem><SelectItem value="beatriz">Beatriz Costa</SelectItem></SelectContent></Select></div><div className="grid gap-2"><Label htmlFor="appointment-service">Tipo de atendimento</Label><Select><SelectTrigger id="appointment-service"><SelectValue placeholder="Selecione o atendimento" /></SelectTrigger><SelectContent><SelectItem value="psychology">Psicoterapia individual</SelectItem><SelectItem value="neuro">Avaliação neuropsicológica</SelectItem><SelectItem value="biomedicine">Consulta de biomedicina</SelectItem></SelectContent></Select></div><div className="grid grid-cols-2 gap-3"><div className="grid gap-2"><Label htmlFor="appointment-date">Data</Label><Input id="appointment-date" type="date" /></div><div className="grid gap-2"><Label htmlFor="appointment-time">Horário</Label><Input id="appointment-time" type="time" /></div></div></div><DialogFooter><Button type="button" variant="outline">Cancelar</Button><Button type="button" className="bg-[#2f8f82] hover:bg-[#26796e]">Pré-visualizar</Button></DialogFooter></DialogContent></Dialog>;
-}
-
-export function NewPatientDialog() {
-  return <Dialog><DialogTrigger asChild><Button className="gap-2 bg-[#2f8f82] text-white hover:bg-[#26796e]"><Plus className="size-4" /> Novo paciente</Button></DialogTrigger><DialogContent><DialogHeader><DialogTitle>Cadastrar paciente</DialogTitle><DialogDescription>Prévia de cadastro. Nenhum dado será salvo nesta demonstração.</DialogDescription></DialogHeader><div className="grid gap-4 py-2"><div className="grid gap-2"><Label htmlFor="patient-name">Nome completo</Label><Input id="patient-name" placeholder="Nome fictício" /></div><div className="grid grid-cols-2 gap-3"><div className="grid gap-2"><Label htmlFor="patient-age">Idade</Label><Input id="patient-age" type="number" min="0" placeholder="00" /></div><div className="grid gap-2"><Label htmlFor="patient-area">Área</Label><Select><SelectTrigger id="patient-area"><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent><SelectItem value="psychology">Psicologia</SelectItem><SelectItem value="biomedicine">Biomedicina</SelectItem><SelectItem value="neuropsychology">Neuropsicologia</SelectItem></SelectContent></Select></div></div><div className="grid gap-2"><Label htmlFor="patient-contact">Telefone (opcional)</Label><Input id="patient-contact" placeholder="(00) 0 0000-0000" /></div></div><DialogFooter><Button type="button" variant="outline">Cancelar</Button><Button type="button" className="bg-[#2f8f82] hover:bg-[#26796e]">Pré-visualizar cadastro</Button></DialogFooter></DialogContent></Dialog>;
 }
 
 export function EmptyState({ title, description, action }: { title: string; description: string; action?: ReactNode }) {
@@ -141,7 +132,7 @@ export function PatientAvatar({ initials, className }: { initials: string; class
 }
 
 export function AdminNotice() {
-  return <div className="flex items-start gap-3 rounded-xl border border-[#cce7df] bg-[#eff9f6] px-4 py-3 text-sm text-[#286a60]"><Activity className="mt-0.5 size-4 shrink-0" /><p><strong className="font-semibold">Modo demonstração:</strong> os dados exibidos são fictícios e as interações locais não têm persistência.</p></div>;
+  return <div className="flex items-start gap-3 rounded-xl border border-[#cce7df] bg-[#eff9f6] px-4 py-3 text-sm text-[#286a60]"><Activity className="mt-0.5 size-4 shrink-0" /><p><strong className="font-semibold">Operações protegidas:</strong> os dados são consultados e atualizados conforme as permissões da sua conta.</p></div>;
 }
 
 export function AdminBrandMark() {
