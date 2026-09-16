@@ -77,6 +77,12 @@ export async function createAppointment(userId: string, input: Omit<AppointmentR
   return supabase.from("appointments").insert({ ...input, doctor_id: userId }).select(appointmentFields).single();
 }
 
+export type AppointmentUpdateInput = Pick<AppointmentRecord, "patient_id" | "start_time" | "end_time" | "status" | "notes" | "amount_paid">;
+
+export async function updateAppointment(userId: string, appointmentId: string, input: AppointmentUpdateInput) {
+  return supabase.from("appointments").update(input).eq("doctor_id", userId).eq("id", appointmentId).select(appointmentFields).single();
+}
+
 export async function updateAppointmentStatus(userId: string, appointmentId: string, status: string) {
   return supabase.from("appointments").update({ status }).eq("doctor_id", userId).eq("id", appointmentId).select(appointmentFields).single();
 }
