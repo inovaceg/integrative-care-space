@@ -88,7 +88,7 @@ export function AdminHeader({ onMenu }: { onMenu: () => void }) {
 
   async function handleSignOut() {
     await signOut();
-    void navigate({ to: "/admin/login", replace: true });
+    void navigate({ to: "/", replace: true });
   }
 
   return <header className="flex min-h-20 items-center justify-between gap-4 border-b border-slate-200 bg-white px-4 sm:px-8"><div className="flex min-w-0 items-center gap-3"><Button variant="ghost" size="icon" className="lg:hidden" onClick={onMenu} aria-label="Abrir menu"><Menu className="size-5" /></Button><div className="min-w-0"><h1 className="truncate font-display text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">{current.title}</h1><p className="hidden truncate text-xs text-slate-500 sm:block">{current.description}</p></div></div><div className="flex shrink-0 items-center gap-2 sm:gap-4"><span className="hidden text-right text-xs text-slate-500 md:block">{email}</span><button type="button" className="relative rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800" aria-label="Notificações"><Bell className="size-5" /><span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-[#2f8f82] ring-2 ring-white" /></button><div className="hidden h-8 w-px bg-slate-200 sm:block" /><Avatar className="size-9 border border-slate-200"><AvatarFallback className="bg-[#e1f2ee] text-xs font-semibold text-[#21655f]">{initials}</AvatarFallback></Avatar><span className="hidden text-sm font-medium text-slate-700 lg:block">{email}</span><Button type="button" variant="ghost" size="icon" onClick={handleSignOut} aria-label="Sair"><LogOut className="size-5" /></Button></div></header>;
