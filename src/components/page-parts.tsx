@@ -3,7 +3,6 @@ import { ArrowRight, Check, Image, MapPin, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { biomedicineServices, faqItems, mapsUrl, psychologyServices, type Service, whatsappUrl } from "@/lib/site-data";
-import biomedicinaImg from "@/assets/biomedicina-integrativa-estetica.png";
 
 export function Eyebrow({ children, tone = "neutral" }: { children: React.ReactNode; tone?: "neutral" | "psychology" | "biomedicine" }) {
   return <p className={`eyebrow eyebrow-${tone}`}>{children}</p>;
@@ -20,7 +19,7 @@ export function ServiceGrid({ services, tone }: { services: Service[]; tone: "ps
 export function AreaCards() {
   const psychList = psychologyServices.map((s) => s.title);
   const bioList = ["Emagrecimento", "Estética corporal e facial", "Protocolos para dores crônicas", "Acupuntura", "Injetáveis personalizados", "Saúde integrativa e bem-estar", "Laserterapia e ILIB", "Microagulhamento", "Toxina botulínica", "Protocolos capilares", "Protocolos de saúde sexual"];
-  return <div className="grid gap-5 lg:grid-cols-2"><AreaCard tone="psychology" title="Psicologia e Saúde Mental" items={psychList} to="/psicologia" button="Conheça Psicologia e Saúde Mental" image="/psicologia.png" imageAlt="Dr. Frederick Parreira em atendimento de Psicologia e Saúde Mental." /><AreaCard tone="biomedicine" title="Biomedicina Integrativa e Estética" items={bioList} to="/biomedicina" button="Conheça Biomedicina Integrativa" image={biomedicinaImg} imageAlt="Ilustração editorial representando saúde integrativa, biomedicina e estética." /></div>;
+  return <div className="grid gap-5 lg:grid-cols-2"><AreaCard tone="psychology" title="Psicologia e Saúde Mental" items={psychList} to="/psicologia" button="Conheça Psicologia e Saúde Mental" image="/psicologia.png" imageAlt="Dr. Frederick Parreira em atendimento de Psicologia e Saúde Mental." /><AreaCard tone="biomedicine" title="Biomedicina Integrativa e Estética" items={bioList} to="/biomedicina" button="Conheça Biomedicina Integrativa" image="/biomedicina.png" imageAlt="Dr. Frederick Parreira em atendimento de Biomedicina Integrativa e Estética." /></div>;
 }
 
 function AreaCard({ tone, title, items, to, button, image, imageAlt }: { tone: "psychology" | "biomedicine"; title: string; items: string[]; to: "/psicologia" | "/biomedicina"; button: string; image?: string; imageAlt?: string }) {
