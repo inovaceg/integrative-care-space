@@ -18,7 +18,7 @@ export function ServiceGrid({ services, tone }: { services: Service[]; tone: "ps
 
 export function AreaCards() {
   const psychList = ["Psicologia clínica", "Psicoterapia individual", "Neuropsicologia", "Avaliação psicológica", "TDAH, TOD e TEA", "Depressão e ansiedade", "Transtornos de personalidade", "Dependência química", "Sexologia e relacionamentos", "Orientação familiar", "Luto, estresse e burnout", "Autoestima e compulsões"];
-  const bioList = ["Emagrecimento", "Estética corporal e facial", "Protocolos para dores crônicas", "Acupuntura", "Injetáveis personalizados", "Saúde integrativa e bem-estar", "Laserterapia e ILIB", "Microagulhamento", "Toxina botulínica", "Protocolos capilares", "Protocolos de saúde sexual"];
+  const bioList = ["Emagrecimento", "Estética corporal e facial", "Protocolo para dores crônicas", "Acupuntura", "Injetáveis personalizados", "Imunidade e bem-estar", "Laserterapia e ILIB", "Microagulhamento", "Botox", "Protocolo capilar", "Protocolo sexual", "Protocolo Picadinha do Amor"];
   return <div className="grid gap-5 lg:grid-cols-2"><AreaCard tone="psychology" title="Psicologia e Saúde Mental" items={psychList} to="/psicologia" button="Conheça Psicologia e Saúde Mental" image="/psicologia.png" imageAlt="Dr. Frederick Parreira em atendimento de Psicologia e Saúde Mental." /><AreaCard tone="biomedicine" title="Biomedicina Integrativa e Estética" items={bioList} to="/biomedicina" button="Conheça Biomedicina Integrativa" image="/biomedicina.png" imageAlt="Dr. Frederick Parreira em atendimento de Biomedicina Integrativa e Estética." /></div>;
 }
 
