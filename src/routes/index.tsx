@@ -6,17 +6,7 @@ import { whatsappUrl } from "@/lib/site-data";
 import drFrederickAsset from "@/assets/dr-frederick-parreira.png.asset.json";
 
 export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "Dr. Frederick Parreira | Saúde Integrativa" },
-      { name: "description", content: "Psicologia, Neuropsicologia, Biomedicina Integrativa e Estética com atendimento individualizado em Juiz de Fora." },
-      { property: "og:title", content: "Espaço de Saúde Integrativa | Dr. Frederick Parreira" },
-      { property: "og:description", content: "Saúde mental e cuidado integrativo em um só espaço." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-    links: [{ rel: "canonical", href: "/" }],
-  }),
+  head: () => ({ meta: [{ title: "Dr. Frederick Parreira | Saúde Integrativa" }, { name: "description", content: "Psicologia, Neuropsicologia, Biomedicina Integrativa e Estética com atendimento individualizado em Juiz de Fora." }, { property: "og:title", content: "Espaço de Saúde Integrativa | Dr. Frederick Parreira" }, { property: "og:description", content: "Saúde mental e cuidado integrativo em um só espaço." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }], links: [{ rel: "canonical", href: "/" }] }),
   component: HomePage,
 });
 

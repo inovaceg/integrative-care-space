@@ -109,24 +109,6 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="pt-BR">
       <head>
         <HeadContent />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "ProfessionalService",
-              name: "Espaço de Saúde Integrativa Dr. Frederick Parreira",
-              telephone: "+55 32 99193-1779",
-              address: {
-                "@type": "PostalAddress",
-                streetAddress: "Rua Fernando Lobo, 102, Sala 704",
-                addressLocality: "Juiz de Fora",
-                addressRegion: "MG",
-                addressCountry: "BR",
-              },
-            }),
-          }}
-        />
       </head>
       <body>
         {children}

@@ -190,11 +190,17 @@
 @utility area-card-psychology { background: var(--psychology); }
 @utility area-card-biomedicine { background: var(--biomedicine); }
 @utility area-card-image { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radius); margin-block-end: 1.5rem; }
+@utility area-card-cta { display: flex; width: 100%; min-height: 3.5rem; margin-top: 2.25rem; align-items: center; justify-content: center; gap: .75rem; border: 2px solid color-mix(in oklab, white 72%, transparent); border-radius: 999px; padding: .85rem 1.25rem; color: white; font-size: .875rem; font-weight: 800; line-height: 1.2; text-align: center; box-shadow: 0 8px 22px color-mix(in oklab, black 18%, transparent), inset 0 1px 0 color-mix(in oklab, white 30%, transparent); transition: transform .2s ease, box-shadow .2s ease, filter .2s ease; }
+@utility area-card-cta-psychology { background: oklch(0.68 0.14 175); }
+@utility area-card-cta-biomedicine { background: oklch(0.62 0.18 245); }
 @utility hero-image { border-radius: 2.5rem 2.5rem 2.5rem .5rem; box-shadow: 0 28px 70px color-mix(in oklab, var(--foreground) 20%, transparent); }
 @utility hero-accent { background: var(--gold); }
 @utility prose-legal { max-width: 52rem; }
 .prose-legal h2 { margin-top: 2.25rem; font-family: var(--font-display); font-size: 1.75rem; }
 .prose-legal p { margin-top: .75rem; line-height: 1.8; color: var(--muted-foreground); }
 
-@media (hover: hover) { .service-card:hover { transform: translateY(-3px); box-shadow: 0 18px 35px color-mix(in oklab, var(--foreground) 8%, transparent); } }
+@media (hover: hover) {
+  .service-card:hover { transform: translateY(-3px); box-shadow: 0 18px 35px color-mix(in oklab, var(--foreground) 8%, transparent); }
+  .area-card-cta:hover { transform: translateY(-2px); filter: brightness(1.08); box-shadow: 0 12px 28px color-mix(in oklab, black 24%, transparent), inset 0 1px 0 color-mix(in oklab, white 35%, transparent); }
+}
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; } }
