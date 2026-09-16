@@ -25,7 +25,7 @@ export function AreaCards() {
 function AreaCard({ tone, title, items, to, button, image, imageAlt }: { tone: "psychology" | "biomedicine"; title: string; items: string[]; to: "/psicologia" | "/biomedicina"; button: string; image?: string; imageAlt?: string }) {
   const cardClass = tone === "psychology" ? "area-card area-card-psychology" : "area-card area-card-biomedicine";
   const titleClass = tone === "psychology"
-    ? "mt-5 inline-block max-w-md rounded-2xl bg-background/85 p-5 font-display text-3xl text-foreground shadow-lg backdrop-blur-sm md:text-4xl"
+    ? "mt-5 block w-full rounded-2xl bg-background/85 p-5 font-display text-4xl text-foreground shadow-lg backdrop-blur-sm md:text-5xl"
     : "mt-5 max-w-md font-display text-3xl md:text-4xl";
   const buttonClass = tone === "psychology"
     ? "mt-9 flex min-h-14 w-full items-center justify-center gap-4 rounded-full border-2 border-[#8ff4df] bg-gradient-to-r from-[#08bca0] to-[#19c9aa] px-6 py-4 text-center text-base font-extrabold text-white shadow-[0_0_0_1px_rgba(255,255,255,.12),0_10px_28px_rgba(8,188,160,.38)] transition duration-200 hover:-translate-y-1 hover:brightness-110 hover:shadow-[0_0_24px_rgba(25,201,170,.55),0_14px_32px_rgba(0,0,0,.24)]"
