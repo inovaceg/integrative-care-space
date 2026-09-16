@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as BiomedicinaRouteImport } from './routes/biomedicina'
 import { Route as BlogRouteImport } from './routes/blog'
 import { Route as ContatoRouteImport } from './routes/contato'
@@ -20,10 +21,25 @@ import { Route as PsicologiaRouteImport } from './routes/psicologia'
 import { Route as ServicosRouteImport } from './routes/servicos'
 import { Route as SobreRouteImport } from './routes/sobre'
 import { Route as TermosDeUsoRouteImport } from './routes/termos-de-uso'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminAgendaRouteImport } from './routes/admin/agenda'
+import { Route as AdminConfiguracoesRouteImport } from './routes/admin/configuracoes'
+import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
+import { Route as AdminFinanceiroRouteImport } from './routes/admin/financeiro'
+import { Route as AdminLoginRouteImport } from './routes/admin/login'
+import { Route as AdminPacientesRouteImport } from './routes/admin/pacientes'
+import { Route as AdminProtocolosRouteImport } from './routes/admin/protocolos'
+import { Route as AdminRelatoriosRouteImport } from './routes/admin/relatorios'
+import { Route as AdminPacientesIdRouteImport } from './routes/admin/pacientes/$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BiomedicinaRoute = BiomedicinaRouteImport.update({
@@ -76,9 +92,60 @@ const TermosDeUsoRoute = TermosDeUsoRouteImport.update({
   path: '/termos-de-uso',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAgendaRoute = AdminAgendaRouteImport.update({
+  id: '/agenda',
+  path: '/agenda',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminConfiguracoesRoute = AdminConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDashboardRoute = AdminDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminFinanceiroRoute = AdminFinanceiroRouteImport.update({
+  id: '/financeiro',
+  path: '/financeiro',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPacientesRoute = AdminPacientesRouteImport.update({
+  id: '/pacientes',
+  path: '/pacientes',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminProtocolosRoute = AdminProtocolosRouteImport.update({
+  id: '/protocolos',
+  path: '/protocolos',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminRelatoriosRoute = AdminRelatoriosRouteImport.update({
+  id: '/relatorios',
+  path: '/relatorios',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPacientesIdRoute = AdminPacientesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AdminPacientesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/biomedicina': typeof BiomedicinaRoute
   '/blog': typeof BlogRoute
   '/contato': typeof ContatoRoute
@@ -89,6 +156,16 @@ export interface FileRoutesByFullPath {
   '/servicos': typeof ServicosRoute
   '/sobre': typeof SobreRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
+  '/admin/agenda': typeof AdminAgendaRoute
+  '/admin/configuracoes': typeof AdminConfiguracoesRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/financeiro': typeof AdminFinanceiroRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/pacientes': typeof AdminPacientesRouteWithChildren
+  '/admin/protocolos': typeof AdminProtocolosRoute
+  '/admin/relatorios': typeof AdminRelatoriosRoute
+  '/admin/': typeof AdminIndexRoute
+  '/admin/pacientes/$id': typeof AdminPacientesIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -102,10 +179,21 @@ export interface FileRoutesByTo {
   '/servicos': typeof ServicosRoute
   '/sobre': typeof SobreRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
+  '/admin/agenda': typeof AdminAgendaRoute
+  '/admin/configuracoes': typeof AdminConfiguracoesRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/financeiro': typeof AdminFinanceiroRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/pacientes': typeof AdminPacientesRouteWithChildren
+  '/admin/protocolos': typeof AdminProtocolosRoute
+  '/admin/relatorios': typeof AdminRelatoriosRoute
+  '/admin': typeof AdminIndexRoute
+  '/admin/pacientes/$id': typeof AdminPacientesIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/biomedicina': typeof BiomedicinaRoute
   '/blog': typeof BlogRoute
   '/contato': typeof ContatoRoute
@@ -116,11 +204,22 @@ export interface FileRoutesById {
   '/servicos': typeof ServicosRoute
   '/sobre': typeof SobreRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
+  '/admin/agenda': typeof AdminAgendaRoute
+  '/admin/configuracoes': typeof AdminConfiguracoesRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/financeiro': typeof AdminFinanceiroRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/pacientes': typeof AdminPacientesRouteWithChildren
+  '/admin/protocolos': typeof AdminProtocolosRoute
+  '/admin/relatorios': typeof AdminRelatoriosRoute
+  '/admin/': typeof AdminIndexRoute
+  '/admin/pacientes/$id': typeof AdminPacientesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/biomedicina'
     | '/blog'
     | '/contato'
@@ -131,6 +230,16 @@ export interface FileRouteTypes {
     | '/servicos'
     | '/sobre'
     | '/termos-de-uso'
+    | '/admin/agenda'
+    | '/admin/configuracoes'
+    | '/admin/dashboard'
+    | '/admin/financeiro'
+    | '/admin/login'
+    | '/admin/pacientes'
+    | '/admin/protocolos'
+    | '/admin/relatorios'
+    | '/admin/'
+    | '/admin/pacientes/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -144,9 +253,20 @@ export interface FileRouteTypes {
     | '/servicos'
     | '/sobre'
     | '/termos-de-uso'
+    | '/admin/agenda'
+    | '/admin/configuracoes'
+    | '/admin/dashboard'
+    | '/admin/financeiro'
+    | '/admin/login'
+    | '/admin/pacientes'
+    | '/admin/protocolos'
+    | '/admin/relatorios'
+    | '/admin'
+    | '/admin/pacientes/$id'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/biomedicina'
     | '/blog'
     | '/contato'
@@ -157,10 +277,21 @@ export interface FileRouteTypes {
     | '/servicos'
     | '/sobre'
     | '/termos-de-uso'
+    | '/admin/agenda'
+    | '/admin/configuracoes'
+    | '/admin/dashboard'
+    | '/admin/financeiro'
+    | '/admin/login'
+    | '/admin/pacientes'
+    | '/admin/protocolos'
+    | '/admin/relatorios'
+    | '/admin/'
+    | '/admin/pacientes/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   BiomedicinaRoute: typeof BiomedicinaRoute
   BlogRoute: typeof BlogRoute
   ContatoRoute: typeof ContatoRoute
@@ -180,6 +311,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/biomedicina': {
@@ -252,11 +390,120 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermosDeUsoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/agenda': {
+      id: '/admin/agenda'
+      path: '/agenda'
+      fullPath: '/admin/agenda'
+      preLoaderRoute: typeof AdminAgendaRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/configuracoes': {
+      id: '/admin/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/admin/configuracoes'
+      preLoaderRoute: typeof AdminConfiguracoesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/dashboard': {
+      id: '/admin/dashboard'
+      path: '/dashboard'
+      fullPath: '/admin/dashboard'
+      preLoaderRoute: typeof AdminDashboardRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/financeiro': {
+      id: '/admin/financeiro'
+      path: '/financeiro'
+      fullPath: '/admin/financeiro'
+      preLoaderRoute: typeof AdminFinanceiroRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/login': {
+      id: '/admin/login'
+      path: '/login'
+      fullPath: '/admin/login'
+      preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/pacientes': {
+      id: '/admin/pacientes'
+      path: '/pacientes'
+      fullPath: '/admin/pacientes'
+      preLoaderRoute: typeof AdminPacientesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/protocolos': {
+      id: '/admin/protocolos'
+      path: '/protocolos'
+      fullPath: '/admin/protocolos'
+      preLoaderRoute: typeof AdminProtocolosRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/relatorios': {
+      id: '/admin/relatorios'
+      path: '/relatorios'
+      fullPath: '/admin/relatorios'
+      preLoaderRoute: typeof AdminRelatoriosRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/pacientes/$id': {
+      id: '/admin/pacientes/$id'
+      path: '/$id'
+      fullPath: '/admin/pacientes/$id'
+      preLoaderRoute: typeof AdminPacientesIdRouteImport
+      parentRoute: typeof AdminPacientesRoute
+    }
   }
 }
 
+interface AdminPacientesRouteChildren {
+  AdminPacientesIdRoute: typeof AdminPacientesIdRoute
+}
+
+const AdminPacientesRouteChildren: AdminPacientesRouteChildren = {
+  AdminPacientesIdRoute: AdminPacientesIdRoute,
+}
+
+const AdminPacientesRouteWithChildren = AdminPacientesRoute._addFileChildren(
+  AdminPacientesRouteChildren,
+)
+
+interface AdminRouteChildren {
+  AdminAgendaRoute: typeof AdminAgendaRoute
+  AdminConfiguracoesRoute: typeof AdminConfiguracoesRoute
+  AdminDashboardRoute: typeof AdminDashboardRoute
+  AdminFinanceiroRoute: typeof AdminFinanceiroRoute
+  AdminLoginRoute: typeof AdminLoginRoute
+  AdminPacientesRoute: typeof AdminPacientesRouteWithChildren
+  AdminProtocolosRoute: typeof AdminProtocolosRoute
+  AdminRelatoriosRoute: typeof AdminRelatoriosRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminAgendaRoute: AdminAgendaRoute,
+  AdminConfiguracoesRoute: AdminConfiguracoesRoute,
+  AdminDashboardRoute: AdminDashboardRoute,
+  AdminFinanceiroRoute: AdminFinanceiroRoute,
+  AdminLoginRoute: AdminLoginRoute,
+  AdminPacientesRoute: AdminPacientesRouteWithChildren,
+  AdminProtocolosRoute: AdminProtocolosRoute,
+  AdminRelatoriosRoute: AdminRelatoriosRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   BiomedicinaRoute: BiomedicinaRoute,
   BlogRoute: BlogRoute,
   ContatoRoute: ContatoRoute,

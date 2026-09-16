@@ -7,3 +7,4 @@
 - [x] Preencher os dois cards de área de atuação com imagens complementares e corrigir fundo
 - [x] Aplicar identidade grafite, turquesa e dourada com composição assimétrica
 - [x] Validar desktop, mobile, links, conteúdo e acessibilidade
+- [x] Unificar formato, títulos e acabamento dos cards em todas as páginas

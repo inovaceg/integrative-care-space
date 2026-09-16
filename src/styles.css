@@ -182,17 +182,22 @@
 @utility page-intro { border-bottom: 1px solid var(--border); background: color-mix(in oklab, var(--secondary) 45%, var(--background)); }
 @utility page-intro-psychology { background: color-mix(in oklab, var(--psychology) 8%, var(--background)); }
 @utility page-intro-biomedicine { background: color-mix(in oklab, var(--biomedicine) 8%, var(--background)); }
-@utility service-card { border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); padding: 1.5rem; transition: transform .25s ease, box-shadow .25s ease; }
-@utility service-card-psychology { border-top: 3px solid var(--psychology); }
-@utility service-card-biomedicine { border-top: 3px solid var(--biomedicine); }
-@utility service-icon { display: grid; width: 2.75rem; height: 2.75rem; place-items: center; border-radius: 50%; background: var(--muted); color: var(--foreground); }
-@utility area-card { border-radius: calc(var(--radius) * 1.75); padding: clamp(1.5rem, 4vw, 3rem); color: var(--primary-foreground); box-shadow: 0 18px 50px color-mix(in oklab, var(--foreground) 10%, transparent); }
-@utility area-card-psychology { background: var(--psychology); }
-@utility area-card-biomedicine { background: var(--biomedicine); }
-@utility area-card-image { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radius); margin-block-end: 1.5rem; }
-@utility area-card-cta { display: flex; width: 100%; min-height: 3.5rem; margin-top: 2.25rem; align-items: center; justify-content: center; gap: .75rem; border: 2px solid color-mix(in oklab, white 72%, transparent); border-radius: 999px; padding: .85rem 1.25rem; color: white; font-size: .875rem; font-weight: 800; line-height: 1.2; text-align: center; box-shadow: 0 8px 22px color-mix(in oklab, black 18%, transparent), inset 0 1px 0 color-mix(in oklab, white 30%, transparent); transition: transform .2s ease, box-shadow .2s ease, filter .2s ease; }
-@utility area-card-cta-psychology { background: oklch(0.68 0.14 175); }
-@utility area-card-cta-biomedicine { background: oklch(0.62 0.18 245); }
+@utility card-grid { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); }
+@utility content-card { border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); padding: clamp(1.5rem, 3vw, 2rem); box-shadow: 0 8px 26px color-mix(in oklab, var(--foreground) 6%, transparent); transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
+@utility card-title { font-family: var(--font-display); font-size: clamp(1.35rem, 2vw, 1.75rem); font-weight: 650; line-height: 1.22; }
+@utility card-topline { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+@utility card-number { font-family: var(--font-display); font-size: 2.75rem; font-weight: 700; line-height: 1; color: var(--gold); }
+@utility card-index { font-family: var(--font-display); font-size: 2rem; font-weight: 600; line-height: 1; color: var(--primary); }
+@utility service-card { border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); padding: clamp(1.5rem, 3vw, 2rem); box-shadow: 0 8px 26px color-mix(in oklab, var(--foreground) 6%, transparent); transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
+@utility service-card-psychology { border-top: 3px solid var(--primary); }
+@utility service-card-biomedicine { border-top: 3px solid var(--gold); }
+@utility service-icon { display: grid; width: 3rem; height: 3rem; place-items: center; border-radius: calc(var(--radius) - 4px); background: var(--muted); color: var(--primary); }
+@utility area-card { border: 1px solid var(--border); border-radius: var(--radius); padding: clamp(1.5rem, 4vw, 2.5rem); box-shadow: 0 12px 34px color-mix(in oklab, var(--foreground) 8%, transparent); transition: transform .25s ease, box-shadow .25s ease; }
+@utility area-card-psychology { background: var(--card); color: var(--card-foreground); }
+@utility area-card-biomedicine { background: var(--secondary); color: var(--secondary-foreground); border-color: color-mix(in oklab, var(--secondary-foreground) 14%, transparent); }
+@utility area-card-image { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: calc(var(--radius) - 3px); margin-block-end: 1.75rem; }
+@utility area-card-cta { display: flex; width: 100%; min-height: 3.5rem; margin-top: 2.25rem; align-items: center; justify-content: center; gap: .75rem; border: 1px solid var(--primary); border-radius: calc(var(--radius) - 4px); padding: .85rem 1.25rem; background: var(--primary); color: var(--primary-foreground); font-size: .875rem; font-weight: 800; line-height: 1.2; text-align: center; transition: transform .2s ease, filter .2s ease; }
+@utility steps-grid { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
 @utility hero-image { border-radius: 2.5rem 2.5rem 2.5rem .5rem; box-shadow: 0 28px 70px color-mix(in oklab, var(--foreground) 20%, transparent); }
 @utility hero-accent { background: var(--gold); }
 @utility prose-legal { max-width: 52rem; }
@@ -200,7 +205,7 @@
 .prose-legal p { margin-top: .75rem; line-height: 1.8; color: var(--muted-foreground); }
 
 @media (hover: hover) {
-  .service-card:hover { transform: translateY(-3px); box-shadow: 0 18px 35px color-mix(in oklab, var(--foreground) 8%, transparent); }
-  .area-card-cta:hover { transform: translateY(-2px); filter: brightness(1.08); box-shadow: 0 12px 28px color-mix(in oklab, black 24%, transparent), inset 0 1px 0 color-mix(in oklab, white 35%, transparent); }
+  .content-card:hover, .service-card:hover, .area-card:hover { transform: translateY(-4px); border-color: color-mix(in oklab, var(--primary) 45%, var(--border)); box-shadow: 0 18px 38px color-mix(in oklab, var(--foreground) 10%, transparent); }
+  .area-card-cta:hover { transform: translateY(-2px); filter: brightness(1.08); }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; } }

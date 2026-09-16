@@ -21,7 +21,7 @@ export function ContactForm() {
     const message = `Olá! Vim pelo site do Dr. Frederick Parreira.\n\nNome: ${String(data.get("name")).trim()}\nTelefone: ${String(data.get("phone")).trim()}\nE-mail: ${String(data.get("email")).trim()}\nÁrea de interesse: ${String(data.get("interest"))}\nMensagem: ${String(data.get("message")).trim()}`;
     window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
   }
-  return <form onSubmit={submit} className="grid gap-5 rounded-md border border-border bg-background p-6 md:p-8" noValidate>
+  return <form onSubmit={submit} className="content-card grid gap-5" noValidate>
     <div className="grid gap-5 sm:grid-cols-2"><Field label="Nome" id="name"><Input id="name" name="name" required maxLength={100} autoComplete="name" /></Field><Field label="Telefone" id="phone"><Input id="phone" name="phone" type="tel" required maxLength={20} autoComplete="tel" /></Field></div>
     <Field label="E-mail" id="email"><Input id="email" name="email" type="email" required maxLength={255} autoComplete="email" /></Field>
     <Field label="Área de interesse" id="interest"><select id="interest" name="interest" required defaultValue="" className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"><option value="" disabled>Selecione uma opção</option>{interests.map((item) => <option key={item}>{item}</option>)}</select></Field>
