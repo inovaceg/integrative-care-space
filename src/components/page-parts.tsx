@@ -21,7 +21,7 @@ export function ServiceGrid({ services, tone }: { services: Service[]; tone: "ps
 export function AreaCards() {
   const psychList = psychologyServices.map((s) => s.title);
   const bioList = ["Emagrecimento", "Estética corporal e facial", "Protocolos para dores crônicas", "Acupuntura", "Injetáveis personalizados", "Saúde integrativa e bem-estar", "Laserterapia e ILIB", "Microagulhamento", "Toxina botulínica", "Protocolos capilares", "Protocolos de saúde sexual"];
-  return <div className="grid gap-5 lg:grid-cols-2"><AreaCard tone="psychology" title="Psicologia e Saúde Mental" items={psychList} to="/psicologia" button="Conheça Psicologia e Saúde Mental" image={psicologiaImg} imageAlt="Ilustração editorial representando acolhimento, equilíbrio emocional e saúde mental." /><AreaCard tone="biomedicine" title="Biomedicina Integrativa e Estética" items={bioList} to="/biomedicina" button="Conheça Biomedicina Integrativa" /></div>;
+  return <div className="grid gap-5 lg:grid-cols-2"><AreaCard tone="psychology" title="Psicologia e Saúde Mental" items={psychList} to="/psicologia" button="Conheça Psicologia e Saúde Mental" image={psicologiaImg} imageAlt="Ilustração editorial representando acolhimento, equilíbrio emocional e saúde mental." /><AreaCard tone="biomedicine" title="Biomedicina Integrativa e Estética" items={bioList} to="/biomedicina" button="Conheça Biomedicina Integrativa" image={biomedicinaImg} imageAlt="Ilustração editorial representando saúde integrativa, biomedicina e estética." /></div>;
 }
 
 function AreaCard({ tone, title, items, to, button, image, imageAlt }: { tone: "psychology" | "biomedicine"; title: string; items: string[]; to: "/psicologia" | "/biomedicina"; button: string; image?: string; imageAlt?: string }) {
