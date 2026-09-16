@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { FinancialEntryStatus, FinancialTransactionType } from "@/lib/admin/types";
 
 export type PatientRecord = {
   id: string;
@@ -81,4 +82,32 @@ export async function updateAppointmentStatus(userId: string, appointmentId: str
 
 export async function deleteAppointment(userId: string, appointmentId: string) {
   return supabase.from("appointments").delete().eq("doctor_id", userId).eq("id", appointmentId);
+}
+
+export type FinancialEntryInput = {
+  description: string;
+  category: string;
+  transaction_type: FinancialTransactionType;
+  amount: number;
+  transaction_date: string;
+  status: FinancialEntryStatus;
+  notes: string | null;
+};
+
+const financialEntryFields = "id, user_id, description, category, transaction_type, amount, transaction_date, status, notes, created_at, updated_at";
+
+export async function fetchFinancialEntries(userId: string) {
+  return supabase.from("financial_entries").select(financialEntryFields).eq("user_id", userId).order("transaction_date", { ascending: false }).order("created_at", { ascending: false });
+}
+
+export async function createFinancialEntry(userId: string, input: FinancialEntryInput) {
+  return supabase.from("financial_entries").insert({ ...input, user_id: userId }).select(financialEntryFields).single();
+}
+
+export async function updateFinancialEntry(userId: string, entryId: string, input: FinancialEntryInput) {
+  return supabase.from("financial_entries").update(input).eq("user_id", userId).eq("id", entryId).select(financialEntryFields).single();
+}
+
+export async function deleteFinancialEntry(userId: string, entryId: string) {
+  return supabase.from("financial_entries").delete().eq("user_id", userId).eq("id", entryId);
 }
