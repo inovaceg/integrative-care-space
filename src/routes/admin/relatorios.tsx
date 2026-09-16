@@ -96,12 +96,18 @@ function ReportsPage() {
   const growth = previousRevenue === 0 ? null : ((currentRevenue - previousRevenue) / previousRevenue) * 100;
   const growthValue = growth === null ? (currentRevenue === 0 ? "0,0%" : "—") : `${growth >= 0 ? "+" : ""}${growth.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
   const growthNote = growth === null && currentRevenue > 0 ? "sem base no mês anterior" : "comparado ao mês anterior";
-  const receivedEntries = useMemo(() => entries.filter((entry) => entry.transaction_type === "income" && entry.status === "received" && monthKeys.has(entry.transaction_date.slice(0, 7))), [entries, monthKeys]);
-  const pendingEntries = useMemo(() => entries.filter((entry) => entry.transaction_type === "income" && entry.status === "pending" && monthKeys.has(entry.transaction_date.slice(0, 7))), [entries, monthKeys]);
-  const totalReceived = receivedEntries.reduce((total, entry) => total + Number(entry.amount), 0);
-  const totalPending = pendingEntries.reduce((total, entry) => total + Number(entry.amount), 0);
-  const receivedNote = `${receivedEntries.length} lançamento${receivedEntries.length === 1 ? "" : "s"} no período`;
-  const pendingNote = `${pendingEntries.length} lançamento${pendingEntries.length === 1 ? "" : "s"} no período`;
+  const receivedAppointments = useMemo(() => appointments.filter((appointment) => {
+    const amount = Number(appointment.amount_paid ?? 0);
+    return appointment.status !== "cancelled" && appointment.status === "confirmed" && amount > 0 && monthKeys.has(monthKey(new Date(appointment.start_time)));
+  }), [appointments, monthKeys]);
+  const pendingAppointments = useMemo(() => appointments.filter((appointment) => {
+    const amount = Number(appointment.amount_paid ?? 0);
+    return appointment.status !== "cancelled" && appointment.status === "pending" && amount > 0 && monthKeys.has(monthKey(new Date(appointment.start_time)));
+  }), [appointments, monthKeys]);
+  const totalReceived = receivedAppointments.reduce((total, appointment) => total + Number(appointment.amount_paid ?? 0), 0);
+  const totalPending = pendingAppointments.reduce((total, appointment) => total + Number(appointment.amount_paid ?? 0), 0);
+  const receivedNote = `${receivedAppointments.length} agendamento${receivedAppointments.length === 1 ? "" : "s"} no período`;
+  const pendingNote = `${pendingAppointments.length} agendamento${pendingAppointments.length === 1 ? "" : "s"} no período`;
 
   const newPatients = useMemo(() => patients.filter((patient) => {
     if (!patient.created_at) return false;
