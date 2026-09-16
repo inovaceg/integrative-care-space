@@ -24,7 +24,10 @@ export function AreaCards() {
 
 function AreaCard({ tone, title, items, to, button, image, imageAlt }: { tone: "psychology" | "biomedicine"; title: string; items: string[]; to: "/psicologia" | "/biomedicina"; button: string; image?: string; imageAlt?: string }) {
   const cardClass = tone === "psychology" ? "area-card area-card-psychology" : "area-card area-card-biomedicine";
-  return <article className={cardClass}>{image && <img src={image} alt={imageAlt} loading="lazy" width={1024} height={1024} className="area-card-image" />}<span className="text-xs font-bold uppercase tracking-[0.2em]">Área de atuação</span><h3 className="mt-5 max-w-md font-display text-3xl md:text-4xl">{title}</h3><ul className="mt-8 grid gap-x-6 gap-y-3 sm:grid-cols-2">{items.map((item) => <li key={item} className="flex gap-2 text-sm leading-5"><Check className="mt-0.5 size-4 shrink-0" />{item}</li>)}</ul><Link to={to} className={`area-card-cta area-card-cta-${tone}`}>{button}<ArrowRight className="size-5 shrink-0" /></Link></article>;
+  const buttonClass = tone === "psychology"
+    ? "mt-9 flex min-h-14 w-full items-center justify-center gap-3 rounded-full border-2 border-white/80 bg-[#19a98f] px-6 py-4 text-center text-sm font-extrabold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-[#20bda0] hover:shadow-xl"
+    : "mt-9 flex min-h-14 w-full items-center justify-center gap-3 rounded-full border-2 border-white/80 bg-[#2878c8] px-6 py-4 text-center text-sm font-extrabold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-[#3389dc] hover:shadow-xl";
+  return <article className={cardClass}>{image && <img src={image} alt={imageAlt} loading="lazy" width={1024} height={1024} className="area-card-image" />}<span className="text-xs font-bold uppercase tracking-[0.2em]">Área de atuação</span><h3 className="mt-5 max-w-md font-display text-3xl md:text-4xl">{title}</h3><ul className="mt-8 grid gap-x-6 gap-y-3 sm:grid-cols-2">{items.map((item) => <li key={item} className="flex gap-2 text-sm leading-5"><Check className="mt-0.5 size-4 shrink-0" />{item}</li>)}</ul><Link to={to} className={buttonClass}>{button}<ArrowRight className="size-5 shrink-0" /></Link></article>;
 }
 
 export function Steps() {
