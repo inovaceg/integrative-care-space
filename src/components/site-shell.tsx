@@ -7,10 +7,10 @@ import { navItems, whatsappUrl } from "@/lib/site-data";
 export function Brand() {
   return (
     <Link to="/" className="group flex min-w-0 items-center gap-3" aria-label="Ir para o início">
-      <span className="grid size-11 shrink-0 place-items-center border border-gold/45 font-display text-3xl text-gold transition-colors group-hover:border-gold">Ψ</span>
+      <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-primary font-display text-2xl text-primary-foreground transition-transform group-hover:-rotate-3">Ψ</span>
       <span className="min-w-0 leading-tight">
-        <strong className="block truncate font-display text-lg font-medium text-foreground">Dr. Frederick Parreira</strong>
-        <span className="block truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Espaço de Saúde Integrativa</span>
+        <strong className="block truncate font-display text-base font-semibold text-foreground">Dr. Frederick Parreira</strong>
+        <span className="block truncate text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Espaço de Saúde Integrativa</span>
       </span>
     </Link>
   );
@@ -19,7 +19,7 @@ export function Brand() {
 export function Header() {
   const [open, setOpen] = useState(false);
   return (
-    <header className="sticky top-0 z-50 border-b border-border/70 bg-background/95 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-border/70 bg-background/90 backdrop-blur-xl">
       <div className="container-site grid min-h-20 grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
         <Brand />
         <nav className="hidden items-center gap-1 xl:flex" aria-label="Navegação principal">
