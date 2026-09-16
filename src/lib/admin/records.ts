@@ -5,6 +5,7 @@ export type PatientRecord = {
   id: string;
   profissional_id: string;
   nome: string;
+  created_at: string;
   data_nascimento: string | null;
   email: string | null;
   telefone: string | null;
@@ -23,7 +24,7 @@ export type PatientRecord = {
   como_conheceu: string | null;
 };
 
-export type PatientInput = Omit<PatientRecord, "id" | "profissional_id">;
+export type PatientInput = Omit<PatientRecord, "id" | "profissional_id" | "created_at">;
 export type PatientOption = Pick<PatientRecord, "id" | "nome">;
 
 export type AppointmentRecord = {
@@ -40,8 +41,8 @@ export type AppointmentRecord = {
   due_date: string | null;
 };
 
-const patientFields = "id, profissional_id, nome, data_nascimento, email, telefone, status, cpf, cidade_estado, cep, endereco, numero, complemento, cidade, estado, nome_social, genero, pronomes, como_conheceu";
-const patientListFields = "id, profissional_id, nome, data_nascimento, email, telefone, status";
+const patientFields = "id, profissional_id, nome, created_at, data_nascimento, email, telefone, status, cpf, cidade_estado, cep, endereco, numero, complemento, cidade, estado, nome_social, genero, pronomes, como_conheceu";
+const patientListFields = "id, profissional_id, nome, created_at, data_nascimento, email, telefone, status";
 const appointmentFields = "id, patient_id, doctor_id, start_time, end_time, status, notes, payment_status, amount_paid, payment_date, due_date";
 
 export async function fetchPatients(userId: string) {
