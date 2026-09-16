@@ -34,15 +34,16 @@ function DashboardPage() {
   }, [authLoading, user?.id]);
 
   const upcoming = useMemo(() => appointments.filter((appointment) => new Date(appointment.start_time) >= new Date() && appointment.status !== "cancelled").slice(0, 4), [appointments]);
-  const futurePendingAppointments = useMemo(() => {
-    const now = new Date();
+  const pendingAppointments = useMemo(() => {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
     return appointments.filter((appointment) => {
       const amount = Number(appointment.amount_paid ?? 0);
-      const isOpen = appointment.status === "pending" || appointment.status === "confirmed";
-      return new Date(appointment.start_time) > now && isOpen && amount > 0;
+      const hasPendingPayment = appointment.payment_status === "pending" || appointment.payment_status === "unpaid";
+      return new Date(appointment.start_time) >= startOfToday && appointment.status !== "cancelled" && hasPendingPayment && amount > 0;
     });
   }, [appointments]);
-  const futurePendingTotal = useMemo(() => futurePendingAppointments.reduce((total, appointment) => total + Number(appointment.amount_paid ?? 0), 0), [futurePendingAppointments]);
+  const pendingAppointmentsTotal = useMemo(() => pendingAppointments.reduce((total, appointment) => total + Number(appointment.amount_paid ?? 0), 0), [pendingAppointments]);
   const monthAppointments = useMemo(() => { const now = new Date(); return appointments.filter((appointment) => { const date = new Date(appointment.start_time); return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth(); }); }, [appointments]);
   const stats = [{ label: "Pacientes cadastrados", value: String(patients.length), trend: "Atualizado agora", tone: "teal" as const, note: "cadastros deste profissional" }, { label: "Atendimentos no mês", value: String(monthAppointments.length), trend: "Agenda real", tone: "blue" as const, note: "agendamentos registrados" }, { label: "Próximos atendimentos", value: String(upcoming.length), trend: "Próximos", tone: "amber" as const, note: "não cancelados" }, { label: "Agenda concluída", value: String(appointments.filter((appointment) => appointment.status === "completed").length), trend: "Total", tone: "violet" as const, note: "atendimentos concluídos" }];
 
@@ -59,15 +60,15 @@ function DashboardPage() {
           {patients.length === 0 ? <EmptyState title="Nenhum paciente cadastrado" description="Cadastre um paciente para acompanhar sua base." action={<Button asChild className="bg-[#2f8f82] hover:bg-[#26796e]"><Link to="/admin/pacientes">Cadastrar paciente</Link></Button>} /> : <div className="space-y-4">{patients.slice(0, 4).map((patient) => <Link key={patient.id} to="/admin/pacientes/$id" params={{ id: patient.id }} className="flex items-center gap-3 rounded-lg p-1 hover:bg-slate-50"><PatientAvatar initials={initials(patient.nome)} /><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-slate-800">{patient.nome}</p><p className="text-xs text-slate-500">{patient.email ?? patient.telefone ?? "Contato não informado"}</p></div><StatusBadge status={patient.status ?? "pendente"} /></Link>)}</div>}
         </SectionCard>
       </div>
-      <SectionCard title="Lançamentos futuros pendentes" className="mt-6">
+      <SectionCard title="Lançamentos de hoje e futuros não quitados" className="mt-6">
         <div className="mb-5 rounded-xl border border-[#cce7df] bg-[#eff9f6] p-4 sm:flex sm:items-center sm:justify-between sm:gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#286a60]">Total previsto a receber</p>
-            <p className="mt-1 font-display text-2xl font-semibold text-[#123c3d]">{futurePendingTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p>
+            <p className="mt-1 font-display text-2xl font-semibold text-[#123c3d]">{pendingAppointmentsTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p>
           </div>
-          <p className="mt-2 text-sm text-[#286a60] sm:mt-0">Consultas futuras em aberto · valores ainda não recebidos</p>
+          <p className="mt-2 text-sm text-[#286a60] sm:mt-0">Consultas de hoje e futuras ainda não quitadas · valor previsto, não recebido</p>
         </div>
-        {futurePendingAppointments.length === 0 ? <EmptyState title="Nenhum lançamento futuro pendente" description="Não há consultas futuras em aberto com valor previsto maior que zero." /> : <div className="space-y-2">{futurePendingAppointments.map((appointment) => { const patient = patients.find((item) => item.id === appointment.patient_id); const name = patient?.nome ?? "Paciente"; const date = new Date(appointment.start_time); const amount = Number(appointment.amount_paid ?? 0); return <div key={appointment.id} className="flex flex-col gap-3 rounded-lg border border-slate-100 px-3 py-3 sm:flex-row sm:items-center"><div className="w-28 shrink-0"><p className="text-sm font-semibold text-slate-800">{date.toLocaleDateString("pt-BR")}</p><p className="text-xs text-slate-500">às {date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p></div><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-slate-800">{name}</p><p className="truncate text-xs text-slate-500">{appointmentType(appointment.notes)}</p></div><div className="flex items-center justify-between gap-3 sm:justify-end"><div className="text-right"><p className="text-sm font-semibold text-[#286a60]">{amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p><p className="text-[11px] text-slate-400">valor previsto</p></div><StatusBadge status={appointment.status} /></div></div>; })}</div>}
+        {pendingAppointments.length === 0 ? <EmptyState title="Nenhum lançamento de hoje ou futuro pendente" description="Não há consultas de hoje ou futuras não quitadas com valor previsto maior que zero." /> : <div className="space-y-2">{pendingAppointments.map((appointment) => { const patient = patients.find((item) => item.id === appointment.patient_id); const name = patient?.nome ?? "Paciente"; const date = new Date(appointment.start_time); const amount = Number(appointment.amount_paid ?? 0); return <div key={appointment.id} className="flex flex-col gap-3 rounded-lg border border-slate-100 px-3 py-3 sm:flex-row sm:items-center"><div className="w-28 shrink-0"><p className="text-sm font-semibold text-slate-800">{date.toLocaleDateString("pt-BR")}</p><p className="text-xs text-slate-500">às {date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p></div><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-slate-800">{name}</p><p className="truncate text-xs text-slate-500">{appointmentType(appointment.notes)}</p></div><div className="flex items-center justify-between gap-3 sm:justify-end"><div className="text-right"><p className="text-sm font-semibold text-[#286a60]">{amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p><p className="text-[11px] text-slate-400">valor previsto</p></div><StatusBadge status={appointment.status} /></div></div>; })}</div>}
       </SectionCard>
       <Card className="mt-6 border-0 bg-[#123c3d] text-white shadow-sm"><CardContent className="flex flex-col items-start justify-between gap-4 p-5 sm:flex-row sm:items-center sm:p-6"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8bd5c4]">Acesso rápido</p><p className="mt-2 font-display text-lg font-medium">Mantenha sua rotina organizada</p><p className="mt-1 text-sm text-white/65">Consulte a agenda e registre pacientes no seu espaço.</p></div><Button asChild className="shrink-0 bg-[#8bd5c4] text-[#123c3d] hover:bg-[#a5e2d4]"><Link to="/admin/pacientes">Gerenciar pacientes</Link></Button></CardContent></Card>
     </>}
