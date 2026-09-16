@@ -12,6 +12,7 @@ import {
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
+  Pill,
   Search,
   Settings,
   Stethoscope,
@@ -28,13 +29,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/auth/auth-provider";
-import type { AppointmentStatus, ProtocolStatus } from "@/lib/admin/types";
+import type { AppointmentStatus } from "@/lib/admin/types";
 
 const navigation = [
   { label: "Visão geral", to: "/admin/dashboard", icon: LayoutDashboard },
   { label: "Agenda", to: "/admin/agenda", icon: CalendarDays },
   { label: "Pacientes", to: "/admin/pacientes", icon: UsersRound },
-  { label: "Protocolos", to: "/admin/protocolos", icon: ClipboardList },
+  { label: "Controle de medicamentos", to: "/admin/medicamentos", icon: Pill },
   { label: "Financeiro", to: "/admin/financeiro", icon: CircleDollarSign },
   { label: "Relatórios", to: "/admin/relatorios", icon: FileBarChart },
   { label: "Configurações", to: "/admin/configuracoes", icon: Settings },
@@ -44,7 +45,7 @@ const pageTitles: Record<string, { title: string; description: string }> = {
   "/admin/dashboard": { title: "Visão geral", description: "Acompanhe os principais indicadores do seu espaço." },
   "/admin/agenda": { title: "Agenda", description: "Organize seus atendimentos e compromissos." },
   "/admin/pacientes": { title: "Pacientes", description: "Acompanhe sua base de pacientes com privacidade." },
-  "/admin/protocolos": { title: "Protocolos", description: "Organize seus roteiros de atendimento." },
+  "/admin/medicamentos": { title: "Controle de medicamentos", description: "Acompanhe o estoque e o histórico de movimentações." },
   "/admin/financeiro": { title: "Financeiro", description: "Tenha clareza sobre receitas e despesas." },
   "/admin/relatorios": { title: "Relatórios", description: "Insights para acompanhar a evolução do espaço." },
   "/admin/configuracoes": { title: "Configurações", description: "Ajuste as preferências do ambiente administrativo." },
@@ -108,7 +109,7 @@ export function DashboardCard({ label, value, trend, note, tone }: { label: stri
   return <Card className="border-slate-200/80 shadow-sm"><CardContent className="p-5"><div className="flex items-start justify-between gap-3"><p className="text-sm font-medium text-slate-500">{label}</p><span className={cn("rounded-md px-2 py-1 text-[11px] font-semibold", colors[tone])}>{trend}</span></div><p className="mt-4 font-display text-2xl font-semibold text-slate-900 sm:text-3xl">{value}</p><p className="mt-2 text-xs text-slate-400">{note}</p></CardContent></Card>;
 }
 
-export function StatusBadge({ status }: { status: AppointmentStatus | ProtocolStatus | string }) {
+export function StatusBadge({ status }: { status: AppointmentStatus | string }) {
   const labels: Record<string, string> = { pending: "Pendente", confirmed: "Confirmado", completed: "Concluído", cancelled: "Cancelado" };
   const styles: Record<string, string> = { Confirmado: "bg-[#e2f4ed] text-[#277767]", Pendente: "bg-[#fff4dc] text-[#a36c12]", Concluído: "bg-slate-100 text-slate-600", Cancelado: "bg-red-50 text-red-600", Ativo: "bg-[#e2f4ed] text-[#277767]", Rascunho: "bg-[#e7effb] text-[#3d6eaa]", Arquivado: "bg-slate-100 text-slate-500", Recebido: "bg-[#e2f4ed] text-[#277767]", Pago: "bg-slate-100 text-slate-600" };
   const label = labels[status] ?? status;

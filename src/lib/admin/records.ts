@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { FinancialEntryStatus, FinancialTransactionType } from "@/lib/admin/types";
+import type { FinancialEntryStatus, FinancialTransactionType, MedicationMovementType, MedicationUnit } from "@/lib/admin/types";
 
 export type PatientRecord = {
   id: string;
@@ -110,4 +110,56 @@ export async function updateFinancialEntry(userId: string, entryId: string, inpu
 
 export async function deleteFinancialEntry(userId: string, entryId: string) {
   return supabase.from("financial_entries").delete().eq("user_id", userId).eq("id", entryId);
+}
+
+export type MedicationInput = {
+  name: string;
+  unit: MedicationUnit;
+  supplier: string | null;
+  notes: string | null;
+};
+
+export type MedicationMovementInput = {
+  medication_id: string;
+  movement_type: MedicationMovementType;
+  quantity: number;
+  batch: string | null;
+  expiration_date: string | null;
+  movement_date: string;
+  notes: string | null;
+};
+
+const medicationFields = "id, user_id, name, unit, supplier, notes, created_at, updated_at";
+const movementFields = "id, medication_id, user_id, movement_type, quantity, batch, expiration_date, movement_date, notes, created_at";
+
+export async function fetchMedications(userId: string) {
+  return supabase.from("medications").select(medicationFields).eq("user_id", userId).order("name");
+}
+
+export async function createMedication(userId: string, input: MedicationInput) {
+  return supabase.from("medications").insert({ ...input, user_id: userId }).select(medicationFields).single();
+}
+
+export async function updateMedication(userId: string, medicationId: string, input: MedicationInput) {
+  return supabase.from("medications").update(input).eq("user_id", userId).eq("id", medicationId).select(medicationFields).single();
+}
+
+export async function deleteMedication(userId: string, medicationId: string) {
+  return supabase.from("medications").delete().eq("user_id", userId).eq("id", medicationId);
+}
+
+export async function fetchMedicationMovements(userId: string) {
+  return supabase.from("medication_movements").select(movementFields).eq("user_id", userId).order("movement_date", { ascending: false }).order("created_at", { ascending: false });
+}
+
+export async function createMedicationMovement(userId: string, input: MedicationMovementInput) {
+  return supabase.from("medication_movements").insert({ ...input, user_id: userId }).select(movementFields).single();
+}
+
+export async function updateMedicationMovement(userId: string, movementId: string, input: MedicationMovementInput) {
+  return supabase.from("medication_movements").update(input).eq("user_id", userId).eq("id", movementId).select(movementFields).single();
+}
+
+export async function deleteMedicationMovement(userId: string, movementId: string) {
+  return supabase.from("medication_movements").delete().eq("user_id", userId).eq("id", movementId);
 }

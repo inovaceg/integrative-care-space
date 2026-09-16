@@ -27,8 +27,8 @@ import { Route as AdminConfiguracoesRouteImport } from './routes/admin/configura
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
 import { Route as AdminFinanceiroRouteImport } from './routes/admin/financeiro'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
+import { Route as AdminMedicamentosRouteImport } from './routes/admin/medicamentos'
 import { Route as AdminPacientesRouteImport } from './routes/admin/pacientes'
-import { Route as AdminProtocolosRouteImport } from './routes/admin/protocolos'
 import { Route as AdminRelatoriosRouteImport } from './routes/admin/relatorios'
 import { Route as AdminPacientesIdRouteImport } from './routes/admin/pacientes/$id'
 
@@ -122,14 +122,14 @@ const AdminLoginRoute = AdminLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminMedicamentosRoute = AdminMedicamentosRouteImport.update({
+  id: '/medicamentos',
+  path: '/medicamentos',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminPacientesRoute = AdminPacientesRouteImport.update({
   id: '/pacientes',
   path: '/pacientes',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminProtocolosRoute = AdminProtocolosRouteImport.update({
-  id: '/protocolos',
-  path: '/protocolos',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminRelatoriosRoute = AdminRelatoriosRouteImport.update({
@@ -161,8 +161,8 @@ export interface FileRoutesByFullPath {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/financeiro': typeof AdminFinanceiroRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/medicamentos': typeof AdminMedicamentosRoute
   '/admin/pacientes': typeof AdminPacientesRouteWithChildren
-  '/admin/protocolos': typeof AdminProtocolosRoute
   '/admin/relatorios': typeof AdminRelatoriosRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/pacientes/$id': typeof AdminPacientesIdRoute
@@ -184,8 +184,8 @@ export interface FileRoutesByTo {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/financeiro': typeof AdminFinanceiroRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/medicamentos': typeof AdminMedicamentosRoute
   '/admin/pacientes': typeof AdminPacientesRouteWithChildren
-  '/admin/protocolos': typeof AdminProtocolosRoute
   '/admin/relatorios': typeof AdminRelatoriosRoute
   '/admin': typeof AdminIndexRoute
   '/admin/pacientes/$id': typeof AdminPacientesIdRoute
@@ -209,8 +209,8 @@ export interface FileRoutesById {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/financeiro': typeof AdminFinanceiroRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/medicamentos': typeof AdminMedicamentosRoute
   '/admin/pacientes': typeof AdminPacientesRouteWithChildren
-  '/admin/protocolos': typeof AdminProtocolosRoute
   '/admin/relatorios': typeof AdminRelatoriosRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/pacientes/$id': typeof AdminPacientesIdRoute
@@ -235,8 +235,8 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/financeiro'
     | '/admin/login'
+    | '/admin/medicamentos'
     | '/admin/pacientes'
-    | '/admin/protocolos'
     | '/admin/relatorios'
     | '/admin/'
     | '/admin/pacientes/$id'
@@ -258,8 +258,8 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/financeiro'
     | '/admin/login'
+    | '/admin/medicamentos'
     | '/admin/pacientes'
-    | '/admin/protocolos'
     | '/admin/relatorios'
     | '/admin'
     | '/admin/pacientes/$id'
@@ -282,8 +282,8 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/financeiro'
     | '/admin/login'
+    | '/admin/medicamentos'
     | '/admin/pacientes'
-    | '/admin/protocolos'
     | '/admin/relatorios'
     | '/admin/'
     | '/admin/pacientes/$id'
@@ -432,18 +432,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLoginRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/medicamentos': {
+      id: '/admin/medicamentos'
+      path: '/medicamentos'
+      fullPath: '/admin/medicamentos'
+      preLoaderRoute: typeof AdminMedicamentosRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/pacientes': {
       id: '/admin/pacientes'
       path: '/pacientes'
       fullPath: '/admin/pacientes'
       preLoaderRoute: typeof AdminPacientesRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/protocolos': {
-      id: '/admin/protocolos'
-      path: '/protocolos'
-      fullPath: '/admin/protocolos'
-      preLoaderRoute: typeof AdminProtocolosRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/relatorios': {
@@ -481,8 +481,8 @@ interface AdminRouteChildren {
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdminFinanceiroRoute: typeof AdminFinanceiroRoute
   AdminLoginRoute: typeof AdminLoginRoute
+  AdminMedicamentosRoute: typeof AdminMedicamentosRoute
   AdminPacientesRoute: typeof AdminPacientesRouteWithChildren
-  AdminProtocolosRoute: typeof AdminProtocolosRoute
   AdminRelatoriosRoute: typeof AdminRelatoriosRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
@@ -493,8 +493,8 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminDashboardRoute: AdminDashboardRoute,
   AdminFinanceiroRoute: AdminFinanceiroRoute,
   AdminLoginRoute: AdminLoginRoute,
+  AdminMedicamentosRoute: AdminMedicamentosRoute,
   AdminPacientesRoute: AdminPacientesRouteWithChildren,
-  AdminProtocolosRoute: AdminProtocolosRoute,
   AdminRelatoriosRoute: AdminRelatoriosRoute,
   AdminIndexRoute: AdminIndexRoute,
 }

@@ -1,8 +1,9 @@
 export type AppointmentStatus = "Confirmado" | "Pendente" | "Concluído" | "Cancelado";
 export type PatientStatus = "Em acompanhamento" | "Primeira consulta" | "Inativo";
-export type ProtocolStatus = "Ativo" | "Rascunho" | "Arquivado";
 export type FinancialTransactionType = "income" | "expense";
 export type FinancialEntryStatus = "pending" | "paid" | "received";
+export type MedicationUnit = "unit" | "box" | "bottle";
+export type MedicationMovementType = "entry" | "exit";
 
 export interface FinancialEntry {
   id: string;
@@ -42,12 +43,26 @@ export interface Patient {
   specialty: string;
 }
 
-export interface Protocol {
+export interface MedicationRecord {
   id: string;
+  user_id: string;
   name: string;
-  area: string;
-  description: string;
-  status: ProtocolStatus;
-  updatedAt: string;
-  steps: number;
+  unit: MedicationUnit;
+  supplier: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MedicationMovementRecord {
+  id: string;
+  medication_id: string;
+  user_id: string;
+  movement_type: MedicationMovementType;
+  quantity: number;
+  batch: string | null;
+  expiration_date: string | null;
+  movement_date: string;
+  notes: string | null;
+  created_at: string;
 }
