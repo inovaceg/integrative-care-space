@@ -3,6 +3,7 @@ import { ArrowRight, HeartHandshake, Leaf, LockKeyhole, UserRoundCheck } from "l
 import { Button } from "@/components/ui/button";
 import { AreaCards, Eyebrow, FaqList, LocationBlock, Steps } from "@/components/page-parts";
 import { whatsappUrl } from "@/lib/site-data";
+import drFrederickAsset from "@/assets/dr-frederick-parreira.png.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [{ title: "Dr. Frederick Parreira | Saúde Integrativa" }, { name: "description", content: "Psicologia, saúde mental, biomedicina integrativa e estética com atendimento individualizado em Juiz de Fora." }, { property: "og:title", content: "Espaço de Saúde Integrativa | Dr. Frederick Parreira" }, { property: "og:description", content: "Cuidado completo para a mente, o corpo e o bem-estar." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }], links: [{ rel: "canonical", href: "/" }], scripts: [{ type: "application/ld+json", children: JSON.stringify({ "@context": "https://schema.org", "@type": "ProfessionalService", name: "Espaço de Saúde Integrativa Dr. Frederick Parreira", telephone: "+55 32 99193-1779", address: { "@type": "PostalAddress", streetAddress: "Rua Fernando Lobo, 102, Sala 704", addressLocality: "Juiz de Fora", addressRegion: "MG", addressCountry: "BR" } }) }] }),
