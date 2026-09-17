@@ -3,6 +3,100 @@ import { supabase } from "@/integrations/supabase/client";
 export type AnalyticsEventType = "page_view" | "whatsapp_click" | "appointment_click" | "contact_form_submitted";
 
 const visitorStorageKey = "anonymous_analytics_visitor_id";
+const locationStorageKey = "anonymous_analytics_approximate_location_v1";
+const locationTimeoutMs = 3000;
+const locationFieldMaxLength = 100;
+
+type ApproximateLocation = {
+  country: string | null;
+  state: string | null;
+  city: string | null;
+};
+
+const emptyLocation: ApproximateLocation = { country: null, state: null, city: null };
+let locationRequest: Promise<ApproximateLocation> | null = null;
+
+function sanitizeLocationField(value: unknown) {
+  if (typeof value !== "string") return null;
+  const sanitized = value.replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, locationFieldMaxLength);
+  return sanitized || null;
+}
+
+function sanitizeLocation(value: { country?: unknown; state?: unknown; city?: unknown }): ApproximateLocation {
+  return {
+    country: sanitizeLocationField(value.country),
+    state: sanitizeLocationField(value.state),
+    city: sanitizeLocationField(value.city),
+  };
+}
+
+function readCachedLocation() {
+  try {
+    const cached = window.sessionStorage.getItem(locationStorageKey);
+    if (!cached) return null;
+    const parsed: unknown = JSON.parse(cached);
+    if (!parsed || typeof parsed !== "object") return null;
+    const location = sanitizeLocation(parsed as { country?: unknown; state?: unknown; city?: unknown });
+    return location.country || location.state || location.city ? location : null;
+  } catch {
+    return null;
+  }
+}
+
+function cacheLocation(location: ApproximateLocation) {
+  try {
+    window.sessionStorage.setItem(locationStorageKey, JSON.stringify(location));
+  } catch {
+    // Storage may be unavailable in private browsing or restricted contexts.
+  }
+}
+
+async function fetchApproximateLocation(): Promise<ApproximateLocation> {
+  let timeout: number | undefined;
+  try {
+    const controller = new AbortController();
+    timeout = window.setTimeout(() => controller.abort(), locationTimeoutMs);
+    const response = await fetch("https://ipapi.co/json/?cors=true", {
+      signal: controller.signal,
+      headers: { Accept: "application/json" },
+    });
+    if (!response.ok) return emptyLocation;
+
+    const data: unknown = await response.json();
+    if (!data || typeof data !== "object") return emptyLocation;
+    const responseData = data as { city?: unknown; region?: unknown; country_name?: unknown };
+    return sanitizeLocation({
+      city: responseData.city,
+      state: responseData.region,
+      country: responseData.country_name,
+    });
+  } catch {
+    return emptyLocation;
+  } finally {
+    if (timeout !== undefined) window.clearTimeout(timeout);
+  }
+}
+
+function getApproximateLocation() {
+  const cachedLocation = readCachedLocation();
+  if (cachedLocation) return Promise.resolve(cachedLocation);
+  if (locationRequest) return locationRequest;
+
+  const request = fetchApproximateLocation().then((location) => {
+    if (location.country || location.state || location.city) cacheLocation(location);
+    return location;
+  });
+  locationRequest = request;
+  void request.then(
+    () => {
+      if (locationRequest === request) locationRequest = null;
+    },
+    () => {
+      if (locationRequest === request) locationRequest = null;
+    },
+  );
+  return request;
+}
 
 function createVisitorId() {
   const cryptoApi = typeof globalThis.crypto !== "undefined" ? globalThis.crypto : null;
@@ -62,17 +156,17 @@ export function trackAnalyticsEvent(eventType: AnalyticsEventType, pagePath = wi
   if (window.location.pathname === "/admin" || window.location.pathname.startsWith("/admin/")) return;
 
   const userAgent = navigator.userAgent;
-  void supabase.from("analytics_events").insert({
+  void getApproximateLocation().then((location) => supabase.from("analytics_events").insert({
     event_type: eventType,
     page_path: cleanPagePath(pagePath),
     referrer_origin: getReferrerOrigin(),
     device_type: getDeviceType(userAgent),
     browser: getBrowser(userAgent),
-    country: null,
-    state: null,
-    city: null,
+    country: location.country,
+    state: location.state,
+    city: location.city,
     visitor_id: getVisitorId(),
-  }).then(({ error }) => {
+  })).then(({ error }) => {
     if (error) console.error("[analytics] Failed to insert analytics event.");
   }, () => {
     console.error("[analytics] Failed to insert analytics event.");
