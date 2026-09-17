@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { trackAnalyticsEvent } from "../lib/analytics";
 import { AuthProvider } from "../components/auth/auth-provider";
 import { SiteLayout } from "../components/site-shell";
 
@@ -124,6 +125,10 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const isAdmin = pathname === "/admin" || pathname.startsWith("/admin/");
+
+  useEffect(() => {
+    if (!isAdmin) trackAnalyticsEvent("page_view", pathname);
+  }, [isAdmin, pathname]);
 
   return (
     <QueryClientProvider client={queryClient}>

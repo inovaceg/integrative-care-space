@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { trackAnalyticsEvent } from "@/lib/analytics";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,6 +20,7 @@ export function ContactForm() {
     if (!agreed) { setError("Você precisa concordar com a Política de Privacidade."); return; }
     const data = new FormData(form);
     const message = `Olá! Vim pelo site do Dr. Frederick Parreira.\n\nNome: ${String(data.get("name")).trim()}\nTelefone: ${String(data.get("phone")).trim()}\nE-mail: ${String(data.get("email")).trim()}\nÁrea de interesse: ${String(data.get("interest"))}\nMensagem: ${String(data.get("message")).trim()}`;
+    trackAnalyticsEvent("contact_form_submitted");
     window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
   }
   return <form onSubmit={submit} className="content-card grid gap-5" noValidate>

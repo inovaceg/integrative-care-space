@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Menu, MessageCircle, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { trackAnalyticsEvent, trackAnalyticsEvents } from "@/lib/analytics";
 import { navItems, whatsappUrl } from "@/lib/site-data";
 
 export function Brand() {
@@ -25,10 +26,10 @@ export function Header() {
         <nav className="hidden items-center gap-1 xl:flex" aria-label="Navegação principal">
           {navItems.map(([label, to]) => <Link key={to} to={to} activeProps={{ className: "text-primary" }} className="px-2.5 py-3 text-sm text-muted-foreground transition-colors hover:text-foreground">{label}</Link>)}
           <Link to="/admin/login" className="px-2.5 py-3 text-sm text-muted-foreground transition-colors hover:text-foreground">Área administrativa</Link>
-          <Button asChild size="lg" className="ml-2"><a href={whatsappUrl} target="_blank" rel="noreferrer"><MessageCircle /> Agende sua consulta</a></Button>
+          <Button asChild size="lg" className="ml-2"><a href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackAnalyticsEvents(["appointment_click", "whatsapp_click"])}><MessageCircle /> Agende sua consulta</a></Button>
         </nav>
         <div className="flex items-center gap-2 xl:hidden">
-          <Button asChild size="sm" className="hidden sm:inline-flex"><a href={whatsappUrl} target="_blank" rel="noreferrer">Agendar</a></Button>
+          <Button asChild size="sm" className="hidden sm:inline-flex"><a href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackAnalyticsEvents(["appointment_click", "whatsapp_click"])}>Agendar</a></Button>
           <Button variant="ghost" size="icon" onClick={() => setOpen((v) => !v)} aria-label={open ? "Fechar menu" : "Abrir menu"} aria-expanded={open}>{open ? <X /> : <Menu />}</Button>
         </div>
       </div>
@@ -36,7 +37,7 @@ export function Header() {
         <div className="mx-auto grid max-w-xl grid-cols-2 gap-1">
           {navItems.map(([label, to]) => <Link key={to} to={to} onClick={() => setOpen(false)} className="rounded-sm px-3 py-3 text-sm font-medium hover:bg-muted">{label}</Link>)}
           <Link to="/admin/login" onClick={() => setOpen(false)} className="rounded-sm px-3 py-3 text-sm font-medium hover:bg-muted">Área administrativa</Link>
-          <Button asChild className="col-span-2 mt-2"><a href={whatsappUrl} target="_blank" rel="noreferrer"><MessageCircle /> Agende sua consulta</a></Button>
+          <Button asChild className="col-span-2 mt-2"><a href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackAnalyticsEvents(["appointment_click", "whatsapp_click"])}><MessageCircle /> Agende sua consulta</a></Button>
         </div>
       </nav>}
     </header>
@@ -57,7 +58,7 @@ export function Footer() {
 }
 
 export function WhatsAppFloat() {
-  return <a href={whatsappUrl} target="_blank" rel="noreferrer" aria-label="Falar pelo WhatsApp" className="fixed bottom-5 right-5 z-40 grid size-14 place-items-center rounded-full bg-whatsapp text-whatsapp-foreground shadow-float transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><MessageCircle className="size-6" /></a>;
+  return <a href={whatsappUrl} target="_blank" rel="noreferrer" aria-label="Falar pelo WhatsApp" onClick={() => trackAnalyticsEvent("whatsapp_click")} className="fixed bottom-5 right-5 z-40 grid size-14 place-items-center rounded-full bg-whatsapp text-whatsapp-foreground shadow-float transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><MessageCircle className="size-6" /></a>;
 }
 
 export function SiteLayout({ children }: { children: React.ReactNode }) {

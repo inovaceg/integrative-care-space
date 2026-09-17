@@ -25,6 +25,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAgendaRouteImport } from './routes/admin/agenda'
 import { Route as AdminConfiguracoesRouteImport } from './routes/admin/configuracoes'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
+import { Route as AdminEstatisticasRouteImport } from './routes/admin/estatisticas'
 import { Route as AdminFinanceiroRouteImport } from './routes/admin/financeiro'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
 import { Route as AdminMedicamentosRouteImport } from './routes/admin/medicamentos'
@@ -112,6 +113,11 @@ const AdminDashboardRoute = AdminDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminEstatisticasRoute = AdminEstatisticasRouteImport.update({
+  id: '/estatisticas',
+  path: '/estatisticas',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminFinanceiroRoute = AdminFinanceiroRouteImport.update({
   id: '/financeiro',
   path: '/financeiro',
@@ -159,6 +165,7 @@ export interface FileRoutesByFullPath {
   '/admin/agenda': typeof AdminAgendaRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/estatisticas': typeof AdminEstatisticasRoute
   '/admin/financeiro': typeof AdminFinanceiroRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/medicamentos': typeof AdminMedicamentosRoute
@@ -182,6 +189,7 @@ export interface FileRoutesByTo {
   '/admin/agenda': typeof AdminAgendaRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/estatisticas': typeof AdminEstatisticasRoute
   '/admin/financeiro': typeof AdminFinanceiroRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/medicamentos': typeof AdminMedicamentosRoute
@@ -207,6 +215,7 @@ export interface FileRoutesById {
   '/admin/agenda': typeof AdminAgendaRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/estatisticas': typeof AdminEstatisticasRoute
   '/admin/financeiro': typeof AdminFinanceiroRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/medicamentos': typeof AdminMedicamentosRoute
@@ -233,6 +242,7 @@ export interface FileRouteTypes {
     | '/admin/agenda'
     | '/admin/configuracoes'
     | '/admin/dashboard'
+    | '/admin/estatisticas'
     | '/admin/financeiro'
     | '/admin/login'
     | '/admin/medicamentos'
@@ -256,6 +266,7 @@ export interface FileRouteTypes {
     | '/admin/agenda'
     | '/admin/configuracoes'
     | '/admin/dashboard'
+    | '/admin/estatisticas'
     | '/admin/financeiro'
     | '/admin/login'
     | '/admin/medicamentos'
@@ -280,6 +291,7 @@ export interface FileRouteTypes {
     | '/admin/agenda'
     | '/admin/configuracoes'
     | '/admin/dashboard'
+    | '/admin/estatisticas'
     | '/admin/financeiro'
     | '/admin/login'
     | '/admin/medicamentos'
@@ -418,6 +430,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminDashboardRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/estatisticas': {
+      id: '/admin/estatisticas'
+      path: '/estatisticas'
+      fullPath: '/admin/estatisticas'
+      preLoaderRoute: typeof AdminEstatisticasRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/financeiro': {
       id: '/admin/financeiro'
       path: '/financeiro'
@@ -479,6 +498,7 @@ interface AdminRouteChildren {
   AdminAgendaRoute: typeof AdminAgendaRoute
   AdminConfiguracoesRoute: typeof AdminConfiguracoesRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
+  AdminEstatisticasRoute: typeof AdminEstatisticasRoute
   AdminFinanceiroRoute: typeof AdminFinanceiroRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminMedicamentosRoute: typeof AdminMedicamentosRoute
@@ -491,6 +511,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAgendaRoute: AdminAgendaRoute,
   AdminConfiguracoesRoute: AdminConfiguracoesRoute,
   AdminDashboardRoute: AdminDashboardRoute,
+  AdminEstatisticasRoute: AdminEstatisticasRoute,
   AdminFinanceiroRoute: AdminFinanceiroRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminMedicamentosRoute: AdminMedicamentosRoute,

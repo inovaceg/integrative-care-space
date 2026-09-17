@@ -1,6 +1,7 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   Activity,
+  BarChart3,
   Bell,
   CalendarDays,
   ChevronRight,
@@ -38,6 +39,7 @@ const navigation = [
   { label: "Controle de medicamentos", to: "/admin/medicamentos", icon: Pill },
   { label: "Financeiro", to: "/admin/financeiro", icon: CircleDollarSign },
   { label: "Relatórios", to: "/admin/relatorios", icon: FileBarChart },
+  { label: "Estatísticas", to: "/admin/estatisticas", icon: BarChart3 },
   { label: "Configurações", to: "/admin/configuracoes", icon: Settings },
 ] as const;
 
@@ -48,6 +50,7 @@ const pageTitles: Record<string, { title: string; description: string }> = {
   "/admin/medicamentos": { title: "Controle de medicamentos", description: "Acompanhe o estoque e o histórico de movimentações." },
   "/admin/financeiro": { title: "Financeiro", description: "Tenha clareza sobre receitas e despesas." },
   "/admin/relatorios": { title: "Relatórios", description: "Insights para acompanhar a evolução do espaço." },
+  "/admin/estatisticas": { title: "Estatísticas", description: "Entenda como as pessoas encontram e usam o site." },
   "/admin/configuracoes": { title: "Configurações", description: "Ajuste as preferências do ambiente administrativo." },
 };
 

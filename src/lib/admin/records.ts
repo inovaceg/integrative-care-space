@@ -170,3 +170,22 @@ export async function updateMedicationMovement(userId: string, movementId: strin
 export async function deleteMedicationMovement(userId: string, movementId: string) {
   return supabase.from("medication_movements").delete().eq("user_id", userId).eq("id", movementId);
 }
+
+export type AnalyticsEventRecord = {
+  event_type: "page_view" | "whatsapp_click" | "appointment_click" | "contact_form_submitted";
+  occurred_at: string;
+  page_path: string;
+  referrer_origin: string | null;
+  device_type: "mobile" | "tablet" | "desktop" | null;
+  browser: string | null;
+  country: string | null;
+  state: string | null;
+  city: string | null;
+  visitor_id: string;
+};
+
+const analyticsEventFields = "event_type, occurred_at, page_path, referrer_origin, device_type, browser, country, state, city, visitor_id";
+
+export async function fetchAnalyticsEvents() {
+  return supabase.from("analytics_events").select(analyticsEventFields).order("occurred_at", { ascending: false });
+}
