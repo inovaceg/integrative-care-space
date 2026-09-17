@@ -78,7 +78,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  head: () => ({
+  head: ({ matches }) => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
@@ -98,6 +98,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
     ],
+    scripts: matches.some(
+      ({ pathname }) => pathname === "/admin" || pathname.startsWith("/admin/"),
+    )
+      ? []
+      : [{ type: "application/ld+json", children: JSON.stringify(localBusinessJsonLd) }],
   }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -106,14 +111,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const isAdmin = pathname === "/admin" || pathname.startsWith("/admin/");
-
   return (
     <html lang="pt-BR">
       <head>
         <HeadContent />
-        {!isAdmin && <script type="application/ld+json">{JSON.stringify(localBusinessJsonLd)}</script>}
       </head>
       <body>
         {children}
