@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { BarChart3, CalendarDays, Clock3, Globe2, Loader2, MousePointerClick, Smartphone, UsersRound } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { BarChart3, CalendarDays, Clock3, Globe2, Loader2, MousePointerClick, RefreshCw, Smartphone, UsersRound } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { AdminLayout, EmptyState, PageIntro, SectionCard } from "@/components/admin/admin-ui";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -123,29 +124,56 @@ function StatisticsPage() {
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
+  const requestIdRef = useRef(0);
+
+  const refreshEvents = useCallback(async () => {
+    if (authLoading || !user?.id) return;
+    const requestId = ++requestIdRef.current;
+    setRefreshing(true);
+    setError("");
+    try {
+      const result = await fetchAnalyticsEvents();
+      if (requestId !== requestIdRef.current) return;
+      if (result.error) {
+        setError(result.error.message);
+        return;
+      }
+      setEvents((result.data as AnalyticsEventRecord[] | null) ?? []);
+    } catch (queryError: unknown) {
+      if (requestId !== requestIdRef.current) return;
+      setError(queryError instanceof Error ? queryError.message : "Não foi possível carregar as estatísticas.");
+    } finally {
+      if (requestId !== requestIdRef.current) return;
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [authLoading, user?.id]);
 
   useEffect(() => {
-    let mounted = true;
-    if (authLoading) return () => { mounted = false; };
+    if (authLoading) return;
     if (!user) {
+      requestIdRef.current += 1;
+      setEvents([]);
       setLoading(false);
-      return () => { mounted = false; };
+      setRefreshing(false);
+      return;
     }
-    setLoading(true);
-    setError("");
-    void fetchAnalyticsEvents().then((result) => {
-      if (!mounted) return;
-      if (result.error) setError(result.error.message);
-      setEvents((result.data as AnalyticsEventRecord[] | null) ?? []);
-      setLoading(false);
-    }).catch((queryError: unknown) => {
-      if (!mounted) return;
-      setError(queryError instanceof Error ? queryError.message : "Não foi possível carregar as estatísticas.");
-      setLoading(false);
-    });
-    return () => { mounted = false; };
-  }, [authLoading, user?.id]);
+
+    void refreshEvents();
+    const intervalId = window.setInterval(() => void refreshEvents(), 30_000);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") void refreshEvents();
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      requestIdRef.current += 1;
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [authLoading, refreshEvents, user?.id]);
 
   const range = useMemo(() => rangeForPreset(preset, customFrom, customTo), [customFrom, customTo, preset]);
   const filteredEvents = useMemo(() => events.filter((event) => isInRange(event, range)), [events, range]);
@@ -183,7 +211,7 @@ function StatisticsPage() {
   const countries = useMemo(() => breakdown(pageViews.map((event) => event.country ?? "Não identificado")), [pageViews]);
 
   return <AdminLayout>
-    <PageIntro eyebrow="Audiência do site" title="Estatísticas" description="Acompanhe o comportamento anônimo dos visitantes e a origem dos acessos." />
+    <PageIntro eyebrow="Audiência do site" title="Estatísticas" description="Acompanhe o comportamento anônimo dos visitantes e a origem dos acessos." action={<Button type="button" variant="outline" onClick={() => void refreshEvents()} disabled={authLoading || !user || refreshing} className="gap-2 border-slate-200 bg-white"><RefreshCw className={refreshing ? "size-4 animate-spin" : "size-4"} /> Atualizar</Button>} />
     <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-end sm:justify-between">
       <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-end">
         <label className="grid gap-2 text-xs font-medium text-slate-600">Período<Select value={preset} onValueChange={(value) => setPreset(value as Preset)}><SelectTrigger className="w-full border-slate-200 bg-white sm:w-48"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="today">Hoje</SelectItem><SelectItem value="7">Últimos 7 dias</SelectItem><SelectItem value="30">Últimos 30 dias</SelectItem><SelectItem value="90">Últimos 90 dias</SelectItem><SelectItem value="year">Este ano</SelectItem><SelectItem value="custom">Personalizado</SelectItem></SelectContent></Select></label>

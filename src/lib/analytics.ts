@@ -72,6 +72,10 @@ export function trackAnalyticsEvent(eventType: AnalyticsEventType, pagePath = wi
     state: null,
     city: null,
     visitor_id: getVisitorId(),
+  }).then(({ error }) => {
+    if (error) console.error("[analytics] Failed to insert analytics event.");
+  }, () => {
+    console.error("[analytics] Failed to insert analytics event.");
   });
 }
 
