@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 
 export const Route = createFileRoute("/admin")({
+  head: () => ({ meta: [{ name: "robots", content: "noindex, nofollow" }] }),
   component: AdminRoute,
 });
 

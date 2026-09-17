@@ -1,18 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageIntro, ServiceGrid } from "@/components/page-parts";
 import { biomedicineServices } from "@/lib/site-data";
+import { createSeoHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/biomedicina")({
-  head: () => ({
-    meta: [
-      { title: "Biomedicina Integrativa em Juiz de Fora" },
-      { name: "description", content: "Biomedicina integrativa, estética, acupuntura, laserterapia e ILIB em Juiz de Fora." },
-      { property: "og:title", content: "Biomedicina Integrativa e Estética" },
-      { property: "og:description", content: "Protocolos individualizados voltados à saúde, estética e bem-estar." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-    links: [{ rel: "canonical", href: "/biomedicina" }],
+  head: () => createSeoHead({
+    title: "Biomedicina Integrativa e Estética em Juiz de Fora | Dr. Frederick",
+    description: "Biomedicina integrativa, estética facial e corporal, acupuntura e laserterapia em Juiz de Fora.",
+    path: "/biomedicina",
   }),
   component: Page,
 });

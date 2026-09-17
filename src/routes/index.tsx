@@ -4,9 +4,14 @@ import { Button } from "@/components/ui/button";
 import { trackAnalyticsEvents } from "@/lib/analytics";
 import { AreaCards, Eyebrow, FaqList, LocationBlock, Steps } from "@/components/page-parts";
 import { whatsappUrl } from "@/lib/site-data";
+import { createSeoHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/")({
-  head: () => ({ meta: [{ title: "Dr. Frederick Parreira | Saúde Integrativa" }, { name: "description", content: "Psicologia, Neuropsicologia, Biomedicina Integrativa e Estética com atendimento individualizado em Juiz de Fora." }, { property: "og:title", content: "Espaço de Saúde Integrativa | Dr. Frederick Parreira" }, { property: "og:description", content: "Saúde mental e cuidado integrativo em um só espaço." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }], links: [{ rel: "canonical", href: "/" }] }),
+  head: () => createSeoHead({
+    title: "Psicologia e Biomedicina em Juiz de Fora | Dr. Frederick Parreira",
+    description: "Psicologia, Neuropsicologia e Biomedicina Integrativa com atendimento individualizado no Centro de Juiz de Fora.",
+    path: "/",
+  }),
   component: HomePage,
 });
 

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { LocationBlock, PageIntro } from "@/components/page-parts";
-export const Route = createFileRoute("/estrutura")({ head: () => ({ meta: [{ title: "Estrutura e Localização | Dr. Frederick" }, { name: "description", content: "Localização do Espaço de Saúde Integrativa no Centro de Juiz de Fora." }, { property: "og:title", content: "Estrutura e Localização" }, { property: "og:description", content: "Encontre o Espaço de Saúde Integrativa em Juiz de Fora." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }], links: [{ rel: "canonical", href: "/estrutura" }] }), component: Page });
+import { createSeoHead } from "@/lib/seo";
+export const Route = createFileRoute("/estrutura")({ head: () => createSeoHead({ title: "Estrutura e Endereço no Centro de Juiz de Fora | Dr. Frederick", description: "Conheça o Espaço de Saúde Integrativa na Rua Fernando Lobo, 102, sala 704, no Centro de Juiz de Fora.", path: "/estrutura" }), component: Page });
 function Page(){return <><PageIntro eyebrow="Estrutura" title="Conforto, privacidade e tranquilidade" text="Um espaço pensado para proporcionar uma experiência acolhedora em uma localização central."/><section className="section-space"><div className="container-site"><LocationBlock gallery/></div></section></>}

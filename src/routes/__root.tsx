@@ -15,6 +15,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { trackAnalyticsEvent } from "../lib/analytics";
 import { AuthProvider } from "../components/auth/auth-provider";
 import { SiteLayout } from "../components/site-shell";
+import { localBusinessJsonLd } from "../lib/seo";
 
 function NotFoundComponent() {
   return (
@@ -81,13 +82,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Dr. Frederick Parreira | Saúde Integrativa" },
-      { name: "description", content: "Psicologia, saúde mental, biomedicina integrativa e estética em Juiz de Fora." },
       { name: "author", content: "Dr. Frederick Parreira" },
-      { property: "og:title", content: "Espaço de Saúde Integrativa" },
-      { property: "og:description", content: "Cuidado completo para a mente, o corpo e o bem-estar." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
+      ...(import.meta.env["VITE_GOOGLE_SITE_VERIFICATION"]
+        ? [{ name: "google-site-verification", content: import.meta.env["VITE_GOOGLE_SITE_VERIFICATION"] }]
+        : []),
     ],
     links: [
       {
@@ -108,10 +106,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const isAdmin = pathname === "/admin" || pathname.startsWith("/admin/");
+
   return (
     <html lang="pt-BR">
       <head>
         <HeadContent />
+        {!isAdmin && <script type="application/ld+json">{JSON.stringify(localBusinessJsonLd)}</script>}
       </head>
       <body>
         {children}
