@@ -78,7 +78,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  head: ({ matches }) => ({
+  head: () => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
@@ -98,11 +98,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
     ],
-    scripts: matches.some(
-      ({ pathname }) => pathname === "/admin" || pathname.startsWith("/admin/"),
-    )
-      ? []
-      : [{ type: "application/ld+json", children: JSON.stringify(localBusinessJsonLd) }],
   }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -136,7 +131,19 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        {isAdmin ? <Outlet /> : <SiteLayout><Outlet /></SiteLayout>}
+        {isAdmin ? (
+          <Outlet />
+        ) : (
+          <>
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessJsonLd) }}
+            />
+            <SiteLayout>
+              <Outlet />
+            </SiteLayout>
+          </>
+        )}
       </AuthProvider>
     </QueryClientProvider>
   );
