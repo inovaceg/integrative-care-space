@@ -10,7 +10,18 @@ export function Eyebrow({ children, tone = "neutral" }: { children: React.ReactN
 }
 
 export function PageIntro({ eyebrow, title, text, tone = "neutral", backgroundImage }: { eyebrow: string; title: string; text: string; tone?: "neutral" | "psychology" | "biomedicine"; backgroundImage?: string }) {
-  return <section className={`page-intro page-intro-${tone} relative overflow-hidden`}>{backgroundImage && <><img src={backgroundImage} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-20" /><div className="absolute inset-0 bg-gradient-to-br from-background/90 via-background/75 to-background/55" aria-hidden="true" /></>}<div className="container-site relative z-10 max-w-4xl py-16 md:py-24"><div className="w-full rounded-2xl bg-background/90 p-6 shadow-lg backdrop-blur-sm md:p-8"><Eyebrow tone={tone}>{eyebrow}</Eyebrow><h1 className="mt-5 text-balance font-display text-4xl leading-tight md:text-6xl">{title}</h1><p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">{text}</p></div></div></section>;
+  return (
+    <section className={`page-intro page-intro-${tone} relative overflow-hidden`}>
+      {backgroundImage && <><img src={backgroundImage} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-20" /><div className="absolute inset-0 bg-gradient-to-br from-background/90 via-background/75 to-background/55" aria-hidden="true" /></>}
+      <div className="relative z-10 mx-auto w-[calc(100%-2rem)] max-w-4xl py-8 md:py-12">
+        <div className="flex min-h-72 w-full flex-col justify-center rounded-2xl bg-background/90 p-6 shadow-lg backdrop-blur-sm md:min-h-80 md:p-8">
+          <Eyebrow tone={tone}>{eyebrow}</Eyebrow>
+          <h1 className="mt-4 text-balance break-words font-display text-3xl leading-tight sm:text-4xl md:text-5xl">{title}</h1>
+          <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground md:text-lg md:leading-8">{text}</p>
+        </div>
+      </div>
+    </section>
+  );
 }
 
 export function ServiceGrid({ services, tone, showLearnMore = true }: { services: Service[]; tone: "psychology" | "biomedicine"; showLearnMore?: boolean }) {
