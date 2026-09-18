@@ -4,6 +4,8 @@ export type FinancialTransactionType = "income" | "expense";
 export type FinancialEntryStatus = "pending" | "paid" | "received";
 export type MedicationUnit = "unit" | "box" | "bottle";
 export type MedicationMovementType = "entry" | "exit";
+export type PrescriptionStatus = "rascunho" | "finalizado";
+export type PrescriptionType = "Receituário" | "Orientações" | "Suplementação" | "Fitoterápicos" | "Uso tópico" | "Fórmula manipulada" | "Outro";
 
 export interface FinancialEntry {
   id: string;
@@ -65,4 +67,69 @@ export interface MedicationMovementRecord {
   movement_date: string;
   notes: string | null;
   created_at: string;
+}
+
+export interface PrescriptionItem {
+  id: string;
+  receituario_id: string;
+  nome: string;
+  concentracao?: string;
+  apresentacao?: string;
+  quantidade?: string;
+  posologia?: string;
+  via_administracao?: string;
+  duracao?: string;
+  observacoes?: string;
+  ordem: number;
+}
+
+export interface Prescription {
+  id: string;
+  profissional_id: string;
+  paciente_id?: string;
+  tipo_documento: PrescriptionType;
+  data: string;
+  orientacoes?: string;
+  status: PrescriptionStatus;
+  identificador_unico?: string;
+  created_at: string;
+  updated_at: string;
+  items: PrescriptionItem[];
+}
+
+export interface PrescriptionProfessionalConfig {
+  id: string;
+  profissional_id: string;
+  nome_completo: string;
+  titulo: string;
+  crp: string;
+  crbm: string;
+  pos_graduacoes: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PrescriptionModel {
+  id: string;
+  profissional_id: string;
+  nome: string;
+  tipo: PrescriptionType;
+  conteudo: string;
+  orientacoes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PatientRecord {
+  id: string;
+  profissional_id: string;
+  nome: string;
+  data_nascimento?: string;
+  email?: string;
+  telefone?: string;
+  cpf?: string;
+  nome_social?: string;
+  status?: string;
+  created_at?: string;
+  updated_at?: string;
 }
