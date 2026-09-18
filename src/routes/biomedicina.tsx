@@ -25,26 +25,41 @@ function Page() {
         text="Protocolos individualizados voltados à saúde, estética e bem-estar."
       />
       <section className="section-space">
-        <div className="container-site">
-          <article className="content-card mb-12 p-4 sm:p-6 md:p-8" aria-labelledby="lipo-hd-title">
-            <h2 id="lipo-hd-title" className="font-display text-3xl leading-tight md:text-4xl">Lipo HD – Definição Corporal</h2>
-            <p className="mt-4 max-w-3xl text-base leading-7 text-muted-foreground">
-              Tecnologia voltada ao contorno corporal, com foco em gordura localizada, flacidez e definição. Conheça o procedimento, suas indicações e benefícios.
-            </p>
-            <Button asChild className="mt-6">
-              <a href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackAnalyticsEvent("whatsapp_click")} aria-label="Saiba mais sobre Lipo HD pelo WhatsApp">
-                Saiba mais <ArrowRight className="size-4" />
-              </a>
-            </Button>
-            <img
-              src="/images/lipo-hd-definicao-corporal.png"
-              alt="Material informativo de Lipo HD – Definição Corporal, com imagens comparativas e apresentação do Dr. Frederick Parreira."
-              width={1536}
-              height={1024}
-              className="mt-8 h-auto w-full rounded-xl"
-            />
+        <div className="mx-auto w-[calc(100%-2rem)] max-w-[86rem]">
+          <p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-primary">TRATAMENTO EM DESTAQUE</p>
+          <article className="mb-12 overflow-hidden rounded-2xl border border-primary/15 bg-card shadow-sm md:mb-16" aria-labelledby="lipo-hd-title">
+            <div className="p-5 sm:p-6 md:flex md:items-center md:justify-between md:gap-8 md:px-8">
+              <div className="max-w-3xl">
+                <h2 id="lipo-hd-title" className="font-display text-3xl leading-tight md:text-4xl">Lipo HD – Definição Corporal</h2>
+                <p className="mt-3 text-base leading-7 text-muted-foreground">
+                  Tecnologia voltada ao contorno corporal, com foco em gordura localizada, flacidez e definição. Conheça o procedimento, suas indicações e benefícios.
+                </p>
+              </div>
+              <Button asChild className="mt-5 shrink-0 md:mt-0">
+                <a href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackAnalyticsEvent("whatsapp_click")} aria-label="Saiba mais sobre Lipo HD pelo WhatsApp">
+                  Saiba mais <ArrowRight className="size-4" />
+                </a>
+              </Button>
+            </div>
+            <div className="border-t border-primary/10 bg-primary/[0.03] p-3 sm:p-5">
+              <img
+                src="/images/lipo-hd-definicao-corporal.png"
+                alt="Material informativo de Lipo HD – Definição Corporal, com imagens comparativas e apresentação do Dr. Frederick Parreira."
+                width={1536}
+                height={1024}
+                className="mx-auto block h-auto w-full max-w-4xl rounded-lg object-contain"
+              />
+            </div>
           </article>
-          <ServiceGrid services={biomedicineServices} tone="biomedicine" showLearnMore={false} />
+          <section aria-labelledby="tratamentos-title">
+            <div className="mb-7">
+              <h2 id="tratamentos-title" className="font-display text-3xl leading-tight md:text-4xl">Tratamentos e Protocolos</h2>
+              <p className="mt-3 text-base leading-7 text-muted-foreground">Conheça as principais áreas de atuação em Biomedicina Integrativa e Estética.</p>
+            </div>
+            <div className="[&>div]:grid-cols-1 md:[&>div]:grid-cols-2 lg:[&>div]:grid-cols-4">
+              <ServiceGrid services={biomedicineServices} tone="biomedicine" showLearnMore={false} />
+            </div>
+          </section>
           <div className="content-card mx-auto mt-16 max-w-4xl p-4 sm:p-6">
             <h2 className="font-display text-3xl leading-tight md:text-4xl">Veja um pouco do nosso trabalho</h2>
             <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
