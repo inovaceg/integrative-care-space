@@ -9,8 +9,19 @@ export function Eyebrow({ children, tone = "neutral" }: { children: React.ReactN
   return <p className={`eyebrow eyebrow-${tone}`}>{children}</p>;
 }
 
-export function PageIntro({ eyebrow, title, text, tone = "neutral", backgroundImage }: { eyebrow: string; title: string; text: string; tone?: "neutral" | "psychology" | "biomedicine"; backgroundImage?: string }) {
-  return <section className={`page-intro page-intro-${tone} relative overflow-hidden`}>{backgroundImage && <><img src={backgroundImage} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-20" /><div className="absolute inset-0 bg-gradient-to-br from-background/90 via-background/75 to-background/55" aria-hidden="true" /></>}<div className="container-site relative z-10 max-w-4xl py-16 md:py-24"><div className="w-full rounded-2xl bg-background/90 p-6 shadow-lg backdrop-blur-sm md:p-8"><Eyebrow tone={tone}>{eyebrow}</Eyebrow><h1 className="mt-5 text-balance font-display text-4xl leading-tight md:text-6xl">{title}</h1><p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">{text}</p></div></div></section>;
+export function PageIntro({ eyebrow, title, text, tone = "neutral", backgroundImage }: { eyebrow: string; title: React.ReactNode; text: string; tone?: "neutral" | "psychology" | "biomedicine"; backgroundImage?: string }) {
+  return (
+    <section className={`page-intro page-intro-${tone} relative overflow-hidden`}>
+      {backgroundImage && <><img src={backgroundImage} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-20" /><div className="absolute inset-0 bg-gradient-to-br from-background/90 via-background/75 to-background/55" aria-hidden="true" /></>}
+      <div className="relative z-10 mx-auto w-[calc(100%-2rem)] max-w-4xl py-8 md:py-12">
+        <div className="w-full rounded-2xl bg-background/90 p-6 shadow-lg backdrop-blur-sm md:min-h-[21.25rem] md:p-8">
+          <Eyebrow tone={tone}>{eyebrow}</Eyebrow>
+          <h1 className="mt-5 min-h-[3.75em] text-balance font-display text-4xl leading-tight md:min-h-[2.5em] md:text-6xl">{title}</h1>
+          <p className="mt-6 min-h-24 max-w-2xl text-lg leading-8 text-muted-foreground md:min-h-16">{text}</p>
+        </div>
+      </div>
+    </section>
+  );
 }
 
 export function ServiceGrid({ services, tone, showLearnMore = true }: { services: Service[]; tone: "psychology" | "biomedicine"; showLearnMore?: boolean }) {

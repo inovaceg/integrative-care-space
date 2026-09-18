@@ -18,14 +18,12 @@ export const Route = createFileRoute("/biomedicina")({
 function Page() {
   return (
     <>
-      <div className="[&>section>div]:py-8 md:[&>section>div]:py-12">
-        <PageIntro
-          tone="biomedicine"
-          eyebrow="Biomedicina • CRBM 30421"
-          title="Biomedicina Integrativa e Estética"
-          text="Protocolos individualizados voltados à saúde, estética e bem-estar."
-        />
-      </div>
+      <PageIntro
+        tone="biomedicine"
+        eyebrow="Biomedicina • CRBM 30421"
+        title="Biomedicina Integrativa e Estética"
+        text="Protocolos individualizados voltados à saúde, estética e bem-estar."
+      />
       <section className="section-space">
         <div className="mx-auto w-[calc(100%-2rem)] max-w-[86rem]">
           <p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-primary">TRATAMENTO EM DESTAQUE</p>
