@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Site Fred - Atualizado Psi + Bio</string>
+    <string name="title_activity_main">Site Fred - Atualizado Psi + Bio</string>
+    <string name="package_name">com.example.sitefredatualizadopsibio</string>
+    <string name="custom_url_scheme">com.example.sitefredatualizadopsibio</string>
+</resources>
