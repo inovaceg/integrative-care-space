@@ -23,7 +23,7 @@ function Page() {
       />
       <section className="section-space">
         <div className="container-site">
-          <ServiceGrid services={biomedicineServices} tone="biomedicine" />
+          <ServiceGrid services={biomedicineServices} tone="biomedicine" showLearnMore={false} />
           <div className="content-card mx-auto mt-16 max-w-4xl p-4 sm:p-6">
             <h2 className="font-display text-3xl leading-tight md:text-4xl">Veja um pouco do nosso trabalho</h2>
             <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
