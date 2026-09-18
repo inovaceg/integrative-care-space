@@ -20,6 +20,9 @@ importers:
       '@capacitor/ios':
         specifier: 7.4.4
         version: 7.4.4(@capacitor/core@7.4.4)
+      '@dyad-sh/react-vite-component-tagger':
+        specifier: ^0.9.0
+        version: 0.9.0(vite@8.1.5(@types/node@22.20.2)(jiti@2.7.0))
       '@hookform/resolvers':
         specifier: ^5.2.2
         version: 5.9.1(react-hook-form@7.88.0(react@19.3.0))(zod@3.25.76)
@@ -345,6 +348,11 @@ packages:
 
   '@date-fns/tz@1.5.0':
     resolution: {integrity: sha512-lwYN/vDPeNRULcepoE/LO2Pgx+7/RV+S9ARfbc9lr2DtGkOD7pAiruHvbR1RX3Qyf6ja47EWJDMsNK5vK08DJg==}
+
+  '@dyad-sh/react-vite-component-tagger@0.9.0':
+    resolution: {integrity: sha512-x5HbnFS3P+igQrCD8r3ZzyLwSZcgORN/ni9QRqlDeGGJK2egTCWsGtdUyYNUZW3oRPHkAifhXTJKWLs1tk8+8A==}
+    peerDependencies:
+      vite: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0
 
   '@emnapi/core@1.11.1':
     resolution: {integrity: sha512-RSvbQmHzdKzNsLYa/wHrbc3KN4sYLKAdPZxqiM2HATqv/SBk2/ENSHpvXGaLOMcsAyz0poEGqkmmKYG3OWiJEQ==}
@@ -2355,6 +2363,9 @@ packages:
     resolution: {integrity: sha512-MMdARuVEQziNTeJD8DgMqmhwR11BRQ/cBP+pLtYdSTnf3MIO8fFeiINEbX36ZdNlfU/7A9f3gUw49B3oQsvwBA==}
     engines: {node: '>=4.0'}
 
+  estree-walker@2.0.2:
+    resolution: {integrity: sha512-Rfkk/Mp/DL7JVje3u18FxFujQlTNR2q6QfMSMB7AvCBx91NGj/ba3kCfza0f6dVDbw7YlRf/nDrn7pQrCCyQ/w==}
+
   esutils@2.0.3:
     resolution: {integrity: sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g==}
     engines: {node: '>=0.10.0'}
@@ -3638,6 +3649,13 @@ snapshots:
       '@capacitor/core': 7.4.4
 
   '@date-fns/tz@1.5.0': {}
+
+  '@dyad-sh/react-vite-component-tagger@0.9.0(vite@8.1.5(@types/node@22.20.2)(jiti@2.7.0))':
+    dependencies:
+      '@babel/parser': 7.29.8
+      estree-walker: 2.0.2
+      magic-string: 0.30.21
+      vite: 8.1.5(@types/node@22.20.2)(jiti@2.7.0)
 
   '@emnapi/core@1.11.1':
     dependencies:
@@ -5568,6 +5586,8 @@ snapshots:
       estraverse: 5.3.0
 
   estraverse@5.3.0: {}
+
+  estree-walker@2.0.2: {}
 
   esutils@2.0.3: {}
 
