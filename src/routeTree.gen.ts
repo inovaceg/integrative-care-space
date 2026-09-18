@@ -30,6 +30,7 @@ import { Route as AdminFinanceiroRouteImport } from './routes/admin/financeiro'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
 import { Route as AdminMedicamentosRouteImport } from './routes/admin/medicamentos'
 import { Route as AdminPacientesRouteImport } from './routes/admin/pacientes'
+import { Route as AdminReceituarioRouteImport } from './routes/admin/receituario'
 import { Route as AdminRelatoriosRouteImport } from './routes/admin/relatorios'
 import { Route as AdminPacientesIdRouteImport } from './routes/admin/pacientes/$id'
 
@@ -138,6 +139,11 @@ const AdminPacientesRoute = AdminPacientesRouteImport.update({
   path: '/pacientes',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminReceituarioRoute = AdminReceituarioRouteImport.update({
+  id: '/receituario',
+  path: '/receituario',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminRelatoriosRoute = AdminRelatoriosRouteImport.update({
   id: '/relatorios',
   path: '/relatorios',
@@ -170,6 +176,7 @@ export interface FileRoutesByFullPath {
   '/admin/login': typeof AdminLoginRoute
   '/admin/medicamentos': typeof AdminMedicamentosRoute
   '/admin/pacientes': typeof AdminPacientesRouteWithChildren
+  '/admin/receituario': typeof AdminReceituarioRoute
   '/admin/relatorios': typeof AdminRelatoriosRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/pacientes/$id': typeof AdminPacientesIdRoute
@@ -194,6 +201,7 @@ export interface FileRoutesByTo {
   '/admin/login': typeof AdminLoginRoute
   '/admin/medicamentos': typeof AdminMedicamentosRoute
   '/admin/pacientes': typeof AdminPacientesRouteWithChildren
+  '/admin/receituario': typeof AdminReceituarioRoute
   '/admin/relatorios': typeof AdminRelatoriosRoute
   '/admin': typeof AdminIndexRoute
   '/admin/pacientes/$id': typeof AdminPacientesIdRoute
@@ -220,6 +228,7 @@ export interface FileRoutesById {
   '/admin/login': typeof AdminLoginRoute
   '/admin/medicamentos': typeof AdminMedicamentosRoute
   '/admin/pacientes': typeof AdminPacientesRouteWithChildren
+  '/admin/receituario': typeof AdminReceituarioRoute
   '/admin/relatorios': typeof AdminRelatoriosRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/pacientes/$id': typeof AdminPacientesIdRoute
@@ -247,6 +256,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/medicamentos'
     | '/admin/pacientes'
+    | '/admin/receituario'
     | '/admin/relatorios'
     | '/admin/'
     | '/admin/pacientes/$id'
@@ -271,6 +281,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/medicamentos'
     | '/admin/pacientes'
+    | '/admin/receituario'
     | '/admin/relatorios'
     | '/admin'
     | '/admin/pacientes/$id'
@@ -296,6 +307,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/medicamentos'
     | '/admin/pacientes'
+    | '/admin/receituario'
     | '/admin/relatorios'
     | '/admin/'
     | '/admin/pacientes/$id'
@@ -465,6 +477,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPacientesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/receituario': {
+      id: '/admin/receituario'
+      path: '/receituario'
+      fullPath: '/admin/receituario'
+      preLoaderRoute: typeof AdminReceituarioRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/relatorios': {
       id: '/admin/relatorios'
       path: '/relatorios'
@@ -503,6 +522,7 @@ interface AdminRouteChildren {
   AdminLoginRoute: typeof AdminLoginRoute
   AdminMedicamentosRoute: typeof AdminMedicamentosRoute
   AdminPacientesRoute: typeof AdminPacientesRouteWithChildren
+  AdminReceituarioRoute: typeof AdminReceituarioRoute
   AdminRelatoriosRoute: typeof AdminRelatoriosRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
@@ -516,6 +536,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminLoginRoute: AdminLoginRoute,
   AdminMedicamentosRoute: AdminMedicamentosRoute,
   AdminPacientesRoute: AdminPacientesRouteWithChildren,
+  AdminReceituarioRoute: AdminReceituarioRoute,
   AdminRelatoriosRoute: AdminRelatoriosRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
