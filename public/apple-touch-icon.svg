@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" role="img">
+  <title>Apple Touch Icon</title>
+  <rect width="180" height="180" rx="20" fill="#2f8f82"/>
+  <path d="M90 133c-22 0-40-18-40-40s18-40 40-40s40 18 40 40s-18 40-40 40ZM90 53c-13.3 0-24 10.7-24 24s10.7 24 24 24s24-10.7 24-24S103.3 53 90 53Z" fill="#d7ad57"/>
+  <circle cx="90" cy="73" r="13" fill="#fff"/>
+  <path d="M90 95c-6.6 0-12 5.4-12 12s5.4 12 12 12s12-5.4 12-12S96.6 95 90 95Z" fill="#2f8f82"/>
+  <path d="M90 111c-3.3 0-6-2.7-6-6s2.7-6 6-6s6 2.7 6 6s-2.7 6-6 6Z" fill="#d7ad57"/>
+</svg>

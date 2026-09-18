@@ -80,13 +80,14 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { name: "author", content: "Dr. Frederick Parreira" },
-      ...(import.meta.env["VITE_GOOGLE_SITE_VERIFICATION"]
-        ? [{ name: "google-site-verification", content: import.meta.env["VITE_GOOGLE_SITE_VERIFICATION"] }]
-        : []),
-    ],
+          { charSet: "utf-8" },
+          { name: "viewport", content: "width=device-width, initial-scale=1" },
+          { name: "theme-color", content: "#2f8f82" },
+          { name: "author", content: "Dr. Frederick Parreira" },
+          ...(import.meta.env["VITE_GOOGLE_SITE_VERIFICATION"]
+            ? [{ name: "google-site-verification", content: import.meta.env["VITE_GOOGLE_SITE_VERIFICATION"] }]
+            : []),
+        ],
     links: [
       {
         rel: "stylesheet",
@@ -97,6 +98,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap",
       },
       { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.svg" },
+      { rel: "manifest", href: "/manifest.json" },
     ],
   }),
   shellComponent: RootShell,

@@ -1,0 +1,17 @@
+{
+  "name": "Espaço de Saúde Integrativa Dr. Frederick Parreira",
+  "short_name": "Dr. Frederick Parreira",
+  "description": "Psicologia, Biomedicina Integrativa e Estética em Juiz de Fora.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2f8f82",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

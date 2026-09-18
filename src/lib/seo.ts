@@ -1,5 +1,5 @@
 export const officialSiteUrl = "https://drfredmartins.com.br";
-export const officialImageUrl = `${officialSiteUrl}/dr-frederick-parreira.png`;
+export const officialImageUrl = `${officialSiteUrl}/favicon.svg`;
 
 export type SeoOptions = {
   title: string;

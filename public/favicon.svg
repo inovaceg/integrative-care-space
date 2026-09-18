@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
-  <title>Espaço de Saúde Integrativa</title>
+  <title id="title">Espaço de Saúde Integrativa</title>
   <rect width="64" height="64" rx="16" fill="#2f8f82"/>
   <path d="M32 49c-1.6-9.2-8.6-14.6-17.5-15.8C15.7 44 21.6 51.2 32 52c10.4-.8 16.3-8 17.5-18.8C40.6 34.4 33.6 39.8 32 49Z" fill="#d7ad57"/>
   <path d="M32 49c.2-10.8 4.6-19.2 13.5-25" fill="none" stroke="#fff" stroke-linecap="round" stroke-width="3.5"/>
