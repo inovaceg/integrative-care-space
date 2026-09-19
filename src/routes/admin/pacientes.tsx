@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Loader2, Pencil, Trash2, UserRoundPlus } from "lucide-react";
+import { Clipboard, Link2, Loader2, Pencil, Trash2, UserRoundPlus } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { AdminLayout, EmptyState, PageIntro, PatientAvatar, SearchInput, StatusBadge } from "@/components/admin/admin-ui";
@@ -71,6 +71,54 @@ function patientToInput(patient: PatientRecord): PatientInput {
     contato_emergencia_parentesco: patient.contato_emergencia_parentesco,
     contato_emergencia_telefone: patient.contato_emergencia_telefone,
   };
+}
+
+function PatientCompletionLinkButton({ patient, variant = "ghost" }: { patient: PatientRecord; variant?: "ghost" | "outline" }) {
+  const { user } = useAuth();
+  const [generating, setGenerating] = useState(false);
+  const [message, setMessage] = useState("");
+  const [link, setLink] = useState("");
+  const [open, setOpen] = useState(false);
+
+  async function generateLink() {
+    if (!user || generating) return;
+    setGenerating(true);
+    setMessage("");
+    try {
+      const result = await generatePatientCompletionLink(user.id, patient.id);
+      if (result.error || !result.token) {
+        setMessage(result.error?.message ?? "Não foi possível gerar o link.");
+        return;
+      }
+      const generatedLink = `${window.location.origin}/completar-cadastro/${result.token}`;
+      setLink(generatedLink);
+      try {
+        await navigator.clipboard.writeText(generatedLink);
+        setMessage("Link copiado. Ele expira em 7 dias.");
+      } catch {
+        setMessage("Não foi possível copiar automaticamente. Selecione o link abaixo para copiar.");
+        setOpen(true);
+      }
+    } catch {
+      setMessage("Não foi possível gerar o link.");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  return <>
+    <Button type="button" variant={variant} size="sm" onClick={() => void generateLink()} disabled={generating || !user} className="gap-1.5" aria-label={`Gerar link para ${patient.nome}`}>
+      {generating ? <Loader2 className="size-4 animate-spin" /> : <Link2 className="size-4" />} Gerar link
+    </Button>
+    {message && <span role="status" className={`text-xs ${message.startsWith("Não") ? "text-red-600" : "text-emerald-700"}`}>{message}</span>}
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Link para completar cadastro</DialogTitle><DialogDescription>{message}</DialogDescription></DialogHeader>
+        <div className="grid gap-2"><Label htmlFor={`completion-link-${patient.id}`}>Link</Label><Input id={`completion-link-${patient.id}`} value={link} readOnly onFocus={(event) => event.currentTarget.select()} /></div>
+        <DialogFooter><Button type="button" variant="outline" onClick={() => setOpen(false)}>Fechar</Button><Button type="button" onClick={async () => { try { await navigator.clipboard.writeText(link); setMessage("Link copiado. Ele expira em 7 dias."); setOpen(false); } catch { setMessage("Não foi possível copiar. Selecione o link para copiar."); } }}><Clipboard className="mr-2 size-4" /> Copiar</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  </>;
 }
 
 type PatientFormDialogProps = {
@@ -147,14 +195,6 @@ function PatientFormDialog({ onSaved, patient, trigger }: PatientFormDialogProps
     await onSaved();
   }
 
-  async function generateLink() {
-    if (!user || !patient) return;
-    const result = await generatePatientCompletionLink(user.id, patient.id);
-    if (result.error) { setError(result.error.message); return; }
-    await navigator.clipboard.writeText(`${window.location.origin}/completar-cadastro/${result.token}`);
-    setError("Link copiado. Ele expira em 7 dias.");
-  }
-
   const dialogTrigger = trigger ?? <Button className="gap-2 bg-[#2f8f82] text-white hover:bg-[#26796e]"><UserRoundPlus className="size-4" /> Novo paciente</Button>;
 
   return <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -178,7 +218,7 @@ function PatientFormDialog({ onSaved, patient, trigger }: PatientFormDialogProps
         </fieldset>
         {loadingPatient && <p className="flex items-center text-sm text-slate-500"><Loader2 className="mr-2 size-4 animate-spin" /> Carregando dados do paciente...</p>}
         {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
-        <DialogFooter>{editing && <Button type="button" variant="outline" onClick={() => void generateLink()} disabled={saving || loadingPatient}>Gerar link para completar cadastro</Button>}<Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={saving || loadingPatient}>Cancelar</Button><Button type="submit" disabled={saving || loadingPatient} className="bg-[#2f8f82] hover:bg-[#26796e]">{saving && <Loader2 className="mr-2 size-4 animate-spin" />} {editing ? "Salvar alterações" : "Salvar paciente"}</Button></DialogFooter>
+        <DialogFooter>{editing && patient && <PatientCompletionLinkButton patient={patient} variant="outline" />}<Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={saving || loadingPatient}>Cancelar</Button><Button type="submit" disabled={saving || loadingPatient} className="bg-[#2f8f82] hover:bg-[#26796e]">{saving && <Loader2 className="mr-2 size-4 animate-spin" />} {editing ? "Salvar alterações" : "Salvar paciente"}</Button></DialogFooter>
       </form>
     </DialogContent>
   </Dialog>;
@@ -214,7 +254,9 @@ function PatientDeleteDialog({ patient, onDeleted, trigger }: PatientDeleteDialo
     setOpen(false);
   }
 
-  return <AlertDialog open={open} onOpenChange={(next) => { if (!deleting) { setOpen(next); if (next) setError(""); } }}>
+  return <>
+    <PatientCompletionLinkButton patient={patient} />
+    <AlertDialog open={open} onOpenChange={(next) => { if (!deleting) { setOpen(next); if (next) setError(""); } }}>
     <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
     <AlertDialogContent>
       <AlertDialogHeader>
@@ -224,7 +266,8 @@ function PatientDeleteDialog({ patient, onDeleted, trigger }: PatientDeleteDialo
       {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
       <AlertDialogFooter><AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel><AlertDialogAction onClick={(event) => { event.preventDefault(); void handleDelete(); }} disabled={deleting} className="bg-red-600 hover:bg-red-700">{deleting && <Loader2 className="mr-2 size-4 animate-spin" />} Excluir paciente</AlertDialogAction></AlertDialogFooter>
     </AlertDialogContent>
-  </AlertDialog>;
+    </AlertDialog>
+  </>;
 }
 
 function PatientsPage() {
