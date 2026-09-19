@@ -1,7 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Camera, ImagePlus, Maximize2, Pencil, Trash2 } from "lucide-react";
+import { Camera, ImagePlus, Maximize2, Pencil, Trash2, FileDown, Printer } from "lucide-react";
 import { AdminLayout, PageIntro, SectionCard } from "@/components/admin/admin-ui";
+import { PrintDocument } from "@/components/admin/documents/document-preview";
+import { downloadDocumentPdf } from "@/lib/admin/document-layout";
+import { bodyProgressReportFilename, bodyProgressReportPages } from "@/lib/admin/body-progress-report";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -420,13 +423,14 @@ function formatComparisonValue(value: unknown, unit: string) {
   return `${number.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}${unit ? ` ${unit}` : ""}`;
 }
 
-function ComparisonSection({ items }: { items: BodyEvaluation[] }) {
+function ComparisonSection({ items, patientName }: { items: BodyEvaluation[]; patientName: string }) {
   const ordered = useMemo(
     () => [...items].sort((a, b) => a.evaluation_date.localeCompare(b.evaluation_date)),
     [items],
   );
   const [beforeId, setBeforeId] = useState("");
   const [afterId, setAfterId] = useState("");
+  const [reportError, setReportError] = useState("");
 
   useEffect(() => {
     if (ordered.length < 2) {
@@ -441,6 +445,38 @@ function ComparisonSection({ items }: { items: BodyEvaluation[] }) {
   const before = ordered.find((item) => item.id === beforeId);
   const after = ordered.find((item) => item.id === afterId);
   const sameEvaluation = Boolean(before && after && before.id === after.id);
+  const reportPages = useMemo(() => {
+    if (!before || !after || sameEvaluation || !patientName) return [];
+    return bodyProgressReportPages(patientName, before.evaluation_date, after.evaluation_date, comparisonRows.map(({ key, label, unit }) => {
+      const initial = before[key];
+      const current = after[key];
+      const variation = initial != null && current != null ? Number(current) - Number(initial) : null;
+      return { label, before: formatComparisonValue(initial, unit), after: formatComparisonValue(current, unit), variation: variation == null || !Number.isFinite(variation) ? "-" : `${variation >= 0 ? "+" : "-"}${Math.abs(variation).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}${unit ? ` ${unit}` : ""}` };
+    }));
+  }, [after, before, patientName, sameEvaluation]);
+  const reportReady = reportPages.length > 0;
+
+  function printReport() {
+    if (!reportReady || !before || !after) return;
+    setReportError("");
+    const originalTitle = document.title;
+    document.title = bodyProgressReportFilename(patientName, before.evaluation_date, after.evaluation_date);
+    window.addEventListener("afterprint", () => { document.title = originalTitle; }, { once: true });
+    window.print();
+  }
+
+  function downloadReport() {
+    if (!reportReady || !before || !after) return;
+    setReportError("");
+    try {
+      downloadDocumentPdf(
+        reportPages,
+        bodyProgressReportFilename(patientName, before.evaluation_date, after.evaluation_date),
+      );
+    } catch (downloadError) {
+      setReportError(downloadError instanceof Error ? downloadError.message : "Não foi possível gerar o PDF.");
+    }
+  }
 
   return (
     <SectionCard title="Comparar avaliações">
@@ -459,6 +495,12 @@ function ComparisonSection({ items }: { items: BodyEvaluation[] }) {
             ))}
           </div>
           {sameEvaluation && <p className="text-sm text-slate-500">Escolha datas diferentes para visualizar a variação.</p>}
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="outline" disabled={!reportReady} onClick={printReport}><Printer className="mr-2 h-4 w-4" />Imprimir</Button>
+            <Button type="button" disabled={!reportReady} onClick={downloadReport}><FileDown className="mr-2 h-4 w-4" />Gerar PDF</Button>
+          </div>
+          {reportError && <p role="alert" className="text-sm text-red-600">{reportError}</p>}
+          {reportReady && <PrintDocument pages={reportPages} />}
           <div className="overflow-x-auto rounded-lg border border-slate-200">
             <table className="w-full min-w-[620px] text-sm">
               <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-4 py-3">Medida</th><th className="px-4 py-3">Antes</th><th className="px-4 py-3">Atual</th><th className="px-4 py-3">Variação</th></tr></thead>
@@ -769,7 +811,7 @@ function BodyProgressPage() {
         </div>
       )}
 
-      {patientId && <div className="mt-6"><ComparisonSection items={items} /></div>}
+      {patientId && <div className="mt-6"><ComparisonSection items={items} patientName={patients.find((patient) => patient.id === patientId)?.nome ?? ""} /></div>}
     </AdminLayout>
   );
 }
