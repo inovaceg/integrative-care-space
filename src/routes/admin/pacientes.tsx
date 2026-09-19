@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createPatient, deletePatient, fetchPatient, fetchPatients, updatePatient, type PatientInput, type PatientRecord } from "@/lib/admin/records";
 
@@ -16,12 +17,21 @@ export const Route = createFileRoute("/admin/pacientes")({ component: PatientsPa
 
 const emptyPatient: PatientInput = {
   nome: "", data_nascimento: null, email: null, telefone: null, status: "pendente", cpf: null,
-  cidade_estado: null, cep: null, endereco: null, numero: null, complemento: null, cidade: null,
-  estado: null, nome_social: null, genero: null, pronomes: null, como_conheceu: null,
+  cidade_estado: null, cep: null, endereco: null, numero: null, complemento: null, bairro: null, cidade: null,
+  estado: null, nome_social: null, genero: null, pronomes: null, area: null, queixa_principal: null,
+  data_primeiro_atendimento: null, como_conheceu: null, observacoes_iniciais: null,
+  contato_emergencia_nome: null, contato_emergencia_parentesco: null, contato_emergencia_telefone: null,
 };
 
 function initials(name: string) {
   return name.split(" ").filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "P";
+}
+
+function mask(value: string, kind: "cpf" | "phone" | "cep") {
+  const digits = value.replace(/\D/g, "");
+  if (kind === "cpf") return digits.slice(0, 11).replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+  if (kind === "cep") return digits.slice(0, 8).replace(/(\d{5})(\d)/, "$1-$2");
+  return digits.slice(0, 11).replace(/(\d{2})(\d)/, "($1) $2").replace(/(\d{5})(\d)/, "$1-$2");
 }
 
 function patientAge(date: string | null) {
@@ -46,12 +56,20 @@ function patientToInput(patient: PatientRecord): PatientInput {
     endereco: patient.endereco,
     numero: patient.numero,
     complemento: patient.complemento,
+    bairro: patient.bairro,
     cidade: patient.cidade,
     estado: patient.estado,
     nome_social: patient.nome_social,
     genero: patient.genero,
     pronomes: patient.pronomes,
+    area: patient.area,
+    queixa_principal: patient.queixa_principal,
+    data_primeiro_atendimento: patient.data_primeiro_atendimento,
     como_conheceu: patient.como_conheceu,
+    observacoes_iniciais: patient.observacoes_iniciais,
+    contato_emergencia_nome: patient.contato_emergencia_nome,
+    contato_emergencia_parentesco: patient.contato_emergencia_parentesco,
+    contato_emergencia_telefone: patient.contato_emergencia_telefone,
   };
 }
 
@@ -71,7 +89,8 @@ function PatientFormDialog({ onSaved, patient, trigger }: PatientFormDialogProps
   const editing = Boolean(patient);
 
   function update(field: keyof PatientInput, value: string) {
-    setForm((current) => ({ ...current, [field]: value || null }));
+    const formatted = field === "cpf" ? mask(value, "cpf") : field === "telefone" || field === "contato_emergencia_telefone" ? mask(value, "phone") : field === "cep" ? mask(value, "cep") : value;
+    setForm((current) => ({ ...current, [field]: formatted || null }));
   }
 
   async function handleOpenChange(next: boolean) {
@@ -144,7 +163,10 @@ function PatientFormDialog({ onSaved, patient, trigger }: PatientFormDialogProps
           <div className="grid gap-3 sm:grid-cols-2"><div className="grid gap-2"><Label htmlFor="patient-email">E-mail</Label><Input id="patient-email" type="email" value={form.email ?? ""} onChange={(event) => update("email", event.target.value)} autoComplete="email" /></div><div className="grid gap-2"><Label htmlFor="patient-phone">Telefone</Label><Input id="patient-phone" value={form.telefone ?? ""} onChange={(event) => update("telefone", event.target.value)} autoComplete="tel" /></div></div>
           <div className="grid gap-3 sm:grid-cols-2"><div className="grid gap-2"><Label htmlFor="patient-cpf">CPF</Label><Input id="patient-cpf" value={form.cpf ?? ""} onChange={(event) => update("cpf", event.target.value)} /></div><div className="grid gap-2"><Label htmlFor="patient-social-name">Nome social</Label><Input id="patient-social-name" value={form.nome_social ?? ""} onChange={(event) => update("nome_social", event.target.value)} /></div></div>
           <div className="grid gap-3 sm:grid-cols-[1fr_120px]"><div className="grid gap-2"><Label htmlFor="patient-address">Endereço</Label><Input id="patient-address" value={form.endereco ?? ""} onChange={(event) => update("endereco", event.target.value)} autoComplete="street-address" /></div><div className="grid gap-2"><Label htmlFor="patient-number">Número</Label><Input id="patient-number" value={form.numero ?? ""} onChange={(event) => update("numero", event.target.value)} /></div></div>
-          <div className="grid gap-3 sm:grid-cols-3"><div className="grid gap-2"><Label htmlFor="patient-city">Cidade</Label><Input id="patient-city" value={form.cidade ?? ""} onChange={(event) => update("cidade", event.target.value)} /></div><div className="grid gap-2"><Label htmlFor="patient-state">Estado</Label><Input id="patient-state" maxLength={2} value={form.estado ?? ""} onChange={(event) => update("estado", event.target.value.toUpperCase())} /></div><div className="grid gap-2"><Label htmlFor="patient-zip">CEP</Label><Input id="patient-zip" value={form.cep ?? ""} onChange={(event) => update("cep", event.target.value)} autoComplete="postal-code" /></div></div>
+          <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4"><h3 className="mb-4 font-display text-lg font-semibold text-slate-800">1. Dados pessoais</h3><p className="text-xs text-slate-500">Nome, nascimento, status, contato, CPF e nome social estão acima.</p></div>
+          <div className="rounded-xl border border-slate-100 p-4"><h3 className="mb-4 font-display text-lg font-semibold text-slate-800">2. Endereço</h3><div className="grid gap-3 sm:grid-cols-2"><div className="grid gap-2"><Label htmlFor="patient-complement">Complemento</Label><Input id="patient-complement" value={form.complemento ?? ""} onChange={(event) => update("complemento", event.target.value)} /></div><div className="grid gap-2"><Label htmlFor="patient-neighborhood">Bairro</Label><Input id="patient-neighborhood" value={form.bairro ?? ""} onChange={(event) => update("bairro", event.target.value)} /></div></div></div>
+          <div className="rounded-xl border border-slate-100 p-4"><h3 className="mb-4 font-display text-lg font-semibold text-slate-800">3. Informações do atendimento</h3><div className="grid gap-3 sm:grid-cols-2"><div className="grid gap-2"><Label>Área</Label><Select value={form.area ?? ""} onValueChange={(value) => update("area", value)}><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent><SelectItem value="Psicologia">Psicologia</SelectItem><SelectItem value="Biomedicina">Biomedicina</SelectItem></SelectContent></Select></div><div className="grid gap-2"><Label>Data do primeiro atendimento</Label><Input type="date" value={form.data_primeiro_atendimento ?? ""} onChange={(event) => update("data_primeiro_atendimento", event.target.value)} /></div></div><div className="mt-3 grid gap-2"><Label>Queixa principal / motivo do atendimento</Label><Textarea value={form.queixa_principal ?? ""} onChange={(event) => update("queixa_principal", event.target.value)} /></div><div className="mt-3 grid gap-2"><Label>Como conheceu o consultório</Label><Input value={form.como_conheceu ?? ""} onChange={(event) => update("como_conheceu", event.target.value)} /></div><div className="mt-3 grid gap-2"><Label>Observações iniciais</Label><Textarea value={form.observacoes_iniciais ?? ""} onChange={(event) => update("observacoes_iniciais", event.target.value)} /></div></div>
+          <div className="rounded-xl border border-slate-100 p-4"><h3 className="mb-4 font-display text-lg font-semibold text-slate-800">4. Contato de emergência</h3><div className="grid gap-3 sm:grid-cols-3"><Input placeholder="Nome" value={form.contato_emergencia_nome ?? ""} onChange={(event) => update("contato_emergencia_nome", event.target.value)} /><Input placeholder="Parentesco" value={form.contato_emergencia_parentesco ?? ""} onChange={(event) => update("contato_emergencia_parentesco", event.target.value)} /><Input placeholder="Telefone" value={form.contato_emergencia_telefone ?? ""} onChange={(event) => update("contato_emergencia_telefone", event.target.value)} /></div></div>
         </fieldset>
         {loadingPatient && <p className="flex items-center text-sm text-slate-500"><Loader2 className="mr-2 size-4 animate-spin" /> Carregando dados do paciente...</p>}
         {error && <p role="alert" className="text-sm text-red-600">{error}</p>}

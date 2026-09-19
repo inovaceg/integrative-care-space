@@ -16,12 +16,20 @@ export type PatientRecord = {
   endereco: string | null;
   numero: string | null;
   complemento: string | null;
+  bairro: string | null;
   cidade: string | null;
   estado: string | null;
   nome_social: string | null;
   genero: string | null;
   pronomes: string | null;
+  area: string | null;
+  queixa_principal: string | null;
+  data_primeiro_atendimento: string | null;
   como_conheceu: string | null;
+  observacoes_iniciais: string | null;
+  contato_emergencia_nome: string | null;
+  contato_emergencia_parentesco: string | null;
+  contato_emergencia_telefone: string | null;
 };
 
 export type PatientInput = Omit<PatientRecord, "id" | "profissional_id" | "created_at">;
@@ -41,7 +49,7 @@ export type AppointmentRecord = {
   due_date: string | null;
 };
 
-const patientFields = "id, profissional_id, nome, created_at, data_nascimento, email, telefone, status, cpf, cidade_estado, cep, endereco, numero, complemento, cidade, estado, nome_social, genero, pronomes, como_conheceu";
+const patientFields = "id, profissional_id, nome, created_at, data_nascimento, email, telefone, status, cpf, cidade_estado, cep, endereco, numero, complemento, bairro, cidade, estado, nome_social, genero, pronomes, area, queixa_principal, data_primeiro_atendimento, como_conheceu, observacoes_iniciais, contato_emergencia_nome, contato_emergencia_parentesco, contato_emergencia_telefone";
 const patientListFields = "id, profissional_id, nome, created_at, data_nascimento, email, telefone, status";
 const appointmentFields = "id, patient_id, doctor_id, start_time, end_time, status, notes, payment_status, amount_paid, payment_date, due_date";
 
@@ -67,6 +75,12 @@ export async function updatePatient(userId: string, patientId: string, input: Pa
 
 export async function deletePatient(userId: string, patientId: string) {
   return supabase.from("pacientes").delete().eq("profissional_id", userId).eq("id", patientId);
+}
+
+export async function generatePatientCompletionLink(userId: string, patientId: string) {
+  const token = crypto.randomUUID();
+  const { error } = await supabase.from("pacientes").update({ token_anamnese: token, token_expira_em: new Date(Date.now() + 7 * 86400000).toISOString() }).eq("profissional_id", userId).eq("id", patientId);
+  return { token, error };
 }
 
 export async function fetchAppointments(userId: string) {

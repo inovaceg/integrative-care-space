@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { deletePatient, fetchAppointments, fetchPatient, updatePatient, type AppointmentRecord, type PatientInput, type PatientRecord } from "@/lib/admin/records";
+import { deletePatient, fetchAppointments, fetchPatient, generatePatientCompletionLink, updatePatient, type AppointmentRecord, type PatientInput, type PatientRecord } from "@/lib/admin/records";
 
 export const Route = createFileRoute("/admin/pacientes/$id")({ component: PatientProfilePage });
 
