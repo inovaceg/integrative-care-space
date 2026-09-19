@@ -74,13 +74,13 @@ export function layoutReceipt(receipt: Receipt): DocumentPage[] {
     { text: `${receipt.city}, ${displayDate(receipt.issue_date)}.`, size: 10, gap: 0 },
   ], 245, 562);
 
+  page.push({ text: '', x: 297.5, y: 650, size: 11, kind: 'signature-line' });
   section([
-    { text: '____________________________________________', size: 11, centered: true, color: '#94a3b8', gap: 7 },
     { text: receipt.professional_name, size: 12, centered: true, bold: true, color: '#123c3d', gap: 3 },
     { text: receipt.professional_title, size: 10, centered: true, gap: 3 },
     { text: receipt.professional_registration, size: 10, centered: true, bold: true, color: '#21655f', gap: 5 },
     { text: 'Assinatura do profissional responsável', size: 8, centered: true, color: '#64748b', gap: 0 },
-  ], 599, 713);
+  ], 660, 728);
 
   if (receipt.footer?.trim()) {
     section([{ text: receipt.footer.trim(), size: 7, centered: true, color: '#94a3b8', gap: 0 }], 742, 812);
