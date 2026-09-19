@@ -106,9 +106,9 @@ export default function ReceiptsPage() {
     finally { lock.current = false; setBusy(false); }
   }
 
-  function download() {
+  async function download() {
     if (!preview) return;
-    try { downloadDocumentPdf(preview.pages, preview.receipt.receipt_number, true); }
+    try { await downloadDocumentPdf(preview.pages, preview.receipt.receipt_number, true); }
     catch (failure) { setError(failure instanceof Error ? failure.message : 'Não foi possível gerar o PDF.'); setPreview(null); }
   }
   function print() {

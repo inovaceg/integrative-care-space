@@ -1,8 +1,9 @@
 import { areaSpecialties, displayDate, professionalAreas, professionalDocumentFooter, professionalName, type DocumentContent, type DocumentType, type ProfessionalArea } from './documents';
 import { documentBrandPdf } from './document-brand';
 
-export type DocumentLine = { text: string; x: number; y: number; size: number; bold?: boolean; color?: string; align?: 'left' | 'center' | 'right' };
+export type DocumentLine = { text: string; x: number; y: number; size: number; bold?: boolean; color?: string; align?: 'left' | 'center' | 'right'; kind?: 'signature-line' };
 export type DocumentPage = DocumentLine[];
+export const signatureAsset = '/assets/professional-signature.png';
 const pageWidth = 595;
 const width = 511;
 
@@ -154,8 +155,8 @@ export function layoutDocument(area: ProfessionalArea, type: DocumentType, conte
   }
 
   // Signature Block (Centered)
-  if (y + 90 > 725) newPage();
-  y = Math.max(y + 30, 640);
+  if (Math.max(y + 110, 640) + 43 > 725) newPage();
+  y = Math.max(y + 110, 640);
   
   const signLine = '_____________________________________________';
   const signName = professionalName;
@@ -163,7 +164,7 @@ export function layoutDocument(area: ProfessionalArea, type: DocumentType, conte
   const signReg = identity.registration;
 
   page.push(
-    { text: signLine, x: centeredX(signLine, 11, false), y, size: 11, color: '#64748b', align: 'center' },
+    { text: signLine, x: centeredX(signLine, 11, false), y, size: 11, color: '#64748b', align: 'center', kind: 'signature-line' },
     { text: signName, x: centeredX(signName, 11, true), y: y + 16, size: 11, bold: true, color: '#123c3d', align: 'center' },
     { text: signTitle, x: centeredX(signTitle, 9.5, false), y: y + 30, size: 9.5, color: '#475569', align: 'center' },
     { text: signReg, x: centeredX(signReg, 9.5, true), y: y + 43, size: 9.5, bold: true, color: '#21655f', align: 'center' }
@@ -214,8 +215,38 @@ function pdfText(text: string) {
   return `<${output}>`;
 }
 
-export function downloadDocumentPdf(pages: DocumentPage[], filename: string, showBrand = false) {
+async function signatureJpeg() {
+  const response = await fetch(signatureAsset);
+  if (!response.ok) throw new Error('Não foi possível carregar a imagem de assinatura.');
+  const blob = await response.blob();
+  const bitmap = await createImageBitmap(blob);
+  const canvas = document.createElement('canvas');
+  canvas.width = bitmap.width;
+  canvas.height = bitmap.height;
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('Não foi possível preparar a imagem de assinatura.');
+  context.fillStyle = '#ffffff';
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(bitmap, 0, 0);
+  bitmap.close();
+  const encoded = canvas.toDataURL('image/jpeg', 0.92).split(',')[1] ?? '';
+  const data = atob(encoded);
+  const bytes = new Uint8Array(data.length);
+  for (let i = 0; i < data.length; i += 1) bytes[i] = data.charCodeAt(i);
+  return { bytes, width: canvas.width, height: canvas.height };
+}
+
+export async function downloadDocumentPdf(pages: DocumentPage[], filename: string, showBrand = false) {
+  const hasSignature = pages.some(page => page.some(line => line.kind === 'signature-line'));
   const objects: string[] = ['', '', '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>', '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>'];
+  const imageId = 5;
+  if (hasSignature) {
+    const jpeg = await signatureJpeg();
+    let imageData = '';
+    for (const byte of jpeg.bytes) imageData += byte.toString(16).padStart(2, '0');
+    imageData += '>';
+    objects.push(`<< /Type /XObject /Subtype /Image /Width ${jpeg.width} /Height ${jpeg.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter [/ASCIIHexDecode /DCTDecode] /Length ${imageData.length} >>\nstream\n${imageData}\nendstream`);
+  }
   const kids: string[] = [];
   
   for (const lines of pages) {
@@ -248,10 +279,12 @@ Q
       return `BT /${line.bold ? 'F2' : 'F1'} ${line.size} Tf ${color} rg 1 0 0 1 ${line.x} ${842 - line.y} Tm ${pdfText(line.text)} Tj ET`;
     }).join('\n');
 
-    const fullStream = drawCommands + '\n' + textStream;
+    const signatureLine = lines.find(line => line.kind === 'signature-line');
+    const signatureCommand = signatureLine ? `q\n180 0 0 90 207.5 ${842 - signatureLine.y} cm /Im1 Do\nQ\n` : '';
+    const fullStream = drawCommands + '\n' + signatureCommand + textStream;
 
     objects.push(
-      `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${streamId} 0 R >>`,
+      `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> ${hasSignature ? `/XObject << /Im1 ${imageId} 0 R >>` : ''} >> /Contents ${streamId} 0 R >>`,
       `<< /Length ${fullStream.length} >>\nstream\n${fullStream}\nendstream`
     );
   }

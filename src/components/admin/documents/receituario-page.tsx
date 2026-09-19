@@ -77,8 +77,8 @@ export default function ReceituarioPage() {
     window.addEventListener('afterprint', restore, { once: true });
     window.print();
   }
-  function download(lines: DocumentPage[], filename: string) {
-    try { downloadDocumentPdf(lines, filename, true); } catch (failure) { setError(failure instanceof Error ? failure.message : 'Não foi possível gerar o PDF.'); }
+  async function download(lines: DocumentPage[], filename: string) {
+    try { await downloadDocumentPdf(lines, filename, true); } catch (failure) { setError(failure instanceof Error ? failure.message : 'Não foi possível gerar o PDF.'); }
   }
   async function persist(status: ProfessionalDocument['status']) {
     if (!area || !type || !valid()) return;

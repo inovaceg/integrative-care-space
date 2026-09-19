@@ -471,11 +471,11 @@ function ComparisonSection({ items, patientName }: { items: BodyEvaluation[]; pa
     window.print();
   }
 
-  function downloadReport() {
+  async function downloadReport() {
     if (!reportReady || !before || !after) return;
     setReportError("");
     try {
-      downloadDocumentPdf(
+      await downloadDocumentPdf(
         reportPages,
         bodyProgressReportFilename(patientName, before.evaluation_date, after.evaluation_date),
       );

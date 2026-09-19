@@ -1,6 +1,7 @@
 import { createPortal } from 'react-dom';
 import type { DocumentPage } from '@/lib/admin/document-layout';
 import { documentBrand } from '@/lib/admin/document-brand';
+import { signatureAsset } from '@/lib/admin/document-layout';
 
 export function A4Page({ lines, index, showBrand = false }: { lines: DocumentPage; index: number; showBrand?: boolean }) {
   return (
@@ -12,7 +13,12 @@ export function A4Page({ lines, index, showBrand = false }: { lines: DocumentPag
           <path d={documentBrand.symbolPath} fill="none" stroke="white" strokeWidth={documentBrand.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
         </g>
       )}
-      {lines.map((line, i) => <text key={i} x={line.x} y={line.y} fontFamily="Arial, Helvetica, sans-serif" fontSize={line.size} fontWeight={line.bold ? 700 : 400} fill={line.color ?? '#17232d'} xmlSpace="preserve">{line.text}</text>)}
+      {lines.map((line, i) => line.kind === 'signature-line' ? (
+        <g key={i}>
+          <image href={signatureAsset} x="207.5" y={line.y - 90} width="180" height="90" preserveAspectRatio="xMidYMid meet" />
+          <text x={line.x} y={line.y} fontFamily="Arial, Helvetica, sans-serif" fontSize={line.size} fill={line.color ?? '#17232d'} xmlSpace="preserve">{line.text}</text>
+        </g>
+      ) : <text key={i} x={line.x} y={line.y} fontFamily="Arial, Helvetica, sans-serif" fontSize={line.size} fontWeight={line.bold ? 700 : 400} fill={line.color ?? '#17232d'} xmlSpace="preserve">{line.text}</text>)}
     </svg>
   );
 }
