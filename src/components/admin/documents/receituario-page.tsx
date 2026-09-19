@@ -80,7 +80,7 @@ export default function ReceituarioPage() {
     window.print();
   }
   function download(lines: DocumentPage[], filename: string) {
-    try { downloadDocumentPdf(lines, filename); } catch (failure) { setError(failure instanceof Error ? failure.message : 'Não foi possível gerar o PDF.'); }
+    try { downloadDocumentPdf(lines, filename, true); } catch (failure) { setError(failure instanceof Error ? failure.message : 'Não foi possível gerar o PDF.'); }
   }
   async function persist(status: ProfessionalDocument['status']) {
     if (!area || !type || !valid()) return;
@@ -148,12 +148,12 @@ export default function ReceituarioPage() {
             </div>
           </fieldset>
         </form>
-        <aside className="min-w-0"><DocumentPreview pages={pages} /></aside>
+        <aside className="min-w-0"><DocumentPreview pages={pages} showBrand /></aside>
       </div>
     </>}
-    <Dialog open={!!preview} onOpenChange={value => { if (!value) setPreview(null); }}><DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-4xl"><DialogHeader><DialogTitle>Visualizar documento</DialogTitle><DialogDescription>Documento privado. Revise o conteúdo e a identificação profissional.</DialogDescription></DialogHeader>{preview && <><div className="flex flex-wrap gap-2"><Button onClick={() => print(preview.pages, preview.filename)}>Imprimir</Button><Button variant="outline" onClick={() => download(preview.pages, preview.filename)}>Gerar PDF</Button>{preview.record?.status === 'Rascunho' && <Button variant="outline" onClick={() => open(preview.record!, false)}>Editar rascunho</Button>}</div>{preview.record && <p className="break-all text-xs text-slate-500">{preview.record.status} · Identificador: {preview.record.id} · Criado em {new Date(preview.record.created_at).toLocaleString('pt-BR')}</p>}<DocumentPreview pages={preview.pages} /></>}</DialogContent></Dialog>
+    <Dialog open={!!preview} onOpenChange={value => { if (!value) setPreview(null); }}><DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-4xl"><DialogHeader><DialogTitle>Visualizar documento</DialogTitle><DialogDescription>Documento privado. Revise o conteúdo e a identificação profissional.</DialogDescription></DialogHeader>{preview && <><div className="flex flex-wrap gap-2"><Button onClick={() => print(preview.pages, preview.filename)}>Imprimir</Button><Button variant="outline" onClick={() => download(preview.pages, preview.filename)}>Gerar PDF</Button>{preview.record?.status === 'Rascunho' && <Button variant="outline" onClick={() => open(preview.record!, false)}>Editar rascunho</Button>}</div>{preview.record && <p className="break-all text-xs text-slate-500">{preview.record.status} · Identificador: {preview.record.id} · Criado em {new Date(preview.record.created_at).toLocaleString('pt-BR')}</p>}<DocumentPreview pages={preview.pages} showBrand /></>}</DialogContent></Dialog>
     <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}><DialogContent><DialogHeader><DialogTitle>Dados do rodapé</DialogTitle><DialogDescription>Informe somente dados reais de contato: endereço, telefone, site ou outras informações. Até 250 caracteres e 3 linhas. Aplicado aos novos documentos.</DialogDescription></DialogHeader><Field label="Contatos do profissional" multiline value={footerDraft} onChange={setFooterDraft} maxLength={250} /><Button disabled={busy || footerDraft.split('\n').length > 3} onClick={() => void configureFooter()}>Salvar rodapé</Button></DialogContent></Dialog>
     <AlertDialog open={!!confirmation} onOpenChange={open => { if (!open) setConfirmation(null); }}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{confirmation?.title}</AlertDialogTitle><AlertDialogDescription>{confirmation?.description}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Voltar</AlertDialogCancel><AlertDialogAction onClick={() => { const action = confirmation?.action; setConfirmation(null); action?.(); }}>Confirmar</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
-    {(pages.length > 0 || preview || printPages.length > 0) && <PrintDocument pages={printPages.length ? printPages : preview?.pages ?? pages} />}
+    {(pages.length > 0 || preview || printPages.length > 0) && <PrintDocument pages={printPages.length ? printPages : preview?.pages ?? pages} showBrand />}
   </AdminLayout>;
 }

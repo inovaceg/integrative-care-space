@@ -1,4 +1,5 @@
 import { areaSpecialties, displayDate, professionalAreas, professionalName, type DocumentContent, type DocumentType, type ProfessionalArea } from './documents';
+import { documentBrandPdf } from './document-brand';
 
 export type DocumentLine = { text: string; x: number; y: number; size: number; bold?: boolean; color?: string; align?: 'left' | 'center' | 'right' };
 export type DocumentPage = DocumentLine[];
@@ -213,7 +214,7 @@ function pdfText(text: string) {
   return `<${output}>`;
 }
 
-export function downloadDocumentPdf(pages: DocumentPage[], filename: string) {
+export function downloadDocumentPdf(pages: DocumentPage[], filename: string, showBrand = false) {
   const objects: string[] = ['', '', '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>', '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>'];
   const kids: string[] = [];
   
@@ -223,19 +224,16 @@ export function downloadDocumentPdf(pages: DocumentPage[], filename: string) {
     kids.push(`${pageId} 0 R`);
     
     // Draw decorative header elements in PDF stream
-    // 1) Central emblem icon (caduceus / cross / wellness logo geometric paths)
+    // 1) Central emblem, optionally replaced by the prescription brand
     // 2) Top header separator line
     // 3) Footer separator line
-    let drawCommands = `
-q
+    let drawCommands = `${showBrand ? documentBrandPdf : `q
 0.184 0.561 0.510 rg
-% Top subtle icon / emblem background
 297.5 818 10 0 360 arc fill
 1 1 1 rg
-% Inner cross/plus
 296 812 3 12 re fill
 291.5 816.5 12 3 re fill
-Q
+Q`}
 q
 0.82 0.88 0.86 RG
 0.75 w
