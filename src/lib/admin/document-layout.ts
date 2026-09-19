@@ -1,4 +1,4 @@
-import { displayDate, professionalAreas, professionalName, type DocumentContent, type DocumentType, type ProfessionalArea } from './documents';
+import { areaSpecialties, displayDate, professionalAreas, professionalName, type DocumentContent, type DocumentType, type ProfessionalArea } from './documents';
 
 export type DocumentLine = { text: string; x: number; y: number; size: number; bold?: boolean; color?: string };
 export type DocumentPage = DocumentLine[];
@@ -28,24 +28,26 @@ function wrap(text: string, size: number, bold = false): string[] {
 
 export function layoutDocument(area: ProfessionalArea, type: DocumentType, content: DocumentContent, draft = false): DocumentPage[] {
   const identity = professionalAreas[area];
+  const specialtyLines = areaSpecialties[area].flatMap(text => wrap(text, 10));
+  const bodyStart = 119 + specialtyLines.length * 15;
   const pages: DocumentPage[] = [];
   let page: DocumentPage;
   let y = 0;
   function newPage() {
     page = [
       { text: professionalName.toUpperCase(), x: 42, y: 48, size: 15, bold: true, color: '#123c3d' },
-      { text: identity.title, x: 42, y: 70, size: 11 },
-      { text: identity.registration, x: 42, y: 87, size: 11, bold: true },
-      { text: draft ? 'RASCUNHO • NÃO FINALIZADO' : '', x: 42, y: 109, size: 8, color: '#64748b' },
+      { text: `${identity.title} • ${identity.registration}`, x: 42, y: 70, size: 11 },
+      ...specialtyLines.map((text, index) => ({ text, x: 42, y: 94 + index * 15, size: 10 })),
+      { text: draft ? 'RASCUNHO • NÃO FINALIZADO' : '', x: 42, y: bodyStart - 17, size: 8, color: '#64748b' },
     ];
     pages.push(page);
-    y = 139;
+    y = bodyStart;
   }
   function block(parts: { text: string; bold?: boolean; size?: number }[], gap = 13) {
     const lines = parts.flatMap(part => wrap(part.text, part.size ?? 11, part.bold).map(text => ({ text, bold: part.bold ?? false, size: part.size ?? 11 })));
     const height = lines.reduce((sum, line) => sum + line.size * 1.5, 0);
     // Keep complete items together unless the item is longer than one page.
-    if (height <= 590 && y + height > 735) newPage();
+    if (height <= 735 - bodyStart && y + height > 735) newPage();
     for (const line of lines) {
       if (y + line.size * 1.5 > 735) newPage();
       page.push({ ...line, x: 42, y });

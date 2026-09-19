@@ -6,6 +6,17 @@ export const professionalAreas = {
   biomedicina: { label: 'Biomedicina', title: 'Biomédico Esteta e Integrativo', registration: 'CRBM 30421', types: ['Receituário', 'Solicitação de Exames', 'Orientações ao Paciente'] },
 } as const;
 export type ProfessionalArea = keyof typeof professionalAreas;
+export const areaSpecialties: Record<ProfessionalArea, string[]> = {
+  psicologia: [
+    'Saúde Mental • Neuropsicologia Clínica e Reabilitação Neuropsicológica',
+    'Dependência Química • Terapia Familiar • Sexologia',
+    'Psicologia Social da Imagem – USP',
+  ],
+  biomedicina: [
+    'Saúde Integrativa • Farmácia Estética',
+    'Farmacologia e Prescrição Farmacêutica',
+  ],
+};
 export type DocumentType = (typeof professionalAreas)[ProfessionalArea]['types'][number];
 export type PrescriptionItem = { id: string; product: string; presentation: string; concentration: string; quantity: string; route: string; dosage: string; duration: string; notes: string };
 export type ExamItem = { id: string; name: string; notes: string };

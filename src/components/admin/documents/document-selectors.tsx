@@ -1,18 +1,6 @@
 import { Brain, Stethoscope, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { professionalAreas, professionalName, type ProfessionalArea, type DocumentType } from '@/lib/admin/documents';
-
-const areaSpecialties: Record<ProfessionalArea, string[]> = {
-  psicologia: [
-    'Saúde Mental • Neuropsicologia Clínica e Reabilitação Neuropsicológica',
-    'Dependência Química • Terapia Familiar • Sexologia',
-    'Psicologia Social da Imagem – USP',
-  ],
-  biomedicina: [
-    'Saúde Integrativa • Farmácia Estética',
-    'Farmacologia e Prescrição Farmacêutica',
-  ],
-};
+import { areaSpecialties, professionalAreas, professionalName, type ProfessionalArea, type DocumentType } from '@/lib/admin/documents';
 
 export function ProfessionalAreaSelector({ value, onChange, onContinue }: { value: ProfessionalArea | null; onChange: (value: ProfessionalArea) => void; onContinue: () => void }) {
   return (
