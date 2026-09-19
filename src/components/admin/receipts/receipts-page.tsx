@@ -7,6 +7,7 @@ import { AdminLayout, PageIntro, SearchInput, SectionCard } from '@/components/a
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DocumentPreview, PrintDocument } from '@/components/admin/documents/document-preview';
 import { fetchPatient, fetchPatientOptions, type PatientOption } from '@/lib/admin/records';
@@ -40,6 +41,7 @@ export default function ReceiptsPage() {
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(today);
   const [method, setMethod] = useState('Pix');
+  const [notes, setNotes] = useState('');
   const [search, setSearch] = useState('');
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -81,9 +83,9 @@ export default function ReceiptsPage() {
     if (!user || !patient || lock.current) return;
     lock.current = true; setBusy(true); setError(''); setMessage('');
     try {
-      const draft = await createReceiptDraft(user.id, { patientId, area, amount: Number(amount), paymentDate: date, paymentMethod: method });
+      const draft = await createReceiptDraft(user.id, { patientId, area, amount: Number(amount), paymentDate: date, paymentMethod: method, notes });
       setReceipts(rows => [draft, ...rows]); setOffset(value => value + 1);
-      setPatientId(''); setAmount('');
+      setPatientId(''); setAmount(''); setNotes('');
       const receipt = await finalizeReceipt(user.id, draft.id);
       replaceReceipt(receipt); setMessage('Recibo salvo e finalizado. Você já pode gerar o PDF ou imprimir.'); show(receipt);
     } catch (failure) { setError(failure instanceof Error ? failure.message : 'Não foi possível salvar o recibo.'); }
@@ -163,6 +165,7 @@ export default function ReceiptsPage() {
           <div className="space-y-2"><Label htmlFor="receipt-amount">Valor da consulta (R$)</Label><Input id="receipt-amount" type="number" inputMode="decimal" min="0.01" max="999999999.99" step="0.01" required value={amount} onChange={event => setAmount(event.target.value)} placeholder="0,00" /></div>
           <div className="space-y-2"><Label htmlFor="receipt-date">Data do pagamento</Label><Input id="receipt-date" type="date" required value={date} onChange={event => setDate(event.target.value)} /></div>
           <div className="space-y-2"><Label htmlFor="receipt-method">Forma de pagamento</Label><select id="receipt-method" className={selectClass} value={method} onChange={event => setMethod(event.target.value)}>{paymentMethods.map(value => <option key={value}>{value}</option>)}</select></div>
+          <div className="space-y-2 md:col-span-2 xl:col-span-3"><Label htmlFor="receipt-notes">Observações (opcional)</Label><Textarea id="receipt-notes" maxLength={5000} value={notes} onChange={event => setNotes(event.target.value)} className="w-full" /></div>
           <div className="space-y-3 md:col-span-2 xl:col-span-3">
             {patientError && <p role="alert" className="text-sm text-red-700">{patientError}</p>}
             <p className="text-sm text-slate-500">Confira os dados antes de salvar. PDFs já enviados não serão atualizados. Este documento não substitui obrigações fiscais, como o Receita Saúde, quando aplicável.</p>

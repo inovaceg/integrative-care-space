@@ -36,7 +36,7 @@ export async function fetchReceipts(userId: string, offset = 0) {
   return data as Receipt[];
 }
 
-export async function createReceiptDraft(userId: string, input: { patientId: string; area: ReceiptArea; amount: number; paymentDate: string; paymentMethod: string }) {
+export async function createReceiptDraft(userId: string, input: { patientId: string; area: ReceiptArea; amount: number; paymentDate: string; paymentMethod: string; notes?: string }) {
   if (!Number.isFinite(input.amount) || input.amount <= 0 || input.amount >= 1000000000) throw new Error('Informe um valor válido para a consulta.');
   const [patientResult, settingsResult] = await Promise.all([
     fetchPatient(userId, input.patientId),
@@ -63,6 +63,7 @@ export async function createReceiptDraft(userId: string, input: { patientId: str
     amount: input.amount,
     payment_date: input.paymentDate,
     payment_method: input.paymentMethod,
+    notes: (input.notes ?? '').trim().slice(0, 5000),
     issue_date: today(),
     status: 'RASCUNHO',
   }).select('*').single();
