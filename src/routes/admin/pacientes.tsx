@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { createPatient, deletePatient, fetchPatient, fetchPatients, updatePatient, type PatientInput, type PatientRecord } from "@/lib/admin/records";
+import { createPatient, deletePatient, fetchPatient, fetchPatients, generatePatientCompletionLink, updatePatient, type PatientInput, type PatientRecord } from "@/lib/admin/records";
 
 export const Route = createFileRoute("/admin/pacientes")({ component: PatientsPage });
 
@@ -147,6 +147,14 @@ function PatientFormDialog({ onSaved, patient, trigger }: PatientFormDialogProps
     await onSaved();
   }
 
+  async function generateLink() {
+    if (!user || !patient) return;
+    const result = await generatePatientCompletionLink(user.id, patient.id);
+    if (result.error) { setError(result.error.message); return; }
+    await navigator.clipboard.writeText(`${window.location.origin}/completar-cadastro/${result.token}`);
+    setError("Link copiado. Ele expira em 7 dias.");
+  }
+
   const dialogTrigger = trigger ?? <Button className="gap-2 bg-[#2f8f82] text-white hover:bg-[#26796e]"><UserRoundPlus className="size-4" /> Novo paciente</Button>;
 
   return <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -170,7 +178,7 @@ function PatientFormDialog({ onSaved, patient, trigger }: PatientFormDialogProps
         </fieldset>
         {loadingPatient && <p className="flex items-center text-sm text-slate-500"><Loader2 className="mr-2 size-4 animate-spin" /> Carregando dados do paciente...</p>}
         {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
-        <DialogFooter><Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={saving || loadingPatient}>Cancelar</Button><Button type="submit" disabled={saving || loadingPatient} className="bg-[#2f8f82] hover:bg-[#26796e]">{saving && <Loader2 className="mr-2 size-4 animate-spin" />} {editing ? "Salvar alterações" : "Salvar paciente"}</Button></DialogFooter>
+        <DialogFooter>{editing && <Button type="button" variant="outline" onClick={() => void generateLink()} disabled={saving || loadingPatient}>Gerar link para completar cadastro</Button>}<Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={saving || loadingPatient}>Cancelar</Button><Button type="submit" disabled={saving || loadingPatient} className="bg-[#2f8f82] hover:bg-[#26796e]">{saving && <Loader2 className="mr-2 size-4 animate-spin" />} {editing ? "Salvar alterações" : "Salvar paciente"}</Button></DialogFooter>
       </form>
     </DialogContent>
   </Dialog>;
