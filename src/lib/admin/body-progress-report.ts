@@ -3,6 +3,19 @@ import type { DocumentPage } from './document-layout';
 
 type ReportRow = { label: string; before: string; after: string; variation: string };
 
+function centeredX(text: string, size: number, bold = false): number {
+  let width = text.length * size * 0.55;
+  if (typeof document !== 'undefined') {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    if (context) {
+      context.font = `${bold ? 'bold' : 'normal'} ${size}px Arial`;
+      width = context.measureText(text).width;
+    }
+  }
+  return (595 - width) / 2;
+}
+
 export function bodyProgressReportPages(patientName: string, beforeDate: string, afterDate: string, rows: ReportRow[]): DocumentPage[] {
   const lines: DocumentPage = [
     { text: professionalName, x: 42, y: 58, size: 14, bold: true, color: '#123c3d' },
@@ -25,12 +38,16 @@ export function bodyProgressReportPages(patientName: string, beforeDate: string,
   });
 
   // Professional identification stays below the 15-measure table and above the A4 footer area.
+  const professionalRole = 'Dr. em Psicanálise • Psicólogo Clínico • Biomédico Esteta e Integrativo';
+  const registration = 'CRP 04/86194 • CRBM 30421';
+  const contact = 'Telefone: (32) 9 9193-1779 | drfredmartins.com.br';
+  const location = 'Juiz de Fora – MG';
   lines.push(
-    { text: professionalName, x: 42, y: 610, size: 11, bold: true, color: '#123c3d' },
-    { text: 'Dr. em Psicanálise • Psicólogo Clínico • Biomédico Esteta e Integrativo', x: 42, y: 628, size: 8.5, color: '#475569' },
-    { text: 'CRP 04/86194 • CRBM 30421', x: 42, y: 644, size: 9, bold: true, color: '#21655f' },
-    { text: 'Telefone: (32) 9 9193-1779 | drfredmartins.com.br', x: 42, y: 674, size: 9, color: '#475569' },
-    { text: 'Juiz de Fora – MG', x: 42, y: 691, size: 9, color: '#475569' },
+    { text: professionalName, x: centeredX(professionalName, 11, true), y: 610, size: 11, bold: true, color: '#123c3d' },
+    { text: professionalRole, x: centeredX(professionalRole, 8.5), y: 628, size: 8.5, color: '#475569' },
+    { text: registration, x: centeredX(registration, 9, true), y: 644, size: 9, bold: true, color: '#21655f' },
+    { text: contact, x: centeredX(contact, 9), y: 674, size: 9, color: '#475569' },
+    { text: location, x: centeredX(location, 9), y: 691, size: 9, color: '#475569' },
   );
   return [lines];
 }
