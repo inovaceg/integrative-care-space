@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { flushSync } from 'react-dom';
-import { Link } from '@tanstack/react-router';
+import { ReceiptPatientEditor } from './receipt-patient-editor';
 import { Download, Pencil, Printer } from 'lucide-react';
 import { useAuth } from '@/components/auth/auth-provider';
 import { AdminLayout, PageIntro, SearchInput, SectionCard } from '@/components/admin/admin-ui';
@@ -33,6 +33,7 @@ export default function ReceiptsPage() {
   const [patient, setPatient] = useState<{ nome: string; cpf: string | null } | null>(null);
   const [patientLoading, setPatientLoading] = useState(false);
   const [patientError, setPatientError] = useState('');
+  const [editingPatientId, setEditingPatientId] = useState<string | null>(null);
   const [area, setArea] = useState<ReceiptArea>('Psicologia');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(today);
@@ -60,31 +61,13 @@ export default function ReceiptsPage() {
     setPatient(null); setPatientError('');
     if (!patientId || !user) { setPatientLoading(false); return; }
     let active = true;
-    let request = 0;
-    function refreshPatient() {
-      const currentRequest = ++request;
-      setPatientLoading(true); setPatientError('');
-      fetchPatient(user!.id, patientId).then(({ data, error }) => {
-        if (error || !data) throw new Error();
-        if (!active || currentRequest !== request) return;
-        setPatient(data);
-        setPatients(rows => rows.map(row => row.id === patientId ? { ...row, nome: data.nome } : row));
-      }).catch(() => {
-        if (active && currentRequest === request) {
-          setPatient(null);
-          setPatientError('Não foi possível buscar os dados. Selecione o paciente novamente.');
-        }
-      }).finally(() => { if (active && currentRequest === request) setPatientLoading(false); });
-    }
-    function onVisible() { if (document.visibilityState === 'visible') refreshPatient(); }
-    refreshPatient();
-    window.addEventListener('focus', refreshPatient);
-    document.addEventListener('visibilitychange', onVisible);
-    return () => {
-      active = false;
-      window.removeEventListener('focus', refreshPatient);
-      document.removeEventListener('visibilitychange', onVisible);
-    };
+    setPatientLoading(true);
+    fetchPatient(user.id, patientId).then(({ data, error }) => {
+      if (error || !data) throw new Error();
+      if (active) setPatient(data);
+    }).catch(() => { if (active) setPatientError('Não foi possível buscar os dados. Selecione o paciente novamente.'); })
+      .finally(() => { if (active) setPatientLoading(false); });
+    return () => { active = false; };
   }, [patientId, user?.id]);
 
   function show(receipt: Receipt) { setPreview({ receipt, pages: layoutReceipt(receipt) }); }
@@ -150,9 +133,9 @@ export default function ReceiptsPage() {
             <Label htmlFor="receipt-patient">Paciente cadastrado</Label>
             <div className="flex flex-col gap-2 sm:flex-row">
               <select id="receipt-patient" className={selectClass} required value={patientId} onChange={event => setPatientId(event.target.value)}><option value="">Selecione um paciente</option>{patients.map(item => <option key={item.id} value={item.id}>{item.nome}</option>)}</select>
-              {patientId && !busy ? <Button asChild variant="outline" className="h-10 shrink-0"><Link to="/admin/pacientes/$id" params={{ id: patientId }} target="_blank" rel="noopener noreferrer"><Pencil className="size-4" />Alterar cadastro</Link></Button> : <Button type="button" variant="outline" disabled className="h-10 shrink-0"><Pencil className="size-4" />Alterar cadastro</Button>}
+              <Button type="button" variant="outline" disabled={!patientId || patientLoading || busy} onClick={() => setEditingPatientId(patientId)} className="h-10 shrink-0"><Pencil className="size-4" />Alterar cadastro</Button>
             </div>
-            {patientId && <p className="text-xs text-slate-500">O cadastro abre em outra aba. Use “Editar dados” e salve as alterações. Ao voltar, nome e CPF serão atualizados automaticamente.</p>}
+            {patientId && <p className="text-xs text-slate-500">Edite o cadastro aqui mesmo, sem sair do recibo. Nome e CPF serão atualizados ao salvar.</p>}
             {!patients.length && <p className="text-sm text-slate-500">Cadastre um paciente no módulo Pacientes para emitir recibos.</p>}
           </div>
           <div className="space-y-2"><Label htmlFor="receipt-name">Nome do paciente</Label><Input id="receipt-name" readOnly value={patient?.nome ?? ''} placeholder={patientLoading ? 'Buscando...' : 'Preenchido pelo cadastro'} /></div>
@@ -174,6 +157,13 @@ export default function ReceiptsPage() {
         {hasMore && <Button variant="outline" disabled={busy} className="mt-4" onClick={() => void loadMore()}>Carregar mais recibos</Button>}
       </SectionCard>
     </div>}
+    {editingPatientId && <ReceiptPatientEditor key={editingPatientId} patientId={editingPatientId} onClose={() => setEditingPatientId(null)} onSaved={updated => {
+      setPatient(updated);
+      setPatients(rows => rows.map(row => row.id === updated.id ? { ...row, nome: updated.nome } : row));
+      setPatientError('');
+      setMessage('Cadastro do paciente atualizado com sucesso.');
+      setEditingPatientId(null);
+    }} />}
     <Dialog open={!!preview} onOpenChange={open => { if (!open) setPreview(null); }}><DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-4xl"><DialogHeader><DialogTitle>Recibo {preview?.receipt.receipt_number}</DialogTitle><DialogDescription>Confira os dados antes de compartilhar com o paciente. A assinatura deve ser feita pelo profissional responsável.</DialogDescription></DialogHeader>{preview && <><div className="flex flex-wrap gap-2"><Button onClick={download}><Download className="size-4" />Gerar PDF</Button><Button variant="outline" onClick={print}><Printer className="size-4" />Imprimir</Button></div><DocumentPreview pages={preview.pages} showBrand /></>}</DialogContent></Dialog>
     {printPages.length > 0 && <PrintDocument pages={printPages} showBrand />}
   </AdminLayout>;
