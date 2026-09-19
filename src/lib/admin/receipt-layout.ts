@@ -17,7 +17,7 @@ export function layoutReceipt(receipt: Receipt): DocumentPage[] {
     pages.push(page);
     y = 160;
   }
-  function block(text: string, size = 11, bold = false) {
+  function block(text: string, size = 11, bold = false, centered = false) {
     context.font = `${bold ? 'bold' : 'normal'} ${size}px Arial`;
     const lines: string[] = [];
     for (const paragraph of text.replace(/\r/g, '').split('\n')) {
@@ -38,7 +38,8 @@ export function layoutReceipt(receipt: Receipt): DocumentPage[] {
     }
     for (const text of lines) {
       if (y > 700) newPage();
-      page.push({ text, x: 42, y, size, bold });
+      const x = centered ? (595 - context.measureText(text).width) / 2 : 42;
+      page.push({ text, x, y, size, bold });
       y += size * 1.6;
     }
     y += 12;
@@ -55,7 +56,7 @@ export function layoutReceipt(receipt: Receipt): DocumentPage[] {
   block('____________________________________________');
   block(`${receipt.professional_name}\n${receipt.professional_title}\n${receipt.professional_registration}`, 11, true);
   block('Assinatura do profissional responsável', 9);
-  if (receipt.footer) block(receipt.footer, 8);
+  if (receipt.footer) block(receipt.footer, 8, false, true);
   pages.forEach((lines, index) => lines.push({ text: `Página ${index + 1} de ${pages.length}`, x: 42, y: 815, size: 8, color: '#64748b' }));
   return pages;
 }
