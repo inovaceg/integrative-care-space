@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Camera, ImagePlus, Pencil, Trash2 } from "lucide-react";
 import { AdminLayout, PageIntro, SectionCard } from "@/components/admin/admin-ui";
 import { Button } from "@/components/ui/button";
@@ -297,6 +297,55 @@ function PhotoRegistry({
   );
 }
 
+type DraftPhoto = { file: File; url: string };
+
+type DraftPhotoState = {
+  dates: Record<PhotoStage, string>;
+  captions: Record<string, string>;
+  files: Record<string, DraftPhoto>;
+};
+
+const emptyDraft = (): DraftPhotoState => ({
+  dates: { before: new Date().toISOString().slice(0, 10), after: new Date().toISOString().slice(0, 10) },
+  captions: {},
+  files: {},
+});
+
+function DraftPhotoRegistry({
+  draft,
+  onChange,
+  onError,
+}: {
+  draft: DraftPhotoState;
+  onChange: (next: DraftPhotoState) => void;
+  onError: (message: string) => void;
+}) {
+  function selectFile(stage: PhotoStage, view: PhotoView, file: File) {
+    if (!validDraftPhoto(file)) {
+      onError("A foto deve ser JPEG, PNG ou WebP e ter no máximo 15 MB.");
+      return;
+    }
+    onError("");
+    const key = photoKey(stage, view);
+    const previous = draft.files[key];
+    if (previous) URL.revokeObjectURL(previous.url);
+    onChange({ ...draft, files: { ...draft.files, [key]: { file, url: URL.createObjectURL(file) } } });
+  }
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+      <div className="mb-4 flex items-start gap-3"><Camera className="mt-1 h-5 w-5 text-[#2f8f82]" /><div><h3 className="font-semibold text-slate-900">Registro Fotográfico</h3><p className="text-sm text-slate-500">JPEG, PNG ou WebP, até 15 MB. As fotos serão enviadas ao salvar.</p></div></div>
+      <div className="grid gap-5 xl:grid-cols-2">
+        {stages.map((stage) => <div key={stage} className="rounded-xl border border-slate-200 bg-white p-4"><div className="mb-4 flex items-center justify-between"><Label htmlFor={`draft-${stage}-date`}>{stageLabels[stage]} · Data</Label><Input id={`draft-${stage}-date`} className="w-44" type="date" required value={draft.dates[stage]} onChange={(e) => onChange({ ...draft, dates: { ...draft.dates, [stage]: e.target.value } })} /></div><div className="grid gap-4 sm:grid-cols-3">{views.map((view) => { const key = photoKey(stage, view); const selected = draft.files[key]; const inputId = `draft-${key}-file`; return <div key={view} className="space-y-2"><Label className="text-xs">{viewLabels[view]}</Label><div className="aspect-[3/4] overflow-hidden rounded-lg border bg-slate-100">{selected ? <img src={selected.url} alt={`Prévia ${viewLabels[view]}`} className="h-full w-full object-contain" /> : <div className="flex h-full items-center justify-center text-xs text-slate-400"><ImagePlus className="mr-1 h-5 w-5" />Sem foto</div>}</div><Input aria-label={`Legenda ${viewLabels[view]} ${stageLabels[stage]}`} placeholder="Legenda opcional" value={draft.captions[key] ?? ""} onChange={(e) => onChange({ ...draft, captions: { ...draft.captions, [key]: e.target.value } })} /><input id={inputId} className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => { const file = e.target.files?.[0]; if (file) selectFile(stage, view, file); e.currentTarget.value = ""; }} /><label htmlFor={inputId} className="flex h-9 cursor-pointer items-center justify-center rounded-md border bg-white px-3 text-xs font-medium">{selected ? "Substituir foto" : "Adicionar foto"}</label></div>; })}</div></div>)}
+      </div>
+    </div>
+  );
+}
+
+function validDraftPhoto(file: File) {
+  return ["image/jpeg", "image/png", "image/webp"].includes(file.type) && file.size <= 15 * 1024 * 1024;
+}
+
 function BodyProgressPage() {
   const { user } = useAuth();
   const [patients, setPatients] = useState<{ id: string; nome: string }[]>([]);
@@ -307,8 +356,13 @@ function BodyProgressPage() {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [values, setValues] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState("");
+  const [draft, setDraft] = useState<DraftPhotoState>(emptyDraft);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
+
+  useEffect(() => () => Object.values(draftRef.current.files).forEach(({ url }) => URL.revokeObjectURL(url)), []);
 
   const editing = useMemo(
     () => items.find((item) => item.id === editingId),
@@ -341,7 +395,13 @@ function BodyProgressPage() {
     void loadEvaluations();
   }, [loadEvaluations, patientId]);
 
+  function clearDraftPhotos() {
+    Object.values(draftRef.current.files).forEach(({ url }) => URL.revokeObjectURL(url));
+    setDraft(emptyDraft());
+  }
+
   function resetForm() {
+    clearDraftPhotos();
     setValues({});
     setNotes("");
     setEditingId(undefined);
@@ -378,13 +438,40 @@ function BodyProgressPage() {
     if (result.error) {
       setError(result.error.message);
     } else {
-      resetForm();
+      const evaluationId = (result.data as BodyEvaluation).id;
+      const failedPhotoKeys: string[] = [];
+      for (const [key, selected] of Object.entries(draft.files)) {
+        const [stage, view] = key.split("-") as [PhotoStage, PhotoView];
+        try {
+          const photoResult = await savePhoto(user.id, patientId, evaluationId, stage, view, draft.dates[stage], selected.file, draft.captions[key] ?? "");
+          if (photoResult.error) failedPhotoKeys.push(key);
+        } catch {
+          failedPhotoKeys.push(key);
+        }
+      }
       await loadEvaluations();
+      if (failedPhotoKeys.length) {
+        const failedFiles = Object.fromEntries(
+          Object.entries(draft.files).filter(([key]) => failedPhotoKeys.includes(key)),
+        );
+        Object.entries(draft.files)
+          .filter(([key]) => !failedPhotoKeys.includes(key))
+          .forEach(([, selected]) => URL.revokeObjectURL(selected.url));
+        setDraft((current) => ({ ...current, files: failedFiles }));
+        setEditingId(evaluationId);
+        setError(`Avaliação salva, mas estas fotos não foram enviadas: ${failedPhotoKeys.map((key) => {
+          const [stage, view] = key.split("-") as [PhotoStage, PhotoView];
+          return `${stageLabels[stage]} ${viewLabels[view]}`;
+        }).join(", ")}. Tente salvar novamente.`);
+      } else {
+        resetForm();
+      }
     }
     setSaving(false);
   }
 
   function editEvaluation(item: BodyEvaluation) {
+    clearDraftPhotos();
     setEditingId(item.id);
     setDate(item.evaluation_date);
     setNotes(item.clinical_notes ?? "");
@@ -423,8 +510,8 @@ function BodyProgressPage() {
           className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm"
           value={patientId}
           onChange={(event) => {
+            resetForm();
             setPatientId(event.target.value);
-            setEditingId(undefined);
             setOpenPhotosId(null);
           }}
         >
@@ -475,6 +562,8 @@ function BodyProgressPage() {
               <p className="rounded-md bg-slate-50 p-2 text-sm">
                 IMC calculado: {calculateBmi(Number(values["weight_kg"]) || null, Number(values["height_cm"]) || null) ?? "—"}
               </p>
+              <DraftPhotoRegistry draft={draft} onChange={setDraft} onError={setError} />
+              {editing && user && <PhotoRegistry professionalId={user.id} patientId={patientId} evaluation={editing} />}
               <Textarea
                 placeholder="Observações clínicas (opcional)"
                 value={notes}
