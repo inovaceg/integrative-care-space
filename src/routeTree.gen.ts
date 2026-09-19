@@ -26,6 +26,7 @@ import { Route as AdminAgendaRouteImport } from './routes/admin/agenda'
 import { Route as AdminConfiguracoesRouteImport } from './routes/admin/configuracoes'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
 import { Route as AdminEstatisticasRouteImport } from './routes/admin/estatisticas'
+import { Route as AdminEvolucaoCorporalRouteImport } from './routes/admin/evolucao-corporal'
 import { Route as AdminFinanceiroRouteImport } from './routes/admin/financeiro'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
 import { Route as AdminMedicamentosRouteImport } from './routes/admin/medicamentos'
@@ -119,6 +120,11 @@ const AdminEstatisticasRoute = AdminEstatisticasRouteImport.update({
   path: '/estatisticas',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminEvolucaoCorporalRoute = AdminEvolucaoCorporalRouteImport.update({
+  id: '/evolucao-corporal',
+  path: '/evolucao-corporal',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminFinanceiroRoute = AdminFinanceiroRouteImport.update({
   id: '/financeiro',
   path: '/financeiro',
@@ -172,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/estatisticas': typeof AdminEstatisticasRoute
+  '/admin/evolucao-corporal': typeof AdminEvolucaoCorporalRoute
   '/admin/financeiro': typeof AdminFinanceiroRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/medicamentos': typeof AdminMedicamentosRoute
@@ -197,6 +204,7 @@ export interface FileRoutesByTo {
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/estatisticas': typeof AdminEstatisticasRoute
+  '/admin/evolucao-corporal': typeof AdminEvolucaoCorporalRoute
   '/admin/financeiro': typeof AdminFinanceiroRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/medicamentos': typeof AdminMedicamentosRoute
@@ -224,6 +232,7 @@ export interface FileRoutesById {
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/estatisticas': typeof AdminEstatisticasRoute
+  '/admin/evolucao-corporal': typeof AdminEvolucaoCorporalRoute
   '/admin/financeiro': typeof AdminFinanceiroRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/medicamentos': typeof AdminMedicamentosRoute
@@ -252,6 +261,7 @@ export interface FileRouteTypes {
     | '/admin/configuracoes'
     | '/admin/dashboard'
     | '/admin/estatisticas'
+    | '/admin/evolucao-corporal'
     | '/admin/financeiro'
     | '/admin/login'
     | '/admin/medicamentos'
@@ -277,6 +287,7 @@ export interface FileRouteTypes {
     | '/admin/configuracoes'
     | '/admin/dashboard'
     | '/admin/estatisticas'
+    | '/admin/evolucao-corporal'
     | '/admin/financeiro'
     | '/admin/login'
     | '/admin/medicamentos'
@@ -303,6 +314,7 @@ export interface FileRouteTypes {
     | '/admin/configuracoes'
     | '/admin/dashboard'
     | '/admin/estatisticas'
+    | '/admin/evolucao-corporal'
     | '/admin/financeiro'
     | '/admin/login'
     | '/admin/medicamentos'
@@ -449,6 +461,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminEstatisticasRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/evolucao-corporal': {
+      id: '/admin/evolucao-corporal'
+      path: '/evolucao-corporal'
+      fullPath: '/admin/evolucao-corporal'
+      preLoaderRoute: typeof AdminEvolucaoCorporalRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/financeiro': {
       id: '/admin/financeiro'
       path: '/financeiro'
@@ -518,6 +537,7 @@ interface AdminRouteChildren {
   AdminConfiguracoesRoute: typeof AdminConfiguracoesRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdminEstatisticasRoute: typeof AdminEstatisticasRoute
+  AdminEvolucaoCorporalRoute: typeof AdminEvolucaoCorporalRoute
   AdminFinanceiroRoute: typeof AdminFinanceiroRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminMedicamentosRoute: typeof AdminMedicamentosRoute
@@ -532,6 +552,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminConfiguracoesRoute: AdminConfiguracoesRoute,
   AdminDashboardRoute: AdminDashboardRoute,
   AdminEstatisticasRoute: AdminEstatisticasRoute,
+  AdminEvolucaoCorporalRoute: AdminEvolucaoCorporalRoute,
   AdminFinanceiroRoute: AdminFinanceiroRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminMedicamentosRoute: AdminMedicamentosRoute,
