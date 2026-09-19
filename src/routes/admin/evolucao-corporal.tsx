@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Camera, ImagePlus, Maximize2, Pencil, Trash2, FileDown, Printer } from "lucide-react";
 import { AdminLayout, PageIntro, SectionCard } from "@/components/admin/admin-ui";
+import { BodyPhotoReport } from "@/components/admin/body-photo-report";
 import { PrintDocument } from "@/components/admin/documents/document-preview";
 import { downloadDocumentPdf } from "@/lib/admin/document-layout";
 import { bodyProgressReportFilename, bodyProgressReportPages } from "@/lib/admin/body-progress-report";
@@ -112,10 +113,12 @@ function PhotoPreviewDialog({
 function PhotoRegistry({
   professionalId,
   patientId,
+  patientName,
   evaluation,
 }: {
   professionalId: string;
   patientId: string;
+  patientName: string;
   evaluation: BodyEvaluation;
 }) {
   const [photos, setPhotos] = useState<ProgressPhoto[]>([]);
@@ -344,6 +347,9 @@ function PhotoRegistry({
         </div>
       )}
 
+      <div className="mt-4 flex justify-end">
+        <BodyPhotoReport professionalId={professionalId} patientId={patientId} patientName={patientName} evaluation={evaluation} />
+      </div>
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
     </div>
   );
@@ -739,7 +745,7 @@ function BodyProgressPage() {
                 IMC calculado: {calculateBmi(Number(values["weight_kg"]) || null, Number(values["height_cm"]) || null) ?? "—"}
               </p>
               <DraftPhotoRegistry draft={draft} onChange={setDraft} onError={setError} />
-              {editing && user && <PhotoRegistry professionalId={user.id} patientId={patientId} evaluation={editing} />}
+              {editing && user && <PhotoRegistry professionalId={user.id} patientId={patientId} patientName={patients.find((patient) => patient.id === patientId)?.nome ?? ""} evaluation={editing} />}
               <Textarea
                 placeholder="Observações clínicas (opcional)"
                 value={notes}
@@ -798,6 +804,7 @@ function BodyProgressPage() {
                     <PhotoRegistry
                       professionalId={user.id}
                       patientId={patientId}
+                      patientName={patients.find((patient) => patient.id === patientId)?.nome ?? ""}
                       evaluation={item}
                     />
                   )}
