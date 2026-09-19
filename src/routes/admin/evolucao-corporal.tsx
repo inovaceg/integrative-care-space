@@ -395,6 +395,91 @@ function validDraftPhoto(file: File) {
   return ["image/jpeg", "image/png", "image/webp"].includes(file.type) && file.size <= 15 * 1024 * 1024;
 }
 
+const comparisonRows = [
+  { key: "weight_kg", label: "Peso", unit: "kg" },
+  { key: "height_cm", label: "Altura", unit: "cm" },
+  { key: "bmi", label: "IMC", unit: "" },
+  { key: "waist_cm", label: "Cintura", unit: "cm" },
+  { key: "abdomen_cm", label: "Abdômen", unit: "cm" },
+  { key: "hip_cm", label: "Quadril", unit: "cm" },
+  { key: "chest_cm", label: "Tórax", unit: "cm" },
+  { key: "right_arm_cm", label: "Braço direito", unit: "cm" },
+  { key: "left_arm_cm", label: "Braço esquerdo", unit: "cm" },
+  { key: "right_thigh_cm", label: "Coxa direita", unit: "cm" },
+  { key: "left_thigh_cm", label: "Coxa esquerda", unit: "cm" },
+  { key: "right_calf_cm", label: "Panturrilha direita", unit: "cm" },
+  { key: "left_calf_cm", label: "Panturrilha esquerda", unit: "cm" },
+  { key: "body_fat_percentage", label: "Percentual de gordura", unit: "%" },
+  { key: "muscle_mass_kg", label: "Massa muscular", unit: "kg" },
+] as const;
+
+function formatComparisonValue(value: unknown, unit: string) {
+  if (value == null || value === "") return "—";
+  const number = Number(value);
+  if (!Number.isFinite(number)) return "—";
+  return `${number.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}${unit ? ` ${unit}` : ""}`;
+}
+
+function ComparisonSection({ items }: { items: BodyEvaluation[] }) {
+  const ordered = useMemo(
+    () => [...items].sort((a, b) => a.evaluation_date.localeCompare(b.evaluation_date)),
+    [items],
+  );
+  const [beforeId, setBeforeId] = useState("");
+  const [afterId, setAfterId] = useState("");
+
+  useEffect(() => {
+    if (ordered.length < 2) {
+      setBeforeId("");
+      setAfterId("");
+      return;
+    }
+    setBeforeId((current) => ordered.some((item) => item.id === current) ? current : ordered[0]!.id);
+    setAfterId((current) => ordered.some((item) => item.id === current) ? current : ordered[ordered.length - 1]!.id);
+  }, [ordered]);
+
+  const before = ordered.find((item) => item.id === beforeId);
+  const after = ordered.find((item) => item.id === afterId);
+  const sameEvaluation = Boolean(before && after && before.id === after.id);
+
+  return (
+    <SectionCard title="Comparar avaliações">
+      {ordered.length < 2 ? (
+        <p className="text-sm text-slate-500">É necessário ter pelo menos duas avaliações para comparar medidas.</p>
+      ) : (
+        <div className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            {[{ label: "Avaliação inicial", value: beforeId, set: setBeforeId }, { label: "Avaliação atual", value: afterId, set: setAfterId }].map((field) => (
+              <label key={field.label} className="grid gap-1 text-sm font-medium text-slate-700">
+                {field.label}
+                <select className="h-10 rounded-md border border-slate-200 bg-white px-3 font-normal" value={field.value} onChange={(event) => field.set(event.target.value)}>
+                  {ordered.map((item) => <option key={item.id} value={item.id}>{new Date(`${item.evaluation_date}T12:00:00`).toLocaleDateString("pt-BR")}</option>)}
+                </select>
+              </label>
+            ))}
+          </div>
+          {sameEvaluation && <p className="text-sm text-slate-500">Escolha datas diferentes para visualizar a variação.</p>}
+          <div className="overflow-x-auto rounded-lg border border-slate-200">
+            <table className="w-full min-w-[620px] text-sm">
+              <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-4 py-3">Medida</th><th className="px-4 py-3">Antes</th><th className="px-4 py-3">Atual</th><th className="px-4 py-3">Variação</th></tr></thead>
+              <tbody className="divide-y divide-slate-100">
+                {comparisonRows.map(({ key, label, unit }) => {
+                  const initial = before?.[key];
+                  const current = after?.[key];
+                  const variation = !sameEvaluation && initial != null && current != null ? Number(current) - Number(initial) : null;
+                  const variationText = variation == null || !Number.isFinite(variation) ? "—" : `${variation >= 0 ? "+" : "−"}${Math.abs(variation).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}${unit ? ` ${unit}` : ""}`;
+                  const indicator = variation == null || !Number.isFinite(variation) ? "" : variation > 0 ? "↑" : variation < 0 ? "↓" : "→";
+                  return <tr key={key}><td className="px-4 py-3 font-medium text-slate-700">{label}</td><td className="px-4 py-3 text-slate-600">{formatComparisonValue(initial, unit)}</td><td className="px-4 py-3 text-slate-600">{formatComparisonValue(current, unit)}</td><td className="px-4 py-3 font-medium text-slate-600"><span className="mr-1 text-slate-400" aria-hidden="true">{indicator}</span>{variationText}</td></tr>;
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </SectionCard>
+  );
+}
+
 function BodyProgressPage() {
   const { user } = useAuth();
   const [patients, setPatients] = useState<{ id: string; nome: string }[]>([]);
@@ -683,6 +768,8 @@ function BodyProgressPage() {
           </SectionCard>
         </div>
       )}
+
+      {patientId && <div className="mt-6"><ComparisonSection items={items} /></div>}
     </AdminLayout>
   );
 }
