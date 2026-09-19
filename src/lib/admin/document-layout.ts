@@ -273,14 +273,14 @@ ${showBrand ? '42 112 m 553 112 l S' : '42 75 m 553 75 l S'}
 Q
 `;
 
-    const textStream = lines.map(line => {
+    const textStream = lines.filter(line => line.kind !== 'signature-line').map(line => {
       const hex = (line.color ?? '#17232d').slice(1);
       const color = [0, 2, 4].map(i => (parseInt(hex.slice(i, i + 2), 16) / 255).toFixed(3)).join(' ');
       return `BT /${line.bold ? 'F2' : 'F1'} ${line.size} Tf ${color} rg 1 0 0 1 ${line.x} ${842 - line.y} Tm ${pdfText(line.text)} Tj ET`;
     }).join('\n');
 
     const signatureLine = lines.find(line => line.kind === 'signature-line');
-    const signatureCommand = signatureLine ? `q\n180 0 0 90 207.5 ${842 - signatureLine.y} cm /Im1 Do\nQ\n` : '';
+    const signatureCommand = signatureLine ? `q\n180 0 0 90 207.5 ${842 - signatureLine.y - 10} cm /Im1 Do\nQ\n` : '';
     const fullStream = drawCommands + '\n' + signatureCommand + textStream;
 
     objects.push(

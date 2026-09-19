@@ -15,8 +15,7 @@ export function A4Page({ lines, index, showBrand = false }: { lines: DocumentPag
       )}
       {lines.map((line, i) => line.kind === 'signature-line' ? (
         <g key={i}>
-          <image href={signatureAsset} x="207.5" y={line.y - 90} width="180" height="90" preserveAspectRatio="xMidYMid meet" />
-          <text x={line.x} y={line.y} fontFamily="Arial, Helvetica, sans-serif" fontSize={line.size} fill={line.color ?? '#17232d'} xmlSpace="preserve">{line.text}</text>
+          <image href={signatureAsset} x="207.5" y={line.y - 80} width="180" height="90" preserveAspectRatio="xMidYMid meet" />
         </g>
       ) : <text key={i} x={line.x} y={line.y} fontFamily="Arial, Helvetica, sans-serif" fontSize={line.size} fontWeight={line.bold ? 700 : 400} fill={line.color ?? '#17232d'} xmlSpace="preserve">{line.text}</text>)}
     </svg>
