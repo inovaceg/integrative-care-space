@@ -34,6 +34,7 @@ import { Route as AdminPacientesRouteImport } from './routes/admin/pacientes'
 import { Route as AdminReceituarioRouteImport } from './routes/admin/receituario'
 import { Route as AdminRecibosRouteImport } from './routes/admin/recibos'
 import { Route as AdminRelatoriosRouteImport } from './routes/admin/relatorios'
+import { Route as CompletarCadastroTokenRouteImport } from './routes/completar-cadastro/$token'
 import { Route as AdminPacientesIdRouteImport } from './routes/admin/pacientes/$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -161,6 +162,11 @@ const AdminRelatoriosRoute = AdminRelatoriosRouteImport.update({
   path: '/relatorios',
   getParentRoute: () => AdminRoute,
 } as any)
+const CompletarCadastroTokenRoute = CompletarCadastroTokenRouteImport.update({
+  id: '/completar-cadastro/$token',
+  path: '/completar-cadastro/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminPacientesIdRoute = AdminPacientesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -192,6 +198,7 @@ export interface FileRoutesByFullPath {
   '/admin/receituario': typeof AdminReceituarioRoute
   '/admin/recibos': typeof AdminRecibosRoute
   '/admin/relatorios': typeof AdminRelatoriosRoute
+  '/completar-cadastro/$token': typeof CompletarCadastroTokenRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/pacientes/$id': typeof AdminPacientesIdRoute
 }
@@ -219,6 +226,7 @@ export interface FileRoutesByTo {
   '/admin/receituario': typeof AdminReceituarioRoute
   '/admin/recibos': typeof AdminRecibosRoute
   '/admin/relatorios': typeof AdminRelatoriosRoute
+  '/completar-cadastro/$token': typeof CompletarCadastroTokenRoute
   '/admin': typeof AdminIndexRoute
   '/admin/pacientes/$id': typeof AdminPacientesIdRoute
 }
@@ -248,6 +256,7 @@ export interface FileRoutesById {
   '/admin/receituario': typeof AdminReceituarioRoute
   '/admin/recibos': typeof AdminRecibosRoute
   '/admin/relatorios': typeof AdminRelatoriosRoute
+  '/completar-cadastro/$token': typeof CompletarCadastroTokenRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/pacientes/$id': typeof AdminPacientesIdRoute
 }
@@ -278,6 +287,7 @@ export interface FileRouteTypes {
     | '/admin/receituario'
     | '/admin/recibos'
     | '/admin/relatorios'
+    | '/completar-cadastro/$token'
     | '/admin/'
     | '/admin/pacientes/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -305,6 +315,7 @@ export interface FileRouteTypes {
     | '/admin/receituario'
     | '/admin/recibos'
     | '/admin/relatorios'
+    | '/completar-cadastro/$token'
     | '/admin'
     | '/admin/pacientes/$id'
   id:
@@ -333,6 +344,7 @@ export interface FileRouteTypes {
     | '/admin/receituario'
     | '/admin/recibos'
     | '/admin/relatorios'
+    | '/completar-cadastro/$token'
     | '/admin/'
     | '/admin/pacientes/$id'
   fileRoutesById: FileRoutesById
@@ -350,6 +362,7 @@ export interface RootRouteChildren {
   ServicosRoute: typeof ServicosRoute
   SobreRoute: typeof SobreRoute
   TermosDeUsoRoute: typeof TermosDeUsoRoute
+  CompletarCadastroTokenRoute: typeof CompletarCadastroTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -529,6 +542,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRelatoriosRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/completar-cadastro/$token': {
+      id: '/completar-cadastro/$token'
+      path: '/completar-cadastro/$token'
+      fullPath: '/completar-cadastro/$token'
+      preLoaderRoute: typeof CompletarCadastroTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/pacientes/$id': {
       id: '/admin/pacientes/$id'
       path: '/$id'
@@ -598,6 +618,7 @@ const rootRouteChildren: RootRouteChildren = {
   ServicosRoute: ServicosRoute,
   SobreRoute: SobreRoute,
   TermosDeUsoRoute: TermosDeUsoRoute,
+  CompletarCadastroTokenRoute: CompletarCadastroTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
