@@ -1,11 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Camera, ImagePlus, Pencil, Trash2 } from "lucide-react";
+import { Camera, ImagePlus, Maximize2, Pencil, Trash2 } from "lucide-react";
 import { AdminLayout, PageIntro, SectionCard } from "@/components/admin/admin-ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { useAuth } from "@/components/auth/auth-provider";
 import {
   calculateBmi,
@@ -57,6 +65,45 @@ const viewLabels: Record<PhotoView, string> = {
 
 function photoKey(stage: PhotoStage, view: PhotoView) {
   return `${stage}-${view}`;
+}
+
+function PhotoPreviewDialog({
+  url,
+  alt,
+  stage,
+  view,
+  caption,
+}: {
+  url: string;
+  alt: string;
+  stage: PhotoStage;
+  view: PhotoView;
+  caption: string | null | undefined;
+}) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <button
+          type="button"
+          className="group relative h-full w-full overflow-hidden rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2f8f82] focus-visible:ring-offset-2"
+          aria-label={`Visualizar maior: ${alt}`}
+        >
+          <img src={url} alt={alt} className="h-full w-full object-contain" />
+          <span className="absolute inset-x-2 bottom-2 flex items-center justify-center gap-1 rounded-md bg-slate-950/75 px-2 py-1.5 text-xs font-medium text-white opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-visible:opacity-100">
+            <Maximize2 className="h-3.5 w-3.5" />
+            Visualizar maior
+          </span>
+        </button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[92vh] max-w-5xl overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{stageLabels[stage]} · {viewLabels[view]}</DialogTitle>
+          <DialogDescription>{caption || "Visualização ampliada da foto"}</DialogDescription>
+        </DialogHeader>
+        <img src={url} alt={alt} className="max-h-[72vh] w-full object-contain" />
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 function PhotoRegistry({
@@ -230,10 +277,12 @@ function PhotoRegistry({
                       </Label>
                       <div className="aspect-[3/4] overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
                         {photo?.url ? (
-                          <img
-                            src={photo.url}
+                          <PhotoPreviewDialog
+                            url={photo.url}
                             alt={photo.caption || `Foto ${viewLabels[view].toLowerCase()} ${stageLabels[stage].toLowerCase()}`}
-                            className="h-full w-full object-contain"
+                            stage={stage}
+                            view={view}
+                            caption={photo.caption}
                           />
                         ) : (
                           <div className="flex h-full flex-col items-center justify-center gap-2 px-2 text-center text-xs text-slate-400">
@@ -336,7 +385,7 @@ function DraftPhotoRegistry({
     <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
       <div className="mb-4 flex items-start gap-3"><Camera className="mt-1 h-5 w-5 text-[#2f8f82]" /><div><h3 className="font-semibold text-slate-900">Registro Fotográfico</h3><p className="text-sm text-slate-500">JPEG, PNG ou WebP, até 15 MB. As fotos serão enviadas ao salvar.</p></div></div>
       <div className="grid gap-5 xl:grid-cols-2">
-        {stages.map((stage) => <div key={stage} className="rounded-xl border border-slate-200 bg-white p-4"><div className="mb-4 flex items-center justify-between"><Label htmlFor={`draft-${stage}-date`}>{stageLabels[stage]} · Data</Label><Input id={`draft-${stage}-date`} className="w-44" type="date" required value={draft.dates[stage]} onChange={(e) => onChange({ ...draft, dates: { ...draft.dates, [stage]: e.target.value } })} /></div><div className="grid gap-4 sm:grid-cols-3">{views.map((view) => { const key = photoKey(stage, view); const selected = draft.files[key]; const inputId = `draft-${key}-file`; return <div key={view} className="space-y-2"><Label className="text-xs">{viewLabels[view]}</Label><div className="aspect-[3/4] overflow-hidden rounded-lg border bg-slate-100">{selected ? <img src={selected.url} alt={`Prévia ${viewLabels[view]}`} className="h-full w-full object-contain" /> : <div className="flex h-full items-center justify-center text-xs text-slate-400"><ImagePlus className="mr-1 h-5 w-5" />Sem foto</div>}</div><Input aria-label={`Legenda ${viewLabels[view]} ${stageLabels[stage]}`} placeholder="Legenda opcional" value={draft.captions[key] ?? ""} onChange={(e) => onChange({ ...draft, captions: { ...draft.captions, [key]: e.target.value } })} /><input id={inputId} className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => { const file = e.target.files?.[0]; if (file) selectFile(stage, view, file); e.currentTarget.value = ""; }} /><label htmlFor={inputId} className="flex h-9 cursor-pointer items-center justify-center rounded-md border bg-white px-3 text-xs font-medium">{selected ? "Substituir foto" : "Adicionar foto"}</label></div>; })}</div></div>)}
+        {stages.map((stage) => <div key={stage} className="rounded-xl border border-slate-200 bg-white p-4"><div className="mb-4 flex items-center justify-between"><Label htmlFor={`draft-${stage}-date`}>{stageLabels[stage]} · Data</Label><Input id={`draft-${stage}-date`} className="w-44" type="date" required value={draft.dates[stage]} onChange={(e) => onChange({ ...draft, dates: { ...draft.dates, [stage]: e.target.value } })} /></div><div className="grid gap-4 sm:grid-cols-3">{views.map((view) => { const key = photoKey(stage, view); const selected = draft.files[key]; const inputId = `draft-${key}-file`; return <div key={view} className="space-y-2"><Label className="text-xs">{viewLabels[view]}</Label><div className="aspect-[3/4] overflow-hidden rounded-lg border bg-slate-100">{selected ? <PhotoPreviewDialog url={selected.url} alt={`Prévia ${viewLabels[view]}`} stage={stage} view={view} caption={draft.captions[key]} /> : <div className="flex h-full items-center justify-center text-xs text-slate-400"><ImagePlus className="mr-1 h-5 w-5" />Sem foto</div>}</div><Input aria-label={`Legenda ${viewLabels[view]} ${stageLabels[stage]}`} placeholder="Legenda opcional" value={draft.captions[key] ?? ""} onChange={(e) => onChange({ ...draft, captions: { ...draft.captions, [key]: e.target.value } })} /><input id={inputId} className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => { const file = e.target.files?.[0]; if (file) selectFile(stage, view, file); e.currentTarget.value = ""; }} /><label htmlFor={inputId} className="flex h-9 cursor-pointer items-center justify-center rounded-md border bg-white px-3 text-xs font-medium">{selected ? "Substituir foto" : "Adicionar foto"}</label></div>; })}</div></div>)}
       </div>
     </div>
   );
