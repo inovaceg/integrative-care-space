@@ -44,7 +44,7 @@ export async function createReceiptDraft(userId: string, input: { patientId: str
   ]);
   if (patientResult.error || settingsResult.error) throw new Error('Não foi possível consultar os dados do paciente ou do profissional.');
   const patient = patientResult.data;
-  if (!patient?.nome?.trim() || !patient.cpf?.trim()) throw new Error('Preencha o nome e o CPF no cadastro do paciente antes de emitir o recibo.');
+  if (!patient?.nome?.trim()) throw new Error('Preencha o nome no cadastro do paciente antes de emitir o recibo.');
   const settings = settingsResult.data;
   const psychology = input.area === 'Psicologia';
   const identity = professionalAreas[psychology ? 'psicologia' : 'biomedicina'];
@@ -52,7 +52,7 @@ export async function createReceiptDraft(userId: string, input: { patientId: str
     user_id: userId,
     patient_id: patient.id,
     patient_name: patient.nome,
-    patient_cpf: patient.cpf,
+    patient_cpf: patient.cpf?.trim() || '',
     professional_area: input.area,
     professional_name: settings?.professional_name || professionalName,
     professional_title: (psychology ? settings?.psychology_title : settings?.biomedicine_title) || identity.title,

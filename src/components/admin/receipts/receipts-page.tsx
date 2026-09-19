@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { flushSync } from 'react-dom';
-import { Download, Printer } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
+import { Download, Pencil, Printer } from 'lucide-react';
 import { useAuth } from '@/components/auth/auth-provider';
 import { AdminLayout, PageIntro, SearchInput, SectionCard } from '@/components/admin/admin-ui';
 import { Button } from '@/components/ui/button';
@@ -59,13 +60,31 @@ export default function ReceiptsPage() {
     setPatient(null); setPatientError('');
     if (!patientId || !user) { setPatientLoading(false); return; }
     let active = true;
-    setPatientLoading(true);
-    fetchPatient(user.id, patientId).then(({ data, error }) => {
-      if (error || !data) throw new Error();
-      if (active) setPatient(data);
-    }).catch(() => { if (active) setPatientError('Não foi possível buscar os dados. Selecione o paciente novamente.'); })
-      .finally(() => { if (active) setPatientLoading(false); });
-    return () => { active = false; };
+    let request = 0;
+    function refreshPatient() {
+      const currentRequest = ++request;
+      setPatientLoading(true); setPatientError('');
+      fetchPatient(user!.id, patientId).then(({ data, error }) => {
+        if (error || !data) throw new Error();
+        if (!active || currentRequest !== request) return;
+        setPatient(data);
+        setPatients(rows => rows.map(row => row.id === patientId ? { ...row, nome: data.nome } : row));
+      }).catch(() => {
+        if (active && currentRequest === request) {
+          setPatient(null);
+          setPatientError('Não foi possível buscar os dados. Selecione o paciente novamente.');
+        }
+      }).finally(() => { if (active && currentRequest === request) setPatientLoading(false); });
+    }
+    function onVisible() { if (document.visibilityState === 'visible') refreshPatient(); }
+    refreshPatient();
+    window.addEventListener('focus', refreshPatient);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      active = false;
+      window.removeEventListener('focus', refreshPatient);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [patientId, user?.id]);
 
   function show(receipt: Receipt) { setPreview({ receipt, pages: layoutReceipt(receipt) }); }
@@ -127,18 +146,25 @@ export default function ReceiptsPage() {
     {loading ? <p role="status">Carregando pacientes e recibos...</p> : loadFailed ? <Button onClick={() => setReload(value => value + 1)}>Tentar novamente</Button> : <div className="space-y-6">
       <SectionCard title="Novo recibo">
         <form onSubmit={save} autoComplete="off"><fieldset disabled={busy} className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          <div className="space-y-2 md:col-span-2 xl:col-span-3"><Label htmlFor="receipt-patient">Paciente cadastrado</Label><select id="receipt-patient" className={selectClass} required value={patientId} onChange={event => setPatientId(event.target.value)}><option value="">Selecione um paciente</option>{patients.map(item => <option key={item.id} value={item.id}>{item.nome}</option>)}</select>{!patients.length && <p className="text-sm text-slate-500">Cadastre um paciente no módulo Pacientes para emitir recibos.</p>}</div>
+          <div className="space-y-2 md:col-span-2 xl:col-span-3">
+            <Label htmlFor="receipt-patient">Paciente cadastrado</Label>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <select id="receipt-patient" className={selectClass} required value={patientId} onChange={event => setPatientId(event.target.value)}><option value="">Selecione um paciente</option>{patients.map(item => <option key={item.id} value={item.id}>{item.nome}</option>)}</select>
+              {patientId && !busy ? <Button asChild variant="outline" className="h-10 shrink-0"><Link to="/admin/pacientes/$id" params={{ id: patientId }} target="_blank" rel="noopener noreferrer"><Pencil className="size-4" />Alterar cadastro</Link></Button> : <Button type="button" variant="outline" disabled className="h-10 shrink-0"><Pencil className="size-4" />Alterar cadastro</Button>}
+            </div>
+            {patientId && <p className="text-xs text-slate-500">O cadastro abre em outra aba. Use “Editar dados” e salve as alterações. Ao voltar, nome e CPF serão atualizados automaticamente.</p>}
+            {!patients.length && <p className="text-sm text-slate-500">Cadastre um paciente no módulo Pacientes para emitir recibos.</p>}
+          </div>
           <div className="space-y-2"><Label htmlFor="receipt-name">Nome do paciente</Label><Input id="receipt-name" readOnly value={patient?.nome ?? ''} placeholder={patientLoading ? 'Buscando...' : 'Preenchido pelo cadastro'} /></div>
-          <div className="space-y-2"><Label htmlFor="receipt-cpf">CPF</Label><Input id="receipt-cpf" readOnly value={patient?.cpf ?? ''} placeholder="Preenchido pelo cadastro" /></div>
+          <div className="space-y-2"><Label htmlFor="receipt-cpf">CPF (opcional)</Label><Input id="receipt-cpf" readOnly value={patient?.cpf ?? ''} placeholder="Não informado" /></div>
           <div className="space-y-2"><Label htmlFor="receipt-area">Área</Label><select id="receipt-area" className={selectClass} value={area} onChange={event => setArea(event.target.value as ReceiptArea)}><option>Psicologia</option><option>Biomedicina</option></select></div>
           <div className="space-y-2"><Label htmlFor="receipt-amount">Valor da consulta (R$)</Label><Input id="receipt-amount" type="number" inputMode="decimal" min="0.01" max="999999999.99" step="0.01" required value={amount} onChange={event => setAmount(event.target.value)} placeholder="0,00" /></div>
           <div className="space-y-2"><Label htmlFor="receipt-date">Data do pagamento</Label><Input id="receipt-date" type="date" required value={date} onChange={event => setDate(event.target.value)} /></div>
           <div className="space-y-2"><Label htmlFor="receipt-method">Forma de pagamento</Label><select id="receipt-method" className={selectClass} value={method} onChange={event => setMethod(event.target.value)}>{paymentMethods.map(value => <option key={value}>{value}</option>)}</select></div>
           <div className="space-y-3 md:col-span-2 xl:col-span-3">
             {patientError && <p role="alert" className="text-sm text-red-700">{patientError}</p>}
-            {patient && !patient.cpf?.trim() && <p role="alert" className="text-sm text-amber-700">Este paciente não possui CPF. Complete o cadastro em Pacientes e selecione-o novamente.</p>}
             <p className="text-sm text-slate-500">Confira os dados antes de salvar. O recibo finalizado preserva os dados da emissão e não pode ser editado. Este documento não substitui obrigações fiscais, como o Receita Saúde, quando aplicável.</p>
-            <Button type="submit" disabled={!patient?.cpf?.trim() || patientLoading || busy} className="bg-[#2f8f82] hover:bg-[#26796e]">{busy ? 'Salvando...' : 'Salvar e emitir recibo'}</Button>
+            <Button type="submit" disabled={!patient || patientLoading || busy} className="bg-[#2f8f82] hover:bg-[#26796e]">{busy ? 'Salvando...' : 'Salvar e emitir recibo'}</Button>
           </div>
         </fieldset></form>
       </SectionCard>
