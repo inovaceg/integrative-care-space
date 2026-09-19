@@ -15,7 +15,7 @@ export function ProfessionalAreaSelector({ value, onChange, onContinue }: { valu
               <Icon className="mb-4 size-7 text-[#2f8f82]" />
               <strong className="block text-lg uppercase">{area.label}</strong>
               <p className="mt-4 text-sm font-semibold">{professionalName.toLocaleUpperCase('pt-BR')}</p>
-              <p className="mt-2 text-sm text-slate-600">{key === 'psicologia' ? 'Dr. em Psicanálise • ' : ''}{area.title} • <span className="font-semibold text-[#21655f]">{area.registration}</span></p>
+              <p className="mt-2 text-sm text-slate-600">{area.title} • <span className="font-semibold text-[#21655f]">{area.registration}</span></p>
               <div className="mt-4 space-y-1 text-sm leading-6 text-slate-600">
                 {areaSpecialties[key].map(specialty => <p key={specialty}>{specialty}</p>)}
               </div>

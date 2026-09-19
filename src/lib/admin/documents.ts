@@ -2,7 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const professionalName = 'Dr. Frederick Martins Parreira';
 export const professionalAreas = {
-  psicologia: { label: 'Psicologia', title: 'Psicólogo Clínico', registration: 'CRP 04/86194', types: ['Orientações ao Paciente', 'Documento Profissional'] },
+  psicologia: { label: 'Psicologia', title: 'Dr. em Psicanálise • Psicólogo Clínico', registration: 'CRP 04/86194', types: ['Orientações ao Paciente', 'Documento Profissional'] },
   biomedicina: { label: 'Biomedicina', title: 'Biomédico Esteta e Integrativo', registration: 'CRBM 30421', types: ['Receituário', 'Solicitação de Exames', 'Orientações ao Paciente'] },
 } as const;
 export type ProfessionalArea = keyof typeof professionalAreas;
