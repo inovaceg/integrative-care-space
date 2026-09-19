@@ -76,3 +76,18 @@ export async function finalizeReceipt(userId: string, id: string) {
   if (error) throw new Error('O recibo permanece salvo como rascunho. Tente finalizar novamente pelo histórico.');
   return data as Receipt;
 }
+
+export type ReceiptSnapshotInput = Pick<Receipt, 'patient_name' | 'patient_cpf' | 'service_description' | 'amount' | 'payment_method' | 'payment_date' | 'issue_date' | 'notes' | 'professional_area' | 'professional_name' | 'professional_title' | 'professional_registration' | 'city' | 'footer'>;
+
+export async function updateReceipt(userId: string, id: string, input: ReceiptSnapshotInput) {
+  if (!Number.isFinite(input.amount) || input.amount <= 0) throw new Error('Informe um valor válido.');
+  if (!input.patient_name.trim() || !input.service_description.trim() || !input.professional_name.trim()) throw new Error('Preencha os campos obrigatórios.');
+  const { data, error } = await supabase.from('receipts').update(input).eq('user_id', userId).eq('id', id).select('*').single();
+  if (error) throw new Error('Não foi possível atualizar o recibo.');
+  return data as Receipt;
+}
+
+export async function deleteReceipt(userId: string, id: string) {
+  const { error } = await supabase.from('receipts').delete().eq('user_id', userId).eq('id', id).select('id').single();
+  if (error) throw new Error('Não foi possível excluir o recibo.');
+}

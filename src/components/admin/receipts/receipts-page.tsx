@@ -15,6 +15,8 @@ import { downloadDocumentPdf, type DocumentPage } from '@/lib/admin/document-lay
 import { layoutReceipt } from '@/lib/admin/receipt-layout';
 import { createReceiptDraft, fetchReceipts, finalizeReceipt, paymentMethods, receiptPageSize, type Receipt, type ReceiptArea } from '@/lib/admin/receipts';
 import { ReceiptHistory } from './receipt-history';
+import { ReceiptEditor } from './receipt-editor';
+import { deleteReceipt, updateReceipt, type ReceiptSnapshotInput } from '@/lib/admin/receipts';
 
 const selectClass = 'h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm';
 
@@ -43,6 +45,7 @@ export default function ReceiptsPage() {
   const [message, setMessage] = useState('');
   const [preview, setPreview] = useState<{ receipt: Receipt; pages: DocumentPage[] } | null>(null);
   const [printPages, setPrintPages] = useState<DocumentPage[]>([]);
+  const [editingReceipt, setEditingReceipt] = useState<Receipt | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -88,10 +91,26 @@ export default function ReceiptsPage() {
   }
 
   async function finalize(receipt: Receipt) {
-    if (!user || lock.current || !window.confirm('Finalizar este recibo? Após finalizar, os dados não poderão ser alterados.')) return;
+    if (!user || lock.current || !window.confirm('Finalizar este recibo? Confira os dados antes de emitir.')) return;
     lock.current = true; setBusy(true); setError(''); setMessage('');
     try { const saved = await finalizeReceipt(user.id, receipt.id); replaceReceipt(saved); show(saved); setMessage('Recibo finalizado.'); }
     catch (failure) { setError(failure instanceof Error ? failure.message : 'Não foi possível finalizar.'); }
+    finally { lock.current = false; setBusy(false); }
+  }
+
+  async function editReceipt(input: ReceiptSnapshotInput) {
+    if (!user || !editingReceipt || lock.current) return;
+    lock.current = true; setBusy(true); setError('');
+    try { const saved = await updateReceipt(user.id, editingReceipt.id, input); replaceReceipt(saved); setEditingReceipt(null); setMessage('Recibo atualizado. PDFs já enviados permanecem como foram enviados.'); if (preview?.receipt.id === saved.id) show(saved); }
+    catch (failure) { setError(failure instanceof Error ? failure.message : 'Não foi possível atualizar o recibo.'); }
+    finally { lock.current = false; setBusy(false); }
+  }
+
+  async function removeReceipt(receipt: Receipt) {
+    if (!user || lock.current || !window.confirm(`Excluir permanentemente o recibo ${receipt.receipt_number} de ${receipt.patient_name}? Isso não exclui lançamentos financeiros nem PDFs já enviados.`)) return;
+    lock.current = true; setBusy(true); setError('');
+    try { await deleteReceipt(user.id, receipt.id); setReceipts(rows => rows.filter(row => row.id !== receipt.id)); setReload(value => value + 1); setMessage('Recibo excluído permanentemente.'); }
+    catch (failure) { setError(failure instanceof Error ? failure.message : 'Não foi possível excluir o recibo.'); }
     finally { lock.current = false; setBusy(false); }
   }
 
@@ -146,14 +165,14 @@ export default function ReceiptsPage() {
           <div className="space-y-2"><Label htmlFor="receipt-method">Forma de pagamento</Label><select id="receipt-method" className={selectClass} value={method} onChange={event => setMethod(event.target.value)}>{paymentMethods.map(value => <option key={value}>{value}</option>)}</select></div>
           <div className="space-y-3 md:col-span-2 xl:col-span-3">
             {patientError && <p role="alert" className="text-sm text-red-700">{patientError}</p>}
-            <p className="text-sm text-slate-500">Confira os dados antes de salvar. O recibo finalizado preserva os dados da emissão e não pode ser editado. Este documento não substitui obrigações fiscais, como o Receita Saúde, quando aplicável.</p>
+            <p className="text-sm text-slate-500">Confira os dados antes de salvar. PDFs já enviados não serão atualizados. Este documento não substitui obrigações fiscais, como o Receita Saúde, quando aplicável.</p>
             <Button type="submit" disabled={!patient || patientLoading || busy} className="bg-[#2f8f82] hover:bg-[#26796e]">{busy ? 'Salvando...' : 'Salvar e emitir recibo'}</Button>
           </div>
         </fieldset></form>
       </SectionCard>
       <SectionCard title="Histórico de recibos">
         <SearchInput value={search} onChange={setSearch} placeholder="Buscar nos recibos carregados por nome, CPF ou número" />
-        <ReceiptHistory receipts={filtered} busy={busy} onView={show} onFinalize={receipt => void finalize(receipt)} />
+        <ReceiptHistory receipts={filtered} busy={busy} onView={show} onFinalize={receipt => void finalize(receipt)} onEdit={receipt => { setError(''); setMessage(''); setEditingReceipt(receipt); }} onDelete={receipt => void removeReceipt(receipt)} />
         {hasMore && <Button variant="outline" disabled={busy} className="mt-4" onClick={() => void loadMore()}>Carregar mais recibos</Button>}
       </SectionCard>
     </div>}
@@ -165,6 +184,7 @@ export default function ReceiptsPage() {
       setEditingPatientId(null);
     }} />}
     <Dialog open={!!preview} onOpenChange={open => { if (!open) setPreview(null); }}><DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-4xl"><DialogHeader><DialogTitle>Recibo {preview?.receipt.receipt_number}</DialogTitle><DialogDescription>Confira os dados antes de compartilhar com o paciente. A assinatura deve ser feita pelo profissional responsável.</DialogDescription></DialogHeader>{preview && <><div className="flex flex-wrap gap-2"><Button onClick={download}><Download className="size-4" />Gerar PDF</Button><Button variant="outline" onClick={print}><Printer className="size-4" />Imprimir</Button></div><DocumentPreview pages={preview.pages} showBrand /></>}</DialogContent></Dialog>
+    {editingReceipt && <ReceiptEditor receipt={editingReceipt} error={error} saving={busy} onClose={() => setEditingReceipt(null)} onSave={input => void editReceipt(input)} />}
     {printPages.length > 0 && <PrintDocument pages={printPages} showBrand />}
   </AdminLayout>;
 }
