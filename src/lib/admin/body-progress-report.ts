@@ -23,6 +23,15 @@ export function bodyProgressReportPages(patientName: string, beforeDate: string,
       { text: row.variation, x: 460, y, size: 9 },
     );
   });
+
+  // Professional identification stays below the 15-measure table and above the A4 footer area.
+  lines.push(
+    { text: professionalName, x: 42, y: 610, size: 11, bold: true, color: '#123c3d' },
+    { text: 'Dr. em Psicanálise • Psicólogo Clínico • Biomédico Esteta e Integrativo', x: 42, y: 628, size: 8.5, color: '#475569' },
+    { text: 'CRP 04/86194 • CRBM 30421', x: 42, y: 644, size: 9, bold: true, color: '#21655f' },
+    { text: 'Telefone: (32) 9 9193-1779 | drfredmartins.com.br', x: 42, y: 674, size: 9, color: '#475569' },
+    { text: 'Juiz de Fora – MG', x: 42, y: 691, size: 9, color: '#475569' },
+  );
   return [lines];
 }
 
