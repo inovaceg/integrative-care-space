@@ -50,6 +50,7 @@ export interface MedicationRecord {
   user_id: string;
   name: string;
   unit: MedicationUnit;
+  unit_price: number;
   supplier: string | null;
   notes: string | null;
   created_at: string;

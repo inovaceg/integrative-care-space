@@ -122,6 +122,7 @@ export async function deleteFinancialEntry(userId: string, entryId: string) {
 export type MedicationInput = {
   name: string;
   unit: MedicationUnit;
+  unit_price: number;
   supplier: string | null;
   notes: string | null;
 };
@@ -136,7 +137,7 @@ export type MedicationMovementInput = {
   notes: string | null;
 };
 
-const medicationFields = "id, user_id, name, unit, supplier, notes, created_at, updated_at";
+const medicationFields = "id, user_id, name, unit, unit_price, supplier, notes, created_at, updated_at";
 const movementFields = "id, medication_id, user_id, movement_type, quantity, batch, expiration_date, movement_date, notes, created_at";
 
 export async function fetchMedications(userId: string) {
