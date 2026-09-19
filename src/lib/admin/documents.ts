@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 
 export const professionalName = 'Dr. Frederick Martins Parreira';
+export const professionalDocumentFooter = `${professionalName}\nDr. em Psicanálise • Psicólogo Clínico • Biomédico Esteta e Integrativo\nCRP 04/86194 • CRBM 30421\nTelefone: (32) 9 9193-1779\nJuiz de Fora – MG\ndrfredmartins.com.br`;
 export const professionalAreas = {
   psicologia: { label: 'Psicologia', title: 'Dr. em Psicanálise • Psicólogo Clínico', registration: 'CRP 04/86194', types: ['Orientações ao Paciente', 'Documento Profissional'] },
   biomedicina: { label: 'Biomedicina', title: 'Biomédico Esteta e Integrativo', registration: 'CRBM 30421', types: ['Receituário', 'Solicitação de Exames', 'Orientações ao Paciente'] },

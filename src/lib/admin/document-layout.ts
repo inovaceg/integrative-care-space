@@ -1,4 +1,4 @@
-import { areaSpecialties, displayDate, professionalAreas, professionalName, type DocumentContent, type DocumentType, type ProfessionalArea } from './documents';
+import { areaSpecialties, displayDate, professionalAreas, professionalDocumentFooter, professionalName, type DocumentContent, type DocumentType, type ProfessionalArea } from './documents';
 import { documentBrandPdf } from './document-brand';
 
 export type DocumentLine = { text: string; x: number; y: number; size: number; bold?: boolean; color?: string; align?: 'left' | 'center' | 'right' };
@@ -53,7 +53,7 @@ export function layoutDocument(area: ProfessionalArea, type: DocumentType, conte
   const bodyStart = headerTextBottom + 26;
   
   const pages: DocumentPage[] = [];
-  let page: DocumentPage;
+  let page: DocumentPage = [];
   let y = 0;
 
   function newPage() {
@@ -117,7 +117,7 @@ export function layoutDocument(area: ProfessionalArea, type: DocumentType, conte
     for (const line of lines) {
       if (y + line.size * 1.5 > 730) newPage();
       const xPos = line.align === 'center' ? centeredX(line.text, line.size, line.bold) : 42;
-      page.push({ ...line, x: xPos, y });
+      page.push({ ...line, align: line.align ?? 'left', x: xPos, y });
       y += line.size * 1.5;
     }
     y += gap;
@@ -169,14 +169,14 @@ export function layoutDocument(area: ProfessionalArea, type: DocumentType, conte
     { text: signReg, x: centeredX(signReg, 9.5, true), y: y + 43, size: 9.5, bold: true, color: '#21655f', align: 'center' }
   );
 
-  // Footer - Centralized
-  const footerLines = content.footer ? wrap(content.footer, 8, false, 511) : [];
+  // Footer - Centralized and standardized for all professional documents
+  const footerLines = professionalDocumentFooter.split('\n');
   pages.forEach((p, index) => {
     footerLines.forEach((text, i) => {
       p.push({
         text,
         x: centeredX(text, 8, false),
-        y: 775 + i * 11,
+        y: 744 + i * 11,
         size: 8,
         color: '#64748b',
         align: 'center',
@@ -186,7 +186,7 @@ export function layoutDocument(area: ProfessionalArea, type: DocumentType, conte
     p.push({
       text: pageNumber,
       x: centeredX(pageNumber, 7.5, false),
-      y: 818,
+      y: 826,
       size: 7.5,
       color: '#94a3b8',
       align: 'center',
@@ -238,7 +238,7 @@ q
 0.82 0.88 0.86 RG
 0.75 w
 42 708 m 553 708 l S
-42 75 m 553 75 l S
+${showBrand ? '42 112 m 553 112 l S' : '42 75 m 553 75 l S'}
 Q
 `;
 
