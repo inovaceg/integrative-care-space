@@ -155,8 +155,8 @@ export function layoutDocument(area: ProfessionalArea, type: DocumentType, conte
   }
 
   // Signature Block (Centered)
-  if (Math.max(y + 110, 640) + 43 > 725) newPage();
-  y = Math.max(y + 110, 640);
+  if (Math.max(y + 110, 680) + 43 > 725) newPage();
+  y = Math.max(y + 110, 680);
   
   const signLine = '_____________________________________________';
   const signName = professionalName;
