@@ -51,6 +51,17 @@ async function adminUser(req: Request, admin: ReturnType<typeof createClient>) {
   return role?.role === 'doctor' || role?.role === 'admin' ? user : null
 }
 
+function technicalError(error: unknown) {
+  if (!error || typeof error !== 'object') return { message: 'Unknown error' }
+  const value = error as Record<string, unknown>
+  return {
+    message: typeof value.message === 'string' ? value.message : 'Unknown error',
+    code: typeof value.code === 'string' ? value.code : undefined,
+    details: typeof value.details === 'string' ? value.details : undefined,
+    hint: typeof value.hint === 'string' ? value.hint : undefined,
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders })
   try {
@@ -79,7 +90,7 @@ Deno.serve(async (req) => {
         queixa_principal: text(answers.motivo_atendimento), quando_comecou: text(answers.inicio_queixa),
         expectativas_tratamento: text(answers.expectativa_tratamento), preferencia_modalidade: text(answers.modalidade),
         doencas_fisicas: text(answers.doencas_detalhes), cirurgias: text(answers.cirurgias_detalhes),
-        alergias: text(answers.alergias_detalhes), medicamentos_atuais: text(answers.medicamentos_detalhes),
+        medicamentos_atuais: text(answers.medicamentos_detalhes),
         alimentacao: text(answers.alimentacao), qualidade_sono: text(answers.sono), atividade_fisica: text(answers.atividade_fisica_detalhes),
         uso_substancias: text(answers.substancias_detalhes), sintomas_checklist: answers.sintomas ?? [],
         escala_ansiedade: integer(answers.escala_ansiedade), escala_tristeza: integer(answers.escala_tristeza),
@@ -127,7 +138,7 @@ Deno.serve(async (req) => {
     }
     return new Response('Bad request', { status: 400, headers: corsHeaders })
   } catch (error) {
-    console.error('[anamnese] request failed', error instanceof Error ? error.message : 'unknown')
+    console.error('[anamnese] request failed', technicalError(error))
     return new Response('Internal server error', { status: 500, headers: corsHeaders })
   }
 })
