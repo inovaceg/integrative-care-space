@@ -102,6 +102,12 @@ function PatientAnamneseButton({ patient }: { patient: PatientRecord }) {
   </>;
 }
 
+function PatientProfileAnamneseLink({ patient, variant = "ghost" }: { patient: PatientRecord; variant?: "ghost" | "outline" }) {
+  return <Button asChild variant={variant} size="sm" className="gap-1.5">
+    <Link to="/admin/pacientes/$id" params={{ id: patient.id }} search={{ tab: "anamnese" }}><FileText className="size-4" /> Visualizar anamnese</Link>
+  </Button>;
+}
+
 function PatientCompletionLinkButton({ patient, variant = "ghost" }: { patient: PatientRecord; variant?: "ghost" | "outline" }) {
   const { user } = useAuth();
   const [generating, setGenerating] = useState(false);
@@ -284,6 +290,7 @@ function PatientDeleteDialog({ patient, onDeleted, trigger }: PatientDeleteDialo
   }
 
   return <>
+    <PatientProfileAnamneseLink patient={patient} />
     <PatientCompletionLinkButton patient={patient} />
     <AlertDialog open={open} onOpenChange={(next) => { if (!deleting) { setOpen(next); if (next) setError(""); } }}>
     <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
