@@ -139,8 +139,8 @@ function AgendaPage() {
 
   const range = useMemo(() => {
     const base = dateFromValue(selectedDate);
-    if (view === "Dia") return { start: base, end: new Date(base.getTime() + 86400000) };
-    if (view === "Semana") { const start = new Date(base); start.setDate(base.getDate() - base.getDay()); const end = new Date(start); end.setDate(start.getDate() + 7); return { start, end }; }
+    if (view === "Dia") { const end = new Date(base); end.setDate(end.getDate() + 1); return { start: base, end }; }
+    if (view === "Semana") { const dayOffset = (base.getDay() + 6) % 7; const start = new Date(base); start.setDate(start.getDate() - dayOffset); const end = new Date(start); end.setDate(end.getDate() + 7); return { start, end }; }
     const start = new Date(base.getFullYear(), base.getMonth(), 1); const end = new Date(base.getFullYear(), base.getMonth() + 1, 1); return { start, end };
   }, [selectedDate, view]);
   const visibleAppointments = useMemo(() => appointments.filter((appointment) => { const date = new Date(appointment.start_time); return date >= range.start && date < range.end && (patientFilter === "all" || appointment.patient_id === patientFilter) && (typeFilter === "all" || appointmentType(appointment.notes) === typeFilter) && (statusFilter === "all" || appointment.status === statusFilter); }), [appointments, range, patientFilter, typeFilter, statusFilter]);
