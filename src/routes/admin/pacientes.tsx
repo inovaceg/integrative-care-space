@@ -105,7 +105,7 @@ function PatientAnamneseButton({ patient }: { patient: PatientRecord }) {
 function PatientProfileAnamneseLink({ patient, variant = "ghost" }: { patient: PatientRecord; variant?: "ghost" | "outline" }) {
   const navigate = useNavigate();
 
-  return <Button type="button" variant={variant} size="sm" className="gap-1.5" onClick={() => void navigate({ to: "/admin/pacientes/$id", params: { id: patient.id }, search: { tab: "anamnese" } })}>
+  return <Button type="button" variant={variant} size="sm" className="gap-1.5" onClick={() => { window.location.assign(`/admin/pacientes/${patient.id}?tab=anamnese`); }}>
     <FileText className="size-4" /> Visualizar anamnese
   </Button>;
 }
