@@ -35,7 +35,13 @@ function DashboardPage() {
 
   const upcoming = useMemo(() => {
     const now = new Date();
-    return appointments.filter((appointment) => appointment.status === "pending" && new Date(appointment.start_time) >= now).slice(0, 4);
+    return appointments
+      .filter((appointment) => (appointment.status === "pending" || appointment.status === "confirmed") && new Date(appointment.start_time) >= now)
+      .sort((a, b) => {
+        const startTimeDifference = new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
+        return startTimeDifference || a.id.localeCompare(b.id);
+      })
+      .slice(0, 4);
   }, [appointments]);
   const pendingAppointments = useMemo(() => {
     const startOfToday = new Date();
@@ -83,7 +89,7 @@ function DashboardPage() {
       </div>
       <div className="mt-6 grid gap-6 xl:grid-cols-[1.35fr_.65fr]">
         <SectionCard title="Próximos atendimentos" action={<Button asChild variant="ghost" size="sm" className="text-[#2f8f82]"><Link to="/admin/agenda">Ver agenda <ArrowUpRight className="ml-1 size-3.5" /></Link></Button>}>
-          {upcoming.length === 0 ? <EmptyState title="Nenhum próximo atendimento" description="Os novos agendamentos aparecerão aqui." /> : <div className="space-y-1">{upcoming.map((appointment) => { const patient = patients.find((item) => item.id === appointment.patient_id); const name = patient?.nome ?? "Paciente"; return <div key={appointment.id} className="flex items-center gap-3 rounded-lg px-2 py-3 hover:bg-slate-50"><div className="w-16 shrink-0 text-center"><p className="font-display text-sm font-semibold text-slate-800">{new Date(appointment.start_time).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p><p className="text-[10px] text-slate-400">{new Date(appointment.start_time).toLocaleDateString("pt-BR")}</p></div><div className="h-10 w-1 rounded-full bg-[#7bc7b7]" /><PatientAvatar initials={initials(name)} /><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-slate-800">{name}</p><p className="truncate text-xs text-slate-500">{appointmentType(appointment.notes)}</p></div><StatusBadge status={appointment.status} /></div>; })}</div>}
+          {upcoming.length === 0 ? <EmptyState title="Nenhum próximo atendimento" description="Não há próximos agendamentos pendentes ou confirmados na agenda." /> : <div className="space-y-1">{upcoming.map((appointment) => { const patient = patients.find((item) => item.id === appointment.patient_id); const name = patient?.nome ?? "Paciente"; return <div key={appointment.id} className="flex items-center gap-3 rounded-lg px-2 py-3 hover:bg-slate-50"><div className="w-16 shrink-0 text-center"><p className="font-display text-sm font-semibold text-slate-800">{new Date(appointment.start_time).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p><p className="text-[10px] text-slate-400">{new Date(appointment.start_time).toLocaleDateString("pt-BR")}</p></div><div className="h-10 w-1 rounded-full bg-[#7bc7b7]" /><PatientAvatar initials={initials(name)} /><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-slate-800">{name}</p><p className="truncate text-xs text-slate-500">{appointmentType(appointment.notes)}</p></div><StatusBadge status={appointment.status} /></div>; })}</div>}
         </SectionCard>
         <SectionCard title="Pacientes recentes" action={<Button asChild variant="ghost" size="sm" className="text-[#2f8f82]"><Link to="/admin/pacientes">Ver todos <ArrowUpRight className="ml-1 size-3.5" /></Link></Button>}>
           {confirmedPatientAppointments.length === 0 ? <EmptyState title="Nenhum paciente com consulta confirmada" description="Os pacientes com consultas confirmadas para hoje ou os próximos dias aparecerão aqui." /> : <div className="space-y-4">{confirmedPatientAppointments.map(({ appointment, patient }) => <Link key={patient.id} to="/admin/pacientes/$id" params={{ id: patient.id }} className="flex items-center gap-3 rounded-lg p-1 hover:bg-slate-50"><PatientAvatar initials={initials(patient.nome)} /><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-slate-800">{patient.nome}</p><p className="text-xs text-slate-500">{patient.email ?? patient.telefone ?? "Contato não informado"}</p></div><StatusBadge status={appointment.status} /></Link>)}</div>}
