@@ -50,7 +50,7 @@ function PatientProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [deleting, setDeleting] = useState(false);
-  const [activeTab, setActiveTab] = useState(() => new URLSearchParams(window.location.search).get("tab") === "anamnese" ? "anamnese" : "overview");
+  const [activeTab, setActiveTab] = useState("overview");
 
   function selectTab(value: string) {
     setActiveTab(value);
