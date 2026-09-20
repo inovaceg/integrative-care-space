@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Clipboard, FileText, Link2, Loader2, Pencil, Trash2, UserRoundPlus } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
@@ -75,6 +75,7 @@ function patientToInput(patient: PatientRecord): PatientInput {
 
 function PatientAnamneseButton({ patient }: { patient: PatientRecord }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [opening, setOpening] = useState(false);
   const [error, setError] = useState("");
 
@@ -85,8 +86,7 @@ function PatientAnamneseButton({ patient }: { patient: PatientRecord }) {
     try {
       const result = await generatePatientCompletionLink(user.id, patient.id);
       if (result.error || !result.token) throw result.error ?? new Error("Não foi possível gerar o link da anamnese.");
-      const link = `${window.location.origin}/anamnese/${result.token}`;
-      window.location.assign(link);
+      await navigate({ to: "/anamnese/$token", params: { token: result.token } });
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Não foi possível abrir a anamnese.");
     } finally {
@@ -98,7 +98,7 @@ function PatientAnamneseButton({ patient }: { patient: PatientRecord }) {
     <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={() => void openQuestionnaire()} disabled={opening || !user}>
       {opening ? <Loader2 className="size-4 animate-spin" /> : <FileText className="size-4" />} {opening ? "Abrindo..." : "Anamnese"}
     </Button>
-    {error && <span role="alert" className="sr-only">{error}</span>}
+    {error && <span role="alert" className="max-w-xs text-sm text-red-600">{error}</span>}
   </>;
 }
 
