@@ -86,7 +86,7 @@ function PatientAnamneseButton({ patient }: { patient: PatientRecord }) {
       const result = await generatePatientCompletionLink(user.id, patient.id);
       if (result.error || !result.token) throw result.error ?? new Error("Não foi possível gerar o link da anamnese.");
       const link = `${window.location.origin}/anamnese/${result.token}`;
-      window.open(link, "_blank", "noopener,noreferrer");
+      window.location.assign(link);
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Não foi possível abrir a anamnese.");
     } finally {
