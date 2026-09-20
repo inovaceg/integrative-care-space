@@ -63,7 +63,7 @@ function PatientProfilePage() {
   }
 
   useEffect(() => { if (!authLoading) void loadProfile(); }, [authLoading, user?.id, id]);
-  useEffect(() => { if (window.location.hash === "#anamnese") setActiveTab("anamnese"); }, []);
+  useEffect(() => { if (new URLSearchParams(window.location.search).get("tab") === "anamnese" || window.location.hash === "#anamnese") setActiveTab("anamnese"); }, []);
 
   async function removePatient() {
     if (!user || !patient || !window.confirm(`Excluir o cadastro de ${patient.nome}? Essa ação não pode ser desfeita.`)) return;
