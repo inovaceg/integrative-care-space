@@ -37,11 +37,42 @@ function PublicAnamnesePage() {
   useEffect(() => { loadPublicAnamnese(token).then(data => { setName(data.firstName); setAnswers(current => ({ ...current, ...data.answers })); setState('ready') }).catch(error => { setMessage(error.message.includes('LINK_UTILIZADO') ? 'Esta ficha já foi enviada e não aceita novas alterações.' : 'Este link é inválido ou expirou.'); setState(error.message.includes('LINK_UTILIZADO') ? 'completed' : 'invalid') }) }, [token])
   const risk = value('pensamentos_morte') === 'Sim, neste momento' || value('pensamentos_presentes_agora') === 'Sim'
   const progress = ((step + 1) / steps.length) * 100
-  const missingStepOne = !value('motivo_atendimento') || !value('modalidade') || !value('inicio_queixa') || !value('impacto_vida') || !value('expectativa_tratamento')
-  const canContinue = step !== 0 || !missingStepOne
+  function validationMessage(currentStep: number) {
+    const required = (keys: string[]) => keys.find(key => !value(key).trim())
+    if (currentStep === 0) {
+      const missing = required(['motivo_atendimento', 'modalidade', 'inicio_queixa', 'impacto_vida', 'expectativa_tratamento'])
+      return missing ? 'Preencha todos os campos obrigatórios desta etapa antes de continuar.' : ''
+    }
+    if (currentStep === 1) {
+      const missing = required(['doencas', 'cirurgias', 'alergias', 'medicamentos', 'acompanhamento', 'exames'])
+      if (missing) return 'Responda todas as perguntas desta etapa antes de continuar.'
+      if (yes('doencas') && !value('doencas_detalhes')) return 'Informe quais doenças ou condições de saúde você possui.'
+      if (yes('alergias') && !value('alergias_detalhes')) return 'Detalhe suas alergias antes de continuar.'
+      if (yes('medicamentos') && !value('medicamentos_detalhes')) return 'Informe os medicamentos e suplementos utilizados.'
+      return ''
+    }
+    if (currentStep === 2) {
+      const missing = required(['alimentacao', 'sono', 'atividade_fisica', 'substancias'])
+      if (missing) return 'Preencha ou responda todas as perguntas desta etapa antes de continuar.'
+      if (yes('atividade_fisica') && !value('atividade_fisica_detalhes')) return 'Informe o tipo e a frequência da atividade física.'
+      if (yes('substancias') && !value('substancias_detalhes')) return 'Informe quais substâncias utiliza, a frequência e a última utilização.'
+      return ''
+    }
+    if (currentStep === 3) {
+      const missing = required(['pensamentos_morte', 'rede_apoio', 'traumas'])
+      if (missing) return 'Responda as perguntas obrigatórias de saúde emocional antes de continuar.'
+      if (risk && (!value('pensamentos_presentes_agora') || !value('planejamento') || !value('acesso_meios'))) return 'Responda todas as perguntas de segurança apresentadas.'
+      if (yes('rede_apoio') && (!value('rede_apoio_nome') || !value('rede_apoio_vinculo') || !value('rede_apoio_telefone'))) return 'Informe nome, vínculo e telefone da sua rede de apoio.'
+      return ''
+    }
+    if (currentStep === 4) return value('relacionamentos') ? '' : 'Descreva seus relacionamentos antes de continuar.'
+    return ''
+  }
+  const missingStepOne = Boolean(validationMessage(0))
+  const canContinue = !validationMessage(step)
 
   async function saveDraft() { setSaving(true); setMessage(''); try { await savePublicAnamnese(token, answers); setMessage('Respostas salvas.'); } catch { setMessage('Não foi possível salvar agora. Tente novamente.') } finally { setSaving(false) } }
-  async function submit(event: FormEvent) { event.preventDefault(); if (missingStepOne || !consent.truth || !consent.lgpd || !consent.urgent || !consent.signature.trim()) { setMessage('Revise os campos obrigatórios e os consentimentos antes de enviar.'); return } setSaving(true); setMessage(''); try { await submitPublicAnamnese(token, answers, consent); setState('completed'); setMessage('Ficha enviada com sucesso. Você pode fechar esta página.') } catch { setMessage('Não foi possível enviar a ficha. Verifique os campos obrigatórios e tente novamente.') } finally { setSaving(false) } }
+  async function submit(event: FormEvent) { event.preventDefault(); const stepError = validationMessage(step); if (stepError || !consent.truth || !consent.lgpd || !consent.urgent || !consent.signature.trim()) { setMessage(stepError || 'Revise os campos obrigatórios e os consentimentos antes de enviar.'); return } setSaving(true); setMessage(''); try { await submitPublicAnamnese(token, answers, consent); setState('completed'); setMessage('Ficha enviada com sucesso. Você pode fechar esta página.') } catch { setMessage('Não foi possível enviar a ficha. Verifique os campos obrigatórios e tente novamente.') } finally { setSaving(false) } }
   const symptomValues = Array.isArray(answers['sintomas']) ? answers['sintomas'] : []
   function toggleSymptom(symptom: string) { set('sintomas', symptomValues.includes(symptom) ? symptomValues.filter(item => item !== symptom) : [...symptomValues, symptom]) }
 
@@ -60,6 +91,6 @@ function PublicAnamnesePage() {
   </section>}
   {step === 5 && <section className="space-y-6">{['Biomedicina/Estética', 'Saúde Integrativa', 'Atendimento Integrado'].includes(value('modalidade')) && <div className="space-y-5 rounded-xl border border-[#bde1d9] bg-[#f1faf8] p-4"><h2 className="font-display text-lg font-semibold text-slate-800">29. Informações para atendimento biomédico, estético ou integrativo</h2><Textarea value={value('objetivo_biomedicina')} onChange={event => set('objetivo_biomedicina', event.target.value)} placeholder="Região, condição ou objetivo que deseja tratar" /><div className="grid gap-3 sm:grid-cols-2"><Input value={value('peso')} onChange={event => set('peso', event.target.value)} placeholder="Peso atual" /><Input value={value('altura')} onChange={event => set('altura', event.target.value)} placeholder="Altura" /><Input value={value('tratamentos_anteriores')} onChange={event => set('tratamentos_anteriores', event.target.value)} placeholder="Tratamentos anteriores" /></div>{['tirzepatida', 'semaglutida', 'outros_medicamentos_emagrecimento', 'gestacao_amamentacao', 'anticoagulante', 'tendencia_manchas', 'tendencia_queloides', 'doenca_autoimune', 'herpes_recorrente', 'uso_acidos', 'isotretinoina'].map(key => <Question key={key} label={key.replaceAll('_', ' ')}><Choice value={value(key)} onChange={next => set(key, next)} options={['Sim', 'Não']} /></Question>)}<label className="flex gap-3 text-sm"><Checkbox checked={consent.clinicalPhoto} onCheckedChange={checked => setConsent(current => ({ ...current, clinicalPhoto: checked === true }))} />Autorizo registro fotográfico apenas no prontuário clínico.</label><label className="flex gap-3 text-sm"><Checkbox checked={consent.publicPhoto} onCheckedChange={checked => setConsent(current => ({ ...current, publicPhoto: checked === true }))} />Autorizo divulgação pública de imagens (opcional e não necessária ao tratamento).</label></div>}<Question label="30. Existe informação importante que não foi perguntada? (opcional)"><Textarea rows={4} value={value('observacoes_finais')} onChange={event => set('observacoes_finais', event.target.value)} /></Question><div className="space-y-4 rounded-xl border border-slate-200 p-4"><h2 className="font-display text-lg font-semibold">Consentimentos finais</h2>{([['truth', 'Declaro que as informações fornecidas são verdadeiras e completas conforme meu conhecimento.'], ['lgpd', 'Autorizo o tratamento dos meus dados pessoais e dados de saúde exclusivamente para atendimento, acompanhamento e prontuário, conforme a LGPD.'], ['urgent', 'Estou ciente de que o preenchimento desta ficha não substitui consulta, avaliação profissional ou atendimento de urgência.']] as const).map(([key, label]) => <label key={key} className="flex gap-3 text-sm leading-6"><Checkbox checked={consent[key]} onCheckedChange={checked => setConsent(current => ({ ...current, [key]: checked === true }))} />{label}</label>)}<Question label="Nome completo para assinatura eletrônica" required><Input required value={consent.signature} onChange={event => setConsent(current => ({ ...current, signature: event.target.value }))} /></Question><p className="text-xs text-slate-500">Termo versão anamnese-v1 · data e horário serão registrados no envio.</p></div></section>}
   {message && <p role="status" className={message.includes('não foi') || message.includes('Revise') ? 'text-sm text-red-700' : 'text-sm text-emerald-700'}>{message}</p>}
-  <div className="flex flex-wrap justify-between gap-3 border-t border-slate-100 pt-5"><Button type="button" variant="outline" disabled={step === 0 || saving} onClick={() => setStep(current => current - 1)}><ChevronLeft className="mr-1 size-4" />Voltar</Button><div className="flex gap-2"><Button type="button" variant="outline" disabled={saving} onClick={() => void saveDraft()}>{saving ? <Loader2 className="size-4 animate-spin" /> : 'Salvar respostas'}</Button>{step < steps.length - 1 ? <Button type="button" disabled={!canContinue || saving} className="bg-[#2f8f82] hover:bg-[#26796e]" onClick={() => setStep(current => current + 1)}>Continuar<ChevronRight className="ml-1 size-4" /></Button> : <Button type="submit" disabled={saving} className="bg-[#2f8f82] hover:bg-[#26796e]">{saving ? <Loader2 className="mr-1 size-4 animate-spin" /> : <CheckCircle2 className="mr-1 size-4" />}Enviar anamnese</Button>}</div></div>
+  <div className="flex flex-wrap justify-between gap-3 border-t border-slate-100 pt-5"><Button type="button" variant="outline" disabled={step === 0 || saving} onClick={() => setStep(current => current - 1)}><ChevronLeft className="mr-1 size-4" />Voltar</Button><div className="flex gap-2"><Button type="button" variant="outline" disabled={saving} onClick={() => void saveDraft()}>{saving ? <Loader2 className="size-4 animate-spin" /> : 'Salvar respostas'}</Button>{step < steps.length - 1 ? <Button type="button" disabled={!canContinue || saving} className="bg-[#2f8f82] hover:bg-[#26796e]" onClick={() => { const error = validationMessage(step); if (error) { setMessage(error); return } setMessage(''); setStep(current => current + 1) }}>Continuar<ChevronRight className="ml-1 size-4" /></Button> : <Button type="submit" disabled={saving} className="bg-[#2f8f82] hover:bg-[#26796e]">{saving ? <Loader2 className="mr-1 size-4 animate-spin" /> : <CheckCircle2 className="mr-1 size-4" />}Enviar anamnese</Button>}</div></div>
   </form></CardContent></Card></main>
 }
