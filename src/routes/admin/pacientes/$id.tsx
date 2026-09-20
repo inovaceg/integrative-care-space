@@ -50,6 +50,7 @@ function PatientProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
 
   async function loadProfile() {
     if (!user) return;
@@ -62,6 +63,7 @@ function PatientProfilePage() {
   }
 
   useEffect(() => { if (!authLoading) void loadProfile(); }, [authLoading, user?.id, id]);
+  useEffect(() => { if (window.location.hash === "#anamnese") setActiveTab("anamnese"); }, []);
 
   async function removePatient() {
     if (!user || !patient || !window.confirm(`Excluir o cadastro de ${patient.nome}? Essa ação não pode ser desfeita.`)) return;
