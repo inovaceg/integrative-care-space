@@ -51,6 +51,15 @@ export async function fetchAnamneseStatus(patientId: string) {
   return request<{ patient: { nome: string; telefone: string | null; token_anamnese: string | null; token_expira_em: string | null }; anamnese: AnamneseRecord | null }>({ action: 'admin-status', patientId }, true)
 }
 
+export async function fetchCompletedAnamnese(patientId: string, professionalId: string) {
+  const { data: patient, error: patientError } = await supabase.from('pacientes').select('nome').eq('id', patientId).eq('profissional_id', professionalId).maybeSingle()
+  if (patientError) throw patientError
+  if (!patient) return { patient: null, anamnese: null }
+  const { data, error } = await supabase.from('anamneses').select('*').eq('paciente_id', patientId).eq('profissional_id', professionalId).not('preenchido_em', 'is', null).order('updated_at', { ascending: false }).order('created_at', { ascending: false }).limit(1).maybeSingle()
+  if (error) throw error
+  return { patient: patient as { nome: string }, anamnese: data as AnamneseRecord | null }
+}
+
 export async function generateAnamneseLink(patientId: string) {
   return request<{ token: string; expiresAt: string }>({ action: 'admin-generate', patientId }, true)
 }

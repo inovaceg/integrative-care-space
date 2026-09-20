@@ -37,6 +37,7 @@ import { Route as AdminRelatoriosRouteImport } from './routes/admin/relatorios'
 import { Route as AnamneseTokenRouteImport } from './routes/anamnese/$token'
 import { Route as CompletarCadastroTokenRouteImport } from './routes/completar-cadastro/$token'
 import { Route as AdminPacientesIdRouteImport } from './routes/admin/pacientes/$id'
+import { Route as AdminPacientesIdAnamneseRouteImport } from './routes/admin/pacientes/$id/anamnese'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -178,6 +179,12 @@ const AdminPacientesIdRoute = AdminPacientesIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AdminPacientesRoute,
 } as any)
+const AdminPacientesIdAnamneseRoute =
+  AdminPacientesIdAnamneseRouteImport.update({
+    id: '/anamnese',
+    path: '/anamnese',
+    getParentRoute: () => AdminPacientesIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -207,7 +214,8 @@ export interface FileRoutesByFullPath {
   '/anamnese/$token': typeof AnamneseTokenRoute
   '/completar-cadastro/$token': typeof CompletarCadastroTokenRoute
   '/admin/': typeof AdminIndexRoute
-  '/admin/pacientes/$id': typeof AdminPacientesIdRoute
+  '/admin/pacientes/$id': typeof AdminPacientesIdRouteWithChildren
+  '/admin/pacientes/$id/anamnese': typeof AdminPacientesIdAnamneseRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -236,7 +244,8 @@ export interface FileRoutesByTo {
   '/anamnese/$token': typeof AnamneseTokenRoute
   '/completar-cadastro/$token': typeof CompletarCadastroTokenRoute
   '/admin': typeof AdminIndexRoute
-  '/admin/pacientes/$id': typeof AdminPacientesIdRoute
+  '/admin/pacientes/$id': typeof AdminPacientesIdRouteWithChildren
+  '/admin/pacientes/$id/anamnese': typeof AdminPacientesIdAnamneseRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -267,7 +276,8 @@ export interface FileRoutesById {
   '/anamnese/$token': typeof AnamneseTokenRoute
   '/completar-cadastro/$token': typeof CompletarCadastroTokenRoute
   '/admin/': typeof AdminIndexRoute
-  '/admin/pacientes/$id': typeof AdminPacientesIdRoute
+  '/admin/pacientes/$id': typeof AdminPacientesIdRouteWithChildren
+  '/admin/pacientes/$id/anamnese': typeof AdminPacientesIdAnamneseRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -300,6 +310,7 @@ export interface FileRouteTypes {
     | '/completar-cadastro/$token'
     | '/admin/'
     | '/admin/pacientes/$id'
+    | '/admin/pacientes/$id/anamnese'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -329,6 +340,7 @@ export interface FileRouteTypes {
     | '/completar-cadastro/$token'
     | '/admin'
     | '/admin/pacientes/$id'
+    | '/admin/pacientes/$id/anamnese'
   id:
     | '__root__'
     | '/'
@@ -359,6 +371,7 @@ export interface FileRouteTypes {
     | '/completar-cadastro/$token'
     | '/admin/'
     | '/admin/pacientes/$id'
+    | '/admin/pacientes/$id/anamnese'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -576,15 +589,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPacientesIdRouteImport
       parentRoute: typeof AdminPacientesRoute
     }
+    '/admin/pacientes/$id/anamnese': {
+      id: '/admin/pacientes/$id/anamnese'
+      path: '/anamnese'
+      fullPath: '/admin/pacientes/$id/anamnese'
+      preLoaderRoute: typeof AdminPacientesIdAnamneseRouteImport
+      parentRoute: typeof AdminPacientesIdRoute
+    }
   }
 }
 
+interface AdminPacientesIdRouteChildren {
+  AdminPacientesIdAnamneseRoute: typeof AdminPacientesIdAnamneseRoute
+}
+
+const AdminPacientesIdRouteChildren: AdminPacientesIdRouteChildren = {
+  AdminPacientesIdAnamneseRoute: AdminPacientesIdAnamneseRoute,
+}
+
+const AdminPacientesIdRouteWithChildren =
+  AdminPacientesIdRoute._addFileChildren(AdminPacientesIdRouteChildren)
+
 interface AdminPacientesRouteChildren {
-  AdminPacientesIdRoute: typeof AdminPacientesIdRoute
+  AdminPacientesIdRoute: typeof AdminPacientesIdRouteWithChildren
 }
 
 const AdminPacientesRouteChildren: AdminPacientesRouteChildren = {
-  AdminPacientesIdRoute: AdminPacientesIdRoute,
+  AdminPacientesIdRoute: AdminPacientesIdRouteWithChildren,
 }
 
 const AdminPacientesRouteWithChildren = AdminPacientesRoute._addFileChildren(
