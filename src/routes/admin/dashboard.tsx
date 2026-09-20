@@ -46,12 +46,16 @@ function DashboardPage() {
   const pendingAppointments = useMemo(() => {
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
-    return appointments.filter((appointment) => {
-      const amount = Number(appointment.amount_paid ?? 0);
-      return new Date(appointment.start_time) >= startOfToday && appointment.status !== "cancelled" && appointment.status === "pending" && amount > 0;
-    });
+    return appointments
+      .filter((appointment) => appointment.status === "pending" && new Date(appointment.start_time) >= startOfToday)
+      .sort((a, b) => {
+        const startTimeDifference = new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
+        return startTimeDifference || a.id.localeCompare(b.id);
+      });
   }, [appointments]);
-  const pendingAppointmentsTotal = useMemo(() => pendingAppointments.reduce((total, appointment) => total + Number(appointment.amount_paid ?? 0), 0), [pendingAppointments]);
+  const pendingAppointmentsTotal = useMemo(() => pendingAppointments
+    .filter((appointment) => Number(appointment.amount_paid ?? 0) > 0)
+    .reduce((total, appointment) => total + Number(appointment.amount_paid ?? 0), 0), [pendingAppointments]);
   const confirmedAppointments = useMemo(() => {
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
