@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Clipboard, FileText, Link2, Loader2, Pencil, Trash2, UserRoundPlus } from "lucide-react";
+import { Clipboard, ExternalLink, FileText, Link2, Loader2, Pencil, Trash2, UserRoundPlus } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { AdminLayout, EmptyState, PageIntro, PatientAvatar, SearchInput, StatusBadge } from "@/components/admin/admin-ui";
@@ -130,12 +130,12 @@ function PatientCompletionLinkButton({ patient, variant = "ghost" }: { patient: 
       }
       const generatedLink = `${window.location.origin}/completar-cadastro/${result.token}`;
       setLink(generatedLink);
+      setOpen(true);
       try {
         await navigator.clipboard.writeText(generatedLink);
-        setMessage("Link copiado. Ele expira em 7 dias.");
+        setMessage("Link gerado e copiado. Ele expira em 7 dias.");
       } catch {
-        setMessage("Não foi possível copiar automaticamente. Selecione o link abaixo para copiar.");
-        setOpen(true);
+        setMessage("Link gerado. Toque no campo abaixo para selecionar e copiar.");
       }
     } catch {
       setMessage("Não foi possível gerar o link.");
@@ -153,7 +153,7 @@ function PatientCompletionLinkButton({ patient, variant = "ghost" }: { patient: 
       <DialogContent>
         <DialogHeader><DialogTitle>Link para completar cadastro</DialogTitle><DialogDescription>{message}</DialogDescription></DialogHeader>
         <div className="grid gap-2"><Label htmlFor={`completion-link-${patient.id}`}>Link</Label><Input id={`completion-link-${patient.id}`} value={link} readOnly onFocus={(event) => event.currentTarget.select()} /></div>
-        <DialogFooter><Button type="button" variant="outline" onClick={() => setOpen(false)}>Fechar</Button><Button type="button" onClick={async () => { try { await navigator.clipboard.writeText(link); setMessage("Link copiado. Ele expira em 7 dias."); setOpen(false); } catch { setMessage("Não foi possível copiar. Selecione o link para copiar."); } }}><Clipboard className="mr-2 size-4" /> Copiar</Button></DialogFooter>
+        <DialogFooter><Button type="button" variant="outline" onClick={() => setOpen(false)}>Fechar</Button><Button type="button" variant="outline" asChild><a href={link} target="_blank" rel="noreferrer"><ExternalLink className="mr-2 size-4" /> Abrir cadastro</a></Button><Button type="button" onClick={async () => { try { await navigator.clipboard.writeText(link); setMessage("Link copiado. Ele expira em 7 dias."); } catch { setMessage("Não foi possível copiar. Toque no campo para selecionar o link."); } }}><Clipboard className="mr-2 size-4" /> Copiar</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   </>;
