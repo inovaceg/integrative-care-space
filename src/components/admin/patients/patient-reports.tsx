@@ -3,8 +3,12 @@ import { FileText, Loader2, Printer } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-provider'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { supabase } from '@/integrations/supabase/client'
 import type { PatientRecord } from '@/lib/admin/records'
+
+const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
 
 type ReportPatient = Pick<PatientRecord, 'id' | 'nome' | 'data_nascimento' | 'telefone' | 'endereco' | 'numero' | 'complemento' | 'bairro' | 'cidade' | 'estado' | 'cidade_estado' | 'cep'>
 
@@ -20,15 +24,24 @@ export function PatientReports() {
   const [patients, setPatients] = useState<ReportPatient[] | null>(null)
   const [generatedAt, setGeneratedAt] = useState('')
   const [error, setError] = useState('')
+  const [reportType, setReportType] = useState('registration')
+  const [month, setMonth] = useState(() => String(new Date().getMonth() + 1))
   const reportRef = useRef<HTMLDivElement>(null)
   const requestVersion = useRef(0)
+  const birthdays = reportType === 'birthdays'
+  const reportTitle = birthdays ? `Aniversariantes do mês — ${months[Number(month) - 1]}` : 'Cadastro de pacientes'
 
-  function changeOpen(next: boolean) {
+  function resetReport() {
     requestVersion.current += 1
-    setOpen(next)
     setPatients(null)
     setError('')
     setLoading(false)
+  }
+
+  function changeOpen(next: boolean) {
+    resetReport()
+    setOpen(next)
+    if (next) setMonth(String(new Date().getMonth() + 1))
   }
 
   async function generate() {
@@ -49,8 +62,14 @@ export function PatientReports() {
         rows.push(...(data ?? []))
         if (!data || data.length < pageSize) break
       }
-      rows.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }) || a.id.localeCompare(b.id))
-      setPatients(rows)
+      const reportRows = birthdays
+        ? rows.filter(patient => patient.data_nascimento && Number(patient.data_nascimento.slice(5, 7)) === Number(month))
+        : rows
+      reportRows.sort((a, b) => {
+        const dayOrder = birthdays ? Number(a.data_nascimento?.slice(8, 10)) - Number(b.data_nascimento?.slice(8, 10)) : 0
+        return dayOrder || a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }) || a.id.localeCompare(b.id)
+      })
+      setPatients(reportRows)
       setGeneratedAt(new Date().toLocaleString('pt-BR'))
     } catch {
       if (requestVersion.current === version) setError('Não foi possível gerar o relatório. Tente novamente.')
@@ -68,7 +87,7 @@ export function PatientReports() {
       return
     }
     printWindow.opener = null
-    printWindow.document.title = 'Cadastro de pacientes'
+    printWindow.document.title = reportTitle
     printWindow.document.documentElement.lang = 'pt-BR'
     const style = printWindow.document.createElement('style')
     style.textContent = `
@@ -94,10 +113,26 @@ export function PatientReports() {
     <DialogContent className="max-h-[90vh] max-w-6xl overflow-y-auto">
       <DialogHeader>
         <DialogTitle>Relatórios de pacientes</DialogTitle>
-        <DialogDescription>Gere o cadastro de todos os seus pacientes, independentemente da busca na lista.</DialogDescription>
+        <DialogDescription>Escolha o relatório que deseja emitir, independentemente da busca na lista de pacientes.</DialogDescription>
       </DialogHeader>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="patient-report-type">Relatório</Label>
+          <Select value={reportType} onValueChange={value => { resetReport(); setReportType(value) }}>
+            <SelectTrigger id="patient-report-type"><SelectValue /></SelectTrigger>
+            <SelectContent><SelectItem value="registration">Cadastro de pacientes</SelectItem><SelectItem value="birthdays">Aniversariantes do mês</SelectItem></SelectContent>
+          </Select>
+        </div>
+        {birthdays && <div className="space-y-2">
+          <Label htmlFor="patient-report-month">Mês dos aniversários</Label>
+          <Select value={month} onValueChange={value => { resetReport(); setMonth(value) }}>
+            <SelectTrigger id="patient-report-month"><SelectValue /></SelectTrigger>
+            <SelectContent>{months.map((name, index) => <SelectItem key={name} value={String(index + 1)}>{name}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>}
+      </div>
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 p-4">
-        <div><h2 className="font-semibold text-slate-800">Cadastro de pacientes</h2><p className="text-sm text-slate-500">Nome, nascimento, telefone e endereço, em ordem alfabética.</p></div>
+        <div><h2 className="font-semibold text-slate-800">{reportTitle}</h2><p className="text-sm text-slate-500">{birthdays ? 'Pacientes do mês escolhido, ordenados pelo dia do aniversário. Cadastros sem data de nascimento não são incluídos.' : 'Nome, nascimento, telefone e endereço, em ordem alfabética.'}</p></div>
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => void generate()} disabled={loading || !user}>{loading && <Loader2 className="mr-2 size-4 animate-spin" />}{loading ? 'Gerando...' : patients ? 'Atualizar relatório' : 'Gerar relatório'}</Button>
           <Button variant="outline" disabled={!patients?.length || loading} onClick={printReport}><Printer className="mr-2 size-4" />Imprimir / Salvar PDF</Button>
@@ -106,8 +141,9 @@ export function PatientReports() {
       {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
       {patients && <>
         <div ref={reportRef} className="space-y-3">
-          <h2 className="text-xl font-semibold text-slate-800">Cadastro de pacientes</h2>
+          <h2 className="text-xl font-semibold text-slate-800">{reportTitle}</h2>
           <p className="text-sm text-slate-500">Emitido em {generatedAt} · Total: {patients.length} paciente(s)</p>
+          {birthdays && <p className="text-sm text-slate-500">Ordem: dia do aniversário, com desempate por nome. Apenas pacientes com data de nascimento cadastrada.</p>}
           <p className="text-xs text-slate-500">Confidencial — contém dados pessoais. Uso restrito ao atendimento.</p>
           {patients.length ? <div className="overflow-x-auto"><table className="w-full min-w-[750px] border-collapse text-left text-sm">
             <thead><tr className="bg-slate-50">{['Nome do paciente', 'Data de nascimento', 'Telefone', 'Endereço'].map(label => <th key={label} className="border border-slate-200 p-3 font-semibold">{label}</th>)}</tr></thead>
@@ -117,7 +153,7 @@ export function PatientReports() {
               <td className="border border-slate-200 p-3 align-top">{patient.telefone || 'Não informado'}</td>
               <td className="border border-slate-200 p-3 align-top">{address(patient)}</td>
             </tr>)}</tbody>
-          </table></div> : <p className="py-6 text-center text-sm text-slate-500">Nenhum paciente cadastrado para emitir o relatório.</p>}
+          </table></div> : <p className="py-6 text-center text-sm text-slate-500">{birthdays ? `Nenhum aniversariante com data de nascimento cadastrada em ${months[Number(month) - 1]}.` : 'Nenhum paciente cadastrado para emitir o relatório.'}</p>}
         </div>
         {patients.length > 0 && <p className="text-xs text-slate-500">Para baixar o arquivo, clique em “Imprimir / Salvar PDF” e escolha “Salvar como PDF” na janela de impressão.</p>}
       </>}
