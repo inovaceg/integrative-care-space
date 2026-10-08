@@ -22,7 +22,7 @@ function Page() {
         tone="biomedicine"
         eyebrow="Biomedicina • CRBM 30421"
         title="Biomedicina Integrativa e Estética"
-        text="Protocolos individualizados voltados à saúde, estética e bem-estar."
+        text="Uma abordagem individualizada voltada à avaliação, ao equilíbrio do organismo, à saúde integrativa, à estética e ao bem-estar."
       />
       <section className="section-space">
         <div className="mx-auto w-[calc(100%-2rem)] max-w-[86rem]">

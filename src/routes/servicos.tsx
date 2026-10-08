@@ -1,5 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AreaCards, PageIntro } from "@/components/page-parts";
 import { createSeoHead } from "@/lib/seo";
-export const Route = createFileRoute("/servicos")({ head: () => createSeoHead({ title: "Serviços de Psicologia e Biomedicina | Juiz de Fora", description: "Veja os serviços de Psicologia e Saúde Mental e de Biomedicina Integrativa e Estética oferecidos em Juiz de Fora.", path: "/servicos" }), component: Page });
-function Page(){return <><PageIntro eyebrow="Serviços" title="Duas áreas de cuidado, competências bem definidas" text="Consulte os atendimentos disponíveis em Psicologia e Saúde Mental ou em Biomedicina Integrativa e Estética."/><section className="section-space"><div className="container-site"><AreaCards/><p className="mt-8 text-sm leading-6 text-muted-foreground">A escolha de acompanhamento ou procedimento depende de avaliação profissional individualizada. As áreas não compartilham atribuições profissionais.</p></div></section></>}
+export const Route = createFileRoute("/servicos")({
+  head: () => createSeoHead({
+    title: "Serviços de Psicologia e Biomedicina | Juiz de Fora",
+    description: "Veja os serviços de Psicologia e Saúde Mental e de Biomedicina Integrativa e Estética oferecidos em Juiz de Fora.",
+    path: "/servicos",
+  }),
+  component: Page,
+});
+function Page(){return <><PageIntro eyebrow="Serviços" title="Duas áreas de cuidado, competências bem definidas" text="Conheça os serviços disponíveis em cada área. Cada atendimento é definido após avaliação profissional."/><section className="section-space"><div className="container-site"><AreaCards/><p className="mt-8 text-sm leading-6 text-muted-foreground">A escolha de acompanhamento ou procedimento depende de avaliação profissional individualizada. As áreas não compartilham atribuições profissionais.</p></div></section></>};

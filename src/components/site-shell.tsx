@@ -20,13 +20,13 @@ export function Brand() {
 export function Header() {
   const [open, setOpen] = useState(false);
   return (
-    <header className="sticky top-0 z-50 border-b border-border/70 bg-background/90 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-border/70 bg-background/95 backdrop-blur-xl">
       <div className="container-site grid min-h-20 grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
         <Brand />
         <nav className="hidden items-center gap-1 xl:flex" aria-label="Navegação principal">
-          {navItems.map(([label, to]) => <Link key={to} to={to} activeProps={{ className: "text-primary" }} className="px-2.5 py-3 text-sm text-muted-foreground transition-colors hover:text-foreground">{label}</Link>)}
-          <Link to="/admin/login" className="px-2.5 py-3 text-sm text-muted-foreground transition-colors hover:text-foreground">Área administrativa</Link>
-          <Button asChild size="lg" className="ml-2"><a href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackAnalyticsEvents(["appointment_click", "whatsapp_click"])}><MessageCircle /> Agende sua consulta</a></Button>
+          {navItems.map(([label, to]) => <Link key={to} to={to} activeProps={{ className: "text-primary" }} className="px-3 py-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{label}</Link>)}
+          <Link to="/admin/login" className="px-3 py-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Área administrativa</Link>
+          <Button asChild size="lg" className="ml-2"><a href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackAnalyticsEvents(["appointment_click", "whatsapp_click"])}><MessageCircle className="size-4 mr-2" />Agende sua consulta</a></Button>
         </nav>
         <div className="flex items-center gap-2 xl:hidden">
           <Button asChild size="sm" className="hidden sm:inline-flex"><a href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackAnalyticsEvents(["appointment_click", "whatsapp_click"])}>Agendar</a></Button>
@@ -48,9 +48,32 @@ export function Footer() {
   return (
     <footer className="bg-footer text-footer-foreground">
       <div className="container-site grid gap-10 py-14 lg:grid-cols-[1.2fr_1fr_1fr]">
-        <div><div className="font-display text-2xl">Espaço de Saúde Integrativa</div><p className="mt-3 text-sm leading-7 text-footer-muted">Dr. Frederick Parreira<br />Psicólogo • CRP 04/86194<br />Biomédico • CRBM 30421</p></div>
-        <div><h2 className="text-xs font-bold uppercase tracking-[0.18em] text-gold-soft">Endereço</h2><address className="mt-3 text-sm not-italic leading-7 text-footer-muted">Rua Fernando Lobo, 102 — Sala 704<br />Centro — Juiz de Fora/MG<br /><a className="hover:text-footer-foreground" href="tel:+5532991931779">(32) 99193-1779</a></address></div>
-        <div><h2 className="text-xs font-bold uppercase tracking-[0.18em] text-gold-soft">Navegue</h2><nav className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-footer-muted">{navItems.filter((_, i) => i !== 5 && i !== 7).map(([label, to]) => <Link key={to} to={to} className="hover:text-footer-foreground">{label}</Link>)}<Link to="/politica-de-privacidade" className="hover:text-footer-foreground">Privacidade</Link><Link to="/termos-de-uso" className="hover:text-footer-foreground">Termos de Uso</Link></nav></div>
+        <div>
+          <div className="font-display text-2xl">Espaço de Saúde Integrativa</div>
+          <p className="mt-3 text-sm leading-7 text-footer-muted">Dr. Frederick Parreira<br />Psicólogo • CRP 04/86194<br />Biomédico • CRBM 30421</p>
+        </div>
+        <div>
+          <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-gold-soft">Endereço</h2>
+          <address className="mt-3 text-sm not-italic leading-7 text-footer-muted">
+            Edifício Europa Central Tower<br />
+            Rua Fernando Lobo, 102 — Sala 704<br />
+            Centro — Juiz de Fora/MG<br />
+            <a className="hover:text-footer-foreground" href="tel:+5532991931779">(32) 99193-1779</a>
+          </address>
+        </div>
+        <div>
+          <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-gold-soft">Navegue</h2>
+          <nav className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-footer-muted">
+            <Link to="/psicologia" className="hover:text-footer-foreground">Psicologia</Link>
+            <Link to="/biomedicina" className="hover:text-footer-foreground">Biomedicina</Link>
+            <Link to="/servicos" className="hover:text-footer-foreground">Serviços</Link>
+            <Link to="/sobre" className="hover:text-footer-foreground">Sobre</Link>
+            <Link to="/faq" className="hover:text-footer-foreground">FAQ</Link>
+            <Link to="/contato" className="hover:text-footer-foreground">Contato</Link>
+            <Link to="/politica-de-privacidade" className="hover:text-footer-foreground">Privacidade</Link>
+            <Link to="/termos-de-uso" className="hover:text-footer-foreground">Termos de Uso</Link>
+          </nav>
+        </div>
       </div>
       <div className="border-t border-footer-line"><div className="container-site py-5 text-xs text-footer-muted">© 2026 Espaço de Saúde Integrativa Dr. Frederick Parreira. Todos os direitos reservados.</div></div>
     </footer>
