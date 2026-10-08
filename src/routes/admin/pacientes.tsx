@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useChildMatches, useNavigate } from "@tanstack/react-router";
 import { Clipboard, ExternalLink, FileText, Link2, Loader2, Pencil, Trash2, UserRoundPlus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
@@ -14,7 +14,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ExamAttachments } from "@/components/admin/patients/exam-attachments";
 import { createPatient, deletePatient, fetchPatient, fetchPatients, generatePatientCompletionLink, updatePatient, type PatientInput, type PatientRecord } from "@/lib/admin/records";
 
-export const Route = createFileRoute("/admin/pacientes")({ component: PatientsPage });
+export const Route = createFileRoute("/admin/pacientes")({ component: PatientsRouteComponent });
+
+function PatientsRouteComponent() {
+  const hasChildMatches = useChildMatches({ select: (matches) => matches.length > 0 });
+  return hasChildMatches ? <Outlet /> : <PatientsPage />;
+}
 
 const emptyPatient: PatientInput = {
   nome: "", data_nascimento: null, email: null, telefone: null, status: "pendente", cpf: null,

@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useParams, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useChildMatches, useParams, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, CalendarPlus, FileText, Loader2, Mail, Phone, Save, ShieldCheck, Trash2 } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
@@ -13,7 +13,12 @@ import { AnamneseTab } from "@/components/admin/patients/anamnese-tab";
 import { ExamAttachments } from "@/components/admin/patients/exam-attachments";
 import { deletePatient, fetchAppointments, fetchPatient, generatePatientCompletionLink, updatePatient, type AppointmentRecord, type PatientInput, type PatientRecord } from "@/lib/admin/records";
 
-export const Route = createFileRoute("/admin/pacientes/$id")({ component: PatientProfilePage });
+export const Route = createFileRoute("/admin/pacientes/$id")({ component: PatientProfileRouteComponent });
+
+function PatientProfileRouteComponent() {
+  const hasChildMatches = useChildMatches({ select: (matches) => matches.length > 0 });
+  return hasChildMatches ? <Outlet /> : <PatientProfilePage />;
+}
 
 function initials(name: string) {
   return name.split(" ").filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "P";
