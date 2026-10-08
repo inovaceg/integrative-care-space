@@ -5,6 +5,7 @@ export type PatientRecord = {
   id: string;
   profissional_id: string;
   nome: string;
+  avatar_url?: string | null;
   created_at: string;
   data_nascimento: string | null;
   email: string | null;
@@ -49,8 +50,8 @@ export type AppointmentRecord = {
   due_date: string | null;
 };
 
-const patientFields = "id, profissional_id, nome, created_at, data_nascimento, email, telefone, status, cpf, cidade_estado, cep, endereco, numero, complemento, bairro, cidade, estado, nome_social, genero, pronomes, area, queixa_principal, data_primeiro_atendimento, como_conheceu, observacoes_iniciais, contato_emergencia_nome, contato_emergencia_parentesco, contato_emergencia_telefone";
-const patientListFields = "id, profissional_id, nome, created_at, data_nascimento, email, telefone, status";
+const patientFields = "id, profissional_id, avatar_url, nome, created_at, data_nascimento, email, telefone, status, cpf, cidade_estado, cep, endereco, numero, complemento, bairro, cidade, estado, nome_social, genero, pronomes, area, queixa_principal, data_primeiro_atendimento, como_conheceu, observacoes_iniciais, contato_emergencia_nome, contato_emergencia_parentesco, contato_emergencia_telefone";
+const patientListFields = "id, profissional_id, avatar_url, nome, created_at, data_nascimento, email, telefone, status";
 const appointmentFields = "id, patient_id, doctor_id, start_time, end_time, status, notes, payment_status, amount_paid, payment_date, due_date";
 
 export async function fetchPatients(userId: string) {
@@ -65,12 +66,31 @@ export async function fetchPatient(userId: string, patientId: string) {
   return supabase.from("pacientes").select(patientFields).eq("profissional_id", userId).eq("id", patientId).maybeSingle();
 }
 
-export async function createPatient(userId: string, input: PatientInput) {
-  return supabase.from("pacientes").insert({ ...input, profissional_id: userId }).select(patientFields).single();
+async function savePatient(userId: string, input: PatientInput, patientId?: string, photo?: File | null) {
+  let uploadedPath: string | null = null;
+  try {
+    if (photo) {
+      uploadedPath = `${userId}/${crypto.randomUUID()}.jpg`;
+      const { error } = await supabase.storage.from('patient-avatars').upload(uploadedPath, photo, { contentType: 'image/jpeg' });
+      if (error) return { data: null, error };
+    }
+    const values = uploadedPath ? { ...input, avatar_url: uploadedPath } : input;
+    const result = patientId
+      ? await supabase.from('pacientes').update(values).eq('profissional_id', userId).eq('id', patientId).select(patientFields).single()
+      : await supabase.from('pacientes').insert({ ...values, profissional_id: userId }).select(patientFields).single();
+    if (result.error && uploadedPath) await supabase.storage.from('patient-avatars').remove([uploadedPath]);
+    return result;
+  } catch {
+    return { data: null, error: new Error('Não foi possível salvar o paciente. Verifique a conexão e tente novamente.') };
+  }
 }
 
-export async function updatePatient(userId: string, patientId: string, input: PatientInput) {
-  return supabase.from("pacientes").update(input).eq("profissional_id", userId).eq("id", patientId).select(patientFields).single();
+export async function createPatient(userId: string, input: PatientInput, photo?: File | null) {
+  return savePatient(userId, input, undefined, photo);
+}
+
+export async function updatePatient(userId: string, patientId: string, input: PatientInput, photo?: File | null) {
+  return savePatient(userId, input, patientId, photo);
 }
 
 export async function deletePatient(userId: string, patientId: string) {
