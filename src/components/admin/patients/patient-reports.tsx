@@ -29,7 +29,8 @@ export function PatientReports() {
   const reportRef = useRef<HTMLDivElement>(null)
   const requestVersion = useRef(0)
   const birthdays = reportType === 'birthdays'
-  const reportTitle = birthdays ? `Aniversariantes do mês — ${months[Number(month) - 1]}` : 'Cadastro de pacientes'
+  const allMonths = month === 'all'
+  const reportTitle = birthdays ? (allMonths ? 'Aniversariantes — Todos os meses' : `Aniversariantes do mês — ${months[Number(month) - 1]}`) : 'Cadastro de pacientes'
 
   function resetReport() {
     requestVersion.current += 1
@@ -63,11 +64,11 @@ export function PatientReports() {
         if (!data || data.length < pageSize) break
       }
       const reportRows = birthdays
-        ? rows.filter(patient => patient.data_nascimento && Number(patient.data_nascimento.slice(5, 7)) === Number(month))
+        ? rows.filter(patient => patient.data_nascimento && (allMonths || Number(patient.data_nascimento.slice(5, 7)) === Number(month)))
         : rows
       reportRows.sort((a, b) => {
-        const dayOrder = birthdays ? Number(a.data_nascimento?.slice(8, 10)) - Number(b.data_nascimento?.slice(8, 10)) : 0
-        return dayOrder || a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }) || a.id.localeCompare(b.id)
+        const birthdayOrder = birthdays ? (a.data_nascimento?.slice(5) ?? '').localeCompare(b.data_nascimento?.slice(5) ?? '') : 0
+        return birthdayOrder || a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }) || a.id.localeCompare(b.id)
       })
       setPatients(reportRows)
       setGeneratedAt(new Date().toLocaleString('pt-BR'))
@@ -127,12 +128,12 @@ export function PatientReports() {
           <Label htmlFor="patient-report-month">Mês dos aniversários</Label>
           <Select value={month} onValueChange={value => { resetReport(); setMonth(value) }}>
             <SelectTrigger id="patient-report-month"><SelectValue /></SelectTrigger>
-            <SelectContent>{months.map((name, index) => <SelectItem key={name} value={String(index + 1)}>{name}</SelectItem>)}</SelectContent>
+            <SelectContent><SelectItem value="all">Todos os meses</SelectItem>{months.map((name, index) => <SelectItem key={name} value={String(index + 1)}>{name}</SelectItem>)}</SelectContent>
           </Select>
         </div>}
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 p-4">
-        <div><h2 className="font-semibold text-slate-800">{reportTitle}</h2><p className="text-sm text-slate-500">{birthdays ? 'Pacientes do mês escolhido, ordenados pelo dia do aniversário. Cadastros sem data de nascimento não são incluídos.' : 'Nome, nascimento, telefone e endereço, em ordem alfabética.'}</p></div>
+        <div><h2 className="font-semibold text-slate-800">{reportTitle}</h2><p className="text-sm text-slate-500">{birthdays ? (allMonths ? 'Aniversários de janeiro a dezembro, ordenados por mês e dia. Cadastros sem data de nascimento não são incluídos.' : 'Pacientes do mês escolhido, ordenados pelo dia do aniversário. Cadastros sem data de nascimento não são incluídos.') : 'Nome, nascimento, telefone e endereço, em ordem alfabética.'}</p></div>
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => void generate()} disabled={loading || !user}>{loading && <Loader2 className="mr-2 size-4 animate-spin" />}{loading ? 'Gerando...' : patients ? 'Atualizar relatório' : 'Gerar relatório'}</Button>
           <Button variant="outline" disabled={!patients?.length || loading} onClick={printReport}><Printer className="mr-2 size-4" />Imprimir / Salvar PDF</Button>
@@ -143,7 +144,7 @@ export function PatientReports() {
         <div ref={reportRef} className="space-y-3">
           <h2 className="text-xl font-semibold text-slate-800">{reportTitle}</h2>
           <p className="text-sm text-slate-500">Emitido em {generatedAt} · Total: {patients.length} paciente(s)</p>
-          {birthdays && <p className="text-sm text-slate-500">Ordem: dia do aniversário, com desempate por nome. Apenas pacientes com data de nascimento cadastrada.</p>}
+          {birthdays && <p className="text-sm text-slate-500">Ordem: {allMonths ? 'mês e dia do aniversário, de janeiro a dezembro' : 'dia do aniversário'}, com desempate por nome. Apenas pacientes com data de nascimento cadastrada.</p>}
           <p className="text-xs text-slate-500">Confidencial — contém dados pessoais. Uso restrito ao atendimento.</p>
           {patients.length ? <div className="overflow-x-auto"><table className="w-full min-w-[750px] border-collapse text-left text-sm">
             <thead><tr className="bg-slate-50">{['Nome do paciente', 'Data de nascimento', 'Telefone', 'Endereço'].map(label => <th key={label} className="border border-slate-200 p-3 font-semibold">{label}</th>)}</tr></thead>
@@ -153,7 +154,7 @@ export function PatientReports() {
               <td className="border border-slate-200 p-3 align-top">{patient.telefone || 'Não informado'}</td>
               <td className="border border-slate-200 p-3 align-top">{address(patient)}</td>
             </tr>)}</tbody>
-          </table></div> : <p className="py-6 text-center text-sm text-slate-500">{birthdays ? `Nenhum aniversariante com data de nascimento cadastrada em ${months[Number(month) - 1]}.` : 'Nenhum paciente cadastrado para emitir o relatório.'}</p>}
+          </table></div> : <p className="py-6 text-center text-sm text-slate-500">{birthdays ? (allMonths ? 'Nenhum paciente com data de nascimento cadastrada.' : `Nenhum aniversariante com data de nascimento cadastrada em ${months[Number(month) - 1]}.`) : 'Nenhum paciente cadastrado para emitir o relatório.'}</p>}
         </div>
         {patients.length > 0 && <p className="text-xs text-slate-500">Para baixar o arquivo, clique em “Imprimir / Salvar PDF” e escolha “Salvar como PDF” na janela de impressão.</p>}
       </>}
