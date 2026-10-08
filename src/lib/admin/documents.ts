@@ -16,6 +16,7 @@ export const areaSpecialties: Record<ProfessionalArea, string[]> = {
   biomedicina: [
     'Saúde Integrativa • Farmácia Estética',
     'Farmacologia e Prescrição Farmacêutica',
+    'Estética Regenerativa e Ortomolecular',
   ],
 };
 export type DocumentType = (typeof professionalAreas)[ProfessionalArea]['types'][number];
