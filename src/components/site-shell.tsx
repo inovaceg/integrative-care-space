@@ -75,7 +75,7 @@ export function Footer() {
           </nav>
         </div>
       </div>
-      <div className="border-t border-footer-line"><div className="container-site py-5 text-xs text-footer-muted">© 2026 Espaço de Saúde Integrativa Dr. Frederick Parreira. Todos os direitos reservados. | Criação e desenvolvimento: Felipe Cal.</div></div>
+      <div className="border-t border-footer-line"><div className="container-site py-5 text-center text-xs text-footer-muted">© 2026 Espaço de Saúde Integrativa Dr. Frederick Parreira. Todos os direitos reservados. | Criação e desenvolvimento: Felipe Cal.</div></div>
     </footer>
   );
 }
