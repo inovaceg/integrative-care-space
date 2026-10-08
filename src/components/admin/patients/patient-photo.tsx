@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { supabase } from '@/integrations/supabase/client'
@@ -23,12 +24,28 @@ function usePhotoUrl(path?: string | null) {
   return resolved?.path === path ? resolved?.url : undefined
 }
 
-export function PatientPhoto({ path, initials, className }: { path?: string | null | undefined; initials: string; className?: string }) {
+export function PatientPhoto({ path, initials, className, expandable = false }: { path?: string | null | undefined; initials: string; className?: string; expandable?: boolean }) {
   const url = usePhotoUrl(path)
-  return <Avatar className={cn('size-9 shrink-0', className)}>
+  const [imageError, setImageError] = useState(false)
+  const avatar = <Avatar className={cn('size-9 shrink-0', className)}>
     <AvatarImage src={url} alt="Foto do paciente" className="object-cover" />
     <AvatarFallback className="bg-[#e3f3ef] text-xs font-semibold text-[#28786e]">{initials}</AvatarFallback>
   </Avatar>
+  if (!expandable || !url) return avatar
+  return <Dialog onOpenChange={() => setImageError(false)}>
+    <DialogTrigger asChild>
+      <button type="button" aria-label="Ampliar foto do paciente" title="Clique para ampliar a foto" className="shrink-0 cursor-zoom-in rounded-full transition-shadow hover:ring-2 hover:ring-[#2f8f82] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2f8f82] focus-visible:ring-offset-2">
+        {avatar}
+      </button>
+    </DialogTrigger>
+    <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+      <DialogHeader>
+        <DialogTitle>Foto do paciente</DialogTitle>
+        <DialogDescription>Visualização ampliada da foto cadastrada.</DialogDescription>
+      </DialogHeader>
+      {imageError ? <p role="alert" className="py-6 text-center text-sm text-red-600">Não foi possível carregar a foto. Feche esta janela e atualize a página para tentar novamente.</p> : <img src={url} alt="Foto ampliada do paciente" onError={() => setImageError(true)} className="max-h-[70vh] w-full rounded-lg bg-slate-50 object-contain" />}
+    </DialogContent>
+  </Dialog>
 }
 
 async function preparePhoto(file: File): Promise<File> {
