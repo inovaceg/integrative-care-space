@@ -123,8 +123,8 @@ export function DashboardBirthdays() {
             <h2 className="font-display text-lg font-semibold text-slate-800">Aniversariantes</h2>
           </div>
           <Button asChild variant="ghost" size="sm" className="text-[#2f8f82]">
-            <Link to="/admin/relatorios">Ver relatório completo</Link>
-          </Button>
+                      <Link to="/admin/pacientes">Ver relatório completo</Link>
+                    </Button>
         </div>
 
         {!hasData ? (
