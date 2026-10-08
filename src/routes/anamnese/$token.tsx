@@ -1,6 +1,7 @@
 import { createFileRoute, useParams } from '@tanstack/react-router'
 import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { AnamneseSummary } from '@/components/anamnese/anamnese-summary'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -27,14 +28,41 @@ function PublicAnamnesePage() {
   const [consent, setConsent] = useState<Consent>({ truth: false, lgpd: false, urgent: false, signature: '', clinicalPhoto: false, publicPhoto: false })
   const [step, setStep] = useState(0)
   const [name, setName] = useState('')
-  const [state, setState] = useState<'loading' | 'ready' | 'invalid' | 'completed'>('loading')
+  const [state, setState] = useState<'loading' | 'ready' | 'invalid' | 'completed' | 'submitted'>('loading')
+  const [loadedToken, setLoadedToken] = useState('')
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
+  const requestVersion = useRef(0)
   const value = (key: string) => String(answers[key] ?? '')
   const yes = (key: string) => value(key) === 'Sim'
   const set = (key: string, next: string | number | boolean | string[]) => setAnswers(current => ({ ...current, [key]: next }))
 
-  useEffect(() => { loadPublicAnamnese(token).then(data => { setName(data.firstName); setAnswers(current => ({ ...current, ...data.answers })); setState('ready') }).catch(error => { setMessage(error.message.includes('LINK_UTILIZADO') ? 'Esta ficha já foi enviada e não aceita novas alterações.' : 'Este link é inválido ou expirou.'); setState(error.message.includes('LINK_UTILIZADO') ? 'completed' : 'invalid') }) }, [token])
+  useEffect(() => {
+    const version = ++requestVersion.current
+    let active = true
+    setAnswers({ escala_prejuizo: 0, escala_ansiedade: 0, escala_tristeza: 0, sintomas: [] })
+    setConsent({ truth: false, lgpd: false, urgent: false, signature: '', clinicalPhoto: false, publicPhoto: false })
+    setStep(0)
+    setName('')
+    setMessage('')
+    setSaving(false)
+    setState('loading')
+    setLoadedToken('')
+    loadPublicAnamnese(token).then(data => {
+      if (!active) return
+      setName(data.firstName)
+      setAnswers({ escala_prejuizo: 0, escala_ansiedade: 0, escala_tristeza: 0, sintomas: [], ...data.answers })
+      setLoadedToken(token)
+      setState('ready')
+    }).catch(error => {
+      if (!active) return
+      const alreadyUsed = error.message.includes('LINK_UTILIZADO')
+      setMessage(alreadyUsed ? 'Esta ficha já foi enviada e não aceita novas alterações.' : 'Este link é inválido ou expirou.')
+      setLoadedToken(token)
+      setState(alreadyUsed ? 'completed' : 'invalid')
+    })
+    return () => { active = false; if (requestVersion.current === version) requestVersion.current += 1 }
+  }, [token])
   const risk = value('pensamentos_morte') === 'Sim, neste momento' || value('pensamentos_presentes_agora') === 'Sim'
   const progress = ((step + 1) / steps.length) * 100
   function validationMessage(currentStep: number) {
@@ -71,12 +99,43 @@ function PublicAnamnesePage() {
   const missingStepOne = Boolean(validationMessage(0))
   const canContinue = !validationMessage(step)
 
-  async function saveDraft() { setSaving(true); setMessage(''); try { await savePublicAnamnese(token, answers); setMessage('Respostas salvas.'); } catch { setMessage('Não foi possível salvar agora. Tente novamente.') } finally { setSaving(false) } }
-  async function submit(event: FormEvent) { event.preventDefault(); const stepError = validationMessage(step); if (stepError || !consent.truth || !consent.lgpd || !consent.urgent || !consent.signature.trim()) { setMessage(stepError || 'Revise os campos obrigatórios e os consentimentos antes de enviar.'); return } setSaving(true); setMessage(''); try { await submitPublicAnamnese(token, answers, consent); setState('completed'); setMessage('Ficha enviada com sucesso. Você pode fechar esta página.') } catch { setMessage('Não foi possível enviar a ficha. Verifique os campos obrigatórios e tente novamente.') } finally { setSaving(false) } }
+  async function saveDraft() {
+    const version = requestVersion.current
+    setSaving(true)
+    setMessage('')
+    try {
+      await savePublicAnamnese(token, answers)
+      if (requestVersion.current === version) setMessage('Respostas salvas.')
+    } catch {
+      if (requestVersion.current === version) setMessage('Não foi possível salvar agora. Tente novamente.')
+    } finally {
+      if (requestVersion.current === version) setSaving(false)
+    }
+  }
+  async function submit(event: FormEvent) {
+    event.preventDefault()
+    const stepError = validationMessage(step)
+    if (stepError || !consent.truth || !consent.lgpd || !consent.urgent || !consent.signature.trim()) {
+      setMessage(stepError || 'Revise os campos obrigatórios e os consentimentos antes de enviar.')
+      return
+    }
+    const version = requestVersion.current
+    setSaving(true)
+    setMessage('')
+    try {
+      await submitPublicAnamnese(token, answers, consent)
+      if (requestVersion.current === version) setState('submitted')
+    } catch {
+      if (requestVersion.current === version) setMessage('Não foi possível enviar a ficha. Verifique os campos obrigatórios e tente novamente.')
+    } finally {
+      if (requestVersion.current === version) setSaving(false)
+    }
+  }
   const symptomValues = Array.isArray(answers['sintomas']) ? answers['sintomas'] : []
   function toggleSymptom(symptom: string) { set('sintomas', symptomValues.includes(symptom) ? symptomValues.filter(item => item !== symptom) : [...symptomValues, symptom]) }
 
-  if (state !== 'ready') return <main className="min-h-screen bg-[#f4faf8] p-4 sm:p-8"><Card className="mx-auto mt-10 max-w-xl"><CardContent className="p-8 text-center">{state === 'loading' ? <Loader2 className="mx-auto size-6 animate-spin text-[#2f8f82]" /> : <><AlertTriangle className="mx-auto size-8 text-amber-600" /><h1 className="mt-4 font-display text-xl font-semibold">{state === 'completed' ? 'Ficha já enviada' : 'Link indisponível'}</h1><p className="mt-2 text-sm text-slate-600">{message}</p></>}</CardContent></Card></main>
+  if (loadedToken === token && state === 'submitted') return <main className="min-h-screen bg-[#f4faf8] px-4 py-6 sm:py-10"><AnamneseSummary answers={answers} /></main>
+  if (loadedToken !== token || state !== 'ready') return <main className="min-h-screen bg-[#f4faf8] p-4 sm:p-8"><Card className="mx-auto mt-10 max-w-xl"><CardContent className="p-8 text-center">{state === 'loading' || loadedToken !== token ? <Loader2 className="mx-auto size-6 animate-spin text-[#2f8f82]" /> : <><AlertTriangle className="mx-auto size-8 text-amber-600" /><h1 className="mt-4 font-display text-xl font-semibold">{state === 'completed' ? 'Ficha já enviada' : 'Link indisponível'}</h1><p className="mt-2 text-sm text-slate-600">{message}</p></>}</CardContent></Card></main>
 
   return <main className="min-h-screen bg-[#f4faf8] px-4 py-6 sm:py-10"><Card className="mx-auto max-w-3xl border-slate-200 shadow-sm"><CardHeader className="border-b border-slate-100"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#2f8f82]">Dr. Frederick Martins Parreira</p><CardTitle className="mt-2 font-display text-3xl text-slate-800">Ficha de Anamnese</CardTitle><p className="mt-2 text-sm text-slate-600">Olá, {name}. Suas informações são confidenciais e serão usadas exclusivamente no seu atendimento.</p><div className="mt-5"><div className="mb-2 flex justify-between text-xs text-slate-500"><span>Etapa {step + 1} de {steps.length}</span><span>{steps[step]}</span></div><Progress value={progress} /></div></CardHeader><CardContent className="p-5 sm:p-8"><form onSubmit={submit} className="space-y-7">
   {step === 0 && <section className="space-y-6"><Question label="1. Qual é o principal motivo pelo qual você está procurando atendimento?" required><Textarea required rows={5} value={value('motivo_atendimento')} onChange={event => set('motivo_atendimento', event.target.value)} /></Question><Question label="2. Qual modalidade de atendimento deseja?" required><Choice value={value('modalidade')} onChange={next => set('modalidade', next)} options={['Psicologia', 'Biomedicina/Estética', 'Saúde Integrativa', 'Atendimento Integrado']} /></Question><Question label="3. Quando essa queixa começou?" required><Choice value={value('inicio_queixa')} onChange={next => set('inicio_queixa', next)} options={['Há poucos dias', 'Há algumas semanas', 'Há alguns meses', 'Há mais de um ano', 'Desde a infância ou adolescência']} /></Question><Question label="4. Houve algum acontecimento que iniciou ou agravou o problema?"><Choice value={value('evento_agravante')} onChange={next => set('evento_agravante', next)} options={['Sim', 'Não']} />{yes('evento_agravante') && <Textarea value={value('evento_agravante_detalhes')} onChange={event => set('evento_agravante_detalhes', event.target.value)} placeholder="Explique, se desejar." />}</Question><Question label="5. Como isso interfere atualmente em sua vida?" required><Textarea required rows={4} value={value('impacto_vida')} onChange={event => set('impacto_vida', event.target.value)} /></Question><Question label="6. O que espera alcançar com o tratamento?" required><Textarea required rows={4} value={value('expectativa_tratamento')} onChange={event => set('expectativa_tratamento', event.target.value)} /></Question><Scale label="7. Quanto isso prejudica sua qualidade de vida" value={Number(answers['escala_prejuizo'] ?? 0)} onChange={next => set('escala_prejuizo', next)} /></section>}
