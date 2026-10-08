@@ -6,6 +6,7 @@ import { AdminLayout, DashboardCard, EmptyState, PageIntro, PatientAvatar, Secti
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { fetchAppointments, fetchPatients, type AppointmentRecord, type PatientRecord } from "@/lib/admin/records";
+import { DashboardBirthdays } from "@/components/admin/dashboard/dashboard-birthdays";
 
 export const Route = createFileRoute("/admin/dashboard")({ component: DashboardPage });
 
@@ -102,7 +103,8 @@ function DashboardPage() {
       <SectionCard title="Consultas pendentes de hoje e futuras" className="mt-6">
         {pendingAppointments.length === 0 ? <EmptyState title="Nenhuma consulta pendente de hoje ou futura" description="Não há consultas pendentes de hoje ou futuras com valor previsto maior que zero." /> : <div className="space-y-2">{pendingAppointments.map((appointment) => { const patient = patients.find((item) => item.id === appointment.patient_id); const name = patient?.nome ?? "Paciente"; const date = new Date(appointment.start_time); const amount = Number(appointment.amount_paid ?? 0); return <div key={appointment.id} className="flex flex-col gap-3 rounded-lg border border-slate-100 px-3 py-3 sm:flex-row sm:items-center"><div className="w-28 shrink-0"><p className="text-sm font-semibold text-slate-800">{date.toLocaleDateString("pt-BR")}</p><p className="text-xs text-slate-500">às {date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p></div><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-slate-800">{name}</p><p className="truncate text-xs text-slate-500">{appointmentType(appointment.notes)}</p></div><div className="flex items-center justify-between gap-3 sm:justify-end"><div className="text-right"><p className="text-sm font-semibold text-[#286a60]">{amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p><p className="text-[11px] text-slate-400">valor previsto</p></div><StatusBadge status={appointment.status} /></div></div>; })}</div>}
       </SectionCard>
-      <Card className="mt-6 border-0 bg-[#123c3d] text-white shadow-sm"><CardContent className="flex flex-col items-start justify-between gap-4 p-5 sm:flex-row sm:items-center sm:p-6"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8bd5c4]">Acesso rápido</p><p className="mt-2 font-display text-lg font-medium">Mantenha sua rotina organizada</p><p className="mt-1 text-sm text-white/65">Consulte a agenda e registre pacientes no seu espaço.</p></div><Button asChild className="shrink-0 bg-[#8bd5c4] text-[#123c3d] hover:bg-[#a5e2d4]"><Link to="/admin/pacientes">Gerenciar pacientes</Link></Button></CardContent></Card>
-    </>}
-  </AdminLayout>;
-}
+            <DashboardBirthdays />
+            <Card className="mt-6 border-0 bg-[#123c3d] text-white shadow-sm"><CardContent className="flex flex-col items-start justify-between gap-4 p-5 sm:flex-row sm:items-center sm:p-6"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8bd5c4]">Acesso rápido</p><p className="mt-2 font-display text-lg font-medium">Mantenha sua rotina organizada</p><p className="mt-1 text-sm text-white/65">Consulte a agenda e registre pacientes no seu espaço.</p></div><Button asChild className="shrink-0 bg-[#8bd5c4] text-[#123c3d] hover:bg-[#a5e2d4]"><Link to="/admin/pacientes">Gerenciar pacientes</Link></Button></CardContent></Card>
+          </>}
+        </AdminLayout>;
+      }
