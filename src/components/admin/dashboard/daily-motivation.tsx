@@ -24,7 +24,10 @@ export function DailyMotivation({ userId }: { userId: string }) {
     setError("");
     async function load() {
       try {
-        const { data, error: requestError } = await supabase.functions.invoke("https://fusqpjescampwoyazceu.supabase.co/functions/v1/daily-motivation", { body: {} });
+        const endpoint = new URL("https://fusqpjescampwoyazceu.supabase.co/functions/v1/daily-motivation");
+        // O SDK já adiciona a URL base; invoke recebe apenas o nome da função.
+        const functionName = endpoint.pathname.split("/").pop()!;
+        const { data, error: requestError } = await supabase.functions.invoke(functionName, { body: {} });
         if (requestError) {
           let detail = "Não foi possível carregar a mensagem diária.";
           if (requestError.context instanceof Response) {
