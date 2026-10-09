@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { fetchAppointments, fetchPatients, type AppointmentRecord, type PatientRecord } from "@/lib/admin/records";
 import { DashboardBirthdays } from "@/components/admin/dashboard/dashboard-birthdays";
+import drFrederickImage from "@/assets/dr-frederick-parreira.png";
 
 export const Route = createFileRoute("/admin/dashboard")({ component: DashboardPage });
 
