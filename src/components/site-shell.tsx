@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Menu, MessageCircle, X } from "lucide-react";
+import { Instagram, Menu, MessageCircle, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { trackAnalyticsEvent, trackAnalyticsEvents } from "@/lib/analytics";
@@ -51,6 +51,10 @@ export function Footer() {
         <div>
           <div className="font-display text-2xl">Espaço de Saúde Integrativa</div>
           <p className="mt-3 text-sm leading-7 text-footer-muted">Dr. Frederick Parreira<br />Psicólogo • CRP 04/86194<br />Biomédico • CRBM 30421</p>
+          <a href="https://www.instagram.com/fredmartinsjf/" target="_blank" rel="noopener noreferrer" aria-label="Instagram do Dr. Frederick Parreira: @fredmartinsjf (abre em nova aba)" className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-sm text-sm text-footer-foreground transition-colors hover:text-gold-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-soft focus-visible:ring-offset-2 focus-visible:ring-offset-footer">
+            <Instagram className="size-5" aria-hidden="true" />
+            <span>@fredmartinsjf</span>
+          </a>
         </div>
         <div>
           <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-gold-soft">Endereço</h2>
