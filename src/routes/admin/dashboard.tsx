@@ -97,7 +97,7 @@ function DashboardPage() {
       <div>
         <p className="text-sm text-slate-500">{greeting},</p>
         <h2 className="font-display text-xl font-semibold text-slate-900">{doctorName}</h2>
-        {user && <DailyMotivation key={user.id} userId={user.id} />}
+        {user && <DailyMotivation />}
       </div>
     </div>
     {error && <p role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">Não foi possível carregar o resumo: {error}</p>}
