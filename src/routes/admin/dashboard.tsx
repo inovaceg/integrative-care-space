@@ -83,8 +83,20 @@ function DashboardPage() {
   const monthAppointments = useMemo(() => { const now = new Date(); return appointments.filter((appointment) => { const date = new Date(appointment.start_time); return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth(); }); }, [appointments]);
   const stats = [{ label: "Pacientes cadastrados", value: String(patients.length), trend: "Atualizado agora", tone: "teal" as const, note: "cadastros deste profissional" }, { label: "Atendimentos no mês", value: String(monthAppointments.length), trend: "Agenda real", tone: "blue" as const, note: "agendamentos registrados" }, { label: "Próximos atendimentos", value: String(upcoming.length), trend: "Próximos", tone: "amber" as const, note: "não cancelados" }, { label: "Agenda concluída", value: String(appointments.filter((appointment) => appointment.status === "completed").length), trend: "Total", tone: "violet" as const, note: "atendimentos concluídos" }];
 
+  const now = new Date();
+  const hour = now.getHours();
+  const greeting = hour >= 5 && hour < 12 ? "Bom dia" : hour >= 12 && hour < 18 ? "Boa tarde" : "Boa noite";
+  const doctorName = "Dr. Frederick Martins Parreira";
+
   return <AdminLayout>
     <PageIntro eyebrow="Resumo do dia" title="Visão geral" description="Acompanhe os dados reais dos seus pacientes e atendimentos." action={<Button asChild variant="outline" className="gap-2 border-slate-200 bg-white"><Link to="/admin/agenda"><CalendarPlus className="size-4" /> Ver agenda</Link></Button>} />
+    <div className="mb-6 flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <img src="/__l5e/assets-v1/10bc38fc-68b1-417d-9aca-752bca80a034/dr-frederick-parreira.png" alt="Foto do Dr. Frederick" className="size-14 shrink-0 rounded-full object-cover" />
+      <div>
+        <p className="text-sm text-slate-500">{greeting},</p>
+        <h2 className="font-display text-xl font-semibold text-slate-900">{doctorName}</h2>
+      </div>
+    </div>
     {error && <p role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">Não foi possível carregar o resumo: {error}</p>}
     {loading || authLoading ? <div className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-12 text-sm text-slate-500"><Loader2 className="mr-2 size-4 animate-spin" /> Carregando resumo...</div> : <>
       <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{stats.map((stat) => <DashboardCard key={stat.label} {...stat} />)}</div>
