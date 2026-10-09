@@ -92,7 +92,7 @@ function DashboardPage() {
   return <AdminLayout>
     <PageIntro eyebrow="Resumo do dia" title="Visão geral" description="Acompanhe os dados reais dos seus pacientes e atendimentos." action={<Button asChild variant="outline" className="gap-2 border-slate-200 bg-white"><Link to="/admin/agenda"><CalendarPlus className="size-4" /> Ver agenda</Link></Button>} />
     <div className="mb-6 flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <img src="/__l5e/assets-v1/10bc38fc-68b1-417d-9aca-752bca80a034/dr-frederick-parreira.png" alt="Foto do Dr. Frederick" className="size-14 shrink-0 rounded-full object-cover" />
+      <img src={drFrederickImage} alt="Foto do Dr. Frederick" className="size-14 shrink-0 rounded-full object-cover object-top" />
       <div>
         <p className="text-sm text-slate-500">{greeting},</p>
         <h2 className="font-display text-xl font-semibold text-slate-900">{doctorName}</h2>
