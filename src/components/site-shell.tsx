@@ -59,8 +59,9 @@ export function Footer() {
         <div>
           <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-gold-soft">Endereço</h2>
           <address className="mt-3 text-sm not-italic leading-7 text-footer-muted">
-            Edifício Europa Central Tower<br />
-            Rua Fernando Lobo, 102 — Sala 704<br />
+            Edifício Comendador Pedro Procópio R. Valle<br />
+            Avenida Barão do Rio Branco, 2555<br />
+            Sala 205 — Espaço Humanizze<br />
             Centro — Juiz de Fora/MG<br />
             <a className="hover:text-footer-foreground" href="tel:+5532991931779">(32) 99193-1779</a>
           </address>
