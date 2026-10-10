@@ -436,53 +436,47 @@ function formatComparisonValue(value: unknown, unit: string) {
 
 function ComparisonSection({ items, patientName }: { items: BodyEvaluation[]; patientName: string }) {
   const ordered = useMemo(
-    () => [...items].sort((a, b) => a.evaluation_date.localeCompare(b.evaluation_date)),
+    () => [...items].sort((a, b) => a.evaluation_date.localeCompare(b.evaluation_date) || a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id)),
     [items],
   );
-  const [beforeId, setBeforeId] = useState("");
-  const [afterId, setAfterId] = useState("");
   const [reportError, setReportError] = useState("");
-
-  useEffect(() => {
-    if (ordered.length < 2) {
-      setBeforeId("");
-      setAfterId("");
-      return;
-    }
-    setBeforeId((current) => ordered.some((item) => item.id === current) ? current : ordered[0]!.id);
-    setAfterId((current) => ordered.some((item) => item.id === current) ? current : ordered[ordered.length - 1]!.id);
-  }, [ordered]);
-
-  const before = ordered.find((item) => item.id === beforeId);
-  const after = ordered.find((item) => item.id === afterId);
-  const sameEvaluation = Boolean(before && after && before.id === after.id);
+  const first = ordered[0];
+  const last = ordered[ordered.length - 1];
+  const rows = useMemo(() => comparisonRows.map(({ key, label, unit }) => {
+    const initial = first?.[key];
+    const current = last?.[key];
+    const difference = ordered.length > 1 && initial != null && current != null ? current - initial : null;
+    const variation = difference != null && Number.isFinite(difference) ? Math.round(difference * 100) / 100 : null;
+    return {
+      key,
+      label,
+      values: ordered.map((item) => formatComparisonValue(item[key], unit)),
+      variation: variation == null ? "—" : `${variation >= 0 ? "+" : "−"}${formatComparisonValue(Math.abs(variation), unit)}`,
+      indicator: variation == null ? "" : variation > 0 ? "↑" : variation < 0 ? "↓" : "→",
+    };
+  }), [first, last, ordered]);
   const reportPages = useMemo(() => {
-    if (!before || !after || sameEvaluation || !patientName) return [];
-    return bodyProgressReportPages(patientName, before.evaluation_date, after.evaluation_date, comparisonRows.map(({ key, label, unit }) => {
-      const initial = before[key];
-      const current = after[key];
-      const variation = initial != null && current != null ? current - initial : null;
-      return { label, before: formatComparisonValue(initial, unit), after: formatComparisonValue(current, unit), variation: variation == null || !Number.isFinite(variation) ? "-" : `${variation >= 0 ? "+" : "-"}${formatComparisonValue(Math.abs(variation), unit)}` };
-    }));
-  }, [after, before, patientName, sameEvaluation]);
+    if (!ordered.length || !patientName) return [];
+    return bodyProgressReportPages(patientName, ordered.map((item) => item.evaluation_date), rows);
+  }, [ordered, patientName, rows]);
   const reportReady = reportPages.length > 0;
 
   function printReport() {
-    if (!reportReady || !before || !after) return;
+    if (!reportReady || !first || !last) return;
     setReportError("");
     const originalTitle = document.title;
-    document.title = bodyProgressReportFilename(patientName, before.evaluation_date, after.evaluation_date);
+    document.title = bodyProgressReportFilename(patientName, first.evaluation_date, last.evaluation_date);
     window.addEventListener("afterprint", () => { document.title = originalTitle; }, { once: true });
     window.print();
   }
 
   async function downloadReport() {
-    if (!reportReady || !before || !after) return;
+    if (!reportReady || !first || !last) return;
     setReportError("");
     try {
       await downloadDocumentPdf(
         reportPages,
-        bodyProgressReportFilename(patientName, before.evaluation_date, after.evaluation_date),
+        bodyProgressReportFilename(patientName, first.evaluation_date, last.evaluation_date),
       );
     } catch (downloadError) {
       setReportError(downloadError instanceof Error ? downloadError.message : "Não foi possível gerar o PDF.");
@@ -490,43 +484,41 @@ function ComparisonSection({ items, patientName }: { items: BodyEvaluation[]; pa
   }
 
   return (
-    <SectionCard title="Comparar avaliações">
-      {ordered.length < 2 ? (
-        <p className="text-sm text-slate-500">É necessário ter pelo menos duas avaliações para comparar medidas.</p>
+    <SectionCard title="Comparar avaliações" className="min-w-0">
+      {!ordered.length ? (
+        <p className="text-sm text-slate-500">Nenhuma avaliação registrada para este paciente.</p>
       ) : (
-        <div className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2">
-            {[{ label: "Avaliação inicial", value: beforeId, set: setBeforeId }, { label: "Avaliação atual", value: afterId, set: setAfterId }].map((field) => (
-              <label key={field.label} className="grid gap-1 text-sm font-medium text-slate-700">
-                {field.label}
-                <select className="h-10 rounded-md border border-slate-200 bg-white px-3 font-normal" value={field.value} onChange={(event) => field.set(event.target.value)}>
-                  {ordered.map((item) => <option key={item.id} value={item.id}>{new Date(`${item.evaluation_date}T12:00:00`).toLocaleDateString("pt-BR")}</option>)}
-                </select>
-              </label>
-            ))}
-          </div>
-          {sameEvaluation && <p className="text-sm text-slate-500">Escolha datas diferentes para visualizar a variação.</p>}
+        <div className="min-w-0 space-y-4">
+          <p className="text-sm text-slate-600">Todas as avaliações em ordem cronológica. A variação total corresponde à última avaliação menos a primeira.</p>
+          {ordered.length === 1 && <p className="text-sm text-slate-500">A variação ficará disponível após registrar uma segunda avaliação.</p>}
           <div className="flex flex-wrap gap-2">
             <Button type="button" variant="outline" disabled={!reportReady} onClick={printReport}><Printer className="mr-2 h-4 w-4" />Imprimir</Button>
             <Button type="button" disabled={!reportReady} onClick={downloadReport}><FileDown className="mr-2 h-4 w-4" />Gerar PDF</Button>
           </div>
           {reportError && <p role="alert" className="text-sm text-red-600">{reportError}</p>}
           {reportReady && <PrintDocument pages={reportPages} />}
-          <div className="overflow-x-auto rounded-lg border border-slate-200">
+          <div className="overflow-x-auto rounded-lg border border-slate-200" role="region" aria-label="Histórico comparativo de avaliações" tabIndex={0}>
             <table className="w-full min-w-[620px] text-sm">
-              <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-4 py-3">Medida</th><th className="px-4 py-3">Antes</th><th className="px-4 py-3">Atual</th><th className="px-4 py-3">Variação</th></tr></thead>
+              <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th scope="col" className="sticky left-0 z-10 min-w-44 bg-slate-50 px-4 py-3">Medida</th>
+                  {ordered.map((item, index) => <th scope="col" key={item.id} className="min-w-36 whitespace-nowrap px-4 py-3">
+                    <span className="block">{new Date(`${item.evaluation_date}T12:00:00`).toLocaleDateString("pt-BR")}</span>
+                    <span className="mt-1 block text-[10px] font-normal normal-case">{index + 1}ª avaliação{index === 0 ? " · Primeira" : index === ordered.length - 1 ? " · Última" : ""}</span>
+                  </th>)}
+                  <th scope="col" className="min-w-44 bg-[#edf7f4] px-4 py-3 text-[#21655f]">Variação total<span className="mt-1 block text-[10px] font-normal normal-case">Última − primeira</span></th>
+                </tr>
+              </thead>
               <tbody className="divide-y divide-slate-100">
-                {comparisonRows.map(({ key, label, unit }) => {
-                  const initial = before?.[key];
-                  const current = after?.[key];
-                  const variation = !sameEvaluation && initial != null && current != null ? current - initial : null;
-                  const variationText = variation == null || !Number.isFinite(variation) ? "—" : `${variation >= 0 ? "+" : "−"}${formatComparisonValue(Math.abs(variation), unit)}`;
-                  const indicator = variation == null || !Number.isFinite(variation) ? "" : variation > 0 ? "↑" : variation < 0 ? "↓" : "→";
-                  return <tr key={key}><td className="px-4 py-3 font-medium text-slate-700">{label}</td><td className="px-4 py-3 text-slate-600">{formatComparisonValue(initial, unit)}</td><td className="px-4 py-3 text-slate-600">{formatComparisonValue(current, unit)}</td><td className="px-4 py-3 font-medium text-slate-600"><span className="mr-1 text-slate-400" aria-hidden="true">{indicator}</span>{variationText}</td></tr>;
-                })}
+                {rows.map((row) => <tr key={row.key}>
+                  <th scope="row" className="sticky left-0 z-10 bg-white px-4 py-3 text-left font-medium text-slate-700">{row.label}</th>
+                  {ordered.map((item, index) => <td key={item.id} className="whitespace-nowrap px-4 py-3 text-slate-600">{row.values[index]}</td>)}
+                  <td className="whitespace-nowrap bg-[#f5faf8] px-4 py-3 font-medium text-slate-600"><span className="mr-1 text-slate-400" aria-hidden="true">{row.indicator}</span>{row.variation}</td>
+                </tr>)}
               </tbody>
             </table>
           </div>
+          <p className="text-xs text-slate-500">Role a tabela horizontalmente para ver todas as datas. Se faltar uma medida na primeira ou na última avaliação, a variação será exibida como —.</p>
         </div>
       )}
     </SectionCard>

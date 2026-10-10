@@ -26,6 +26,7 @@ export type BodyEvaluation = {
   patient_id: string;
   profissional_id: string;
   evaluation_date: string;
+  created_at: string;
 } & Partial<Record<(typeof measurementFields)[number], number | null>>;
 
 export type PhotoStage = "before" | "after";

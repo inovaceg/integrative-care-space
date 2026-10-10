@@ -1,7 +1,7 @@
 import { professionalName, displayDate } from './documents';
 import type { DocumentPage } from './document-layout';
 
-type ReportRow = { label: string; before: string; after: string; variation: string };
+type ReportRow = { label: string; values: string[]; variation: string };
 
 function centeredX(text: string, size: number, bold = false): number {
   let width = text.length * size * 0.55;
@@ -16,40 +16,59 @@ function centeredX(text: string, size: number, bold = false): number {
   return (595 - width) / 2;
 }
 
-export function bodyProgressReportPages(patientName: string, beforeDate: string, afterDate: string, rows: ReportRow[]): DocumentPage[] {
-  const lines: DocumentPage = [
-    { text: professionalName, x: 42, y: 58, size: 14, bold: true, color: '#123c3d' },
-    { text: 'Relatório de Evolução Corporal', x: 42, y: 88, size: 18, bold: true, color: '#123c3d' },
-    { text: `Paciente: ${patientName}`, x: 42, y: 116, size: 11, bold: true },
-    { text: `Avaliações: ${displayDate(beforeDate)}  •  ${displayDate(afterDate)}`, x: 42, y: 136, size: 10, color: '#475569' },
-    { text: 'Medida', x: 42, y: 178, size: 10, bold: true, color: '#21655f' },
-    { text: 'Antes', x: 280, y: 178, size: 10, bold: true, color: '#21655f' },
-    { text: 'Atual', x: 370, y: 178, size: 10, bold: true, color: '#21655f' },
-    { text: 'Variação', x: 460, y: 178, size: 10, bold: true, color: '#21655f' },
-  ];
-  rows.forEach((row, index) => {
-    const y = 202 + index * 20;
-    lines.push(
-      { text: row.label, x: 42, y, size: 9 },
-      { text: row.before, x: 280, y, size: 9 },
-      { text: row.after, x: 370, y, size: 9 },
-      { text: row.variation, x: 460, y, size: 9 },
-    );
-  });
+export function bodyProgressReportPages(patientName: string, dates: string[], rows: ReportRow[]): DocumentPage[] {
+  if (!dates.length) return [];
+  const pages: DocumentPage[] = [];
+  const perPage = 3;
+  const pageCount = Math.ceil(dates.length / perPage);
+  const firstDate = displayDate(dates[0]!);
+  const lastDate = displayDate(dates[dates.length - 1]!);
 
-  // As 18 medidas terminam antes da identificação profissional na página A4.
-  const professionalRole = 'Dr. em Psicanálise • Psicólogo Clínico • Biomédico Esteta e Integrativo';
-  const registration = 'CRP 04/86194 • CRBM 30421';
-  const contact = 'Telefone: (32) 9 9193-1779 | drfredmartins.com.br';
-  const location = 'Juiz de Fora – MG';
-  lines.push(
-    { text: professionalName, x: centeredX(professionalName, 11, true), y: 610, size: 11, bold: true, color: '#123c3d' },
-    { text: professionalRole, x: centeredX(professionalRole, 8.5), y: 628, size: 8.5, color: '#475569' },
-    { text: registration, x: centeredX(registration, 9, true), y: 644, size: 9, bold: true, color: '#21655f' },
-    { text: contact, x: centeredX(contact, 9), y: 674, size: 9, color: '#475569' },
-    { text: location, x: centeredX(location, 9), y: 691, size: 9, color: '#475569' },
-  );
-  return [lines];
+  // Divide as datas em blocos para manter todas as avaliações legíveis em A4.
+  for (let start = 0; start < dates.length; start += perPage) {
+    const pageNumber = Math.floor(start / perPage) + 1;
+    const columns = dates.slice(start, start + perPage);
+    const lines: DocumentPage = [
+      { text: professionalName, x: 42, y: 58, size: 14, bold: true, color: '#123c3d' },
+      { text: 'Relatório de Evolução Corporal', x: 42, y: 88, size: 18, bold: true, color: '#123c3d' },
+      { text: `Paciente: ${patientName}`, x: 42, y: 116, size: 11, bold: true },
+      { text: `Período: ${firstDate} a ${lastDate} • ${dates.length} avaliação(ões)`, x: 42, y: 136, size: 10, color: '#475569' },
+      { text: 'Variação total: última avaliação menos a primeira, em todas as páginas.', x: 42, y: 154, size: 8, color: '#475569' },
+      { text: 'Medida', x: 42, y: 182, size: 9, bold: true, color: '#21655f' },
+      { text: 'Variação total', x: 475, y: 182, size: 8, bold: true, color: '#21655f' },
+    ];
+    columns.forEach((date, index) => {
+      const x = 211 + index * 88;
+      lines.push(
+        { text: `${start + index + 1}ª avaliação`, x, y: 176, size: 8, bold: true, color: '#21655f' },
+        { text: displayDate(date), x, y: 189, size: 8, color: '#475569' },
+      );
+    });
+    rows.forEach((row, index) => {
+      const y = 214 + index * 20;
+      lines.push({ text: row.label, x: 42, y, size: 8.5 });
+      columns.forEach((_, column) => {
+        lines.push({ text: row.values[start + column] ?? '—', x: 211 + column * 88, y, size: 8 });
+      });
+      lines.push({ text: row.variation, x: 475, y, size: 8 });
+    });
+    lines.push({ text: '—: medida não informada ou avaliações insuficientes para calcular a variação.', x: 42, y: 578, size: 8, color: '#475569' });
+
+    const professionalRole = 'Dr. em Psicanálise • Psicólogo Clínico • Biomédico Esteta e Integrativo';
+    const registration = 'CRP 04/86194 • CRBM 30421';
+    const contact = 'Telefone: (32) 9 9193-1779 | drfredmartins.com.br';
+    const location = 'Juiz de Fora – MG';
+    lines.push(
+      { text: professionalName, x: centeredX(professionalName, 11, true), y: 610, size: 11, bold: true, color: '#123c3d' },
+      { text: professionalRole, x: centeredX(professionalRole, 8.5), y: 628, size: 8.5, color: '#475569' },
+      { text: registration, x: centeredX(registration, 9, true), y: 644, size: 9, bold: true, color: '#21655f' },
+      { text: contact, x: centeredX(contact, 9), y: 674, size: 9, color: '#475569' },
+      { text: location, x: centeredX(location, 9), y: 691, size: 9, color: '#475569' },
+      { text: `Página ${pageNumber} de ${pageCount}`, x: 475, y: 725, size: 8, color: '#475569' },
+    );
+    pages.push(lines);
+  }
+  return pages;
 }
 
 export function bodyProgressReportFilename(patientName: string, beforeDate: string, afterDate: string) {
