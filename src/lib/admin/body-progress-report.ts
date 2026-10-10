@@ -50,7 +50,8 @@ export function bodyProgressReportPages(patientName: string, dates: string[], ro
       columns.forEach((_, column) => {
         lines.push({ text: row.values[start + column] ?? '—', x: 211 + column * 88, y, size: 8 });
       });
-      lines.push({ text: row.variation, x: 475, y, size: 8 });
+      // Helvetica/WinAnsi aceita o hífen, mas não o sinal matemático U+2212.
+      lines.push({ text: row.variation.replace(/−/g, '-'), x: 475, y, size: 8 });
     });
     lines.push({ text: '—: medida não informada ou avaliações insuficientes para calcular a variação.', x: 42, y: 578, size: 8, color: '#475569' });
 
