@@ -6,11 +6,10 @@ import { BodyPhotoReport } from "@/components/admin/body-photo-report";
 import { PrintDocument } from "@/components/admin/documents/document-preview";
 import { downloadDocumentPdf } from "@/lib/admin/document-layout";
 import { bodyProgressReportFilename, bodyProgressReportPages } from "@/lib/admin/body-progress-report";
-import { measurementForDisplay, measurementForInput, parseMeasurement } from "@/lib/admin/body-measurements";
+import { measurementForInput, parseMeasurement } from "@/lib/admin/body-measurements";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -21,7 +20,6 @@ import {
 } from "@/components/ui/dialog";
 import { useAuth } from "@/components/auth/auth-provider";
 import {
-  calculateBmi,
   deleteEvaluation,
   fetchBodyPatients,
   fetchEvaluations,
@@ -41,22 +39,25 @@ export const Route = createFileRoute("/admin/evolucao-corporal")({
   component: BodyProgressPage,
 });
 
-const labels: Record<string, string> = {
+const labels: Record<(typeof measurementFields)[number], string> = {
   weight_kg: "Peso (kg)",
-  height_cm: "Altura (m)",
-  bmi: "IMC",
+  bmi: "IMC (kg/m²)",
+  body_fat_percentage: "Gordura corporal (%)",
+  muscle_mass_kg: "Massa muscular (kg)",
+  visceral_fat_level: "Gordura visceral (nível)",
+  body_water_percentage: "Água corporal (%)",
+  basal_metabolism_kcal: "Metabolismo basal (kcal/dia)",
+  metabolic_age_years: "Idade metabólica (anos)",
+  chest_cm: "Busto / tórax (cm)",
+  right_arm_cm: "Braço direito (cm)",
+  left_arm_cm: "Braço esquerdo (cm)",
   waist_cm: "Cintura (cm)",
   abdomen_cm: "Abdômen (cm)",
   hip_cm: "Quadril (cm)",
-  chest_cm: "Tórax (cm)",
-  right_arm_cm: "Braço direito (cm)",
-  left_arm_cm: "Braço esquerdo (cm)",
   right_thigh_cm: "Coxa direita (cm)",
   left_thigh_cm: "Coxa esquerda (cm)",
   right_calf_cm: "Panturrilha direita (cm)",
   left_calf_cm: "Panturrilha esquerda (cm)",
-  body_fat_percentage: "Gordura (%)",
-  muscle_mass_kg: "Massa muscular (kg)",
 };
 
 const stages: PhotoStage[] = ["before", "after"];
@@ -407,27 +408,30 @@ function validDraftPhoto(file: File) {
 
 const comparisonRows = [
   { key: "weight_kg", label: "Peso", unit: "kg" },
-  { key: "height_cm", label: "Altura", unit: "m" },
-  { key: "bmi", label: "IMC", unit: "" },
+  { key: "bmi", label: "IMC", unit: "kg/m²" },
+  { key: "body_fat_percentage", label: "Gordura corporal", unit: "%" },
+  { key: "muscle_mass_kg", label: "Massa muscular", unit: "kg" },
+  { key: "visceral_fat_level", label: "Gordura visceral (nível)", unit: "" },
+  { key: "body_water_percentage", label: "Água corporal", unit: "%" },
+  { key: "basal_metabolism_kcal", label: "Metabolismo basal", unit: "kcal/dia" },
+  { key: "metabolic_age_years", label: "Idade metabólica", unit: "anos" },
+  { key: "chest_cm", label: "Busto / tórax", unit: "cm" },
+  { key: "right_arm_cm", label: "Braço direito", unit: "cm" },
+  { key: "left_arm_cm", label: "Braço esquerdo", unit: "cm" },
   { key: "waist_cm", label: "Cintura", unit: "cm" },
   { key: "abdomen_cm", label: "Abdômen", unit: "cm" },
   { key: "hip_cm", label: "Quadril", unit: "cm" },
-  { key: "chest_cm", label: "Tórax", unit: "cm" },
-  { key: "right_arm_cm", label: "Braço direito", unit: "cm" },
-  { key: "left_arm_cm", label: "Braço esquerdo", unit: "cm" },
   { key: "right_thigh_cm", label: "Coxa direita", unit: "cm" },
   { key: "left_thigh_cm", label: "Coxa esquerda", unit: "cm" },
   { key: "right_calf_cm", label: "Panturrilha direita", unit: "cm" },
   { key: "left_calf_cm", label: "Panturrilha esquerda", unit: "cm" },
-  { key: "body_fat_percentage", label: "Percentual de gordura", unit: "%" },
-  { key: "muscle_mass_kg", label: "Massa muscular", unit: "kg" },
 ] as const;
 
 function formatComparisonValue(value: unknown, unit: string) {
   if (value == null || value === "") return "—";
   const number = Number(value);
   if (!Number.isFinite(number)) return "—";
-  return `${number.toLocaleString("pt-BR", { maximumFractionDigits: unit === "m" ? 4 : 2 })}${unit ? ` ${unit}` : ""}`;
+  return `${number.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}${unit ? ` ${unit}` : ""}`;
 }
 
 function ComparisonSection({ items, patientName }: { items: BodyEvaluation[]; patientName: string }) {
@@ -455,8 +459,8 @@ function ComparisonSection({ items, patientName }: { items: BodyEvaluation[]; pa
   const reportPages = useMemo(() => {
     if (!before || !after || sameEvaluation || !patientName) return [];
     return bodyProgressReportPages(patientName, before.evaluation_date, after.evaluation_date, comparisonRows.map(({ key, label, unit }) => {
-      const initial = measurementForDisplay(key, before[key]);
-      const current = measurementForDisplay(key, after[key]);
+      const initial = before[key];
+      const current = after[key];
       const variation = initial != null && current != null ? current - initial : null;
       return { label, before: formatComparisonValue(initial, unit), after: formatComparisonValue(current, unit), variation: variation == null || !Number.isFinite(variation) ? "-" : `${variation >= 0 ? "+" : "-"}${formatComparisonValue(Math.abs(variation), unit)}` };
     }));
@@ -513,8 +517,8 @@ function ComparisonSection({ items, patientName }: { items: BodyEvaluation[]; pa
               <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-4 py-3">Medida</th><th className="px-4 py-3">Antes</th><th className="px-4 py-3">Atual</th><th className="px-4 py-3">Variação</th></tr></thead>
               <tbody className="divide-y divide-slate-100">
                 {comparisonRows.map(({ key, label, unit }) => {
-                  const initial = measurementForDisplay(key, before?.[key]);
-                  const current = measurementForDisplay(key, after?.[key]);
+                  const initial = before?.[key];
+                  const current = after?.[key];
                   const variation = !sameEvaluation && initial != null && current != null ? current - initial : null;
                   const variationText = variation == null || !Number.isFinite(variation) ? "—" : `${variation >= 0 ? "+" : "−"}${formatComparisonValue(Math.abs(variation), unit)}`;
                   const indicator = variation == null || !Number.isFinite(variation) ? "" : variation > 0 ? "↑" : variation < 0 ? "↓" : "→";
@@ -538,7 +542,6 @@ function BodyProgressPage() {
   const [openPhotosId, setOpenPhotosId] = useState<string | null>(null);
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [values, setValues] = useState<Record<string, string>>({});
-  const [notes, setNotes] = useState("");
   const [draft, setDraft] = useState<DraftPhotoState>(emptyDraft);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -586,7 +589,6 @@ function BodyProgressPage() {
   function resetForm() {
     clearDraftPhotos();
     setValues({});
-    setNotes("");
     setEditingId(undefined);
     setDate(new Date().toISOString().slice(0, 10));
   }
@@ -596,11 +598,6 @@ function BodyProgressPage() {
     setValues((current) => ({ ...current, [key]: value }));
   }
 
-  const calculatedBmi = calculateBmi(
-    parseMeasurement("weight_kg", values["weight_kg"]),
-    parseMeasurement("height_cm", values["height_cm"]),
-  );
-
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (!user || !patientId || !date) return;
@@ -608,18 +605,19 @@ function BodyProgressPage() {
     setError("");
     const payload: Record<string, unknown> = {
       evaluation_date: date,
-      clinical_notes: notes || null,
     };
     for (const key of measurementFields) {
-      if (key === "bmi") continue;
-      const value = parseMeasurement(key, values[key]);
+      const value = parseMeasurement(values[key]);
       if (value !== null && !Number.isFinite(value)) {
-        setError(`Informe um valor válido para ${labels[key]}, como 1,75 ou 72,5.`);
+        setError(`Informe um valor válido para ${labels[key]}, como 24,5.`);
+        return;
+      }
+      if (key === "body_water_percentage" && value !== null && value > 100) {
+        setError("Água corporal (%) deve estar entre 0 e 100.");
         return;
       }
       payload[key] = value;
     }
-    payload["bmi"] = calculatedBmi;
     setSaving(true);
 
     const result = await saveEvaluation(user.id, patientId, payload, editingId);
@@ -662,11 +660,10 @@ function BodyProgressPage() {
     clearDraftPhotos();
     setEditingId(item.id);
     setDate(item.evaluation_date);
-    setNotes(item.clinical_notes ?? "");
     const nextValues: Record<string, string> = {};
     measurementFields.forEach((key) => {
       const value = item[key];
-      if (value != null) nextValues[key] = measurementForInput(key, value);
+      if (value != null) nextValues[key] = measurementForInput(value);
     });
     setValues(nextValues);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -729,9 +726,7 @@ function BodyProgressPage() {
               </div>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {measurementFields
-                  .filter((key) => key !== "bmi")
-                  .map((key) => (
+                {measurementFields.map((key) => (
                     <div className="grid gap-1" key={key}>
                       <Label htmlFor={key} className="text-xs">
                         {labels[key]}
@@ -740,7 +735,7 @@ function BodyProgressPage() {
                         id={key}
                         type="text"
                         inputMode="decimal"
-                        placeholder={key === "height_cm" ? "Ex.: 1,75" : key === "weight_kg" ? "Ex.: 72,5" : "Ex.: 30,5"}
+                        placeholder={key === "weight_kg" ? "Ex.: 72,5" : key === "bmi" ? "Ex.: 24,5" : undefined}
                         value={values[key] ?? ""}
                         onChange={(event) => changeMeasurement(key, event.target.value)}
                       />
@@ -748,16 +743,8 @@ function BodyProgressPage() {
                   ))}
               </div>
 
-              <p className="rounded-md bg-slate-50 p-2 text-sm">
-                IMC calculado: {formatComparisonValue(calculatedBmi, "")}
-              </p>
               <DraftPhotoRegistry draft={draft} onChange={setDraft} onError={setError} />
               {editing && user && <PhotoRegistry professionalId={user.id} patientId={patientId} patientName={patients.find((patient) => patient.id === patientId)?.nome ?? ""} evaluation={editing} />}
-              <Textarea
-                placeholder="Observações clínicas (opcional)"
-                value={notes}
-                onChange={(event) => setNotes(event.target.value)}
-              />
               {error && <p className="text-sm text-red-600">{error}</p>}
               <div className="flex gap-2">
                 <Button disabled={saving} className="bg-[#2f8f82] hover:bg-[#26796e]">
@@ -779,7 +766,7 @@ function BodyProgressPage() {
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <strong>{new Date(`${item.evaluation_date}T12:00:00`).toLocaleDateString("pt-BR")}</strong>
                     <span className="text-sm text-slate-500">
-                      {formatComparisonValue(item.weight_kg, "kg")} · IMC {formatComparisonValue(item.bmi, "")}
+                      {formatComparisonValue(item.weight_kg, "kg")} · IMC {formatComparisonValue(item.bmi, "kg/m²")}
                     </span>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">

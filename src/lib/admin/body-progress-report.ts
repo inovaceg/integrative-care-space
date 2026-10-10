@@ -28,7 +28,7 @@ export function bodyProgressReportPages(patientName: string, beforeDate: string,
     { text: 'Variação', x: 460, y: 178, size: 10, bold: true, color: '#21655f' },
   ];
   rows.forEach((row, index) => {
-    const y = 202 + index * 24;
+    const y = 202 + index * 20;
     lines.push(
       { text: row.label, x: 42, y, size: 9 },
       { text: row.before, x: 280, y, size: 9 },
@@ -37,7 +37,7 @@ export function bodyProgressReportPages(patientName: string, beforeDate: string,
     );
   });
 
-  // Professional identification stays below the 15-measure table and above the A4 footer area.
+  // As 18 medidas terminam antes da identificação profissional na página A4.
   const professionalRole = 'Dr. em Psicanálise • Psicólogo Clínico • Biomédico Esteta e Integrativo';
   const registration = 'CRP 04/86194 • CRBM 30421';
   const contact = 'Telefone: (32) 9 9193-1779 | drfredmartins.com.br';

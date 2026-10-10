@@ -2,20 +2,23 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const measurementFields = [
   "weight_kg",
-  "height_cm",
   "bmi",
-  "waist_cm",
-  "abdomen_cm",
-  "hip_cm",
+  "body_fat_percentage",
+  "muscle_mass_kg",
+  "visceral_fat_level",
+  "body_water_percentage",
+  "basal_metabolism_kcal",
+  "metabolic_age_years",
   "chest_cm",
   "right_arm_cm",
   "left_arm_cm",
+  "waist_cm",
+  "abdomen_cm",
+  "hip_cm",
   "right_thigh_cm",
   "left_thigh_cm",
   "right_calf_cm",
   "left_calf_cm",
-  "body_fat_percentage",
-  "muscle_mass_kg",
 ] as const;
 
 export type BodyEvaluation = {
@@ -23,14 +26,7 @@ export type BodyEvaluation = {
   patient_id: string;
   profissional_id: string;
   evaluation_date: string;
-  clinical_notes: string | null;
-  weight_kg?: number | null;
-  height_cm?: number | null;
-  bmi?: number | null;
-} & Omit<
-  Partial<Record<(typeof measurementFields)[number], number | null>>,
-  "weight_kg" | "height_cm" | "bmi"
->;
+} & Partial<Record<(typeof measurementFields)[number], number | null>>;
 
 export type PhotoStage = "before" | "after";
 export type PhotoView = "front" | "side" | "back";
@@ -252,10 +248,4 @@ export async function removePhoto(
     .eq("profissional_id", professionalId)
     .eq("patient_id", patientId)
     .eq("evaluation_id", evaluationId);
-}
-
-export function calculateBmi(weight: number | null, heightCm: number | null) {
-  return weight && heightCm
-    ? Number((weight / (heightCm / 100) ** 2).toFixed(2))
-    : null;
 }
