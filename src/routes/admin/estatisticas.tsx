@@ -117,16 +117,22 @@ function buildSeries(events: AnalyticsEventRecord[], range: DateRange) {
   return Array.from(buckets.values());
 }
 
+let statisticsDraftState = { preset: "30" as Preset, customFrom: "", customTo: "" };
+
 function StatisticsPage() {
   const { user, isLoading: authLoading } = useAuth();
   const [events, setEvents] = useState<AnalyticsEventRecord[]>([]);
-  const [preset, setPreset] = useState<Preset>("30");
-  const [customFrom, setCustomFrom] = useState("");
-  const [customTo, setCustomTo] = useState("");
+  const [preset, setPreset] = useState<Preset>(statisticsDraftState.preset);
+  const [customFrom, setCustomFrom] = useState(statisticsDraftState.customFrom);
+  const [customTo, setCustomTo] = useState(statisticsDraftState.customTo);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const requestIdRef = useRef(0);
+
+  useEffect(() => {
+    statisticsDraftState = { preset, customFrom, customTo };
+  }, [customFrom, customTo, preset]);
 
   const refreshEvents = useCallback(async () => {
     if (authLoading || !user?.id) return;
