@@ -616,7 +616,11 @@ function BodyProgressPage() {
     if (result.error) {
       setError(result.error.message);
     } else {
-      const evaluationId = (result.data as BodyEvaluation).id;
+      const savedEvaluation = result.data as BodyEvaluation;
+      const evaluationId = savedEvaluation.id;
+      setItems((current) => editingId
+        ? current.map((item) => item.id === editingId ? savedEvaluation : item)
+        : [savedEvaluation, ...current]);
       const failedPhotoKeys: string[] = [];
       for (const [key, selected] of Object.entries(draft.files)) {
         const [stage, view] = key.split("-") as [PhotoStage, PhotoView];
@@ -627,7 +631,6 @@ function BodyProgressPage() {
           failedPhotoKeys.push(key);
         }
       }
-      await loadEvaluations();
       if (failedPhotoKeys.length) {
         const failedFiles = Object.fromEntries(
           Object.entries(draft.files).filter(([key]) => failedPhotoKeys.includes(key)),
