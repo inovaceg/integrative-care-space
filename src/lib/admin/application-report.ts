@@ -30,9 +30,9 @@ export function applicationReportPages(patientName: string, rows: ApplicationRep
       { text: `Período: ${displayDate(first.application_date)} a ${displayDate(last.application_date)} • ${rows.length} registro(s)`, x: 42, y: 136, size: 9, color: "#475569" },
       { text: "Data", x: 42, y: 178, size: 9, bold: true, color: "#21655f" },
       { text: "Procedimento", x: 105, y: 178, size: 9, bold: true, color: "#21655f" },
-      { text: "Peso", x: 290, y: 178, size: 9, bold: true, color: "#21655f" },
-      { text: "Variação", x: 350, y: 178, size: 9, bold: true, color: "#21655f" },
-      { text: "Observações", x: 430, y: 178, size: 8, bold: true, color: "#21655f" },
+      { text: "Peso", x: 275, y: 178, size: 9, bold: true, color: "#21655f" },
+      { text: "Variação", x: 335, y: 178, size: 9, bold: true, color: "#21655f" },
+      { text: "Observações", x: 405, y: 178, size: 8, bold: true, color: "#21655f" },
     ];
 
     pageRows.forEach((row, index) => {
@@ -41,10 +41,10 @@ export function applicationReportPages(patientName: string, rows: ApplicationRep
       const notes = (row.notes ?? "—").trim() || "—";
       lines.push(
         { text: displayDate(row.application_date), x: 42, y, size: 8.5 },
-        { text: row.procedure_name.slice(0, 27), x: 105, y, size: 8.5 },
-        { text: `${Number(row.current_weight_kg).toFixed(2).replace(".", ",")} kg`, x: 290, y, size: 8.5 },
-        { text: variation, x: 350, y, size: 8.5 },
-        { text: notes.slice(0, 25), x: 430, y, size: 7.5, color: "#475569" },
+        { text: row.procedure_name.slice(0, 23), x: 105, y, size: 8.5 },
+        { text: `${Number(row.current_weight_kg).toFixed(2).replace(".", ",")} kg`, x: 275, y, size: 8.5 },
+        { text: variation, x: 335, y, size: 8.5 },
+        { text: notes.slice(0, 36), x: 405, y, size: 7.5, color: "#475569" },
       );
     });
 
