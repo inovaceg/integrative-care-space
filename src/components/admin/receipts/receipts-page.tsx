@@ -21,6 +21,17 @@ import { deleteReceipt, updateReceipt, type ReceiptSnapshotInput } from '@/lib/a
 
 const selectClass = 'h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm';
 
+let receiptsDraftState = {
+  patientId: '',
+  area: 'Psicologia' as ReceiptArea,
+  amount: '',
+  date: today(),
+  method: 'Pix',
+  notes: '',
+  editingReceipt: null as Receipt | null,
+  editingPatientId: null as string | null,
+};
+
 export default function ReceiptsPage() {
   const { user } = useAuth();
   const [patients, setPatients] = useState<PatientOption[]>([]);
@@ -32,22 +43,26 @@ export default function ReceiptsPage() {
   const lock = useRef(false);
   const [hasMore, setHasMore] = useState(false);
   const [offset, setOffset] = useState(0);
-  const [patientId, setPatientId] = useState('');
+  const [patientId, setPatientId] = useState(receiptsDraftState.patientId);
   const [patient, setPatient] = useState<{ nome: string; cpf: string | null } | null>(null);
   const [patientLoading, setPatientLoading] = useState(false);
   const [patientError, setPatientError] = useState('');
-  const [editingPatientId, setEditingPatientId] = useState<string | null>(null);
-  const [area, setArea] = useState<ReceiptArea>('Psicologia');
-  const [amount, setAmount] = useState('');
-  const [date, setDate] = useState(today);
-  const [method, setMethod] = useState('Pix');
-  const [notes, setNotes] = useState('');
+  const [editingPatientId, setEditingPatientId] = useState<string | null>(receiptsDraftState.editingPatientId);
+  const [area, setArea] = useState<ReceiptArea>(receiptsDraftState.area);
+  const [amount, setAmount] = useState(receiptsDraftState.amount);
+  const [date, setDate] = useState(receiptsDraftState.date);
+  const [method, setMethod] = useState(receiptsDraftState.method);
+  const [notes, setNotes] = useState(receiptsDraftState.notes);
   const [search, setSearch] = useState('');
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [preview, setPreview] = useState<{ receipt: Receipt; pages: DocumentPage[] } | null>(null);
   const [printPages, setPrintPages] = useState<DocumentPage[]>([]);
-  const [editingReceipt, setEditingReceipt] = useState<Receipt | null>(null);
+  const [editingReceipt, setEditingReceipt] = useState<Receipt | null>(receiptsDraftState.editingReceipt);
+
+  useEffect(() => {
+    receiptsDraftState = { patientId, area, amount, date, method, notes, editingReceipt, editingPatientId };
+  }, [amount, area, date, editingPatientId, editingReceipt, method, notes, patientId]);
 
   useEffect(() => {
     if (!user) return;
