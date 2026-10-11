@@ -36,22 +36,35 @@ function parseWeight(value: string) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 }
 
+let applicationsDraftState = {
+  patientId: "",
+  procedureName: "",
+  weight: "",
+  applicationDate: today(),
+  notes: "",
+  editingApplication: null as PatientApplication | null,
+};
+
 function ApplicationsPage() {
   const { user, isLoading: authLoading } = useAuth();
   const [patients, setPatients] = useState<{ id: string; nome: string }[]>([]);
   const [applications, setApplications] = useState<PatientApplication[]>([]);
-  const [patientId, setPatientId] = useState("");
-  const [procedureName, setProcedureName] = useState("");
-  const [weight, setWeight] = useState("");
-  const [applicationDate, setApplicationDate] = useState(today);
-  const [notes, setNotes] = useState("");
+  const [patientId, setPatientId] = useState(applicationsDraftState.patientId);
+  const [procedureName, setProcedureName] = useState(applicationsDraftState.procedureName);
+  const [weight, setWeight] = useState(applicationsDraftState.weight);
+  const [applicationDate, setApplicationDate] = useState(applicationsDraftState.applicationDate);
+  const [notes, setNotes] = useState(applicationsDraftState.notes);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [applicationToDelete, setApplicationToDelete] = useState<PatientApplication | null>(null);
-  const [editingApplication, setEditingApplication] = useState<PatientApplication | null>(null);
+  const [editingApplication, setEditingApplication] = useState<PatientApplication | null>(applicationsDraftState.editingApplication);
   const [reportPreview, setReportPreview] = useState<DocumentPage[]>([]);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    applicationsDraftState = { patientId, procedureName, weight, applicationDate, notes, editingApplication };
+  }, [applicationDate, editingApplication, notes, patientId, procedureName, weight]);
 
   useEffect(() => {
     if (authLoading) return;
