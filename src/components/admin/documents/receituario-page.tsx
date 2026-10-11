@@ -107,7 +107,7 @@ export default function ReceituarioPage() {
       const record = await saveDocument(area, type, content, status, savedId);
       setDocuments(rows => [record, ...rows.filter(row => row.id !== record.id)]);
       setSavedId(record.id); setDirty(false);
-      setMessage(status === 'Rascunho' ? 'Rascunho salvo com segurança.' : 'Documento finalizado. Para alterações, duplique e crie um novo documento.');
+      setMessage(status === 'Rascunho' ? 'Rascunho salvo com segurança.' : 'Documento finalizado e salvo com segurança.');
       if (status === 'Finalizado') { setStep(0); view(record); }
     } catch { setError('Não foi possível salvar. O conteúdo permanece no editor. Verifique sua conexão e permissão de acesso.'); }
     finally { setBusy(false); }
