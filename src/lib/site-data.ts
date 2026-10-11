@@ -18,6 +18,7 @@ export const whatsappNumber = "5532991931779";
 export const whatsappMessage =
   "Olá! Vim pelo site do Dr. Frederick Parreira e gostaria de informações sobre atendimento.";
 export const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
+export const socialProjectWhatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Olá! Gostaria de saber mais sobre o Projeto Social de Atendimento Psicológico realizado nas igrejas.")}`;
 export const mapsUrl =
   "https://www.google.com/maps/search/?api=1&query=Rua%20Fernando%20Lobo%2C%20102%2C%20Juiz%20de%20Fora%20MG";
 

@@ -1,9 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Check, HeartHandshake, Image, MapPin, MessageCircle, Shield, Sparkles, Star, Users } from "lucide-react";
+import { ArrowRight, Check, Church, HeartHandshake, Image, MapPin, MessageCircle, Shield, Sparkles, Star, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { trackAnalyticsEvent, trackAnalyticsEvents } from "@/lib/analytics";
-import { biomedicineServices, faqItems, mapsUrl, type Service, whatsappUrl } from "@/lib/site-data";
+import { biomedicineServices, faqItems, mapsUrl, socialProjectWhatsappUrl, type Service, whatsappUrl } from "@/lib/site-data";
 
 export function Eyebrow({ children, tone = "neutral" }: { children: React.ReactNode; tone?: "neutral" | "psychology" | "biomedicine" }) {
   return <p className={`eyebrow eyebrow-${tone}`}>{children}</p>;
@@ -91,6 +91,44 @@ export function IdentificationSection() {
               <p className="mt-3 text-sm leading-6 text-muted-foreground">{text}</p>
             </article>
           ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function SocialProjectSection() {
+  return (
+    <section className="section-space bg-primary text-primary-foreground">
+      <div className="container-site">
+        <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_.9fr]">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-gold-soft">Projeto social</p>
+            <h2 className="mt-4 max-w-3xl font-display text-4xl font-semibold leading-tight md:text-5xl">Atendimento Psicológico Social</h2>
+            <p className="mt-6 max-w-2xl text-base leading-8 text-primary-foreground/90 md:text-lg">
+              Acreditamos que o acesso à saúde mental é um direito de todos. Por isso, o Dr. Frederick Parreira mantém um projeto social realizado em parceria com igrejas, levando atendimento psicológico de qualidade a pessoas e famílias em situação de vulnerabilidade social e emocional.
+            </p>
+            <p className="mt-4 max-w-2xl text-base leading-8 text-primary-foreground/90 md:text-lg">
+              O projeto une ética, sigilo e ciência a um espaço de acolhimento sem julgamentos, com o propósito de tornar o cuidado psicológico mais acessível.
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Button asChild size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90">
+                <a href={socialProjectWhatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackAnalyticsEvent("whatsapp_click")}>
+                  Quero saber mais sobre o projeto <ArrowRight className="size-4" />
+                </a>
+              </Button>
+              <span className="text-sm text-primary-foreground/75">Consulte a igreja participante mais próxima.</span>
+            </div>
+          </div>
+          <div className="rounded-3xl border border-primary-foreground/15 bg-primary-foreground/10 p-7 backdrop-blur-sm md:p-9">
+            <div className="grid size-14 place-items-center rounded-2xl bg-gold text-gold-foreground"><Church className="size-7" /></div>
+            <h3 className="mt-6 font-display text-2xl font-semibold">Cuidado que chega até a comunidade</h3>
+            <p className="mt-4 leading-7 text-primary-foreground/80">O atendimento é organizado junto às igrejas parceiras, aproximando a Psicologia de quem precisa de acolhimento e orientação.</p>
+            <div className="mt-7 grid gap-4 border-t border-primary-foreground/15 pt-6 text-sm text-primary-foreground/85 sm:grid-cols-2 lg:grid-cols-1">
+              <span className="flex gap-3"><HeartHandshake className="size-5 shrink-0 text-gold-soft" /> Escuta humanizada e sem julgamentos</span>
+              <span className="flex gap-3"><Shield className="size-5 shrink-0 text-gold-soft" /> Sigilo e ética profissional</span>
+            </div>
+          </div>
         </div>
       </div>
     </section>

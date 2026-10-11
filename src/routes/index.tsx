@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, HeartHandshake, Leaf, LockKeyhole, Star, UserRoundCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { trackAnalyticsEvents } from "@/lib/analytics";
-import { AreaCards, CtaSection, FaqList, IdentificationSection, LocationBlock, ProfessionalSection, Steps } from "@/components/page-parts";
+import { AreaCards, CtaSection, FaqList, IdentificationSection, LocationBlock, ProfessionalSection, SocialProjectSection, Steps } from "@/components/page-parts";
 import { whatsappUrl } from "@/lib/site-data";
 import { createSeoHead } from "@/lib/seo";
 
@@ -59,7 +59,11 @@ function HomePage() {
     </section>
 
     <section className="fade-in-section">
-    <IdentificationSection />
+      <IdentificationSection />
+    </section>
+
+    <section className="fade-in-section">
+      <SocialProjectSection />
     </section>
 
     <section className="fade-in-section section-space bg-card">
