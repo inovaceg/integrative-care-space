@@ -13,10 +13,15 @@ function centeredX(text: string, size: number, bold = false) {
   return Math.max(30, (595 - width) / 2);
 }
 
+function observationLines(value: string | null) {
+  const text = (value ?? "—").trim() || "—";
+  return [text.slice(0, 78), text.length > 78 ? `${text.slice(78, 156)}…` : ""].filter(Boolean);
+}
+
 export function applicationReportPages(patientName: string, rows: ApplicationReportRow[]): DocumentPage[] {
   if (!rows.length) return [];
   const pages: DocumentPage[] = [];
-  const perPage = 18;
+  const perPage = 12;
   const first = rows[0]!;
   const last = rows.at(-1)!;
 
@@ -31,19 +36,21 @@ export function applicationReportPages(patientName: string, rows: ApplicationRep
       { text: "Procedimento", x: 145, y: 178, size: 9, bold: true, color: "#21655f" },
       { text: "Peso", x: 350, y: 178, size: 9, bold: true, color: "#21655f" },
       { text: "Variação", x: 420, y: 178, size: 9, bold: true, color: "#21655f" },
-      { text: "Observações", x: 485, y: 178, size: 8, bold: true, color: "#21655f" },
+      { text: "Observações", x: 42, y: 194, size: 8, bold: true, color: "#21655f" },
     ];
 
     pageRows.forEach((row, index) => {
-      const y = 202 + index * 27;
+      const y = 218 + index * 40;
       const variation = row.variation === null ? "—" : `${row.variation > 0 ? "+" : ""}${row.variation.toFixed(2).replace(".", ",")} kg`;
+      const notes = observationLines(row.notes);
       lines.push(
         { text: displayDate(row.application_date), x: 42, y, size: 8.5 },
         { text: row.procedure_name.slice(0, 32), x: 145, y, size: 8.5 },
         { text: `${Number(row.current_weight_kg).toFixed(2).replace(".", ",")} kg`, x: 350, y, size: 8.5 },
         { text: variation, x: 420, y, size: 8.5 },
-        { text: (row.notes ?? "—").slice(0, 18), x: 485, y, size: 8 },
+        { text: notes[0]!, x: 42, y: y + 14, size: 7.5, color: "#475569" },
       );
+      if (notes[1]) lines.push({ text: notes[1], x: 42, y: y + 25, size: 7.5, color: "#475569" });
     });
 
     if (start === 0) {
