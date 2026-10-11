@@ -530,22 +530,32 @@ function ComparisonSection({ items, patientName }: { items: BodyEvaluation[]; pa
   );
 }
 
+let bodyProgressDraftState = {
+  patientId: "",
+  editingId: undefined as string | undefined,
+  date: new Date().toISOString().slice(0, 10),
+  values: {} as Record<string, string>,
+  draft: emptyDraft(),
+};
+
 function BodyProgressPage() {
   const { user } = useAuth();
   const [patients, setPatients] = useState<{ id: string; nome: string }[]>([]);
-  const [patientId, setPatientId] = useState("");
+  const [patientId, setPatientId] = useState(bodyProgressDraftState.patientId);
   const [items, setItems] = useState<BodyEvaluation[]>([]);
-  const [editingId, setEditingId] = useState<string>();
+  const [editingId, setEditingId] = useState<string | undefined>(bodyProgressDraftState.editingId);
   const [openPhotosId, setOpenPhotosId] = useState<string | null>(null);
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [values, setValues] = useState<Record<string, string>>({});
-  const [draft, setDraft] = useState<DraftPhotoState>(emptyDraft);
+  const [date, setDate] = useState(bodyProgressDraftState.date);
+  const [values, setValues] = useState<Record<string, string>>(bodyProgressDraftState.values);
+  const [draft, setDraft] = useState<DraftPhotoState>(bodyProgressDraftState.draft);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const draftRef = useRef(draft);
   draftRef.current = draft;
 
-  useEffect(() => () => Object.values(draftRef.current.files).forEach(({ url }) => URL.revokeObjectURL(url)), []);
+  useEffect(() => {
+    bodyProgressDraftState = { patientId, editingId, date, values, draft };
+  }, [date, draft, editingId, patientId, values]);
 
   const editing = useMemo(
     () => items.find((item) => item.id === editingId),
