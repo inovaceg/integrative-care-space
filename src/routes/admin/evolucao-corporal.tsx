@@ -443,14 +443,13 @@ function ComparisonSection({ items, patientName }: { items: BodyEvaluation[]; pa
   const first = ordered[0];
   const last = ordered[ordered.length - 1];
   const rows = useMemo(() => {
-    const initialEvaluation = ordered[0];
-    const latestEvaluation = ordered.at(-1);
     return comparisonRows.map(({ key, label, unit }) => {
-    const initial = initialEvaluation?.[key];
-    const current = latestEvaluation?.[key];
+    const evaluationsWithValue = ordered.filter((item) => item[key] != null);
+    const initial = evaluationsWithValue[0]?.[key];
+    const current = evaluationsWithValue.at(-1)?.[key];
     const initialNumber = initial == null ? null : Number(initial);
     const currentNumber = current == null ? null : Number(current);
-    const difference = ordered.length > 1 && initialNumber != null && currentNumber != null && Number.isFinite(initialNumber) && Number.isFinite(currentNumber) ? currentNumber - initialNumber : null;
+    const difference = evaluationsWithValue.length > 1 && initialNumber != null && currentNumber != null && Number.isFinite(initialNumber) && Number.isFinite(currentNumber) ? currentNumber - initialNumber : null;
     const variation = difference != null ? Math.round(difference * 100) / 100 : null;
     return {
       key,
@@ -495,7 +494,7 @@ function ComparisonSection({ items, patientName }: { items: BodyEvaluation[]; pa
         <p className="text-sm text-slate-500">Nenhuma avaliação registrada para este paciente.</p>
       ) : (
         <div className="min-w-0 space-y-4">
-          <p className="text-sm text-slate-600">Todas as avaliações em ordem cronológica. A variação total corresponde à última avaliação menos a primeira.</p>
+          <p className="text-sm text-slate-600">Todas as avaliações em ordem cronológica. A variação total usa o último valor preenchido menos o primeiro valor preenchido de cada medida.</p>
           {ordered.length === 1 && <p className="text-sm text-slate-500">A variação ficará disponível após registrar uma segunda avaliação.</p>}
           <div className="flex flex-wrap gap-2">
             <Button type="button" variant="outline" disabled={!reportReady} onClick={printReport}><Printer className="mr-2 h-4 w-4" />Imprimir</Button>

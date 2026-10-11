@@ -33,7 +33,7 @@ export function bodyProgressReportPages(patientName: string, dates: string[], ro
       { text: 'Relatório de Evolução Corporal', x: 42, y: 88, size: 18, bold: true, color: '#123c3d' },
       { text: `Paciente: ${patientName}`, x: 42, y: 116, size: 11, bold: true },
       { text: `Período: ${firstDate} a ${lastDate} • ${dates.length} avaliação(ões)`, x: 42, y: 136, size: 10, color: '#475569' },
-      { text: 'Variação total: última avaliação menos a primeira, em todas as páginas.', x: 42, y: 154, size: 8, color: '#475569' },
+      { text: 'Variação total: último valor preenchido menos o primeiro, em todas as páginas.', x: 42, y: 154, size: 8, color: '#475569' },
       { text: 'Medida', x: 42, y: 182, size: 9, bold: true, color: '#21655f' },
       { text: 'Variação total', x: 475, y: 182, size: 8, bold: true, color: '#21655f' },
     ];
