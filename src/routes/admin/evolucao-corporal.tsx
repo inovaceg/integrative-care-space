@@ -442,11 +442,16 @@ function ComparisonSection({ items, patientName }: { items: BodyEvaluation[]; pa
   const [reportError, setReportError] = useState("");
   const first = ordered[0];
   const last = ordered[ordered.length - 1];
-  const rows = useMemo(() => comparisonRows.map(({ key, label, unit }) => {
-    const initial = first?.[key];
-    const current = last?.[key];
-    const difference = ordered.length > 1 && initial != null && current != null ? current - initial : null;
-    const variation = difference != null && Number.isFinite(difference) ? Math.round(difference * 100) / 100 : null;
+  const rows = useMemo(() => {
+    const initialEvaluation = ordered[0];
+    const latestEvaluation = ordered.at(-1);
+    return comparisonRows.map(({ key, label, unit }) => {
+    const initial = initialEvaluation?.[key];
+    const current = latestEvaluation?.[key];
+    const initialNumber = initial == null ? null : Number(initial);
+    const currentNumber = current == null ? null : Number(current);
+    const difference = ordered.length > 1 && initialNumber != null && currentNumber != null && Number.isFinite(initialNumber) && Number.isFinite(currentNumber) ? currentNumber - initialNumber : null;
+    const variation = difference != null ? Math.round(difference * 100) / 100 : null;
     return {
       key,
       label,
@@ -454,7 +459,8 @@ function ComparisonSection({ items, patientName }: { items: BodyEvaluation[]; pa
       variation: variation == null ? "—" : `${variation >= 0 ? "+" : "−"}${formatComparisonValue(Math.abs(variation), unit)}`,
       indicator: variation == null ? "" : variation > 0 ? "↑" : variation < 0 ? "↓" : "→",
     };
-  }), [first, last, ordered]);
+    });
+  }, [ordered]);
   const reportPages = useMemo(() => {
     if (!ordered.length || !patientName) return [];
     return bodyProgressReportPages(patientName, ordered.map((item) => item.evaluation_date), rows);
