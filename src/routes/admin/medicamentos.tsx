@@ -59,6 +59,13 @@ function formatNearestExpiration(medicationId: string, movements: MedicationMove
   return expirationDate ? formatDate(expirationDate) : "Não informada";
 }
 
+let medicationUiState = {
+  medicationDialogOpen: false,
+  movementDialogOpen: false,
+  selectedMedication: null as MedicationRecord | null,
+  selectedMovement: null as MedicationMovementRecord | null,
+};
+
 function MedicationDialog({ medication, open, onOpenChange, onSaved }: { medication: MedicationRecord | null; open: boolean; onOpenChange: (open: boolean) => void; onSaved: (medication: MedicationRecord) => void }) {
   const { user } = useAuth();
   const [form, setForm] = useState<MedicationInput>({ name: "", unit: "unit", unit_price: 0, supplier: null, notes: null });
@@ -149,13 +156,17 @@ function MedicationsPage() {
   const [movementFilter, setMovementFilter] = useState<MedicationMovementType | "all">("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [medicationDialogOpen, setMedicationDialogOpen] = useState(false);
-  const [movementDialogOpen, setMovementDialogOpen] = useState(false);
-  const [selectedMedication, setSelectedMedication] = useState<MedicationRecord | null>(null);
-  const [selectedMovement, setSelectedMovement] = useState<MedicationMovementRecord | null>(null);
+  const [medicationDialogOpen, setMedicationDialogOpen] = useState(medicationUiState.medicationDialogOpen);
+  const [movementDialogOpen, setMovementDialogOpen] = useState(medicationUiState.movementDialogOpen);
+  const [selectedMedication, setSelectedMedication] = useState<MedicationRecord | null>(medicationUiState.selectedMedication);
+  const [selectedMovement, setSelectedMovement] = useState<MedicationMovementRecord | null>(medicationUiState.selectedMovement);
   const [medicationToDelete, setMedicationToDelete] = useState<MedicationRecord | null>(null);
   const [movementToDelete, setMovementToDelete] = useState<MedicationMovementRecord | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    medicationUiState = { medicationDialogOpen, movementDialogOpen, selectedMedication, selectedMovement };
+  }, [medicationDialogOpen, movementDialogOpen, selectedMedication, selectedMovement]);
 
   useEffect(() => {
     let active = true;
