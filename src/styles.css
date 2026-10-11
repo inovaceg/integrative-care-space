@@ -4,20 +4,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/*
- * Design system definition.
- *
- * The @theme inline block maps CSS custom properties to Tailwind utility
- * classes (e.g. --color-primary -> bg-primary, text-primary).
- *
- * The :root and .dark blocks define the actual color values using oklch.
- * All colors MUST use oklch format.
- *
- * To add a new semantic color:
- * 1. Add the variable to :root (light value) and .dark (dark value)
- * 2. Register it in @theme inline as --color-<name>: var(--<name>)
- */
-
 @theme inline {
   --font-display: "Sora", Arial, sans-serif;
   --font-sans: "Manrope", Arial, sans-serif;
@@ -58,7 +44,6 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
   --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-psychology: var(--psychology);
@@ -78,136 +63,47 @@
 
 :root {
   --radius: 1rem;
-  --background: oklch(0.975 0.003 115); /* Branco mais puro */
-  --foreground: oklch(0.21 0.008 245); /* Texto principal mais escuro */
-  --card: oklch(0.995 0.002 110);
-  --card-foreground: oklch(0.21 0.008 245);
-  --popover: oklch(0.995 0.002 110);
-  --popover-foreground: oklch(0.21 0.008 245);
-  --primary: oklch(0.38 0.045 184); /* Verde-petróleo mais elegante */
-  --primary-foreground: oklch(0.985 0.004 115);
-  --secondary: oklch(0.25 0.012 245); /* Azul-petróleo mais discreto */
-  --secondary-foreground: oklch(0.97 0.004 115);
-  --muted: oklch(0.935 0.008 185);
-  --muted-foreground: oklch(0.45 0.015 225);
-  --accent: oklch(0.89 0.035 85); /* Dourado mais sutil */
-  --accent-foreground: oklch(0.21 0.008 245);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.86 0.012 200); /* Bordas mais suaves */
-  --input: oklch(0.80 0.018 200);
-  --ring: oklch(0.38 0.045 184);
-  --psychology: oklch(0.35 0.042 184); /* Verde psicologia */
-  --psychology-foreground: oklch(0.98 0.005 85);
-  --biomedicine: oklch(0.28 0.018 245); /* Azul biomedicina */
-  --biomedicine-foreground: oklch(0.98 0.005 85);
-  --gold: oklch(0.70 0.09 82); /* Dourado mais refinado */
-  --gold-soft: oklch(0.82 0.07 82);
-  --footer: oklch(0.21 0.008 245);
-  --footer-foreground: oklch(0.97 0.008 85);
-  --footer-muted: oklch(0.75 0.015 190);
-  --footer-line: oklch(0.35 0.018 220);
-  --whatsapp: oklch(0.64 0.17 149);
-  --whatsapp-foreground: oklch(1 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.984 0.003 247.858);
-  --sidebar-foreground: oklch(0.129 0.042 264.695);
-  --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
-  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
+  --background: oklch(0.98 0.006 180);
+  --foreground: oklch(0.22 0.03 180);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.22 0.03 180);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.22 0.03 180);
+  --primary: oklch(0.54 0.11 175);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.94 0.025 180);
+  --secondary-foreground: oklch(0.28 0.04 180);
+  --muted: oklch(0.95 0.01 180);
+  --muted-foreground: oklch(0.5 0.03 180);
+  --accent: oklch(0.93 0.03 180);
+  --accent-foreground: oklch(0.3 0.05 180);
+  --destructive: oklch(0.58 0.2 25);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.88 0.02 180);
+  --input: oklch(0.88 0.02 180);
+  --ring: oklch(0.54 0.11 175);
+  --radius: 1rem;
 }
 
-.dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
-}
+* { border-color: var(--border); }
 
-@layer base {
-  * {
-    border-color: var(--color-border);
+@media (max-width: 640px) {
+  [data-radix-dialog-content],
+  [data-radix-alert-dialog-content] {
+    width: calc(100vw - 1rem);
+    max-width: calc(100vw - 1rem);
+    max-height: calc(100dvh - 1rem);
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 1rem;
   }
 
-  body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
-    font-family: var(--font-sans);
-    text-rendering: optimizeLegibility;
+  [data-radix-dialog-content] form,
+  [data-radix-alert-dialog-content] form {
+    min-width: 0;
   }
-  html { scroll-behavior: smooth; }
-  a, button { outline-offset: 3px; }
 }
 
-@utility container-site { width: min(100% - 2rem, 80rem); margin-inline: auto; }
-@utility section-space { padding-block: clamp(4rem, 8vw, 7rem); }
-@utility eyebrow { font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .18em; color: var(--primary); }
-@utility eyebrow-psychology { color: var(--psychology); }
-@utility eyebrow-biomedicine { color: var(--biomedicine); }
-@utility page-intro { border-bottom: 1px solid var(--border); background: color-mix(in oklab, var(--secondary) 45%, var(--background)); }
-@utility page-intro-psychology { background: color-mix(in oklab, var(--psychology) 8%, var(--background)); }
-@utility page-intro-biomedicine { background: color-mix(in oklab, var(--biomedicine) 8%, var(--background)); }
-@utility card-grid { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); }
-@utility content-card { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--card); padding: clamp(1.75rem, 3.5vw, 2.25rem); box-shadow: 0 4px 12px color-mix(in oklab, var(--foreground) 4%, transparent); transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
-@utility card-title { font-family: var(--font-display); font-size: clamp(1.4rem, 2.2vw, 1.9rem); font-weight: 650; line-height: 1.22; }
-@utility card-topline { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
-@utility card-number { font-family: var(--font-display); font-size: 2.75rem; font-weight: 700; line-height: 1; color: var(--gold); }
-@utility card-index { font-family: var(--font-display); font-size: 2rem; font-weight: 600; line-height: 1; color: var(--primary); }
-@utility service-card { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--card); padding: clamp(1.75rem, 3.5vw, 2.25rem); box-shadow: 0 4px 12px color-mix(in oklab, var(--foreground) 4%, transparent); transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
-@utility service-card-psychology { border-top: 3px solid var(--primary); }
-@utility service-card-biomedicine { border-top: 3px solid var(--gold); }
-@utility service-icon { display: grid; width: 3rem; height: 3rem; place-items: center; border-radius: calc(var(--radius) - 4px); background: var(--muted); color: var(--primary); }
-@utility area-card { border: 1px solid var(--border); border-radius: var(--radius-lg); padding: clamp(2rem, 4vw, 2.75rem); box-shadow: 0 6px 16px color-mix(in oklab, var(--foreground) 5%, transparent); transition: transform .25s ease, box-shadow .25s ease; }
-@utility area-card-psychology { background: var(--card); color: var(--card-foreground); }
-@utility area-card-biomedicine { background: var(--secondary); color: var(--secondary-foreground); border-color: color-mix(in oklab, var(--secondary-foreground) 12%, transparent); }
-@utility area-card-image { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: calc(var(--radius) - 3px); margin-block-end: 2rem; }
-@utility area-card-cta { display: flex; width: 100%; min-height: 3.75rem; margin-top: 2.5rem; align-items: center; justify-content: center; gap: .75rem; border: 1px solid var(--primary); border-radius: calc(var(--radius) - 4px); padding: .9rem 1.3rem; background: var(--primary); color: var(--primary-foreground); font-size: .9rem; font-weight: 800; line-height: 1.2; text-align: center; transition: transform .2s ease, filter .2s ease; }
-@utility steps-grid { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); }
-@utility hero-image { border-radius: 2.5rem 2.5rem 2.5rem .5rem; box-shadow: 0 18px 36px color-mix(in oklab, var(--foreground) 12%, transparent); }
-@utility prose-legal { max-width: 52rem; }
-.prose-legal h2 { margin-top: 2.25rem; font-family: var(--font-display); font-size: 1.75rem; }
-.prose-legal p { margin-top: .75rem; line-height: 1.8; color: var(--muted-foreground); }
-
-@media (hover: hover) {
-  .content-card:hover, .service-card:hover, .area-card:hover { transform: translateY(-3px); border-color: color-mix(in oklab, var(--primary) 35%, var(--border)); box-shadow: 0 10px 24px color-mix(in oklab, var(--foreground) 6%, transparent); }
-  .area-card-cta:hover { transform: translateY(-2px); filter: brightness(1.05); }
+@media print {
+  body > *:not([data-print-document]) { display: none !important; }
 }
-@utility fade-in-section { animation: fade-in .6s ease-out forwards; }
-@keyframes fade-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-@utility service-button { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; border-radius: var(--radius); padding: .75rem 1.5rem; font-size: .875rem; font-weight: 600; line-height: 1.2; transition: all .2s ease; }
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; } }
