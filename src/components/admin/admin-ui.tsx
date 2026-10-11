@@ -63,6 +63,7 @@ const pageTitles: Record<string, { title: string; description: string }> = {
   "/admin/relatorios": { title: "Relatórios", description: "Insights para acompanhar a evolução do espaço." },
   "/admin/estatisticas": { title: "Estatísticas", description: "Entenda como as pessoas encontram e usam o site." },
   "/admin/configuracoes": { title: "Configurações", description: "Ajuste as preferências do ambiente administrativo." },
+  "/admin/blog": { title: "Gerenciar blog", description: "Crie, revise e publique os artigos do site." },
 };
 
 export function AdminSidebar({ collapsed, mobileOpen, onClose, onToggle }: { collapsed: boolean; mobileOpen: boolean; onClose: () => void; onToggle: () => void }) {
