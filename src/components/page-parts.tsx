@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Check, HeartHandshake, Image, MapPin, MessageCircle, Shield, Sparkles, Star, Users } from "lucide-react";
+import { ArrowRight, Check, Church, HeartHandshake, Image, MapPin, MessageCircle, Shield, Sparkles, Star, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { trackAnalyticsEvent, trackAnalyticsEvents } from "@/lib/analytics";
@@ -120,8 +120,8 @@ export function SocialProjectSection() {
               <span className="text-sm text-primary-foreground/75">Consulte a igreja participante mais próxima.</span>
             </div>
           </div>
-          <div className="rounded-3xl border border-primary-foreground/15 bg-primary-foreground/10 p-5 backdrop-blur-sm md:p-7">
-            <img src="/assets/church-social-project.jpg" alt="Ilustração de uma igreja parceira do projeto social" className="h-56 w-full rounded-2xl object-cover object-center md:h-64" loading="lazy" />
+          <div className="rounded-3xl border border-primary-foreground/15 bg-primary-foreground/10 p-7 backdrop-blur-sm md:p-9">
+            <div className="grid size-14 place-items-center rounded-2xl bg-gold text-gold-foreground"><Church className="size-7" /></div>
             <h3 className="mt-6 font-display text-2xl font-semibold">Cuidado que chega até a comunidade</h3>
             <p className="mt-4 leading-7 text-primary-foreground/80">O atendimento é organizado junto às igrejas parceiras, aproximando a Psicologia de quem precisa de acolhimento e orientação.</p>
             <div className="mt-7 grid gap-4 border-t border-primary-foreground/15 pt-6 text-sm text-primary-foreground/85 sm:grid-cols-2 lg:grid-cols-1">
