@@ -36,20 +36,17 @@ export function AreaCards() {
 }
 
 function AreaCard({ tone, title, items, to, button, image, imageAlt }: { tone: "psychology" | "biomedicine"; title: string; items: string[]; to: "/psicologia" | "/biomedicina"; button: string; image?: string; imageAlt?: string }) {
-  const cardClass = tone === "psychology" ? "area-card area-card-psychology" : "area-card area-card-biomedicine";
-  const accentColor = tone === "psychology" ? "border-psychology" : "border-biomedicine";
+  const accent = tone === "psychology" ? "border-l-[#7b6bb0]" : "border-l-[#2f8f82]";
+  const iconTone = tone === "psychology" ? "bg-[#eeeafa] text-[#625398]" : "bg-[#e3f4f0] text-[#26786e]";
   return (
-    <article className={cardClass}>
-      {image && <img src={image} alt={imageAlt} loading="lazy" width={1024} height={1024} className="area-card-image" />}
-      <div className="card-topline">
-        <span className="text-xs font-bold uppercase tracking-[0.2em]">Área de atuação</span>
-        <span className="card-index" aria-hidden="true">+</span>
+    <article className={`group relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${accent} border-l-4`}>
+      {image && <div className="relative h-48 overflow-hidden sm:h-56"><img src={image} alt={imageAlt} loading="lazy" width={1024} height={1024} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" /><div className="absolute inset-0 bg-gradient-to-t from-slate-950/55 via-transparent to-transparent" /><span className="absolute bottom-4 left-5 rounded-full bg-white/95 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-slate-700">Área de atuação</span></div>}
+      <div className="p-6 sm:p-8">
+        {!image && <span className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Área de atuação</span>}
+        <div className="mt-3 flex items-start justify-between gap-4"><h3 className="font-display text-2xl font-semibold leading-tight text-slate-900 sm:text-3xl">{title}</h3><span className={`grid size-11 shrink-0 place-items-center rounded-2xl ${iconTone}`}><Check className="size-5" /></span></div>
+        <ul className="mt-6 grid gap-3 sm:grid-cols-2">{items.map((item) => <li key={item} className="flex gap-2.5 text-sm leading-5 text-slate-600"><Check className={`mt-0.5 size-4 shrink-0 rounded-full p-0.5 ${iconTone}`} />{item}</li>)}</ul>
+        <Link to={to} className="mt-8 inline-flex w-full items-center justify-between rounded-xl bg-slate-900 px-5 py-3.5 text-sm font-bold text-white transition-colors hover:bg-[#2f8f82]"><span>{button}</span><ArrowRight className="size-5 shrink-0" /></Link>
       </div>
-      <h3 className="card-title mt-6 max-w-xl">{title}</h3>
-      <ul className="mt-8 grid gap-x-6 gap-y-3 sm:grid-cols-2">
-        {items.map((item) => <li key={item} className="flex gap-2 text-sm leading-5"><Check className={`mt-0.5 size-4 shrink-0 rounded-full p-0.5 ${accentColor} text-primary-foreground`} />{item}</li>)}
-      </ul>
-      <Link to={to} className="area-card-cta"><span>{button}</span><ArrowRight className="size-5 shrink-0" /></Link>
     </article>
   );
 }
