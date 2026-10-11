@@ -31,6 +31,9 @@ const emptyPatient: PatientInput = {
   contato_emergencia_nome: null, contato_emergencia_parentesco: null, contato_emergencia_telefone: null,
 };
 
+let newPatientDialogOpen = false;
+let newPatientDraft: PatientInput = { ...emptyPatient };
+
 function initials(name: string) {
   return name.split(" ").filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "P";
 }
@@ -178,8 +181,8 @@ type PatientFormDialogProps = {
 
 function PatientFormDialog({ onSaved, patient, trigger }: PatientFormDialogProps) {
   const draftKey = patient ? `patient-edit-draft-${patient.id}` : "patient-new-draft";
-  const [open, setOpen] = useState(false);
-  const [form, setForm] = useState<PatientInput>(patient ? patientToInput(patient) : emptyPatient);
+  const [open, setOpen] = useState(() => !patient && newPatientDialogOpen);
+  const [form, setForm] = useState<PatientInput>(() => patient ? patientToInput(patient) : { ...newPatientDraft });
   const [saving, setSaving] = useState(false);
   const [loadingPatient, setLoadingPatient] = useState(false);
   const [photo, setPhoto] = useState<File | null>(null);
@@ -187,6 +190,13 @@ function PatientFormDialog({ onSaved, patient, trigger }: PatientFormDialogProps
   const [error, setError] = useState("");
   const { user } = useAuth();
   const editing = Boolean(patient);
+
+  useEffect(() => {
+    if (!patient) {
+      newPatientDialogOpen = open;
+      if (open) newPatientDraft = { ...form };
+    }
+  }, [form, open, patient]);
 
   function update(field: keyof PatientInput, value: string) {
     const formatted = field === "cpf" ? mask(value, "cpf") : field === "telefone" || field === "contato_emergencia_telefone" ? mask(value, "phone") : field === "cep" ? mask(value, "cep") : value;
@@ -197,16 +207,24 @@ function PatientFormDialog({ onSaved, patient, trigger }: PatientFormDialogProps
     if (!next && (saving || loadingPatient || photoBusy)) return;
     setOpen(next);
     setPhoto(null);
+    if (!patient) {
+      newPatientDialogOpen = next;
+      if (!next) {
+        newPatientDraft = { ...emptyPatient };
+        setForm({ ...emptyPatient });
+        setError("");
+        return;
+      }
+      setError("");
+      setForm({ ...newPatientDraft });
+      return;
+    }
     if (!next) {
       setError("");
       return;
     }
 
     setError("");
-    if (!patient) {
-      setForm(emptyPatient);
-      return;
-    }
     if (!user) {
       setError("Não foi possível identificar o usuário.");
       return;
@@ -244,6 +262,8 @@ function PatientFormDialog({ onSaved, patient, trigger }: PatientFormDialogProps
       return;
     }
     setForm(emptyPatient);
+    newPatientDialogOpen = false;
+    newPatientDraft = { ...emptyPatient };
     setOpen(false);
     await onSaved();
   }
