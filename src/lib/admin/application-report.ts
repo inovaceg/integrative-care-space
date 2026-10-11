@@ -41,7 +41,7 @@ export function applicationReportPages(patientName: string, rows: ApplicationRep
       const notes = (row.notes ?? "—").trim() || "—";
       lines.push(
         { text: displayDate(row.application_date), x: 42, y, size: 8.5 },
-        { text: row.procedure_name.slice(0, 23), x: 105, y, size: 8.5 },
+        { text: row.procedure_name.slice(0, 18), x: 105, y, size: 8.5 },
         { text: `${Number(row.current_weight_kg).toFixed(2).replace(".", ",")} kg`, x: 275, y, size: 8.5 },
         { text: variation, x: 335, y, size: 8.5 },
         { text: notes.slice(0, 36), x: 405, y, size: 7.5, color: "#475569" },
