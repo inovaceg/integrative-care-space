@@ -2,6 +2,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   Activity,
   BarChart3,
+  BookOpen,
   Bell,
   CalendarDays,
   ChevronRight,
@@ -41,6 +42,7 @@ const navigation = [
   { label: "Evolução do Paciente", to: "/admin/evolucao-corporal", icon: Activity },
   { label: "Aplicações", to: "/admin/aplicacoes", icon: Syringe },
   { label: "Receituário", to: "/admin/receituario", icon: FileText },
+     { label: "Blog", to: "/admin/blog", icon: BookOpen },
   { label: "Recibos", to: "/admin/recibos", icon: FileText },
   { label: "Controle de medicamentos", to: "/admin/medicamentos", icon: Pill },
   { label: "Financeiro", to: "/admin/financeiro", icon: CircleDollarSign },
