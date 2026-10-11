@@ -47,6 +47,7 @@ const navigation = [
   { label: "Relatórios", to: "/admin/relatorios", icon: FileBarChart },
   { label: "Estatísticas", to: "/admin/estatisticas", icon: BarChart3 },
   { label: "Configurações", to: "/admin/configuracoes", icon: Settings },
+  { label: "Blog", to: "/admin/blog", icon: FileText },
 ] as const;
 
 const pageTitles: Record<string, { title: string; description: string }> = {

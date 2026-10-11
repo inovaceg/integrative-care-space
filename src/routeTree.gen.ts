@@ -24,6 +24,7 @@ import { Route as TermosDeUsoRouteImport } from './routes/termos-de-uso'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAgendaRouteImport } from './routes/admin/agenda'
 import { Route as AdminAplicacoesRouteImport } from './routes/admin/aplicacoes'
+import { Route as AdminBlogRouteImport } from './routes/admin/blog'
 import { Route as AdminConfiguracoesRouteImport } from './routes/admin/configuracoes'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
 import { Route as AdminEstatisticasRouteImport } from './routes/admin/estatisticas'
@@ -36,6 +37,7 @@ import { Route as AdminReceituarioRouteImport } from './routes/admin/receituario
 import { Route as AdminRecibosRouteImport } from './routes/admin/recibos'
 import { Route as AdminRelatoriosRouteImport } from './routes/admin/relatorios'
 import { Route as AnamneseTokenRouteImport } from './routes/anamnese/$token'
+import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
 import { Route as CompletarCadastroTokenRouteImport } from './routes/completar-cadastro/$token'
 import { Route as AdminPacientesIdRouteImport } from './routes/admin/pacientes/$id'
 import { Route as AdminPacientesIdAnamneseRouteImport } from './routes/admin/pacientes/$id/anamnese'
@@ -115,6 +117,11 @@ const AdminAplicacoesRoute = AdminAplicacoesRouteImport.update({
   path: '/aplicacoes',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminBlogRoute = AdminBlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminConfiguracoesRoute = AdminConfiguracoesRouteImport.update({
   id: '/configuracoes',
   path: '/configuracoes',
@@ -175,6 +182,11 @@ const AnamneseTokenRoute = AnamneseTokenRouteImport.update({
   path: '/anamnese/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => BlogRoute,
+} as any)
 const CompletarCadastroTokenRoute = CompletarCadastroTokenRouteImport.update({
   id: '/completar-cadastro/$token',
   path: '/completar-cadastro/$token',
@@ -196,7 +208,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/biomedicina': typeof BiomedicinaRoute
-  '/blog': typeof BlogRoute
+  '/blog': typeof BlogRouteWithChildren
   '/contato': typeof ContatoRoute
   '/estrutura': typeof EstruturaRoute
   '/faq': typeof FaqRoute
@@ -207,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/admin/agenda': typeof AdminAgendaRoute
   '/admin/aplicacoes': typeof AdminAplicacoesRoute
+  '/admin/blog': typeof AdminBlogRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/estatisticas': typeof AdminEstatisticasRoute
@@ -219,6 +232,7 @@ export interface FileRoutesByFullPath {
   '/admin/recibos': typeof AdminRecibosRoute
   '/admin/relatorios': typeof AdminRelatoriosRoute
   '/anamnese/$token': typeof AnamneseTokenRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/completar-cadastro/$token': typeof CompletarCadastroTokenRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/pacientes/$id': typeof AdminPacientesIdRouteWithChildren
@@ -227,7 +241,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/biomedicina': typeof BiomedicinaRoute
-  '/blog': typeof BlogRoute
+  '/blog': typeof BlogRouteWithChildren
   '/contato': typeof ContatoRoute
   '/estrutura': typeof EstruturaRoute
   '/faq': typeof FaqRoute
@@ -238,6 +252,7 @@ export interface FileRoutesByTo {
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/admin/agenda': typeof AdminAgendaRoute
   '/admin/aplicacoes': typeof AdminAplicacoesRoute
+  '/admin/blog': typeof AdminBlogRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/estatisticas': typeof AdminEstatisticasRoute
@@ -250,6 +265,7 @@ export interface FileRoutesByTo {
   '/admin/recibos': typeof AdminRecibosRoute
   '/admin/relatorios': typeof AdminRelatoriosRoute
   '/anamnese/$token': typeof AnamneseTokenRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/completar-cadastro/$token': typeof CompletarCadastroTokenRoute
   '/admin': typeof AdminIndexRoute
   '/admin/pacientes/$id': typeof AdminPacientesIdRouteWithChildren
@@ -260,7 +276,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/biomedicina': typeof BiomedicinaRoute
-  '/blog': typeof BlogRoute
+  '/blog': typeof BlogRouteWithChildren
   '/contato': typeof ContatoRoute
   '/estrutura': typeof EstruturaRoute
   '/faq': typeof FaqRoute
@@ -271,6 +287,7 @@ export interface FileRoutesById {
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/admin/agenda': typeof AdminAgendaRoute
   '/admin/aplicacoes': typeof AdminAplicacoesRoute
+  '/admin/blog': typeof AdminBlogRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/estatisticas': typeof AdminEstatisticasRoute
@@ -283,6 +300,7 @@ export interface FileRoutesById {
   '/admin/recibos': typeof AdminRecibosRoute
   '/admin/relatorios': typeof AdminRelatoriosRoute
   '/anamnese/$token': typeof AnamneseTokenRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/completar-cadastro/$token': typeof CompletarCadastroTokenRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/pacientes/$id': typeof AdminPacientesIdRouteWithChildren
@@ -305,6 +323,7 @@ export interface FileRouteTypes {
     | '/termos-de-uso'
     | '/admin/agenda'
     | '/admin/aplicacoes'
+    | '/admin/blog'
     | '/admin/configuracoes'
     | '/admin/dashboard'
     | '/admin/estatisticas'
@@ -317,6 +336,7 @@ export interface FileRouteTypes {
     | '/admin/recibos'
     | '/admin/relatorios'
     | '/anamnese/$token'
+    | '/blog/$slug'
     | '/completar-cadastro/$token'
     | '/admin/'
     | '/admin/pacientes/$id'
@@ -336,6 +356,7 @@ export interface FileRouteTypes {
     | '/termos-de-uso'
     | '/admin/agenda'
     | '/admin/aplicacoes'
+    | '/admin/blog'
     | '/admin/configuracoes'
     | '/admin/dashboard'
     | '/admin/estatisticas'
@@ -348,6 +369,7 @@ export interface FileRouteTypes {
     | '/admin/recibos'
     | '/admin/relatorios'
     | '/anamnese/$token'
+    | '/blog/$slug'
     | '/completar-cadastro/$token'
     | '/admin'
     | '/admin/pacientes/$id'
@@ -368,6 +390,7 @@ export interface FileRouteTypes {
     | '/termos-de-uso'
     | '/admin/agenda'
     | '/admin/aplicacoes'
+    | '/admin/blog'
     | '/admin/configuracoes'
     | '/admin/dashboard'
     | '/admin/estatisticas'
@@ -380,6 +403,7 @@ export interface FileRouteTypes {
     | '/admin/recibos'
     | '/admin/relatorios'
     | '/anamnese/$token'
+    | '/blog/$slug'
     | '/completar-cadastro/$token'
     | '/admin/'
     | '/admin/pacientes/$id'
@@ -390,7 +414,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   BiomedicinaRoute: typeof BiomedicinaRoute
-  BlogRoute: typeof BlogRoute
+  BlogRoute: typeof BlogRouteWithChildren
   ContatoRoute: typeof ContatoRoute
   EstruturaRoute: typeof EstruturaRoute
   FaqRoute: typeof FaqRoute
@@ -510,6 +534,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAplicacoesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/blog': {
+      id: '/admin/blog'
+      path: '/blog'
+      fullPath: '/admin/blog'
+      preLoaderRoute: typeof AdminBlogRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/configuracoes': {
       id: '/admin/configuracoes'
       path: '/configuracoes'
@@ -594,6 +625,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AnamneseTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof BlogRoute
+    }
     '/completar-cadastro/$token': {
       id: '/completar-cadastro/$token'
       path: '/completar-cadastro/$token'
@@ -644,6 +682,7 @@ const AdminPacientesRouteWithChildren = AdminPacientesRoute._addFileChildren(
 interface AdminRouteChildren {
   AdminAgendaRoute: typeof AdminAgendaRoute
   AdminAplicacoesRoute: typeof AdminAplicacoesRoute
+  AdminBlogRoute: typeof AdminBlogRoute
   AdminConfiguracoesRoute: typeof AdminConfiguracoesRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdminEstatisticasRoute: typeof AdminEstatisticasRoute
@@ -661,6 +700,7 @@ interface AdminRouteChildren {
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAgendaRoute: AdminAgendaRoute,
   AdminAplicacoesRoute: AdminAplicacoesRoute,
+  AdminBlogRoute: AdminBlogRoute,
   AdminConfiguracoesRoute: AdminConfiguracoesRoute,
   AdminDashboardRoute: AdminDashboardRoute,
   AdminEstatisticasRoute: AdminEstatisticasRoute,
@@ -677,11 +717,21 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface BlogRouteChildren {
+  BlogSlugRoute: typeof BlogSlugRoute
+}
+
+const BlogRouteChildren: BlogRouteChildren = {
+  BlogSlugRoute: BlogSlugRoute,
+}
+
+const BlogRouteWithChildren = BlogRoute._addFileChildren(BlogRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   BiomedicinaRoute: BiomedicinaRoute,
-  BlogRoute: BlogRoute,
+  BlogRoute: BlogRouteWithChildren,
   ContatoRoute: ContatoRoute,
   EstruturaRoute: EstruturaRoute,
   FaqRoute: FaqRoute,
