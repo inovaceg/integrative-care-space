@@ -36,6 +36,16 @@ export async function createPatientApplication(input: PatientApplicationInput) {
   return supabase.from("patient_applications").insert(input).select(fields).single();
 }
 
+export async function updatePatientApplication(professionalId: string, applicationId: string, input: Omit<PatientApplicationInput, "profissional_id">) {
+  return supabase
+    .from("patient_applications")
+    .update(input)
+    .eq("profissional_id", professionalId)
+    .eq("id", applicationId)
+    .select(fields)
+    .single();
+}
+
 export async function deletePatientApplication(professionalId: string, applicationId: string) {
   return supabase
     .from("patient_applications")
