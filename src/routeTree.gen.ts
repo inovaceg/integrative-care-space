@@ -23,6 +23,7 @@ import { Route as SobreRouteImport } from './routes/sobre'
 import { Route as TermosDeUsoRouteImport } from './routes/termos-de-uso'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAgendaRouteImport } from './routes/admin/agenda'
+import { Route as AdminAplicacoesRouteImport } from './routes/admin/aplicacoes'
 import { Route as AdminConfiguracoesRouteImport } from './routes/admin/configuracoes'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
 import { Route as AdminEstatisticasRouteImport } from './routes/admin/estatisticas'
@@ -107,6 +108,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
 const AdminAgendaRoute = AdminAgendaRouteImport.update({
   id: '/agenda',
   path: '/agenda',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAplicacoesRoute = AdminAplicacoesRouteImport.update({
+  id: '/aplicacoes',
+  path: '/aplicacoes',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminConfiguracoesRoute = AdminConfiguracoesRouteImport.update({
@@ -200,6 +206,7 @@ export interface FileRoutesByFullPath {
   '/sobre': typeof SobreRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/admin/agenda': typeof AdminAgendaRoute
+  '/admin/aplicacoes': typeof AdminAplicacoesRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/estatisticas': typeof AdminEstatisticasRoute
@@ -230,6 +237,7 @@ export interface FileRoutesByTo {
   '/sobre': typeof SobreRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/admin/agenda': typeof AdminAgendaRoute
+  '/admin/aplicacoes': typeof AdminAplicacoesRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/estatisticas': typeof AdminEstatisticasRoute
@@ -262,6 +270,7 @@ export interface FileRoutesById {
   '/sobre': typeof SobreRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/admin/agenda': typeof AdminAgendaRoute
+  '/admin/aplicacoes': typeof AdminAplicacoesRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/estatisticas': typeof AdminEstatisticasRoute
@@ -295,6 +304,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/termos-de-uso'
     | '/admin/agenda'
+    | '/admin/aplicacoes'
     | '/admin/configuracoes'
     | '/admin/dashboard'
     | '/admin/estatisticas'
@@ -325,6 +335,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/termos-de-uso'
     | '/admin/agenda'
+    | '/admin/aplicacoes'
     | '/admin/configuracoes'
     | '/admin/dashboard'
     | '/admin/estatisticas'
@@ -356,6 +367,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/termos-de-uso'
     | '/admin/agenda'
+    | '/admin/aplicacoes'
     | '/admin/configuracoes'
     | '/admin/dashboard'
     | '/admin/estatisticas'
@@ -491,6 +503,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAgendaRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/aplicacoes': {
+      id: '/admin/aplicacoes'
+      path: '/aplicacoes'
+      fullPath: '/admin/aplicacoes'
+      preLoaderRoute: typeof AdminAplicacoesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/configuracoes': {
       id: '/admin/configuracoes'
       path: '/configuracoes'
@@ -624,6 +643,7 @@ const AdminPacientesRouteWithChildren = AdminPacientesRoute._addFileChildren(
 
 interface AdminRouteChildren {
   AdminAgendaRoute: typeof AdminAgendaRoute
+  AdminAplicacoesRoute: typeof AdminAplicacoesRoute
   AdminConfiguracoesRoute: typeof AdminConfiguracoesRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdminEstatisticasRoute: typeof AdminEstatisticasRoute
@@ -640,6 +660,7 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAgendaRoute: AdminAgendaRoute,
+  AdminAplicacoesRoute: AdminAplicacoesRoute,
   AdminConfiguracoesRoute: AdminConfiguracoesRoute,
   AdminDashboardRoute: AdminDashboardRoute,
   AdminEstatisticasRoute: AdminEstatisticasRoute,
