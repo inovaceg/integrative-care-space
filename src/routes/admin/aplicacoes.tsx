@@ -39,7 +39,7 @@ function parseWeight(value: string) {
 function readApplicationsDraft() {
   if (typeof window === "undefined") return null;
   const draft = window.history.state?.applicationsDraft;
-  return draft && typeof draft === "object" ? draft as { patientId: string; procedureName: string; weight: string; applicationDate: string; notes: string; editingApplication: PatientApplication | null } : null;
+  return draft && typeof draft === "object" ? draft as { patientId: string; procedureName: string; weight: string; applicationDate: string; notes: string; editingApplication: PatientApplication | null; reportPreview: DocumentPage[] } : null;
 }
 
 let applicationsDraftState = readApplicationsDraft() ?? {
@@ -49,6 +49,7 @@ let applicationsDraftState = readApplicationsDraft() ?? {
   applicationDate: today(),
   notes: "",
   editingApplication: null as PatientApplication | null,
+  reportPreview: [] as DocumentPage[],
 };
 
 function ApplicationsPage() {
@@ -65,13 +66,13 @@ function ApplicationsPage() {
   const [deleting, setDeleting] = useState(false);
   const [applicationToDelete, setApplicationToDelete] = useState<PatientApplication | null>(null);
   const [editingApplication, setEditingApplication] = useState<PatientApplication | null>(applicationsDraftState.editingApplication);
-  const [reportPreview, setReportPreview] = useState<DocumentPage[]>([]);
+  const [reportPreview, setReportPreview] = useState<DocumentPage[]>(applicationsDraftState.reportPreview);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    applicationsDraftState = { patientId, procedureName, weight, applicationDate, notes, editingApplication };
+    applicationsDraftState = { patientId, procedureName, weight, applicationDate, notes, editingApplication, reportPreview };
     if (typeof window !== "undefined") window.history.replaceState({ ...window.history.state, applicationsDraft: applicationsDraftState }, "");
-  }, [applicationDate, editingApplication, notes, patientId, procedureName, weight]);
+  }, [applicationDate, editingApplication, notes, patientId, procedureName, reportPreview, weight]);
 
   useEffect(() => {
     if (authLoading) return;
