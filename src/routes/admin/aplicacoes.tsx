@@ -36,7 +36,13 @@ function parseWeight(value: string) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 }
 
-let applicationsDraftState = {
+function readApplicationsDraft() {
+  if (typeof window === "undefined") return null;
+  const draft = window.history.state?.applicationsDraft;
+  return draft && typeof draft === "object" ? draft as { patientId: string; procedureName: string; weight: string; applicationDate: string; notes: string; editingApplication: PatientApplication | null } : null;
+}
+
+let applicationsDraftState = readApplicationsDraft() ?? {
   patientId: "",
   procedureName: "",
   weight: "",
@@ -64,6 +70,7 @@ function ApplicationsPage() {
 
   useEffect(() => {
     applicationsDraftState = { patientId, procedureName, weight, applicationDate, notes, editingApplication };
+    if (typeof window !== "undefined") window.history.replaceState({ ...window.history.state, applicationsDraft: applicationsDraftState }, "");
   }, [applicationDate, editingApplication, notes, patientId, procedureName, weight]);
 
   useEffect(() => {
