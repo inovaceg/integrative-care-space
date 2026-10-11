@@ -178,12 +178,8 @@ type PatientFormDialogProps = {
 
 function PatientFormDialog({ onSaved, patient, trigger }: PatientFormDialogProps) {
   const draftKey = patient ? `patient-edit-draft-${patient.id}` : "patient-new-draft";
-  const [open, setOpen] = useState(() => !patient && sessionStorage.getItem("patient-new-open") === "true");
-  const [form, setForm] = useState<PatientInput>(() => {
-    if (patient) return patientToInput(patient);
-    const saved = sessionStorage.getItem("patient-new-draft");
-    return saved ? { ...emptyPatient, ...JSON.parse(saved) as Partial<PatientInput> } : emptyPatient;
-  });
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState<PatientInput>(patient ? patientToInput(patient) : emptyPatient);
   const [saving, setSaving] = useState(false);
   const [loadingPatient, setLoadingPatient] = useState(false);
   const [photo, setPhoto] = useState<File | null>(null);
@@ -191,14 +187,6 @@ function PatientFormDialog({ onSaved, patient, trigger }: PatientFormDialogProps
   const [error, setError] = useState("");
   const { user } = useAuth();
   const editing = Boolean(patient);
-
-  useEffect(() => {
-    if (!patient) {
-      sessionStorage.setItem("patient-new-open", String(open));
-      if (open) sessionStorage.setItem(draftKey, JSON.stringify(form));
-      else sessionStorage.removeItem(draftKey);
-    }
-  }, [draftKey, form, open, patient]);
 
   function update(field: keyof PatientInput, value: string) {
     const formatted = field === "cpf" ? mask(value, "cpf") : field === "telefone" || field === "contato_emergencia_telefone" ? mask(value, "phone") : field === "cep" ? mask(value, "cep") : value;
@@ -216,8 +204,7 @@ function PatientFormDialog({ onSaved, patient, trigger }: PatientFormDialogProps
 
     setError("");
     if (!patient) {
-      const saved = sessionStorage.getItem(draftKey);
-      setForm(saved ? { ...emptyPatient, ...JSON.parse(saved) as Partial<PatientInput> } : emptyPatient);
+      setForm(emptyPatient);
       return;
     }
     if (!user) {

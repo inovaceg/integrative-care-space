@@ -23,16 +23,13 @@ function AdminRoute() {
   const isIndex = pathname === "/admin" || pathname === "/admin/";
 
   useEffect(() => {
-    if (!isLogin && !isIndex) sessionStorage.setItem("last-admin-path", pathname);
     if (isLoading) return;
     if (isIndex) {
-      const savedPath = sessionStorage.getItem("last-admin-path");
-      const target = savedPath && savedPath.startsWith("/admin/") && savedPath !== "/admin/login" ? savedPath : "/admin/dashboard";
-      void navigate({ to: isAdmin ? target : "/admin/login", replace: true });
+      void navigate({ to: isAdmin ? "/admin/dashboard" : "/admin/login", replace: true });
     } else if (!isLogin && !isAdmin) {
       void navigate({ to: "/admin/login", replace: true });
     }
-  }, [isAdmin, isIndex, isLoading, isLogin, navigate, pathname]);
+  }, [isAdmin, isIndex, isLoading, isLogin, navigate]);
 
   if (isLoading || isIndex || (!isLogin && !isAdmin)) {
     return <AuthLoading />;
