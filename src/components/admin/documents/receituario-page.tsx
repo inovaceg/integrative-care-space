@@ -12,10 +12,12 @@ import { DocumentPreview, PrintDocument } from './document-preview';
 import { DocumentHistory } from './document-history';
 import { deleteDocument, emptyContent, getDocuments, professionalDocumentFooter, saveDocument, professionalAreas, today, type DocumentContent, type DocumentType, type ProfessionalArea, type ProfessionalDocument } from '@/lib/admin/documents';
 import { documentFilename, downloadDocumentPdf, layoutDocument, type DocumentPage } from '@/lib/admin/document-layout';
+import { fetchPatient, fetchPatientOptions } from '@/lib/admin/records';
 
 export default function ReceituarioPage() {
   const { user } = useAuth();
   const [documents, setDocuments] = useState<ProfessionalDocument[]>([]);
+  const [patientOptions, setPatientOptions] = useState<{ id: string; nome: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -42,6 +44,16 @@ export default function ReceituarioPage() {
     return () => { active = false; };
   }, []);
   useEffect(() => {
+    if (!user?.id) return;
+    let active = true;
+    fetchPatientOptions(user.id).then(({ data, error: queryError }) => {
+      if (!active) return;
+      if (queryError) { setError('Não foi possível carregar os pacientes cadastrados.'); return; }
+      setPatientOptions((data as { id: string; nome: string }[] | null) ?? []);
+    });
+    return () => { active = false; };
+  }, [user?.id]);
+  useEffect(() => {
     if (area && type && step === 3) setPages(layoutDocument(area, type, content, true));
     else setPages([]);
   }, [area, type, content, step]);
@@ -64,6 +76,13 @@ export default function ReceituarioPage() {
   function valid() {
     if (!content.patient.name.trim() || !content.patient.date) { setError('Preencha o nome completo do paciente e a data do atendimento.'); return false; }
     setError(''); return true;
+  }
+  async function selectPatient(patientId: string) {
+    if (!user?.id) return;
+    const { data, error: queryError } = await fetchPatient(user.id, patientId);
+    if (queryError || !data) { setError('Não foi possível carregar os dados deste paciente.'); return; }
+    const patient = data as { nome: string; cpf: string | null; data_nascimento: string | null; telefone: string | null };
+    change({ ...content, patient: { ...content.patient, name: patient.nome, cpf: patient.cpf ?? '', birthDate: patient.data_nascimento ?? '', phone: patient.telefone ?? '' } });
   }
   function showPreview() {
     if (!area || !type || !valid()) return;
@@ -122,7 +141,7 @@ export default function ReceituarioPage() {
       <div className="grid items-start gap-6 xl:grid-cols-2">
         <form id="professional-document-editor" autoComplete="off" className="min-w-0 space-y-5" onSubmit={event => { event.preventDefault(); void persist('Rascunho'); }}>
           <fieldset disabled={busy} className="min-w-0 space-y-5">
-            <PatientForm patient={content.patient} onChange={patient => change({ ...content, patient })} />
+            <PatientForm patients={patientOptions} patient={content.patient} onChange={patient => change({ ...content, patient })} onSelectPatient={selectPatient} />
             {type === 'Receituário' ? <PrescriptionEditor content={content} onChange={change} /> : type === 'Solicitação de Exames' ? <ExamRequestEditor exams={content.exams} notes={content.clinicalNotes} onChange={exams => change({ ...content, exams })} onNotes={clinicalNotes => change({ ...content, clinicalNotes })} /> : <SectionCard title={type}><Field label="Conteúdo do documento" multiline value={content.text} onChange={text => change({ ...content, text })} /></SectionCard>}
             <SectionCard title="Orientações adicionais"><Field label="Orientações ao paciente" multiline value={content.guidance} onChange={guidance => change({ ...content, guidance })} /></SectionCard>
             <label className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 text-sm leading-6"><input type="checkbox" className="mt-1 size-4 accent-[#2f8f82]" checked={reviewed} onChange={event => setReviewed(event.target.checked)} />Revisei os dados do paciente e todo o conteúdo deste documento, conforme minha área e atribuições profissionais.</label>
