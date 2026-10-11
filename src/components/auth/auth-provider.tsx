@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { AuthError, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -17,6 +17,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
+  const sessionRef = useRef<Session | null>(null);
   const [sessionLoading, setSessionLoading] = useState(true);
   const [role, setRole] = useState<string | null>(null);
   const [roleLoading, setRoleLoading] = useState(true);
@@ -26,13 +27,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     supabase.auth.getSession().then(({ data, error }) => {
       if (!mounted) return;
-      setSession(error ? null : data.session);
+      const nextSession = error ? null : data.session;
+      sessionRef.current = nextSession;
+      setSession(nextSession);
       setSessionLoading(false);
     });
 
-    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (!mounted) return;
-      setSession(nextSession);
+      if (event === "SIGNED_OUT") {
+        sessionRef.current = null;
+        setSession(null);
+      } else if (nextSession) {
+        sessionRef.current = nextSession;
+        setSession(nextSession);
+      } else if (!sessionRef.current) {
+        setSession(null);
+      }
       setSessionLoading(false);
     });
 
