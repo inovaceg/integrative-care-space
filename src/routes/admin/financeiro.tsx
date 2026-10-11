@@ -72,14 +72,21 @@ function totalByType(entries: FinancialEntry[], type: FinancialTransactionType) 
   return entries.filter((entry) => entry.transaction_type === type).reduce((sum, entry) => sum + Number(entry.amount), 0);
 }
 
+const financialDialogState = new Map<string, { open: boolean; form: EntryForm }>();
+
 function EntryDialog({ entry, onSaved, trigger }: { entry?: FinancialEntry; onSaved: (entry: FinancialEntry) => void; trigger: ReactNode }) {
   const { user } = useAuth();
-  const [open, setOpen] = useState(false);
-  const [form, setForm] = useState<EntryForm>(emptyForm);
+  const idSuffix = entry?.id ?? "new";
+  const savedDialog = financialDialogState.get(idSuffix);
+  const [open, setOpen] = useState(savedDialog?.open ?? false);
+  const [form, setForm] = useState<EntryForm>(savedDialog?.form ?? (entry ? formFromEntry(entry) : emptyForm()));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const editing = Boolean(entry);
-  const idSuffix = entry?.id ?? "new";
+
+  useEffect(() => {
+    financialDialogState.set(idSuffix, { open, form });
+  }, [form, idSuffix, open]);
 
   function reset() {
     setForm(entry ? formFromEntry(entry) : emptyForm());
