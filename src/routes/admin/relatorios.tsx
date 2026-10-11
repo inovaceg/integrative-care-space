@@ -34,14 +34,20 @@ function appointmentType(notes: string | null) {
   return notes?.match(/^\[([^\]]+)\]/)?.[1]?.trim() || "Atendimento";
 }
 
+let reportsDraftState = { periodLength: 6 };
+
 function ReportsPage() {
   const { user, isLoading: authLoading } = useAuth();
-  const [periodLength, setPeriodLength] = useState(6);
+  const [periodLength, setPeriodLength] = useState(reportsDraftState.periodLength);
   const [patients, setPatients] = useState<PatientRecord[]>([]);
   const [appointments, setAppointments] = useState<AppointmentRecord[]>([]);
   const [entries, setEntries] = useState<FinancialEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    reportsDraftState = { periodLength };
+  }, [periodLength]);
 
   useEffect(() => {
     let mounted = true;
