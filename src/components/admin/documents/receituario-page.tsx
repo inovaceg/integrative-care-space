@@ -14,6 +14,16 @@ import { deleteDocument, emptyContent, getDocuments, professionalDocumentFooter,
 import { documentFilename, downloadDocumentPdf, layoutDocument, type DocumentPage } from '@/lib/admin/document-layout';
 import { fetchPatient, fetchPatientOptions } from '@/lib/admin/records';
 
+let receituarioDraftState = {
+  step: 0,
+  area: null as ProfessionalArea | null,
+  type: null as DocumentType | null,
+  content: emptyContent(),
+  savedId: undefined as string | undefined,
+  dirty: false,
+  reviewed: false,
+};
+
 export default function ReceituarioPage() {
   const { user } = useAuth();
   const [documents, setDocuments] = useState<ProfessionalDocument[]>([]);
@@ -22,18 +32,22 @@ export default function ReceituarioPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
-  const [step, setStep] = useState(0);
-  const [area, setArea] = useState<ProfessionalArea | null>(null);
-  const [type, setType] = useState<DocumentType | null>(null);
-  const [content, setContent] = useState<DocumentContent>(() => emptyContent());
-  const [savedId, setSavedId] = useState<string>();
-  const [dirty, setDirty] = useState(false);
-  const [reviewed, setReviewed] = useState(false);
+  const [step, setStep] = useState(receituarioDraftState.step);
+  const [area, setArea] = useState<ProfessionalArea | null>(receituarioDraftState.area);
+  const [type, setType] = useState<DocumentType | null>(receituarioDraftState.type);
+  const [content, setContent] = useState<DocumentContent>(receituarioDraftState.content);
+  const [savedId, setSavedId] = useState<string | undefined>(receituarioDraftState.savedId);
+  const [dirty, setDirty] = useState(receituarioDraftState.dirty);
+  const [reviewed, setReviewed] = useState(receituarioDraftState.reviewed);
   const [pages, setPages] = useState<DocumentPage[]>([]);
   const [printPages, setPrintPages] = useState<DocumentPage[]>([]);
   const [preview, setPreview] = useState<{ pages: DocumentPage[]; filename: string; record?: ProfessionalDocument } | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [confirmation, setConfirmation] = useState<{ title: string; description: string; action: () => void } | null>(null);
+
+  useEffect(() => {
+    receituarioDraftState = { step, area, type, content, savedId, dirty, reviewed };
+  }, [area, content, dirty, reviewed, savedId, step, type]);
 
   useEffect(() => {
     let active = true;
