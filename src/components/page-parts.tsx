@@ -68,12 +68,11 @@ export function IdentificationSection() {
   return (
     <section className="section-space bg-background">
       <div className="container-site">
-        <div className="mx-auto max-w-3xl text-center">
+        <div className="relative mx-auto max-w-4xl overflow-hidden rounded-3xl border border-[#cce7df] bg-gradient-to-br from-[#eff9f6] via-white to-[#f7fbfa] px-6 py-10 text-center shadow-sm sm:px-12 sm:py-14">
+          <span className="absolute left-1/2 top-0 h-1 w-24 -translate-x-1/2 rounded-b-full bg-[#2f8f82]" />
           <Eyebrow>Identificação</Eyebrow>
-          <h2 className="mt-4 font-display text-4xl md:text-5xl">Um cuidado que começa por compreender você.</h2>
-          <p className="mt-6 text-lg leading-8 text-muted-foreground">
-            Cada pessoa chega com uma história, uma necessidade e um objetivo diferente. Por isso, o atendimento começa pela escuta e por uma avaliação individualizada, permitindo construir uma proposta de cuidado compatível com cada momento.
-          </p>
+          <h2 className="mt-4 font-display text-4xl leading-tight text-slate-900 md:text-5xl">Um cuidado que começa por compreender você.</h2>
+          <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-slate-600">Cada pessoa chega com uma história, uma necessidade e um objetivo diferente. Por isso, o atendimento começa pela escuta e por uma avaliação individualizada, permitindo construir uma proposta de cuidado compatível com cada momento.</p>
         </div>
         <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {[
