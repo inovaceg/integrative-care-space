@@ -76,17 +76,16 @@ export function IdentificationSection() {
           <h2 className="mt-4 font-display text-4xl leading-tight text-slate-900 md:text-5xl">Um cuidado que começa por compreender você.</h2>
           <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-slate-600">Cada pessoa chega com uma história, uma necessidade e um objetivo diferente. Por isso, o atendimento começa pela escuta e por uma avaliação individualizada, permitindo construir uma proposta de cuidado compatível com cada momento.</p>
         </div>
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mx-auto mt-12 grid max-w-5xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm sm:grid-cols-2">
           {[
             { icon: Users, title: "Atendimento individualizado", text: "Cada acompanhamento é planejado considerando as necessidades identificadas na avaliação." },
             { icon: HeartHandshake, title: "Escuta e acolhimento", text: "Espaço seguro para compartilhar sua história com respeito e sem julgamentos." },
             { icon: Shield, title: "Avaliação profissional", text: "Processo técnico conduzido com instrumentos e critérios adequados à demanda apresentada." },
             { icon: Sparkles, title: "Cuidado integrado", text: "Diferentes possibilidades de cuidado, respeitando as competências de cada área profissional." },
           ].map(({ icon: Icon, title, text }, index) => (
-            <article key={title} className="content-card text-center">
-              <div className="mx-auto size-12 rounded-xl bg-primary/10 grid place-items-center text-primary"><Icon className="size-6" /></div>
-              <h3 className="card-title mt-6">{title}</h3>
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">{text}</p>
+            <article key={title} className={`group flex gap-4 p-6 sm:p-8 ${index % 2 === 0 ? "sm:border-r" : ""} ${index < 2 ? "border-b" : ""}`}>
+              <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-[#e5f4f0] text-[#2f8f82] transition-colors group-hover:bg-[#2f8f82] group-hover:text-white"><Icon className="size-5" /></div>
+              <div><h3 className="font-display text-lg font-semibold text-slate-900">{title}</h3><p className="mt-2 text-sm leading-6 text-slate-600">{text}</p></div>
             </article>
           ))}
         </div>
