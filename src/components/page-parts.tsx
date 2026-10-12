@@ -99,9 +99,9 @@ export function SocialProjectSection() {
     <section className="section-space bg-primary text-primary-foreground">
       <div className="container-site">
         <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_.9fr]">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-gold-soft">Projeto social</p>
-            <h2 className="mt-4 max-w-3xl font-display text-4xl font-semibold leading-tight md:text-5xl">Atendimento Psicológico Social</h2>
+          <div className="rounded-3xl border border-primary-foreground/15 bg-primary-foreground/10 p-6 shadow-xl backdrop-blur-sm sm:p-9">
+            <span className="inline-flex rounded-full border border-gold-soft/40 bg-gold-soft/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-gold-soft">Projeto social</span>
+            <h2 className="mt-5 max-w-3xl font-display text-4xl font-semibold leading-tight md:text-5xl">Atendimento Psicológico Social</h2>
             <p className="mt-6 max-w-2xl text-base leading-8 text-primary-foreground/90 md:text-lg">
               Acreditamos que o acesso à saúde mental é um direito de todos. Por isso, o Dr. Frederick Parreira mantém um projeto social realizado em parceria com igrejas, levando atendimento psicológico de qualidade a pessoas e famílias em situação de vulnerabilidade social e emocional.
             </p>
@@ -109,12 +109,13 @@ export function SocialProjectSection() {
               O projeto une ética, sigilo e ciência a um espaço de acolhimento sem julgamentos, com o propósito de tornar o cuidado psicológico mais acessível.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Button asChild size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90">
+              <Button asChild size="lg" className="w-full bg-gold text-gold-foreground shadow-lg shadow-black/10 hover:bg-gold/90 sm:w-auto">
                 <a href={socialProjectWhatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackAnalyticsEvent("whatsapp_click")}>
                   Quero saber mais sobre o projeto <ArrowRight className="size-4" />
                 </a>
               </Button>
-              <span className="text-sm text-primary-foreground/75">Consulte a igreja participante mais próxima.</span>
+              <Button asChild size="lg" variant="outline" className="w-full border-primary-foreground/40 bg-transparent text-primary-foreground hover:bg-primary-foreground hover:text-primary sm:w-auto"><Link to="/contato">Fale conosco</Link></Button>
+              <span className="text-sm text-primary-foreground/75 sm:ml-1">Consulte a igreja participante mais próxima.</span>
             </div>
           </div>
           <div className="rounded-3xl border border-primary-foreground/15 bg-primary-foreground/10 p-5 backdrop-blur-sm md:p-7">
