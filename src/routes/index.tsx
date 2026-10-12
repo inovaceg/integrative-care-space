@@ -108,10 +108,12 @@ function HomePage() {
           ].map(([Icon, title, text], index) => {
             const C = Icon as typeof HeartHandshake;
             return (
-              <article key={String(title)} className="content-card text-center">
-                <div className="mx-auto size-12 rounded-xl bg-primary/10 grid place-items-center text-primary"><C className="size-6" /></div>
-                <h3 className="card-title mt-6">{String(title)}</h3>
-                <p className="mt-3 text-sm leading-6 text-muted-foreground">{String(text)}</p>
+              <article key={String(title)} className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#9bcfc4] hover:shadow-lg">
+                <span className="absolute right-5 top-4 font-display text-3xl font-semibold text-[#edf6f4]">0{index + 1}</span>
+                <div className="relative grid size-12 place-items-center rounded-xl bg-[#e5f4f0] text-[#2f8f82] transition-colors group-hover:bg-[#2f8f82] group-hover:text-white"><C className="size-5" /></div>
+                <h3 className="relative mt-6 font-display text-lg font-semibold text-slate-900">{String(title)}</h3>
+                <p className="relative mt-3 text-sm leading-6 text-slate-600">{String(text)}</p>
+                <div className="mt-5 h-1 w-8 rounded-full bg-[#72c7b5] transition-all duration-300 group-hover:w-14" />
               </article>
             );
           })}
