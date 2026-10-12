@@ -26,7 +26,7 @@ export function BlogEngagement({ slug, title }: { slug: string; title: string })
     const cleanContent = content.trim();
     if (cleanName.length < 2 || cleanContent.length < 2) { setMessage("Digite seu nome e um comentário."); return; }
     const { data, error } = await supabase.from("blog_comments").insert({ post_slug: slug, author_name: cleanName, content: cleanContent }).select("id,author_name,content,created_at").single();
-    if (error) { setMessage("Não foi possível enviar agora. Tente novamente."); return; }
+    if (error) { setMessage("Não foi possível publicar o comentário. Verifique os dados e tente novamente."); return; }
     setComments((current) => [data as Comment, ...current]);
     setName(""); setContent(""); setMessage("Comentário publicado. Obrigado por participar!");
   }
