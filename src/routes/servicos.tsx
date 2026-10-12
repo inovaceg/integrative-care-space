@@ -1,12 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ArrowRight, HeartHandshake, ShieldCheck } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { AreaCards, PageIntro } from "@/components/page-parts";
+import { Button } from "@/components/ui/button";
 import { createSeoHead } from "@/lib/seo";
-export const Route = createFileRoute("/servicos")({
-  head: () => createSeoHead({
-    title: "Serviços de Psicologia e Biomedicina | Juiz de Fora",
-    description: "Veja os serviços de Psicologia e Saúde Mental e de Biomedicina Integrativa e Estética oferecidos em Juiz de Fora.",
-    path: "/servicos",
-  }),
-  component: Page,
-});
-function Page(){return <><PageIntro eyebrow="Serviços" title="Duas áreas de cuidado, competências bem definidas" text="Conheça os serviços disponíveis em cada área. Cada atendimento é definido após avaliação profissional."/><section className="section-space"><div className="container-site"><AreaCards/><p className="mt-8 text-sm leading-6 text-muted-foreground">A escolha de acompanhamento ou procedimento depende de avaliação profissional individualizada. As áreas não compartilham atribuições profissionais.</p></div></section></>};
+
+export const Route = createFileRoute("/servicos")({ head: () => createSeoHead({ title: "Serviços de Psicologia e Biomedicina | Juiz de Fora", description: "Veja os serviços de Psicologia e Saúde Mental e de Biomedicina Integrativa e Estética oferecidos em Juiz de Fora.", path: "/servicos" }), component: Page });
+function Page() { return <><PageIntro eyebrow="Serviços" title="Duas áreas de cuidado, competências bem definidas" text="Conheça os serviços disponíveis em cada área. Cada atendimento é definido após avaliação profissional." /><main className="bg-[#f4f8f7] py-12 sm:py-20"><div className="container-site"><div className="mx-auto mb-12 max-w-3xl text-center"><div className="mx-auto grid size-14 place-items-center rounded-2xl bg-[#e5f4f0] text-[#2f8f82]"><HeartHandshake className="size-7" /></div><h2 className="mt-5 font-display text-3xl font-semibold text-slate-900 sm:text-4xl">Encontre o cuidado que faz sentido para você</h2><p className="mt-4 text-base leading-7 text-slate-600">Conheça cada área de atuação e escolha o caminho mais adequado para o seu momento, sempre com orientação profissional.</p></div><AreaCards/><div className="mt-10 flex flex-col gap-5 rounded-3xl border border-[#cce7df] bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-8"><div className="flex gap-4"><ShieldCheck className="mt-1 size-6 shrink-0 text-[#2f8f82]" /><p className="max-w-2xl text-sm leading-6 text-slate-600"><strong className="block text-slate-900">Atendimento responsável</strong>A escolha de acompanhamento ou procedimento depende de avaliação profissional individualizada. As áreas respeitam suas competências específicas.</p></div><Button asChild className="shrink-0 bg-[#2f8f82] hover:bg-[#26796e]"><Link to="/contato">Tire suas dúvidas <ArrowRight className="ml-2 size-4" /></Link></Button></div></div></main></> }
