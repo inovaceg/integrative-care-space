@@ -82,8 +82,30 @@
   --border: oklch(0.88 0.02 180);
   --input: oklch(0.88 0.02 180);
   --ring: oklch(0.54 0.11 175);
+  --footer: oklch(0.22 0.045 180);
+  --footer-foreground: oklch(0.98 0.01 180);
+  --footer-muted: oklch(0.78 0.025 180);
+  --footer-line: oklch(0.34 0.04 180);
+  --gold-soft: oklch(0.78 0.12 82);
+  --whatsapp: oklch(0.63 0.16 153);
+  --whatsapp-foreground: oklch(1 0 0);
   --radius: 1rem;
 }
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+.bg-footer { background-color: var(--footer); }
+.text-footer-foreground { color: var(--footer-foreground); }
+.text-footer-muted { color: var(--footer-muted); }
+.border-footer-line { border-color: var(--footer-line); }
+.text-gold-soft { color: var(--gold-soft); }
+.bg-whatsapp { background-color: var(--whatsapp); }
+.text-whatsapp-foreground { color: var(--whatsapp-foreground); }
 
 * { border-color: var(--border); }
 
