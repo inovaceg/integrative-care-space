@@ -1,0 +1,6 @@
+import { useMemo } from "react";
+
+const allowed = new Set(["P", "BR", "H2", "H3", "STRONG", "B", "EM", "I", "UL", "OL", "LI", "BLOCKQUOTE", "A"]);
+function escapeText(value: string) { return value.replace(/[&<>\"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#039;" }[character] ?? character)); }
+function sanitize(html: string) { if (typeof DOMParser === "undefined") return escapeText(html); const doc = new DOMParser().parseFromString(html, "text/html"); doc.body.querySelectorAll("*").forEach((element) => { if (!allowed.has(element.tagName)) { element.replaceWith(...Array.from(element.childNodes)); return; } Array.from(element.attributes).forEach((attribute) => { if (element.tagName === "A" && attribute.name === "href" && /^(https?:\/\/|mailto:|tel:)/i.test(attribute.value)) { element.setAttribute("target", "_blank"); element.setAttribute("rel", "noopener noreferrer"); } else element.removeAttribute(attribute.name); }); }); return doc.body.innerHTML; }
+export function BlogContent({ content }: { content: string }) { const html = useMemo(() => sanitize(content.includes("<") ? content : content.split(/\n\n+/).map((paragraph) => `<p>${escapeText(paragraph).replace(/\n/g, "<br />")}</p>`).join("")), [content]); return <div className="blog-content" dangerouslySetInnerHTML={{ __html: html }} />; }

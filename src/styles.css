@@ -107,6 +107,20 @@ body {
 .bg-whatsapp { background-color: var(--whatsapp); }
 .text-whatsapp-foreground { color: var(--whatsapp-foreground); }
 
+.blog-content { margin-top: 2.5rem; max-width: 46rem; color: #475569; font-size: 1.0625rem; line-height: 1.9; }
+.blog-content p { margin: 0 0 1.5rem; }
+.blog-content h2 { margin: 3rem 0 1rem; color: #123c3d; font-family: "Sora", Arial, sans-serif; font-size: clamp(1.65rem, 3vw, 2.25rem); line-height: 1.25; font-weight: 600; }
+.blog-content h3 { margin: 2rem 0 .75rem; color: #21655f; font-family: "Sora", Arial, sans-serif; font-size: 1.35rem; line-height: 1.35; font-weight: 600; }
+.blog-content strong, .blog-content b { color: #123c3d; font-weight: 700; }
+.blog-content em, .blog-content i { color: #386b65; }
+.blog-content ul, .blog-content ol { margin: 1rem 0 1.75rem 1.5rem; padding-left: 1rem; }
+.blog-content ul { list-style: disc; }
+.blog-content ol { list-style: decimal; }
+.blog-content li { margin: .5rem 0; padding-left: .35rem; }
+.blog-content blockquote { margin: 2rem 0; border-left: 4px solid #72c7b5; border-radius: 0 .75rem .75rem 0; background: #eff9f6; padding: 1.25rem 1.5rem; color: #286a60; font-size: 1.15rem; font-style: italic; }
+.blog-content a { color: #26786e; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.blog-content a:hover { color: #123c3d; }
+
 * { border-color: var(--border); }
 
 @media (max-width: 640px) {
