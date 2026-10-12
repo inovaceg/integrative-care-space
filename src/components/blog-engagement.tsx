@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { officialSiteUrl } from "@/lib/seo";
 
 type Comment = { id: string; author_name: string; content: string; created_at: string };
 
@@ -14,7 +15,7 @@ export function BlogEngagement({ slug, title }: { slug: string; title: string })
   const [content, setContent] = useState("");
   const [message, setMessage] = useState("");
   const [copied, setCopied] = useState(false);
-  const articleUrl = typeof window !== "undefined" ? `${window.location.origin}/blog/${encodeURIComponent(slug)}` : "";
+  const articleUrl = `${officialSiteUrl}/blog/${encodeURIComponent(slug)}`;
 
   useEffect(() => {
     void supabase.from("blog_comments").select("id,author_name,content,created_at").eq("post_slug", slug).order("created_at", { ascending: false }).then(({ data }) => setComments((data as Comment[] | null) ?? []));
