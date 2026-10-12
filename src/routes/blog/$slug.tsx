@@ -6,10 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
 type Post = { title: string; slug: string; content: string; excerpt: string | null; image_url: string | null; category: string | null; author_display_name: string | null; published_at: string | null; created_at: string };
 export const Route = createFileRoute("/blog/$slug")({
   loader: async ({ params }) => {
-    const slug = decodeURIComponent(params.slug);
-    const { data, error } = await supabase.from("blog_posts").select("title,slug,content,excerpt,image_url,category,author_display_name,published_at,created_at").eq("slug", slug).eq("status", "published").maybeSingle();
-    if (error || !data) throw notFound();
-    return data as Post;
+    const requestedSlug = decodeURIComponent(params.slug).trim();
+    const { data, error } = await supabase.from("blog_posts").select("title,slug,content,excerpt,image_url,category,author_display_name,published_at,created_at").eq("status", "published");
+    const post = !error ? (data as Post[] | null)?.find((item) => item.slug.trim() === requestedSlug) : null;
+    if (!post) throw notFound();
+    return post;
   },
   head: ({ loaderData }) => createSeoHead({ title: `${loaderData?.title ?? "Artigo"} | Blog`, description: loaderData?.excerpt ?? "Leia este artigo no blog do Dr. Frederick.", path: `/blog/${loaderData?.slug ?? ""}` }),
   component: ArticlePage,
