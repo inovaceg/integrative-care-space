@@ -1,5 +1,5 @@
 export const officialSiteUrl = "https://drfredmartins.com.br";
-export const officialImageUrl = `${officialSiteUrl}/favicon.svg`;
+export const officialImageUrl = `${officialSiteUrl}/dr-frederick-parreira.png`;
 
 export type SeoOptions = {
   title: string;
@@ -29,7 +29,12 @@ export function createSeoHead({
       { property: "og:type", content: type },
       { property: "og:url", content: url },
       { property: "og:site_name", content: "Espaço de Saúde Integrativa Dr. Frederick Parreira" },
-      ...(image ? [{ property: "og:image", content: image }] : []),
+      ...(image ? [
+        { property: "og:image", content: image },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "630" },
+        { property: "og:image:alt", content: "Dr. Frederick Parreira — Psicologia e Biomedicina" },
+      ] : []),
       { name: "twitter:card", content: twitterCard },
       { name: "twitter:title", content: title },
       { name: "twitter:description", content: description },

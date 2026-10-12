@@ -9,7 +9,7 @@ import { createSeoHead } from "@/lib/seo";
 export const Route = createFileRoute("/")({
   head: () => createSeoHead({
     title: "Psicologia e Biomedicina em Juiz de Fora | Dr. Frederick Parreira",
-    description: "Psicologia, Neuropsicologia e Biomedicina Integrativa com atendimento individualizado no Centro de Juiz de Fora.",
+    description: "Cuidado integrado em Psicologia e Biomedicina, com atendimento personalizado e humanizado em Juiz de Fora.",
     path: "/",
   }),
   component: HomePage,
