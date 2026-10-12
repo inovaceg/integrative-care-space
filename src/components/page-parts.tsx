@@ -136,12 +136,13 @@ export function ProfessionalSection() {
   return (
     <section className="section-space bg-muted/30">
       <div className="container-site grid items-center gap-10 lg:grid-cols-[1.1fr_1fr]">
-        <div className="aspect-[4/5] overflow-hidden bg-secondary rounded-2xl">
-          <img src="/dr-frederick-parreira.png" alt="Dr. Frederick Parreira — Psicólogo e Biomédico" loading="lazy" className="h-full w-full object-cover" />
+        <div className="group relative aspect-[4/5] overflow-hidden rounded-3xl border border-slate-200 bg-[#e5f4f0] shadow-xl">
+          <img src="/dr-frederick-parreira.png" alt="Dr. Frederick Parreira — Psicólogo e Biomédico" loading="lazy" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+          <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-white/40 bg-slate-950/70 p-4 text-white backdrop-blur-sm"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#a9e0d3]">Espaço de Saúde Integrativa</p><p className="mt-1 font-display text-lg">Cuidado técnico e humanizado</p></div>
         </div>
-        <div>
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
           <Eyebrow>Profissional</Eyebrow>
-          <h2 className="mt-4 font-display text-4xl md:text-5xl">Conheça o Dr. Frederick Parreira</h2>
+          <h2 className="mt-4 font-display text-3xl font-semibold leading-tight text-slate-900 md:text-5xl">Conheça o Dr. Frederick Parreira</h2>
           <div className="mt-6 space-y-4 leading-7 text-muted-foreground">
             <p>Dr. Frederick Parreira atua nas áreas de Psicologia e Biomedicina, desenvolvendo um trabalho direcionado à saúde mental, saúde integrativa, estética e bem-estar.</p>
             <p>Sua proposta de atendimento parte de uma visão ampla do indivíduo, respeitando as particularidades e os limites de cada área profissional.</p>
