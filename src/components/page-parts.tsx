@@ -6,7 +6,9 @@ import { trackAnalyticsEvent, trackAnalyticsEvents } from "@/lib/analytics";
 import { biomedicineServices, faqItems, mapsUrl, socialProjectWhatsappUrl, type Service, whatsappUrl } from "@/lib/site-data";
 
 export function Eyebrow({ children, tone = "neutral" }: { children: React.ReactNode; tone?: "neutral" | "psychology" | "biomedicine" }) {
-  return <p className={`eyebrow eyebrow-${tone}`}>{children}</p>;
+  void children;
+  void tone;
+  return null;
 }
 
 export function PageIntro({ eyebrow, title, text, tone = "neutral", backgroundImage }: { eyebrow: string; title: string; text: string; tone?: "neutral" | "psychology" | "biomedicine"; backgroundImage?: string }) {
