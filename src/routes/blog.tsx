@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, BookOpen, CalendarDays, Search } from "lucide-re
 import { useEffect, useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { BlogContent } from "@/components/blog-content";
+import { BlogEngagement } from "@/components/blog-engagement";
 import { createSeoHead } from "@/lib/seo";
 import { supabase } from "@/integrations/supabase/client";
 type Post = { id: string; title: string; slug: string; content: string; excerpt: string | null; image_url: string | null; category: string | null; author_display_name: string | null; tags: string[]; published_at: string | null; created_at: string };
