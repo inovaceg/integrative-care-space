@@ -1,89 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
 import { PageIntro, ServiceGrid } from "@/components/page-parts";
 import { Button } from "@/components/ui/button";
 import { biomedicineServices, whatsappUrl } from "@/lib/site-data";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { createSeoHead } from "@/lib/seo";
 
-export const Route = createFileRoute("/biomedicina")({
-  head: () => createSeoHead({
-    title: "Biomedicina Integrativa e Estética em Juiz de Fora | Dr. Frederick",
-    description: "Biomedicina integrativa, estética facial e corporal, acupuntura e laserterapia em Juiz de Fora.",
-    path: "/biomedicina",
-  }),
-  component: Page,
-});
-
-function Page() {
-  return (
-    <>
-      <PageIntro
-        tone="biomedicine"
-        eyebrow="Biomedicina • CRBM 30421"
-        title="Biomedicina Integrativa e Estética"
-        text="Uma abordagem individualizada voltada à avaliação, ao equilíbrio do organismo, à saúde integrativa, à estética e ao bem-estar."
-      />
-      <section className="section-space">
-        <div className="mx-auto w-[calc(100%-2rem)] max-w-[86rem]">
-          <p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-primary">TRATAMENTO EM DESTAQUE</p>
-          <article className="mb-12 overflow-hidden rounded-2xl border border-primary/15 bg-card shadow-sm md:mb-16" aria-labelledby="lipo-hd-title">
-            <div className="px-5 py-3 sm:px-6 sm:py-4 md:flex md:items-center md:justify-between md:gap-8 md:px-8">
-              <div className="max-w-3xl">
-                <h2 id="lipo-hd-title" className="font-display text-3xl leading-tight md:text-4xl">Lipo HD – Definição Corporal</h2>
-                <p className="mt-2 text-base leading-7 text-muted-foreground">
-                  Tecnologia voltada ao contorno corporal, com foco em gordura localizada, flacidez e definição. Conheça o procedimento, suas indicações e benefícios.
-                </p>
-              </div>
-              <Button asChild className="mt-3 shrink-0 md:mt-0">
-                <a href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackAnalyticsEvent("whatsapp_click")} aria-label="Saiba mais sobre Lipo HD pelo WhatsApp">
-                  Saiba mais <ArrowRight className="size-4" />
-                </a>
-              </Button>
-            </div>
-            <div className="border-t border-primary/10 bg-primary/[0.03] px-3 py-2 sm:px-5 sm:py-3">
-              <img
-                src="/images/lipo-hd-definicao-corporal.png"
-                alt="Material informativo de Lipo HD – Definição Corporal, com imagens comparativas e apresentação do Dr. Frederick Parreira."
-                width={1536}
-                height={1024}
-                className="mx-auto block h-auto w-full max-w-4xl rounded-lg object-contain"
-              />
-            </div>
-          </article>
-          <section aria-labelledby="tratamentos-title">
-            <div className="mb-7">
-              <h2 id="tratamentos-title" className="font-display text-3xl leading-tight md:text-4xl">Tratamentos e Protocolos</h2>
-              <p className="mt-3 text-base leading-7 text-muted-foreground">Conheça as principais áreas de atuação em Biomedicina Integrativa e Estética.</p>
-            </div>
-            <div className="[&>div]:grid-cols-1 md:[&>div]:grid-cols-2 lg:[&>div]:grid-cols-4">
-              <ServiceGrid services={biomedicineServices} tone="biomedicine" showLearnMore={false} />
-            </div>
-          </section>
-          <div className="mt-16 w-full rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6">
-            <h2 className="font-display text-3xl leading-tight md:text-4xl">Veja um pouco do nosso trabalho</h2>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
-              Conheça um dos momentos de aplicação dos nossos protocolos de Biomedicina Integrativa e Estética.
-            </p>
-            <div className="mt-6 overflow-hidden rounded-xl bg-secondary">
-              <video
-                className="block h-auto w-full"
-                controls
-                preload="metadata"
-                aria-label="Vídeo de aplicação de um protocolo de Biomedicina Integrativa e Estética"
-              >
-                <source src="/videos/aplicacao-biomedicina.mp4" type="video/mp4" />
-                Seu navegador não suporta a reprodução deste vídeo.
-              </video>
-            </div>
-          </div>
-          <div className="mx-px mt-8 px-4 text-sm leading-7 text-muted-foreground sm:px-6">
-            <h2 className="font-display text-2xl font-semibold text-foreground">Aplicação de Toxina Botulínica</h2>
-            <p className="mt-3">Procedimento realizado pelo Dr. Frederick Parreira, com avaliação individualizada e planejamento dos pontos de aplicação, buscando resultados naturais, harmônicos e adequados às características de cada paciente.</p>
-            <p className="mt-3">Cada tratamento é personalizado, e os resultados podem variar de pessoa para pessoa.</p>
-          </div>
-        </div>
-      </section>
-    </>
-  );
-}
+export const Route = createFileRoute("/biomedicina")({ head: () => createSeoHead({ title: "Biomedicina Integrativa e Estética em Juiz de Fora | Dr. Frederick", description: "Biomedicina integrativa, estética facial e corporal, acupuntura e laserterapia em Juiz de Fora.", path: "/biomedicina" }), component: Page });
+function Page() { return <><PageIntro tone="biomedicine" eyebrow="Biomedicina • CRBM 30421" title="Biomedicina Integrativa e Estética" text="Uma abordagem individualizada voltada à avaliação, ao equilíbrio do organismo, à saúde integrativa, à estética e ao bem-estar." /><main className="bg-[#f4f8f7] py-12 sm:py-20"><div className="container-site"><section className="relative overflow-hidden rounded-3xl border border-[#bde1d9] bg-white shadow-xl"><div className="grid items-center gap-8 p-6 sm:p-10 lg:grid-cols-[1fr_.9fr] lg:p-12"><div><span className="inline-flex items-center gap-2 rounded-full bg-[#e5f4f0] px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-[#26786e]"><Sparkles className="size-3.5" /> Tratamento em destaque</span><h2 className="mt-5 font-display text-3xl font-semibold leading-tight text-slate-900 sm:text-4xl">Lipo HD – Definição Corporal</h2><p className="mt-5 text-base leading-8 text-slate-600">Tecnologia voltada ao contorno corporal, com foco em gordura localizada, flacidez e definição. Conheça o procedimento, suas indicações e benefícios.</p><div className="mt-6 space-y-3 text-sm text-slate-600"><span className="flex gap-2"><CheckCircle2 className="size-5 text-[#2f8f82]" /> Avaliação individualizada</span><span className="flex gap-2"><CheckCircle2 className="size-5 text-[#2f8f82]" /> Protocolo planejado para cada pessoa</span></div><Button asChild className="mt-8 bg-[#2f8f82] hover:bg-[#26796e]"><a href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackAnalyticsEvent("whatsapp_click")}>Saiba mais <ArrowRight className="ml-2 size-4" /></a></Button></div><div className="overflow-hidden rounded-2xl bg-[#edf7f4] p-3"><img src="/images/lipo-hd-definicao-corporal.png" alt="Material informativo de Lipo HD – Definição Corporal." width={1536} height={1024} className="h-auto w-full rounded-xl object-contain" /></div></div></section><section className="mt-16"><div className="mb-8 max-w-2xl"><p className="text-xs font-bold uppercase tracking-[0.18em] text-[#2f8f82]">Possibilidades de cuidado</p><h2 className="mt-3 font-display text-3xl font-semibold text-slate-900 sm:text-4xl">Tratamentos e protocolos</h2><p className="mt-3 leading-7 text-slate-600">Conheça as principais áreas de atuação em Biomedicina Integrativa e Estética.</p></div><div className="[&>div]:grid-cols-1 md:[&>div]:grid-cols-2 lg:[&>div]:grid-cols-4"><ServiceGrid services={biomedicineServices} tone="biomedicine" showLearnMore={false} /></div></section><section className="mt-16 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10"><div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-[#2f8f82]">Na prática</p><h2 className="mt-3 font-display text-3xl font-semibold text-slate-900">Veja um pouco do nosso trabalho</h2><p className="mt-3 max-w-2xl leading-7 text-slate-600">Conheça um dos momentos de aplicação dos nossos protocolos de Biomedicina Integrativa e Estética.</p></div></div><div className="mt-7 overflow-hidden rounded-2xl bg-slate-950"><video className="block h-auto w-full" controls preload="metadata" aria-label="Vídeo de aplicação de um protocolo de Biomedicina Integrativa e Estética"><source src="/videos/aplicacao-biomedicina.mp4" type="video/mp4" />Seu navegador não suporta a reprodução deste vídeo.</video></div></section><section className="mt-8 rounded-3xl border border-[#cce7df] bg-[#eff9f6] p-6 sm:p-8"><h2 className="font-display text-2xl font-semibold text-slate-900">Aplicação de Toxina Botulínica</h2><p className="mt-3 leading-7 text-slate-600">Procedimento realizado pelo Dr. Frederick Parreira, com avaliação individualizada e planejamento dos pontos de aplicação, buscando resultados naturais, harmônicos e adequados às características de cada paciente.</p><p className="mt-3 leading-7 text-slate-600">Cada tratamento é personalizado, e os resultados podem variar de pessoa para pessoa.</p></section></div></main></> }
