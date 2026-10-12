@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Instagram, Menu, MessageCircle, Share2, X } from "lucide-react";
+import { Instagram, Menu, MessageCircle, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { trackAnalyticsEvent, trackAnalyticsEvents } from "@/lib/analytics";
@@ -89,15 +89,6 @@ export function WhatsAppFloat() {
   return <a href={whatsappUrl} target="_blank" rel="noreferrer" aria-label="Falar pelo WhatsApp" onClick={() => trackAnalyticsEvent("whatsapp_click")} className="fixed bottom-5 right-5 z-40 grid size-14 place-items-center rounded-full bg-whatsapp text-whatsapp-foreground shadow-float transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><MessageCircle className="size-6" /></a>;
 }
 
-export function BlogActions() {
-  async function sharePage() {
-    const data = { title: document.title, url: window.location.href };
-    if (navigator.share) await navigator.share(data);
-    else await navigator.clipboard.writeText(data.url);
-  }
-  return <div className="fixed bottom-5 left-5 z-40 flex gap-2 rounded-full border border-slate-200 bg-white p-2 shadow-lg"><button type="button" onClick={() => void sharePage()} aria-label="Compartilhar esta página" className="grid size-11 place-items-center rounded-full bg-[#e3f3ef] text-[#26786e] transition hover:bg-[#cdebe4]"><Share2 className="size-5" /></button><Link to="/blog" aria-label="Comentar uma notícia no Blog" className="grid size-11 place-items-center rounded-full bg-[#26786e] text-white transition hover:bg-[#1d625b]"><MessageCircle className="size-5" /></Link></div>;
-}
-
 export function SiteLayout({ children }: { children: React.ReactNode }) {
-  return <><Header /><main>{children}</main><Footer /><WhatsAppFloat /><BlogActions /></>;
+  return <><Header /><main>{children}</main><Footer /><WhatsAppFloat /></>;
 }
