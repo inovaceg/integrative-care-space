@@ -149,7 +149,13 @@ function NutritionPlanningPage() {
     try {
       const { data, error: functionError } = await supabase.functions.invoke("nutrition-planning", { body: { patient_id: patientId, goal: profile.goal.trim(), duration_days: Number(duration), desired_meals: profile.desired_meals ? Number(profile.desired_meals) : null } });
       if (functionError || !data?.plan) {
-        setError(data?.error ?? functionError?.message ?? "Não foi possível gerar a proposta. Confira a configuração do serviço e tente novamente.");
+        let responseError: string | undefined;
+        const response = functionError?.context as Response | undefined;
+        if (response instanceof Response) {
+          const body = await response.json().catch(() => null) as { error?: string } | null;
+          responseError = body?.error;
+        }
+        setError(data?.error ?? responseError ?? functionError?.message ?? "Não foi possível gerar a proposta. Confira a configuração do serviço e tente novamente.");
         setMessage("");
         return;
       }
