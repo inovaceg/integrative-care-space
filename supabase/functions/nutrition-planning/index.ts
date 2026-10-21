@@ -92,9 +92,17 @@ serve(async (req) => {
   }
   if (!aiResponse.ok) {
     console.error(`[${functionName}] OpenAI returned status ${aiResponse.status}`);
-    const failure = await aiResponse.json().catch(() => null) as { error?: { message?: string } } | null;
+    const failure = await aiResponse.json().catch(() => null) as { error?: { message?: string; code?: string } } | null;
     const detail = failure?.error?.message;
-    return jsonResponse({ error: aiResponse.status === 429 ? "Limite de geração atingido. Tente novamente mais tarde." : detail ? `OpenAI: ${detail}` : `OpenAI recusou a solicitação (HTTP ${aiResponse.status}).` }, aiResponse.status === 429 ? 429 : 502);
+    const code = failure?.error?.code;
+    const message = code === "insufficient_quota"
+      ? "A conta da OpenAI está sem créditos ou sem faturamento ativo. Confira Billing e limites do projeto na plataforma OpenAI."
+      : code === "rate_limit_exceeded"
+        ? "A OpenAI recebeu muitas solicitações em pouco tempo. Aguarde alguns minutos e tente novamente."
+        : aiResponse.status === 429
+          ? detail ? `Limite da OpenAI: ${detail}` : "A OpenAI limitou a solicitação. Confira o plano, créditos e limites da conta."
+          : detail ? `OpenAI: ${detail}` : `OpenAI recusou a solicitação (HTTP ${aiResponse.status}).`;
+    return jsonResponse({ error: message }, aiResponse.status === 429 ? 429 : 502);
   }
 
   try {
