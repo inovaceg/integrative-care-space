@@ -204,7 +204,7 @@ function NutritionLibraryDemoPage() {
             {csvImportMessage && <p role="status" className="rounded-lg bg-green-50 p-3 text-sm text-green-800 md:col-span-2">{csvImportMessage}</p>}
             {csvParsed && <div className="space-y-3 md:col-span-2">
               <p className="text-sm">Prévia: {csvParsed.rows.length} linhas · {csvParsed.errors.length} erro(s) · {csvParsed.duplicates.length} duplicidade(s) no arquivo.</p>
-              {csvParsed.errors.length > 0 && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-800">{csvParsed.errors.map((error) => <p key={error}>{error}</p>)}</div>
+              {csvParsed.errors.length > 0 && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-800">{csvParsed.errors.map((error) => <p key={error}>{error}</p>)}</div>}
               {csvParsed.duplicates.length > 0 && <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">Duplicidades no arquivo: {csvParsed.duplicates.map((item) => <p key={item}>{item}</p>)}</div>}
               {existingCsvDuplicates.length > 0 && <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">Já existem no catálogo local (serão ignorados): {[...new Set(existingCsvDuplicates)].map((name) => <p key={name}>{name}</p>)}</div>}
               <div className="max-h-56 overflow-auto rounded-lg border"><table className="w-full text-left text-xs"><thead><tr>{Object.keys(csvParsed.rows[0] ?? {}).map((header) => <th className="p-2" key={header}>{header}</th>)}</tr></thead><tbody>{csvParsed.rows.map((row, index) => <tr className="border-t" key={index}>{Object.values(row).map((value, i) => <td className="p-2" key={i}>{value}</td>)}</tr>)}</tbody></table></div>
