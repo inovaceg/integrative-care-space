@@ -67,7 +67,7 @@ serve(async (req) => {
     patient_internal_id: patient.id,
     age_years: patient.data_nascimento ? Math.max(0, Math.floor((Date.now() - new Date(`${patient.data_nascimento}T00:00:00`).getTime()) / 31557600000)) : null,
     biological_sex_if_recorded: patient.genero,
-    relevant_patient_context: { area: patient.area, main_concern: patient.queixa_principal, initial_notes: patient.observacoes_iniciais },
+    relevant_patient_context: { patient_area: patient.area },
     nutritional_profile: profileResult.data,
     assessments: evaluations,
     application_context_only_no_effect_inference: applicationResult.data,

@@ -61,14 +61,6 @@ function NutritionPlanningPage() {
     return found;
   }, [currentEvaluation, profile.height_cm, selected]);
 
-  async function loadHistory(id: string) {
-    if (!user) return;
-    const { data, error: historyError } = await supabase.from("nutrition_plans").select("id,goal,duration_days,status,plan_content,model_name,created_at,approved_at,approved_by,approved_version_id").eq("patient_id", id).eq("profissional_id", user.id).order("created_at", { ascending: false });
-    if (historyError) { setError("Não foi possível carregar o histórico."); return; }
-    const list = (data as Plan[] | null) ?? [];
-    setPlans(list);
-    if (list.length && !activePlan) selectPlan(list[0]);
-  }
   function selectPlan(plan: Plan) { setActivePlan(plan); setContentText(JSON.stringify(plan.plan_content, null, 2)); setDuration(String(plan.duration_days)); }
 
   useEffect(() => {
@@ -99,12 +91,12 @@ function NutritionPlanningPage() {
     return () => { active = false; };
   }, [patientId, user]);
 
-  async function saveProfile() {
-    if (!user || !patientId) return;
+  async function saveProfile(): Promise<boolean> {
+    if (!user || !patientId) return false;
     setSaving(true); setError(""); setMessage("");
     const payload = { patient_id: patientId, profissional_id: user.id, height_cm: profile.height_cm ? Number(profile.height_cm) : null, reference_weight_kg: profile.reference_weight_kg ? Number(profile.reference_weight_kg) : null, goal: profile.goal || null, activity_level: profile.activity_level || null, exercise_details: profile.exercise_details || null, wake_time: profile.wake_time || null, sleep_time: profile.sleep_time || null, meal_schedule: profile.meal_schedule.split("\n").map((item) => item.trim()).filter(Boolean), desired_meals: profile.desired_meals ? Number(profile.desired_meals) : null, work_routine: profile.work_routine || null, cooking_availability: profile.cooking_availability || null, food_budget: profile.food_budget || null, preferred_foods: profile.preferred_foods || null, avoided_foods: profile.avoided_foods || null, cultural_restrictions: profile.cultural_restrictions || null, simple_meals_preference: profile.simple_meals_preference, affordable_food_preference: profile.affordable_food_preference, allergies: profile.allergies || null, intolerances: profile.intolerances || null, diagnosed_conditions: profile.diagnosed_conditions || null, pregnancy_or_breastfeeding: profile.pregnancy_or_breastfeeding || null, medications: profile.medications || null, supplements: profile.supplements || null, eating_disorder_history: profile.eating_disorder_history || null, updated_at: new Date().toISOString() };
     const { error: saveError } = await supabase.from("patient_nutrition_profiles").upsert(payload, { onConflict: "patient_id" });
-    setSaving(false); if (saveError) setError("Não foi possível salvar o perfil nutricional."); else setMessage("Perfil nutricional salvo.");
+    setSaving(false); if (saveError) { setError("Não foi possível salvar o perfil nutricional."); return false; } setMessage("Perfil nutricional salvo."); return true;
   }
   const setField = (key: keyof Profile, value: string | boolean) => setProfile((old) => ({ ...old, [key]: value }));
 
@@ -139,7 +131,7 @@ function NutritionPlanningPage() {
 
   async function generatePlan() {
     if (!patientId || !user) return;
-    await saveProfile();
+    if (!await saveProfile()) return;
     setGenerating(true); setError(""); setMessage("");
     const { data, error: functionError } = await supabase.functions.invoke("nutrition-planning", { body: { patient_id: patientId, goal: profile.goal, duration_days: Number(duration), desired_meals: profile.desired_meals ? Number(profile.desired_meals) : null } });
     setGenerating(false);
@@ -162,19 +154,36 @@ function NutritionPlanningPage() {
     if (approvalError) setError("A aprovação exige credencial CRN verificada e uma versão válida enviada para revisão."); else { setMessage("Planejamento aprovado."); await refreshPlans(activePlan.id); }
   }
 
-  function exportPdf(draftMark: boolean) {
+  async function exportPdf(_draftMark?: boolean) {
     if (!selected) return;
     let plan: PlanContent;
     try { plan = JSON.parse(contentText) as PlanContent; } catch { setError("Revise o conteúdo: não foi possível interpretar o planejamento para o PDF."); return; }
-    const page: DocumentPage = [];
+    if (activePlan?.status === "approved" && activePlan.approved_version_id) {
+      const { data } = await supabase.from("nutrition_plan_versions").select("plan_content").eq("id", activePlan.approved_version_id).eq("plan_id", activePlan.id).maybeSingle();
+      if (!data) { setError("Não foi possível carregar a versão aprovada imutável."); return; }
+      plan = data.plan_content as PlanContent;
+    }
+    const pages: DocumentPage[] = [[]];
+    let page = pages[0];
     let y = 125;
-    const line = (text: string, size = 10, bold = false) => { for (const part of text.split("\n")) { page.push({ text: part.slice(0, 120), x: 42, y, size, bold, color: bold ? "#123c3d" : "#334155" }); y += size + 7; if (y > 760) y = 760; } };
-    if (draftMark || activePlan?.status !== "approved") line("RASCUNHO — NÃO UTILIZAR COMO PRESCRIÇÃO", 13, true);
+    const line = (text: string, size = 10, bold = false) => {
+      const words = text.split(/\\s+/);
+      let chunk = "";
+      const rows: string[] = [];
+      for (const word of words) { if (chunk && `${chunk} ${word}`.length > 82) { rows.push(chunk); chunk = word; } else chunk = chunk ? `${chunk} ${word}` : word; }
+      if (chunk) rows.push(chunk);
+      for (const row of rows) { if (y > 770) { page = []; pages.push(page); y = 55; } page.push({ text: row, x: 42, y, size, bold, color: bold ? "#123c3d" : "#334155" }); y += size + 7; }
+    };
+    if (activePlan?.status !== "approved") line("RASCUNHO - NAO UTILIZAR COMO PRESCRICAO", 13, true);
     line("PLANEJAMENTO ALIMENTAR", 18, true); line(`Paciente: ${selected.nome}`); line(`Data: ${new Date().toLocaleDateString("pt-BR")}`); line(`Objetivo: ${plan.objective || activePlan?.goal || profile.goal || "A confirmar"}`); line(`Status: ${statusNames[activePlan?.status ?? "draft"] ?? "Rascunho"}`, 10, true); y += 8;
-    for (const meal of plan.meals ?? []) { line(meal.name, 13, true); for (const item of meal.items ?? []) { line(`- ${item.food}: ${item.portion}`); if (item.alternatives?.length) line(`  Alternativas: ${item.alternatives.join(", ")}`); } if (meal.notes) line(`Observações: ${meal.notes}`); y += 8; }
-    for (const observation of plan.observations ?? []) line(`Orientação: ${observation}`);
-    if (activePlan?.status === "approved") line(`Nutricionista responsável: ${activePlan.approved_by ?? "Registro vinculado"}`);
-    void downloadDocumentPdf([page], `planejamento-alimentar-${selected.nome.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`, true);
+    for (const meal of plan.meals ?? []) { line(meal.name, 13, true); for (const item of meal.items ?? []) { line(`- ${item.food}: ${item.portion}`); if (item.alternatives?.length) line(`Alternativas: ${item.alternatives.join(", ")}`); } if (meal.notes) line(`Observacoes: ${meal.notes}`); y += 8; }
+    for (const observation of plan.observations ?? []) line(`Orientacao: ${observation}`);
+    if (activePlan?.status === "approved" && activePlan.approved_by) {
+      const { data: nutritionist } = await supabase.from("nutritionist_credentials").select("full_name,crn").eq("profissional_id", activePlan.approved_by).eq("verification_status", "verified").maybeSingle();
+      if (!nutritionist) { setError("Não foi possível carregar a identificação do nutricionista verificado."); return; }
+      line(`Nutricionista responsavel: ${nutritionist.full_name}`); line(`CRN: ${nutritionist.crn}`); line(`Aprovado em: ${new Date(activePlan.approved_at ?? "").toLocaleString("pt-BR")}`);
+    }
+    await downloadDocumentPdf(pages, `planejamento-alimentar-${selected.nome.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`, true);
   }
 
   const textFields: [keyof Profile, string][] = [["exercise_details", "Tipo e frequência de exercícios"],["work_routine", "Rotina de trabalho"],["cooking_availability", "Disponibilidade para cozinhar"],["food_budget", "Orçamento alimentar"],["preferred_foods", "Alimentos preferidos"],["avoided_foods", "Alimentos que não consome"],["cultural_restrictions", "Restrições culturais/religiosas"],["allergies", "Alergias alimentares"],["intolerances", "Intolerâncias"],["diagnosed_conditions", "Doenças diagnosticadas"],["pregnancy_or_breastfeeding", "Gestação ou amamentação"],["medications", "Medicamentos em uso"],["supplements", "Suplementos"],["eating_disorder_history", "Histórico de transtornos alimentares"]];
