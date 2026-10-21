@@ -148,7 +148,7 @@ export function SearchInput({ value, onChange, placeholder = "Buscar..." }: { va
 }
 
 export function SectionCard({ title, action, children, className }: { title: string; action?: ReactNode; children: ReactNode; className?: string }) {
-  if (title === "5. Perfil nutricional complementar") return null;
+  if (title === "5. Perfil nutricional complementar" || title === "6. Configuração da proposta e geração") return null;
   return <Card className={cn("border-slate-200/80 shadow-sm", className)}><CardHeader className="flex-row items-center justify-between space-y-0 border-b border-slate-100 px-5 py-4"><CardTitle className="font-display text-base text-slate-800">{title}</CardTitle>{action}</CardHeader><CardContent className="p-5">{children}</CardContent></Card>;
 }
 
