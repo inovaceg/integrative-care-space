@@ -1,91 +1,77 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, Flame, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { calculateMifflinStJeor, type SexParameter } from "@/lib/admin/nutrition-calculations";
 
 export type EnergyPlan = {
   method: "Mifflin-St Jeor";
-  sex_parameter: "female" | "male" | null;
-  bmr_kcal: number | null;
+  sex_parameter: SexParameter | null;
+  weight_kg: number | null;
+  height_cm: number | null;
+  age_years: number | null;
+  weight_source: string | null;
+  weight_date: string | null;
+  height_source: string | null;
+  activity_level: string;
   activity_factor: number | null;
+  activity_context: string;
+  objective: "maintenance" | "weight_loss" | "weight_gain" | null;
+  bmr_kcal: number | null;
   estimated_daily_kcal: number | null;
   adjusted_daily_kcal: number | null;
   observations: string;
   professional_reviewed: boolean;
+  reviewed_at: string | null;
 };
 
-const activityFactors: Record<string, number> = {
-  "Sedentário": 1.2,
-  "Leve": 1.375,
-  "Moderado": 1.55,
-  "Intenso": 1.725,
-  "Muito intenso": 1.9,
-};
+const activityFactors: Record<string, number> = { "Sedentário": 1.2, "Leve": 1.375, "Moderado": 1.55, "Intenso": 1.725, "Muito intenso": 1.9 };
+const parseNumber = (raw: string): number | null => { const n = Number(raw.trim().replace(/\s/g, "").replace(",", ".")); return raw.trim() && Number.isFinite(n) ? n : null; };
+const fmt = (value: number | null) => value === null ? "Não informado" : value.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
 
-function parseKcal(raw: string): number | null {
-  const normalized = raw.trim().replace(/\s/g, "").replace(",", ".");
-  if (!normalized) return null;
-  const parsed = Number(normalized);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-export function calculateEnergyEstimate(weightKg: number | null, heightCm: number | null, patientAge: number | null, gender: string | null, activityLevel: string, sexParameter: EnergyPlan["sex_parameter"] = null) {
-  const sexTerm = gender?.trim().toLocaleLowerCase("pt-BR") ?? "";
-  const sexConstant = sexParameter === "female" || ["feminino", "mulher", "female"].includes(sexTerm) ? -161 : sexParameter === "male" || ["masculino", "homem", "male"].includes(sexTerm) ? 5 : null;
-  const activityFactor = activityFactors[activityLevel] ?? null;
-  if (weightKg === null || weightKg <= 0 || heightCm === null || heightCm <= 0 || patientAge === null || patientAge < 18 || sexConstant === null || activityFactor === null) return null;
-  const bmr = 10 * weightKg + 6.25 * heightCm - 5 * patientAge + sexConstant;
-  return { bmr_kcal: Math.round(bmr), activity_factor: activityFactor, estimated_daily_kcal: Math.round(bmr * activityFactor) };
-}
-
-export function EnergySection({ value, onChange, weightKg, heightCm, patientAge, gender, activityLevel, onSave, saving, canSave }: {
-  value: EnergyPlan;
-  onChange: (next: EnergyPlan) => void;
-  weightKg: number | null;
-  heightCm: number | null;
-  patientAge: number | null;
-  gender: string | null;
-  activityLevel: string;
-  onSave: () => void;
-  saving: boolean;
-  canSave: boolean;
+export function EnergySection({ value, onChange, weightKg, weightDate, weightSource, heightCm, patientAge, activityLevel, activityContext, heightSource, onSave, saving, canSave }: {
+  value: EnergyPlan; onChange: (next: EnergyPlan) => void; weightKg: number | null; weightDate: string | null; weightSource: string | null; heightCm: number | null; patientAge: number | null; activityLevel: string; activityContext: string; heightSource: string; onSave: () => void; saving: boolean; canSave: boolean;
 }) {
-  const [manualInput, setManualInput] = useState(value.adjusted_daily_kcal === null ? "" : String(value.adjusted_daily_kcal));
-  useEffect(() => {
-    if (value.adjusted_daily_kcal === null) setManualInput("");
-    else if (Number.isFinite(value.adjusted_daily_kcal)) setManualInput(String(value.adjusted_daily_kcal));
-  }, [value.adjusted_daily_kcal]);
-
-  const registeredGender = gender?.trim().toLocaleLowerCase("pt-BR") ?? "";
-  const registeredSexParameter = ["feminino", "mulher", "female"].includes(registeredGender) ? "female" : ["masculino", "homem", "male"].includes(registeredGender) ? "male" : null;
-  const sexParameter = value.sex_parameter ?? registeredSexParameter;
-  const calculation = calculateEnergyEstimate(weightKg, heightCm, patientAge, gender, activityLevel, sexParameter);
-  const activityFactor = calculation?.activity_factor ?? null;
-  const bmr = calculation?.bmr_kcal ?? null;
-  const estimate = calculation?.estimated_daily_kcal ?? null;
-  const manualEntered = manualInput.trim().length > 0;
-  const manualValue = parseKcal(manualInput);
-  const manualValid = !manualEntered || (manualValue !== null && manualValue >= 500 && manualValue <= 10000);
-  const manualNeedsJustification = manualEntered && manualValid && !value.observations.trim();
-  const set = <K extends keyof EnergyPlan>(key: K, fieldValue: EnergyPlan[K]) => onChange({ ...value, [key]: fieldValue, professional_reviewed: false });
+  const [weightInput, setWeightInput] = useState("");
+  const [heightInput, setHeightInput] = useState("");
+  const [ageInput, setAgeInput] = useState("");
+  const [targetInput, setTargetInput] = useState("");
+  useEffect(() => { setWeightInput(value.weight_kg === null ? "" : String(value.weight_kg).replace(".", ",")); }, [value.weight_kg]);
+  useEffect(() => { setHeightInput(value.height_cm === null ? "" : String(value.height_cm).replace(".", ",")); }, [value.height_cm]);
+  useEffect(() => { setAgeInput(value.age_years === null ? "" : String(value.age_years)); }, [value.age_years]);
+  useEffect(() => { setTargetInput(value.adjusted_daily_kcal === null ? "" : String(value.adjusted_daily_kcal)); }, [value.adjusted_daily_kcal]);
+  const activityKey = value.activity_level || activityLevel;
+  const factor = activityFactors[activityKey] ?? null;
+  const weight = value.weight_kg;
+  const height = value.height_cm;
+  const age = value.age_years;
+  const estimate = useMemo(() => calculateMifflinStJeor({ weightKg: weight, heightCm: height, ageYears: age, sex: value.sex_parameter, activityFactor: factor }), [weight, height, age, value.sex_parameter, factor]);
+  const target = parseNumber(targetInput);
+  const targetValid = !targetInput.trim() || (target !== null && target >= 500 && target <= 10000);
+  const justificationRequired = targetInput.trim().length > 0 && !value.observations.trim();
+  const set = <K extends keyof EnergyPlan>(key: K, field: EnergyPlan[K]) => onChange({ ...value, [key]: field, professional_reviewed: false, reviewed_at: null });
+  const updateParam = (key: "weight_kg" | "height_cm" | "age_years", raw: string, setter: (s: string) => void) => { setter(raw); set(key, raw.trim() ? parseNumber(raw) : null); };
+  const confirm = () => onChange({ ...value, bmr_kcal: estimate?.bmrKcal ?? null, estimated_daily_kcal: estimate?.totalKcal ?? null, activity_factor: factor, activity_level: activityKey, professional_reviewed: !value.professional_reviewed, reviewed_at: value.professional_reviewed ? null : new Date().toISOString() });
+  const objectiveLabels = { maintenance: "Manutenção de peso", weight_loss: "Emagrecimento", weight_gain: "Ganho de peso" };
 
   return <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-    <header className="flex items-center gap-2 border-b border-slate-100 px-5 py-4"><Flame className="size-5 text-[#2f8f82]" /><h2 className="font-display text-base font-semibold text-slate-800">Avaliação Energética</h2></header>
-    <div className="space-y-4 p-5">
-      <div><Label>Parâmetro utilizado pela equação</Label><Select value={sexParameter ?? "none"} onValueChange={(selected) => set("sex_parameter", selected === "none" ? null : selected as "female" | "male")}><SelectTrigger className="mt-1 max-w-sm"><SelectValue placeholder="Selecione o parâmetro" /></SelectTrigger><SelectContent><SelectItem value="none">Não informado</SelectItem><SelectItem value="female">Feminino</SelectItem><SelectItem value="male">Masculino</SelectItem></SelectContent></Select><p className="mt-1 text-xs text-slate-500">Usado apenas para aplicar a equação Mifflin–St Jeor; não altera o cadastro do paciente.</p></div>
-      <p className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-950">Estimativa pelo método Mifflin–St Jeor × fator de atividade. Não aplica déficit calórico nem constitui prescrição. A avaliação e a meta final são responsabilidade da nutricionista.</p>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 text-sm"><div><p className="text-slate-500">Peso mais recente</p><p className="font-medium">{weightKg === null ? "Não informado" : `${weightKg} kg`}</p></div><div><p className="text-slate-500">Altura utilizada</p><p className="font-medium">{heightCm === null ? "Não informada" : `${heightCm} cm`}</p></div><div><p className="text-slate-500">Idade</p><p className="font-medium">{patientAge === null ? "Não informada" : `${patientAge} anos`}</p></div><div><p className="text-slate-500">Atividade registrada</p><p className="font-medium">{activityLevel || "Não informada"}</p></div></div>
-      {estimate !== null ? <div className="rounded-xl border border-slate-200 bg-slate-50 p-4"><h3 className="font-semibold text-slate-900">Estimativa de manutenção</h3><p className="mt-2 text-2xl font-semibold text-[#21655f]">{estimate.toLocaleString("pt-BR")} kcal/dia</p><p className="mt-2 text-sm text-slate-600">Metabolismo basal estimado: {bmr!.toLocaleString("pt-BR")} kcal/dia × fator de atividade {activityFactor}.</p><p className="mt-1 text-xs text-slate-500">Método: Mifflin–St Jeor. O metabolismo basal registrado na avaliação não é usado no cálculo.</p></div> : <div className="flex gap-2 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900" role="alert"><AlertTriangle className="size-5 shrink-0" /><p>Não é possível estimar sem peso, altura, idade adulta, gênero compatível com a equação e nível de atividade reconhecido. Complete os dados no perfil do paciente e confira a avaliação profissional.</p></div>}
-      <div><Label htmlFor="energy-target">Ajuste profissional da meta diária (kcal)</Label><Input id="energy-target" className="mt-1" type="text" inputMode="decimal" value={manualInput} onChange={(event) => { const raw = event.target.value; setManualInput(raw); const parsed = parseKcal(raw); set("adjusted_daily_kcal", raw.trim() ? parsed ?? Number.NaN : null); }} placeholder="Opcional; vazio usa a estimativa" /><p className="mt-1 text-xs text-slate-500">Meta manual entre 500 e 10.000 kcal/dia; ajuste exige justificativa.</p></div>
-      {manualEntered && !manualValid && <p className="text-sm text-red-700" role="alert">Informe uma meta válida entre 500 e 10.000 kcal/dia.</p>}
-      {manualNeedsJustification && <p className="text-sm text-amber-800" role="alert">Registre a justificativa profissional para a meta manual.</p>}
-      {manualValue !== null && manualValid && <Button type="button" variant="outline" size="sm" onClick={() => { setManualInput(""); set("adjusted_daily_kcal", null); }}><RotateCcw className="mr-2 size-4" />Usar estimativa automática</Button>}
-      <div><Label htmlFor="energy-observations">Justificativa/observações profissionais{manualEntered ? " (obrigatória para ajuste manual)" : ""}</Label><Textarea id="energy-observations" className="mt-1" value={value.observations} onChange={(event) => set("observations", event.target.value)} placeholder="Registre o raciocínio e os parâmetros revisados" /></div>
-      <div className="flex flex-wrap items-center gap-3"><Button type="button" disabled={estimate === null || !manualValid || manualNeedsJustification} variant={value.professional_reviewed ? "outline" : "default"} onClick={() => onChange({ ...value, professional_reviewed: !value.professional_reviewed })}>{value.professional_reviewed ? <><CheckCircle2 className="mr-2 size-4" />Revisão confirmada</> : "Confirmar revisão profissional"}</Button><Button type="button" variant="outline" onClick={onSave} disabled={saving || !canSave || !manualValid || manualNeedsJustification}>{saving ? "Salvando..." : "Salvar no planejamento"}</Button></div>
-      {!value.professional_reviewed && <p className="text-xs text-amber-800">A estimativa energética só será adicionada ao PDF após revisão profissional e aprovação do planejamento.</p>}
+    <header className="flex items-center gap-2 border-b border-slate-100 px-5 py-4"><Flame className="size-5 text-[#2f8f82]" /><h2 className="font-display text-base font-semibold text-slate-800">Necessidade Calórica Diária</h2></header>
+    <div className="space-y-5 p-5">
+      <p className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-950">Estimativa de referência — não é prescrição. O objetivo não aplica déficit nem excedente. A nutricionista define, justifica e aprova a meta individual separadamente.</p>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div><Label>Objetivo</Label><Select value={value.objective ?? "none"} onValueChange={(v) => set("objective", v === "none" ? null : v as EnergyPlan["objective"])}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">Selecione</SelectItem><SelectItem value="maintenance">Manutenção de peso</SelectItem><SelectItem value="weight_loss">Emagrecimento</SelectItem><SelectItem value="weight_gain">Ganho de peso</SelectItem></SelectContent></Select></div>
+        <div><Label>Parâmetro da equação — confirmação profissional</Label><Select value={value.sex_parameter ?? "none"} onValueChange={(v) => set("sex_parameter", v === "none" ? null : v as SexParameter)}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">Não confirmado</SelectItem><SelectItem value="female">Feminino</SelectItem><SelectItem value="male">Masculino</SelectItem></SelectContent></Select><p className="mt-1 text-xs text-slate-500">Não inferimos este parâmetro do cadastro.</p></div>
+        <div><Label>Fator único de atividade</Label><Select value={activityKey || "none"} onValueChange={(v) => set("activity_level", v === "none" ? "" : v)}><SelectTrigger className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent><SelectItem value="none">Não informado</SelectItem>{Object.keys(activityFactors).map((label) => <SelectItem key={label} value={label}>{label} · {activityFactors[label]}</SelectItem>)}</SelectContent></Select><p className="mt-1 text-xs text-slate-500">Rotina de trabalho e exercícios são contexto para escolher este fator, não parcelas adicionais.</p></div>
+        {[["weight", "Peso (kg)", weightInput, setWeightInput, weight, weightSource ?? "Entrada manual", weightDate], ["height", "Altura (cm)", heightInput, setHeightInput, height, heightSource, null], ["age", "Idade (anos)", ageInput, setAgeInput, age, "Data de nascimento", null]].map(([key, label, input, setter, current, source, date]) => <div key={key as string}><Label>{label as string}</Label><Input className="mt-1" inputMode="decimal" value={input as string} onChange={(e) => updateParam(key as "weight_kg" | "height_cm" | "age_years", e.target.value, setter as (s: string) => void)} /><p className="mt-1 text-xs text-slate-500">{input === "" ? `Atual: ${fmt(current as number | null)} · ${source}${date ? ` · ${date}` : ""}` : "Ajuste temporário; não altera o registro original."}</p></div>)}
+      </div>
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm"><p className="font-semibold">Método: Mifflin–St Jeor</p><p>Fórmula feminina: 10 × peso (kg) + 6,25 × altura (cm) − 5 × idade − 161.</p><p>Fórmula masculina: 10 × peso (kg) + 6,25 × altura (cm) − 5 × idade + 5.</p><p className="mt-2">Contexto de atividade (sem fator adicional): {activityContext || "não informado"}</p>{estimate ? <div className="mt-3 grid gap-2 sm:grid-cols-2"><p>Metabolismo basal estimado: <strong>{fmt(estimate.bmrKcal)} kcal/dia</strong></p><p>Gasto total estimado: <strong>{fmt(estimate.totalKcal)} kcal/dia</strong> ({factor} × basal)</p></div> : <p role="alert" className="mt-2 flex items-center gap-2 text-amber-900"><AlertTriangle className="size-4" />Estimativa indisponível. Confira peso (20–350 kg), altura (100–250 cm), idade adulta, atividade e confirmação do parâmetro sexual pela nutricionista.</p>}<p className="mt-2 text-xs text-slate-500">Metabolismo basal gravado nas avaliações não é utilizado. Data do cálculo: {new Date().toLocaleDateString("pt-BR")}.</p></div>
+      <div className="grid gap-4 sm:grid-cols-2"><div><Label htmlFor="energy-target">Meta calórica definida pela nutricionista (kcal/dia)</Label><Input id="energy-target" className="mt-1" inputMode="decimal" value={targetInput} onChange={(e) => { setTargetInput(e.target.value); set("adjusted_daily_kcal", e.target.value.trim() ? parseNumber(e.target.value) ?? Number.NaN : null); }} placeholder="Não é preenchida pela estimativa" /><p className="mt-1 text-xs text-slate-500">500–10.000 kcal/dia. Nunca preenchida automaticamente.</p></div><div><Label htmlFor="energy-observations">Justificativa profissional</Label><Textarea id="energy-observations" className="mt-1" value={value.observations} onChange={(e) => set("observations", e.target.value)} /></div></div>
+      {!targetValid && <p className="text-sm text-red-700" role="alert">Meta fora do intervalo permitido.</p>}{justificationRequired && <p className="text-sm text-amber-800" role="alert">A meta definida exige justificativa.</p>}
+      <div className="flex flex-wrap gap-3"><Button type="button" disabled={!estimate || !value.objective || !targetValid || justificationRequired || !targetInput.trim()} variant={value.professional_reviewed ? "outline" : "default"} onClick={confirm}>{value.professional_reviewed ? <><CheckCircle2 className="mr-2 size-4" />Revisão confirmada</> : "Aprovar meta profissional"}</Button><Button type="button" variant="outline" onClick={() => { setTargetInput(""); onChange({ ...value, adjusted_daily_kcal: null, professional_reviewed: false, reviewed_at: null }); }}><RotateCcw className="mr-2 size-4" />Limpar meta</Button><Button type="button" variant="outline" onClick={onSave} disabled={saving || !canSave || !targetValid || justificationRequired}>{saving ? "Salvando..." : "Salvar no planejamento"}</Button></div>
+      {!value.professional_reviewed && <p className="text-xs text-amber-800">Somente meta explicitamente definida, justificada e aprovada pela nutricionista será integrada ao plano e PDF.</p>}
     </div>
   </section>;
 }
