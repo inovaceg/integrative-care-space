@@ -23,16 +23,26 @@ describe("motor local de demonstração nutricional", () => {
     expect(() => generateDemoPlan({ ...safeInput, restrictions: ["sem glúten"] })).toThrow(/suficientes compatíveis/);
   });
 
-  test("bloqueia metas fora dos limites de porção demonstrativos", () => {
+  test("bloqueia metas fora dos limites e dados de alergênicos desconhecidos", () => {
     expect(() => generateDemoPlan({ ...safeInput, targetKcal: 10000 })).toThrow(/faixa de ajuste/);
+    const unknownAllergens = demoFoods.map((food) => food.id === "demo-banana" ? { ...food, allergenInfoKnown: false } : food);
+    expect(() => generateDemoPlan(safeInput, unknownAllergens)).toThrow(/suficientes compatíveis/);
   });
 
-  test("recalcula totais após editar uma porção", () => {
-    const plan = generateDemoPlan(safeInput);
+  test("varia combinações entre dias e recalcula totais após editar porções", () => {
+    const plan = generateDemoPlan({ ...safeInput, days: 3 });
+    const firstDayItem = plan.days[0]?.meals[1]?.items[2];
+    const secondDayItem = plan.days[1]?.meals[1]?.items[2];
+    expect(firstDayItem).toBeDefined();
+    expect(secondDayItem).toBeDefined();
+    expect(firstDayItem?.foodId).not.toBe(secondDayItem?.foodId);
+
     const changed = structuredClone(plan);
-    changed.days[0].meals[0].items[0].grams += 20;
+    const firstItem = changed.days[0]?.meals[0]?.items[0];
+    if (!firstItem) throw new Error("A simulação não gerou o item esperado.");
+    firstItem.grams += 20;
     const recalculated = recalculateDemoPlan(changed, demoFoods);
-    expect(recalculated.days[0].totals.kcal).toBeGreaterThan(plan.days[0].totals.kcal);
+    expect(recalculated.days[0]?.totals.kcal).toBeGreaterThan(plan.days[0]?.totals.kcal ?? 0);
   });
 
   test("valida cabeçalhos, valores e duplicatas de CSV", () => {

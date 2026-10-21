@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, FileUp, Plus, Search, Sparkles, Utensils, X } from "lucide-react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { ArrowLeft, Plus, Search, Sparkles, Utensils, X } from "lucide-react";
 import { AdminLayout, PageIntro, SectionCard } from "@/components/admin/admin-ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,7 +64,7 @@ function NutritionLibraryDemoPage() {
   const existingCsvDuplicates = csvParsed?.rows.filter((row) => uniqueNameDuplicate(row.nome)).map((row) => row.nome) ?? [];
 
   function resetFoodForm() { setFoodForm(blankFood); setEditingFoodId(null); }
-  function saveFood(event: React.FormEvent<HTMLFormElement>) {
+  function saveFood(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!foodForm.name.trim() || !foodForm.category.trim() || uniqueNameDuplicate(foodForm.name, editingFoodId)) return;
     const previous = foods.find((food) => food.id === editingFoodId);
@@ -99,9 +99,10 @@ function NutritionLibraryDemoPage() {
     const duplicatedNames = new Set(csvParsed.duplicates.map((item) => normalized(item.match(/“(.*)”/)?.[1] ?? "")));
     const toAdd: DemoFood[] = [];
     csvParsed.rows.forEach((row, index) => {
-      if (blockedLines.has(index + 2) || duplicatedNames.has(normalized(row.nome)) || uniqueNameDuplicate(row.nome)) return;
-      const numeric = (key: string) => Number(row[key].replace(",", "."));
-      toAdd.push({ id: `csv-${crypto.randomUUID()}`, name: row.nome.trim(), category: row.categoria.trim(), kcal100g: numeric("calorias_kcal_100g"), protein100g: numeric("proteina_g_100g"), carbs100g: numeric("carboidrato_g_100g"), fat100g: numeric("gordura_g_100g"), householdMeasure: row.medida_caseira || "Não informada", allergens: (row.alergenicos || "").split(/[|;]/).map((value) => value.trim().toLocaleLowerCase("pt-BR")).filter((value) => value && value !== "nenhum"), allergenInfoKnown: Boolean(row.alergenicos?.trim()), restrictions: [], gluten: (row.gluten_status as DemoFood["gluten"]) || "unknown", lactose: (row.lactose_status as DemoFood["lactose"]) || "unknown", source: row.fonte.trim(), license: row.licenca.trim(), status: "draft", demoOnly: true });
+      const rowName = row.nome ?? "";
+      if (blockedLines.has(index + 2) || duplicatedNames.has(normalized(rowName)) || uniqueNameDuplicate(rowName)) return;
+      const numeric = (key: string) => Number((row[key] ?? "").replace(",", "."));
+      toAdd.push({ id: `csv-${crypto.randomUUID()}`, name: (row.nome ?? "").trim(), category: (row.categoria ?? "").trim(), kcal100g: numeric("calorias_kcal_100g"), protein100g: numeric("proteina_g_100g"), carbs100g: numeric("carboidrato_g_100g"), fat100g: numeric("gordura_g_100g"), householdMeasure: row.medida_caseira || "Não informada", allergens: (row.alergenicos || "").split(/[|;]/).map((value) => value.trim().toLocaleLowerCase("pt-BR")).filter((value) => value && value !== "nenhum"), allergenInfoKnown: Boolean(row.alergenicos?.trim()), restrictions: [], gluten: (row.gluten_status as DemoFood["gluten"]) || "unknown", lactose: (row.lactose_status as DemoFood["lactose"]) || "unknown", source: (row.fonte ?? "").trim(), license: (row.licenca ?? "").trim(), status: "draft", demoOnly: true });
     });
     setFoods((current) => [...current, ...toAdd]);
     setCsvParsed(null);
@@ -115,7 +116,7 @@ function NutritionLibraryDemoPage() {
     setMealFoodId("");
     setMealGrams("100");
   }
-  function saveMeal(event: React.FormEvent<HTMLFormElement>) {
+  function saveMeal(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!mealName.trim() || !mealItems.length) return;
     setMeals((current) => editingMealId
@@ -147,9 +148,14 @@ function NutritionLibraryDemoPage() {
     setPlan((current) => {
       if (!current) return current;
       const changed = structuredClone(current);
-      const item = changed.days[dayIndex].meals[mealIndex].items[itemIndex];
+      const item = changed.days[dayIndex]?.meals[mealIndex]?.items[itemIndex];
+      if (!item) return current;
       if (patch.grams !== undefined && Number.isFinite(patch.grams) && patch.grams > 0) item.grams = patch.grams;
-      if (patch.foodId) item.foodId = patch.foodId;
+      if (patch.foodId) {
+        const replacement = foods.find((food) => food.id === patch.foodId);
+        if (!replacement || !isDemoFoodAllowed(replacement, allergies, restrictions)) return current;
+        item.foodId = patch.foodId;
+      }
       return recalculateDemoPlan(changed, foods);
     });
   }
@@ -161,7 +167,7 @@ function NutritionLibraryDemoPage() {
       <Link to="/admin/planejamento-alimentar" className="inline-flex items-center gap-2 font-medium underline"><ArrowLeft className="size-4" /> Voltar ao planejamento</Link>
     </div>
     <SectionCard title="Biblioteca local — sem banco de dados">
-      <Tabs defaultValue="foods">
+      <Tabs defaultValue="generator">
         <TabsList className="grid h-auto w-full grid-cols-3"><TabsTrigger value="foods">Alimentos ({foods.length})</TabsTrigger><TabsTrigger value="meals">Refeições ({meals.length})</TabsTrigger><TabsTrigger value="generator">Gerador demonstrativo</TabsTrigger></TabsList>
         <TabsContent value="foods" className="space-y-6 pt-4">
           <form onSubmit={saveFood} className="grid gap-3 rounded-xl border p-4 sm:grid-cols-2 lg:grid-cols-4">

@@ -110,6 +110,8 @@ export function generateDemoPlan(input: DemoGenerationInput, foods: DemoFood[] =
   if (!input.targetKcal || !Number.isFinite(input.targetKcal) || input.targetKcal < 500) throw new DemoGenerationError("Informe uma meta energética demonstrativa válida.");
   if (!input.targetProtein || !Number.isFinite(input.targetProtein) || input.targetProtein < 1) throw new DemoGenerationError("Informe uma meta proteica demonstrativa válida.");
   if (!input.clinicalReviewConfirmed) throw new DemoGenerationError("Confirme que alergias, intolerâncias e restrições foram revisadas neste cenário fictício.");
+  const targetKcal = input.targetKcal;
+  const targetProtein = input.targetProtein;
 
   const usableFoods = foods.filter((food) => food.status === "demo_validated" && food.demoOnly);
   const safeTemplates = templates.filter((template) => template.items.length > 0 && template.items.every((item) => {
@@ -122,7 +124,7 @@ export function generateDemoPlan(input: DemoGenerationInput, foods: DemoFood[] =
   const baseDay = ["Desjejum", "Almoço", "Jantar"].map((category) => safeTemplates.find((template) => template.category === category)).filter((meal): meal is DemoMealTemplate => Boolean(meal));
   if (baseDay.length !== 3) throw new DemoGenerationError("O catálogo demonstrativo não possui desjejum, almoço e jantar compatíveis.");
   const baseKcal = baseDay.reduce((sum, meal) => sum + totalsForItems(meal.items, usableFoods).kcal, 0);
-  const portionFactor = input.targetKcal / baseKcal;
+  const portionFactor = targetKcal / baseKcal;
   if (portionFactor < 0.75 || portionFactor > 1.25) throw new DemoGenerationError("A meta está fora da faixa de ajuste demonstrativa de porções (75% a 125%). Nenhuma proposta foi criada.");
 
   const days = Array.from({ length: input.days }, (_, index) => {
@@ -130,19 +132,23 @@ export function generateDemoPlan(input: DemoGenerationInput, foods: DemoFood[] =
       const alternate = index % 2 === 1
         ? item.alternatives.map((id) => usableFoods.find((food) => food.id === id)).find((food) => food && !matchesRestriction(food, input.allergies, input.restrictions))
         : undefined;
-      return { ...item, foodId: alternate?.id ?? item.foodId, grams: Math.round(item.grams * portionFactor) };
+      return { ...item, foodId: alternate?.id ?? item.foodId, grams: Math.round(item.grams * portionFactor), alternatives: item.alternatives.filter((id) => {
+        const food = usableFoods.find((candidate) => candidate.id === id);
+        return Boolean(food && food.allergenInfoKnown !== false && !matchesRestriction(food, input.allergies, input.restrictions));
+      }) };
     }) }, usableFoods));
     return { day: index + 1, meals: dailyMeals, totals: roundNutrients(dailyMeals.reduce((sum, meal) => ({ kcal: sum.kcal + meal.totals.kcal, protein: sum.protein + meal.totals.protein, carbs: sum.carbs + meal.totals.carbs, fat: sum.fat + meal.totals.fat }), { kcal: 0, protein: 0, carbs: 0, fat: 0 })) };
   });
 
-  if (days.some((day) => day.totals.protein < input.targetProtein)) throw new DemoGenerationError("As combinações demonstrativas compatíveis não alcançam a meta proteica informada dentro dos limites de porção.");
-  return { label: "SIMULAÇÃO FICTÍCIA — NÃO É PRESCRIÇÃO", days, targets: { kcal: input.targetKcal, protein: input.targetProtein } };
+  if (days.some((day) => day.totals.protein < targetProtein)) throw new DemoGenerationError("As combinações demonstrativas compatíveis não alcançam a meta proteica informada dentro dos limites de porção.");
+  return { label: "SIMULAÇÃO FICTÍCIA — NÃO É PRESCRIÇÃO", days, targets: { kcal: targetKcal, protein: targetProtein } };
 }
 
 export function parseDemoFoodCsv(text: string): { rows: Array<Record<string, string>>; errors: string[]; duplicates: string[] } {
   const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/).filter((line) => line.trim());
   if (lines.length < 2) return { rows: [], errors: ["O CSV precisa conter cabeçalho e pelo menos uma linha."], duplicates: [] };
-  const delimiter = lines[0].includes(";") ? ";" : ",";
+  const headerLine = lines[0] ?? "";
+  const delimiter = headerLine.includes(";") ? ";" : ",";
   const parseLine = (line: string) => {
     const cells: string[] = [];
     let cell = "";
@@ -152,12 +158,12 @@ export function parseDemoFoodCsv(text: string): { rows: Array<Record<string, str
       if (char === '"' && line[i + 1] === '"' && quoted) { cell += '"'; i += 1; }
       else if (char === '"') quoted = !quoted;
       else if (char === delimiter && !quoted) { cells.push(cell.trim()); cell = ""; }
-      else cell += char;
+      else cell += char ?? "";
     }
     cells.push(cell.trim());
     return cells;
   };
-  const headers = parseLine(lines[0]).map((header) => header.toLocaleLowerCase("pt-BR"));
+  const headers = parseLine(headerLine).map((header) => header.toLocaleLowerCase("pt-BR"));
   const required = ["nome", "categoria", "calorias_kcal_100g", "proteina_g_100g", "carboidrato_g_100g", "gordura_g_100g", "alergenicos", "fonte", "licenca"];
   const missing = required.filter((header) => !headers.includes(header));
   if (missing.length) return { rows: [], errors: [`Colunas obrigatórias ausentes: ${missing.join(", ")}.`], duplicates: [] };
@@ -175,8 +181,9 @@ export function parseDemoFoodCsv(text: string): { rows: Array<Record<string, str
   const names = new Set<string>();
   const duplicates: string[] = [];
   rows.forEach((row, index) => {
-    const normalized = row.nome.trim().toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    if (names.has(normalized)) duplicates.push(`Linha ${index + 2}: “${row.nome}” aparece mais de uma vez no arquivo.`);
+    const name = (row.nome ?? "").trim();
+    const normalized = name.toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (names.has(normalized)) duplicates.push(`Linha ${index + 2}: “${name}” aparece mais de uma vez no arquivo.`);
     names.add(normalized);
   });
   return { rows, errors: [...new Set(errors)], duplicates };
