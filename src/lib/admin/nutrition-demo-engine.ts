@@ -89,6 +89,10 @@ function totalsForItems(items: DemoItem[], foods: DemoFood[]): Nutrients {
 
 const roundNutrients = (value: Nutrients): Nutrients => ({ kcal: Math.round(value.kcal), protein: Math.round(value.protein * 10) / 10, carbs: Math.round(value.carbs * 10) / 10, fat: Math.round(value.fat * 10) / 10 });
 
+export function isDemoFoodAllowed(food: DemoFood, allergies: string[], restrictions: string[]): boolean {
+  return food.status === "demo_validated" && food.demoOnly && food.allergenInfoKnown !== false && !matchesRestriction(food, allergies, restrictions);
+}
+
 export function recalculateDemoMeal(meal: DemoMealTemplate, foods: DemoFood[]): DemoMeal {
   const items = meal.items.map((item) => ({ ...item, alternatives: [...item.alternatives] }));
   return { ...meal, items, totals: roundNutrients(totalsForItems(items, foods)) };

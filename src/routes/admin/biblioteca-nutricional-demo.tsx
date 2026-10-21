@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { demoFoods, demoMealTemplates, generateDemoPlan, parseDemoFoodCsv, recalculateDemoPlan, type DemoFood, type DemoGenerationInput, type DemoMealTemplate, type DemoPlan } from "@/lib/admin/nutrition-demo-engine";
+import { demoFoods, demoMealTemplates, generateDemoPlan, isDemoFoodAllowed, parseDemoFoodCsv, recalculateDemoPlan, type DemoFood, type DemoGenerationInput, type DemoMealTemplate, type DemoPlan } from "@/lib/admin/nutrition-demo-engine";
 
 export const Route = createFileRoute("/admin/biblioteca-nutricional-demo")({ component: NutritionLibraryDemoPage });
 
@@ -34,6 +34,7 @@ function NutritionLibraryDemoPage() {
   const [csvFile, setCsvFile] = useState("");
   const [csvParsed, setCsvParsed] = useState<ReturnType<typeof parseDemoFoodCsv> | null>(null);
   const [mealName, setMealName] = useState("");
+  const [editingMealId, setEditingMealId] = useState<string | null>(null);
   const [mealCategory, setMealCategory] = useState("Lanche");
   const [mealTime, setMealTime] = useState("16:00");
   const [mealFoodId, setMealFoodId] = useState("");
@@ -60,6 +61,7 @@ function NutritionLibraryDemoPage() {
   const categories = useMemo(() => [...new Set(foods.map((food) => food.category))].sort((a, b) => a.localeCompare(b, "pt-BR")), [foods]);
   const filteredFoods = foods.filter((food) => normalized(food.name).includes(normalized(foodQuery)) && (categoryFilter === "all" || food.category === categoryFilter));
   const uniqueNameDuplicate = (name: string, exceptId?: string) => foods.some((food) => food.id !== exceptId && normalized(food.name) === normalized(name));
+  const existingCsvDuplicates = csvParsed?.rows.filter((row) => uniqueNameDuplicate(row.nome)).map((row) => row.nome) ?? [];
 
   function resetFoodForm() { setFoodForm(blankFood); setEditingFoodId(null); }
   function saveFood(event: React.FormEvent<HTMLFormElement>) {
@@ -99,7 +101,7 @@ function NutritionLibraryDemoPage() {
     csvParsed.rows.forEach((row, index) => {
       if (blockedLines.has(index + 2) || duplicatedNames.has(normalized(row.nome)) || uniqueNameDuplicate(row.nome)) return;
       const numeric = (key: string) => Number(row[key].replace(",", "."));
-      toAdd.push({ id: `csv-${crypto.randomUUID()}`, name: row.nome.trim(), category: row.categoria.trim(), kcal100g: numeric("calorias_kcal_100g"), protein100g: numeric("proteina_g_100g"), carbs100g: numeric("carboidrato_g_100g"), fat100g: numeric("gordura_g_100g"), householdMeasure: row.medida_caseira || "Não informada", allergens: (row.alergenicos || "").split(/[|;]/).map((value) => value.trim().toLocaleLowerCase("pt-BR")).filter(Boolean), restrictions: [], gluten: (row.gluten_status as DemoFood["gluten"]) || "unknown", lactose: (row.lactose_status as DemoFood["lactose"]) || "unknown", source: row.fonte.trim(), license: row.licenca.trim(), status: "draft", demoOnly: true });
+      toAdd.push({ id: `csv-${crypto.randomUUID()}`, name: row.nome.trim(), category: row.categoria.trim(), kcal100g: numeric("calorias_kcal_100g"), protein100g: numeric("proteina_g_100g"), carbs100g: numeric("carboidrato_g_100g"), fat100g: numeric("gordura_g_100g"), householdMeasure: row.medida_caseira || "Não informada", allergens: (row.alergenicos || "").split(/[|;]/).map((value) => value.trim().toLocaleLowerCase("pt-BR")).filter((value) => value && value !== "nenhum"), allergenInfoKnown: Boolean(row.alergenicos?.trim()), restrictions: [], gluten: (row.gluten_status as DemoFood["gluten"]) || "unknown", lactose: (row.lactose_status as DemoFood["lactose"]) || "unknown", source: row.fonte.trim(), license: row.licenca.trim(), status: "draft", demoOnly: true });
     });
     setFoods((current) => [...current, ...toAdd]);
     setCsvParsed(null);
@@ -116,9 +118,19 @@ function NutritionLibraryDemoPage() {
   function saveMeal(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!mealName.trim() || !mealItems.length) return;
-    setMeals((current) => [...current, { id: `local-meal-${crypto.randomUUID()}`, name: mealName.trim(), category: mealCategory, time: mealTime, items: mealItems, status: "draft" }]);
+    setMeals((current) => editingMealId
+      ? current.map((meal) => meal.id === editingMealId ? { ...meal, name: mealName.trim(), category: mealCategory, time: mealTime, items: mealItems, status: "draft" } : meal)
+      : [...current, { id: `local-meal-${crypto.randomUUID()}`, name: mealName.trim(), category: mealCategory, time: mealTime, items: mealItems, status: "draft" }]);
     setMealName("");
+    setEditingMealId(null);
     setMealItems([]);
+  }
+  function editMeal(meal: DemoMealRecord) {
+    setEditingMealId(meal.id);
+    setMealName(meal.name);
+    setMealCategory(meal.category);
+    setMealTime(meal.time);
+    setMealItems(meal.items.map((item) => ({ ...item, alternatives: [...item.alternatives] })));
   }
   function generateLocalPlan() {
     setGenerationError("");
@@ -172,7 +184,8 @@ function NutritionLibraryDemoPage() {
             {csvFile && <p className="text-sm md:col-span-2">Arquivo: {csvFile}</p>}
             {csvParsed && <div className="space-y-3 md:col-span-2">
               {csvParsed.errors.length > 0 && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-800">{csvParsed.errors.map((error) => <p key={error}>{error}</p>)}</div>}
-              {csvParsed.duplicates.length > 0 && <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">Duplicidades: {csvParsed.duplicates.map((item) => <p key={item}>{item}</p>)}</div>}
+              {csvParsed.duplicates.length > 0 && <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">Duplicidades no arquivo: {csvParsed.duplicates.map((item) => <p key={item}>{item}</p>)}</div>}
+              {existingCsvDuplicates.length > 0 && <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">Já existem no catálogo local (serão ignorados): {[...new Set(existingCsvDuplicates)].map((name) => <p key={name}>{name}</p>)}</div>}
               <div className="max-h-56 overflow-auto rounded-lg border"><table className="w-full text-left text-xs"><thead><tr>{Object.keys(csvParsed.rows[0] ?? {}).map((header) => <th className="p-2" key={header}>{header}</th>)}</tr></thead><tbody>{csvParsed.rows.map((row, index) => <tr className="border-t" key={index}>{Object.values(row).map((value, i) => <td className="p-2" key={i}>{value}</td>)}</tr>)}</tbody></table></div>
               <Button type="button" onClick={importCsvRows} disabled={!csvParsed.rows.length || csvParsed.errors.length > 0}>Importar linhas válidas como rascunho</Button>
             </div>}
@@ -191,9 +204,9 @@ function NutritionLibraryDemoPage() {
             <div><Label>Horário demonstrativo</Label><Input type="time" value={mealTime} onChange={(event) => setMealTime(event.target.value)} /></div>
             <div className="grid grid-cols-[1fr_110px_auto] items-end gap-2"><div><Label>Alimento</Label><select className="mt-1 h-10 w-full rounded-md border bg-background px-2 text-sm" value={mealFoodId} onChange={(event) => setMealFoodId(event.target.value)}><option value="">Selecionar</option>{foods.map((food) => <option key={food.id} value={food.id}>{food.name}</option>)}</select></div><div><Label>Gramas</Label><Input type="number" min="1" value={mealGrams} onChange={(event) => setMealGrams(event.target.value)} /></div><Button type="button" variant="outline" onClick={addMealItem}>Adicionar</Button></div>
             {mealItems.length > 0 && <div className="space-y-2 md:col-span-2">{mealItems.map((item, index) => <div className="flex items-center justify-between rounded-md bg-slate-50 p-2 text-sm" key={`${item.foodId}-${index}`}>{foods.find((food) => food.id === item.foodId)?.name} · {item.grams} g<Button type="button" size="sm" variant="ghost" onClick={() => setMealItems((current) => current.filter((_, currentIndex) => currentIndex !== index))}>Remover</Button></div>)}</div>}
-            <Button type="submit" disabled={!mealItems.length}><Utensils className="mr-2 size-4" />Salvar refeição como rascunho</Button>
+            <Button type="submit" disabled={!mealItems.length}><Utensils className="mr-2 size-4" />{editingMealId ? "Salvar edição como rascunho" : "Salvar refeição como rascunho"}</Button>{editingMealId && <Button type="button" variant="outline" onClick={() => { setEditingMealId(null); setMealName(""); setMealItems([]); }}>Cancelar edição</Button>}
           </form>
-          <div className="space-y-3">{meals.map((meal) => <article key={meal.id} className="rounded-xl border p-4"><div className="flex flex-wrap justify-between gap-3"><div><h3 className="font-semibold">{meal.name}</h3><p className="text-sm text-slate-500">{meal.category} · {meal.time} · {meal.status === "draft" ? "Rascunho demo" : "Validada (demo; não verificada)"}</p></div>{meal.status === "draft" && <Button size="sm" variant="outline" onClick={() => setMeals((current) => current.map((item) => item.id === meal.id ? { ...item, status: "demo_validated" } : item))}>Marcar validada (demo)</Button>}</div><ul className="mt-3 list-inside list-disc text-sm">{meal.items.map((item) => <li key={`${item.foodId}-${item.grams}`}>{foods.find((food) => food.id === item.foodId)?.name ?? "Alimento removido"} — {item.grams} g</li>)}</ul></article>)}</div>
+          <div className="space-y-3">{meals.map((meal) => <article key={meal.id} className="rounded-xl border p-4"><div className="flex flex-wrap justify-between gap-3"><div><h3 className="font-semibold">{meal.name}</h3><p className="text-sm text-slate-500">{meal.category} · {meal.time} · {meal.status === "draft" ? "Rascunho demo" : "Validada (demo; não verificada)"}</p></div><div className="flex gap-2"><Button size="sm" variant="outline" onClick={() => editMeal(meal)}>Editar</Button>{meal.status === "draft" && <Button size="sm" variant="outline" onClick={() => setMeals((current) => current.map((item) => item.id === meal.id ? { ...item, status: "demo_validated" } : item))}>Marcar validada (demo)</Button>}</div></div><ul className="mt-3 list-inside list-disc text-sm">{meal.items.map((item) => <li key={`${item.foodId}-${item.grams}`}>{foods.find((food) => food.id === item.foodId)?.name ?? "Alimento removido"} — {item.grams} g</li>)}</ul></article>)}</div>
         </TabsContent>
         <TabsContent value="generator" className="space-y-5 pt-4">
           <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950"><strong>Gerador de teste local:</strong> usa apenas composições fictícias selecionadas como “validadas (demo)”. As metas e proporções abaixo são entradas de teste, não recomendações nem prescrição. O resultado nunca é salvo no perfil de paciente.</div>
