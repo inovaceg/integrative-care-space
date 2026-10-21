@@ -78,20 +78,7 @@ function DashboardPage() {
     });
   }, [appointments]);
   const confirmedAppointmentsTotal = useMemo(() => confirmedAppointments.reduce((total, appointment) => total + Number(appointment.amount_paid ?? 0), 0), [confirmedAppointments]);
-  const confirmedPatientAppointments = useMemo(() => {
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-    const seenPatientIds = new Set<string>();
-
-    return appointments.reduce<Array<{ appointment: AppointmentRecord; patient: PatientRecord }>>((matches, appointment) => {
-      const patient = patients.find((item) => item.id === appointment.patient_id);
-      if (appointment.status === "confirmed" && new Date(appointment.start_time) >= startOfToday && patient && !seenPatientIds.has(patient.id)) {
-        seenPatientIds.add(patient.id);
-        matches.push({ appointment, patient });
-      }
-      return matches;
-    }, []).slice(0, 4);
-  }, [appointments, patients]);
+  const recentPatients = useMemo(() => [...patients].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5), [patients]);
   const monthAppointments = useMemo(() => { const now = new Date(); return appointments.filter((appointment) => { const date = new Date(appointment.start_time); return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth(); }); }, [appointments]);
   const weightLossRanking = useMemo(() => {
     const grouped = new Map<string, typeof evaluations>();
@@ -140,7 +127,7 @@ function DashboardPage() {
           {upcoming.length === 0 ? <EmptyState title="Nenhum próximo atendimento" description="Não há próximos agendamentos pendentes ou confirmados na agenda." /> : <div className="space-y-1">{upcoming.map((appointment) => { const patient = patients.find((item) => item.id === appointment.patient_id); const name = patient?.nome ?? "Paciente"; return <div key={appointment.id} className="flex items-center gap-3 rounded-lg px-2 py-3 hover:bg-slate-50"><div className="w-16 shrink-0 text-center"><p className="font-display text-sm font-semibold text-slate-800">{new Date(appointment.start_time).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p><p className="text-[10px] text-slate-400">{new Date(appointment.start_time).toLocaleDateString("pt-BR")}</p></div><div className="h-10 w-1 rounded-full bg-[#7bc7b7]" /><PatientAvatar initials={initials(name)} /><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-slate-800">{name}</p><p className="truncate text-xs text-slate-500">{appointmentType(appointment.notes)}</p></div><StatusBadge status={appointment.status} /></div>; })}</div>}
         </SectionCard>
         <SectionCard title="Pacientes recentes" action={<Button asChild variant="ghost" size="sm" className="text-[#2f8f82]"><Link to="/admin/pacientes">Ver todos <ArrowUpRight className="ml-1 size-3.5" /></Link></Button>}>
-          {confirmedPatientAppointments.length === 0 ? <EmptyState title="Nenhum paciente com consulta confirmada" description="Os pacientes com consultas confirmadas para hoje ou os próximos dias aparecerão aqui." /> : <div className="space-y-4">{confirmedPatientAppointments.map(({ appointment, patient }) => <Link key={patient.id} to="/admin/pacientes/$id" params={{ id: patient.id }} className="flex items-center gap-3 rounded-lg p-1 hover:bg-slate-50"><PatientAvatar initials={initials(patient.nome)} /><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-slate-800">{patient.nome}</p><p className="text-xs text-slate-500">{patient.email ?? patient.telefone ?? "Contato não informado"}</p></div><StatusBadge status={appointment.status} /></Link>)}</div>}
+          {recentPatients.length === 0 ? <EmptyState title="Nenhum paciente cadastrado" description="Os pacientes cadastrados mais recentemente aparecerão aqui." /> : <div className="space-y-4">{recentPatients.map((patient) => <Link key={patient.id} to="/admin/pacientes/$id" params={{ id: patient.id }} className="flex items-center gap-3 rounded-lg p-1 hover:bg-slate-50"><PatientAvatar initials={initials(patient.nome)} /><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-slate-800">{patient.nome}</p><p className="text-xs text-slate-500">Cadastrada em {new Date(patient.created_at).toLocaleDateString("pt-BR")}</p></div></Link>)}</div>}
         </SectionCard>
       </div>
       <SectionCard title="Consultas pendentes de hoje e futuras" className="mt-6">
