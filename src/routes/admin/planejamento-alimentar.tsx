@@ -130,7 +130,7 @@ function NutritionPlanningPage() {
   }, [authLoading, user]);
 
   useEffect(() => {
-    if (!patientId || !user) { setSyntheticTest(false); setEvaluations([]); setApplications([]); setAnamnesis(null); setProfile({ ...emptyProfile }); setHydration({ ...emptyHydration }); setProtein({ ...emptyProtein }); setPlans([]); setActivePlan(null); return; }
+    if (!patientId || !user) { loadedPatientId.current = null; setSyntheticTest(false); setEvaluations([]); setApplications([]); setAnamnesis(null); setProfile({ ...emptyProfile }); setHydration({ ...emptyHydration }); setProtein({ ...emptyProtein }); setPlans([]); setActivePlan(null); return; }
     setSyntheticTest(false);
     let active = true;
     setLoading(true); setError(""); setActivePlan(null); setContentText("");
@@ -147,9 +147,9 @@ function NutritionPlanningPage() {
       const evaluationRows = (evaluationResult.data as Evaluation[] | null) ?? [];
       const applicationRows = (applicationResult.data as Application[] | null) ?? [];
       const list = (planResult.data as Plan[] | null) ?? [];
-      const savedDraft = readPlanningDraft();
+      const savedDraft = readPlanningDraft(user.id);
       const resume = savedDraft.patientId === patientId;
-      const selectedPlan = list.find((plan) => plan.id === savedDraft.activePlanId) ?? list[0] ?? null;
+      const selectedPlan = resume && savedDraft.activePlanId === null ? null : list.find((plan) => plan.id === savedDraft.activePlanId) ?? list[0] ?? null;
       setEvaluations(evaluationRows); setApplications(applicationRows); setAnamnesis((anamnesisResult.data as Anamnesis | null) ?? null); setProfile(resume && savedDraft.profile ? savedDraft.profile : asProfile(profileResult.data as Record<string, unknown> | null));
       setPlans(list); setActivePlan(selectedPlan);
       const lastWeight = latestWeight(evaluationRows, applicationRows);
@@ -160,6 +160,7 @@ function NutritionPlanningPage() {
         setProtein(resume && savedDraft.protein ? savedDraft.protein : proteinForPlan(selectedPlan.plan_content, lastWeight));
       } else {
         setContentText(resume ? savedDraft.contentText ?? "" : "");
+        setDuration(resume && savedDraft.duration ? savedDraft.duration : "1");
         setHydration(resume && savedDraft.hydration ? savedDraft.hydration : hydrationForPlan(null, lastWeight));
         setProtein(resume && savedDraft.protein ? savedDraft.protein : proteinForPlan(null, lastWeight));
       }
@@ -170,9 +171,9 @@ function NutritionPlanningPage() {
   }, [patientId, user]);
 
   useEffect(() => {
-    if (!patientId || loading || loadedPatientId.current !== patientId) return;
-    savePlanningDraft({ patientId, profile, hydration, protein, activePlanId: activePlan?.id ?? null, contentText, duration });
-  }, [patientId, loading, profile, hydration, protein, activePlan, contentText, duration]);
+    if (!user || !patientId || loading || loadedPatientId.current !== patientId) return;
+    savePlanningDraft(user.id, { patientId, profile, hydration, protein, activePlanId: activePlan?.id ?? null, contentText, duration });
+  }, [user, patientId, loading, profile, hydration, protein, activePlan, contentText, duration]);
 
   useEffect(() => {
     if (entryDraft.patientId === patientId && entryDraft.profile) return;
