@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { DemoGenerationError, demoFoods, generateDemoPlan, parseDemoFoodCsv, recalculateDemoPlan } from "./nutrition-demo-engine";
+import { DemoGenerationError, demoFoods, generateDemoPlan, isDemoFoodAllowed, parseDemoFoodCsv, recalculateDemoPlan } from "./nutrition-demo-engine";
 
 const safeInput = { days: 1, targetKcal: 1600, targetProtein: 90, allergies: [], restrictions: [], clinicalReviewConfirmed: true };
 
@@ -29,6 +29,16 @@ describe("motor local de demonstração nutricional", () => {
     expect(() => generateDemoPlan(safeInput, unknownAllergens)).toThrow(/suficientes compatíveis/);
   });
 
+  test("não permite alimentos em rascunho, itens sem dados de alergênicos ou alergia correspondente", () => {
+    const food = demoFoods.find((item) => item.id === "demo-fish");
+    expect(food).toBeDefined();
+    if (!food) return;
+    expect(isDemoFoodAllowed({ ...food, status: "draft" }, [], [])).toBe(false);
+    expect(isDemoFoodAllowed({ ...food, allergenInfoKnown: false }, [], [])).toBe(false);
+    expect(isDemoFoodAllowed(food, ["peixe"], [])).toBe(false);
+    expect(isDemoFoodAllowed(food, [], ["sem glúten"])).toBe(true);
+  });
+
   test("varia combinações entre dias e recalcula totais após editar porções", () => {
     const plan = generateDemoPlan({ ...safeInput, days: 3 });
     const firstDayItem = plan.days[0]?.meals[1]?.items[2];
@@ -43,6 +53,15 @@ describe("motor local de demonstração nutricional", () => {
     firstItem.grams += 20;
     const recalculated = recalculateDemoPlan(changed, demoFoods);
     expect(recalculated.days[0]?.totals.kcal).toBeGreaterThan(plan.days[0]?.totals.kcal ?? 0);
+
+    const lunchItem = changed.days[0]?.meals[1]?.items[2];
+    const fish = demoFoods.find((food) => food.id === "demo-fish");
+    expect(fish).toBeDefined();
+    expect(isDemoFoodAllowed(fish!, [], [])).toBe(true);
+    if (lunchItem && fish) lunchItem.foodId = fish.id;
+    const afterSubstitution = recalculateDemoPlan(changed, demoFoods);
+    expect(afterSubstitution.days[0]?.totals.kcal).not.toBe(recalculated.days[0]?.totals.kcal);
+    expect(fish && isDemoFoodAllowed(fish, ["peixe"], [])).toBe(false);
   });
 
   test("valida cabeçalhos, valores e duplicatas de CSV", () => {
@@ -52,5 +71,7 @@ describe("motor local de demonstração nutricional", () => {
     expect(parsed.duplicates).toHaveLength(1);
     expect(parsed.errors).toHaveLength(0);
     expect(parseDemoFoodCsv("nome,categoria\nItem,Cereais").errors[0]).toContain("Colunas obrigatórias ausentes");
+    const invalidCsv = csv.replace(",100,5,20,2,", ",-10,5,20,2,");
+    expect(parseDemoFoodCsv(invalidCsv).errors.some((error) => error.includes("não negativo"))).toBe(true);
   });
 });

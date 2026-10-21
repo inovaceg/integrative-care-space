@@ -19,7 +19,7 @@ const normalized = (value: string) => value.trim().toLocaleLowerCase("pt-BR").no
 function readDemoStore(): { foods: DemoFood[]; meals: DemoMealRecord[] } {
   try {
     const saved = JSON.parse(window.localStorage.getItem(storeKey) ?? "null");
-    if (saved?.foods && saved?.meals) return saved;
+    if (Array.isArray(saved?.foods) && Array.isArray(saved?.meals)) return saved;
   } catch { /* use isolated demo fixtures */ }
   return { foods: demoFoods.map((food) => ({ ...food, allergens: [...food.allergens], restrictions: [...food.restrictions] })), meals: demoMealTemplates.map((meal) => ({ ...meal, items: meal.items.map((item) => ({ ...item, alternatives: [...item.alternatives] })), status: "demo_validated" })) };
 }
