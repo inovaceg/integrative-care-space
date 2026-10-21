@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Activity, ClipboardList, HeartPulse, Loader2, Save, Sparkles } from "lucide-react";
 import { AdminLayout, AdminNotice, PageIntro, SectionCard } from "@/components/admin/admin-ui";
 import { NutritionPlanPreview } from "@/components/admin/nutrition-plan-preview";
+import { HydrationSection, type HydrationPlan } from "@/components/admin/hydration-section";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,8 +19,12 @@ type Application = { id: string; procedure_name: string; current_weight_kg: numb
 type Anamnesis = { alimentacao: string | null; atividade_fisica: string | null; qualidade_sono: string | null; doencas_fisicas: string | null; medicamentos_atuais: string | null; usa_medicamentos: boolean | null; sintomas_atuais: unknown };
 type Profile = { height_cm: string; reference_weight_kg: string; goal: string; activity_level: string; exercise_details: string; wake_time: string; sleep_time: string; meal_schedule: string; desired_meals: string; work_routine: string; cooking_availability: string; food_budget: string; preferred_foods: string; avoided_foods: string; cultural_restrictions: string; simple_meals_preference: boolean; affordable_food_preference: boolean; allergies: string; intolerances: string; diagnosed_conditions: string; pregnancy_or_breastfeeding: string; medications: string; supplements: string; eating_disorder_history: string };
 type Meal = { name: string; items: { food: string; portion: string; alternatives?: string[] }[]; notes?: string };
-type PlanContent = { summary: string; objective: string; warnings: string[]; meals: Meal[]; observations: string[]; professional_confirmations: string[] };
+type PlanContent = { summary: string; objective: string; warnings: string[]; meals: Meal[]; observations: string[]; professional_confirmations: string[]; hydration?: HydrationPlan };
 type Plan = { id: string; goal: string; duration_days: number; status: string; plan_content: PlanContent; model_name: string | null; created_at: string; approved_at: string | null; approved_by: string | null; approved_version_id: string | null };
+type WeightMeasurement = { weight_kg: number; weight_date: string; weight_source: string };
+const emptyHydration: HydrationPlan = { weight_kg: null, weight_date: null, weight_source: null, factor_ml_per_kg: 33, estimated_total_water_ml: null, adjusted_pure_water_ml: null, activity: "", climate: "", pregnancy: false, breastfeeding: false, kidney_disease: false, cardiac_disease: false, fluid_restriction: false, observations: "", professional_reviewed: false };
+const latestWeight = (evaluations: Evaluation[], applications: Application[]): WeightMeasurement | null => [...evaluations.flatMap((item) => item.weight_kg !== null && item.weight_kg > 0 ? [{ weight_kg: item.weight_kg, weight_date: item.evaluation_date, weight_source: "Avaliação corporal" }] : []), ...applications.flatMap((item) => item.current_weight_kg > 0 ? [{ weight_kg: item.current_weight_kg, weight_date: item.application_date, weight_source: `Aplicação: ${item.procedure_name}` }] : [])].sort((a, b) => b.weight_date.localeCompare(a.weight_date))[0] ?? null;
+const hydrationForPlan = (content: PlanContent | null | undefined, measurements: WeightMeasurement | null): HydrationPlan => content?.hydration ?? { ...emptyHydration, ...(measurements ?? {}) };
 type PlanVersion = { id: string; version_number: number; plan_content: PlanContent; created_at: string; created_by: string };
 const emptyProfile: Profile = { height_cm: "", reference_weight_kg: "", goal: "", activity_level: "", exercise_details: "", wake_time: "", sleep_time: "", meal_schedule: "", desired_meals: "", work_routine: "", cooking_availability: "", food_budget: "", preferred_foods: "", avoided_foods: "", cultural_restrictions: "", simple_meals_preference: false, affordable_food_preference: false, allergies: "", intolerances: "", diagnosed_conditions: "", pregnancy_or_breastfeeding: "", medications: "", supplements: "", eating_disorder_history: "" };
 const asProfile = (row: Record<string, unknown> | null): Profile => row ? Object.fromEntries(Object.keys(emptyProfile).map((key) => [key, key === "meal_schedule" ? Array.isArray(row[key]) ? (row[key] as string[]).join("\n") : "" : key.endsWith("preference") ? Boolean(row[key]) : row[key] == null ? "" : String(row[key])])) as Profile : { ...emptyProfile };
@@ -37,6 +42,7 @@ function NutritionPlanningPage() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [anamnesis, setAnamnesis] = useState<Anamnesis | null>(null);
   const [profile, setProfile] = useState<Profile>({ ...emptyProfile });
+  const [hydration, setHydration] = useState<HydrationPlan>({ ...emptyHydration });
   const [plans, setPlans] = useState<Plan[]>([]);
   const [versions, setVersions] = useState<PlanVersion[]>([]);
   const [activePlan, setActivePlan] = useState<Plan | null>(null);
@@ -63,7 +69,7 @@ function NutritionPlanningPage() {
     return found;
   }, [currentEvaluation, profile.height_cm, selected]);
 
-  function selectPlan(plan: Plan) { setSyntheticTest(false); setActivePlan(plan); setContentText(JSON.stringify(plan.plan_content, null, 2)); setDuration(String(plan.duration_days)); }
+  function selectPlan(plan: Plan) { setSyntheticTest(false); setActivePlan(plan); setContentText(JSON.stringify(plan.plan_content, null, 2)); setDuration(String(plan.duration_days)); setHydration(hydrationForPlan(plan.plan_content, latestWeight(evaluations, applications))); }
 
   useEffect(() => {
     if (authLoading || !user) return;
@@ -73,7 +79,7 @@ function NutritionPlanningPage() {
   }, [authLoading, user]);
 
   useEffect(() => {
-    if (!patientId || !user) { setSyntheticTest(false); setEvaluations([]); setApplications([]); setAnamnesis(null); setProfile({ ...emptyProfile }); setPlans([]); setActivePlan(null); return; }
+    if (!patientId || !user) { setSyntheticTest(false); setEvaluations([]); setApplications([]); setAnamnesis(null); setProfile({ ...emptyProfile }); setHydration({ ...emptyHydration }); setPlans([]); setActivePlan(null); return; }
     setSyntheticTest(false);
     let active = true;
     setLoading(true); setError(""); setActivePlan(null); setContentText("");
@@ -87,8 +93,13 @@ function NutritionPlanningPage() {
       if (!active) return;
       const failed = evaluationResult.error || applicationResult.error || anamnesisResult.error || profileResult.error || planResult.error;
       if (failed) setError("Não foi possível carregar todos os dados. Confira as permissões e tente novamente.");
-      setEvaluations((evaluationResult.data as Evaluation[] | null) ?? []); setApplications((applicationResult.data as Application[] | null) ?? []); setAnamnesis((anamnesisResult.data as Anamnesis | null) ?? null); setProfile(asProfile(profileResult.data as Record<string, unknown> | null));
-      const list = (planResult.data as Plan[] | null) ?? []; setPlans(list); if (list.length) { setActivePlan(list[0]); setContentText(JSON.stringify(list[0].plan_content, null, 2)); setDuration(String(list[0].duration_days)); }
+      const evaluationRows = (evaluationResult.data as Evaluation[] | null) ?? [];
+      const applicationRows = (applicationResult.data as Application[] | null) ?? [];
+      setEvaluations(evaluationRows); setApplications(applicationRows); setAnamnesis((anamnesisResult.data as Anamnesis | null) ?? null); setProfile(asProfile(profileResult.data as Record<string, unknown> | null));
+      const list = (planResult.data as Plan[] | null) ?? []; setPlans(list);
+      const lastWeight = latestWeight(evaluationRows, applicationRows);
+      if (list.length) { setActivePlan(list[0]); setContentText(JSON.stringify(list[0].plan_content, null, 2)); setDuration(String(list[0].duration_days)); setHydration(hydrationForPlan(list[0].plan_content, lastWeight)); }
+      else setHydration(hydrationForPlan(null, lastWeight));
       setLoading(false);
     });
     return () => { active = false; };
@@ -116,6 +127,10 @@ function NutritionPlanningPage() {
     let parsed: PlanContent;
     try { parsed = contentOverride ?? JSON.parse(contentText) as PlanContent; if (!parsed || !Array.isArray(parsed.meals)) throw new Error(); }
     catch { setError("O conteúdo precisa ser um JSON válido com uma lista de refeições."); return; }
+    const hydrationNeedsReview = hydration.pregnancy || hydration.breastfeeding || hydration.kidney_disease || hydration.cardiac_disease || hydration.fluid_restriction;
+    const hydrationFactor = Number(hydration.factor_ml_per_kg);
+    const hydrationEstimate = ageFrom(selected.data_nascimento) !== null && ageFrom(selected.data_nascimento)! >= 18 && !hydrationNeedsReview && hydration.weight_kg !== null && hydration.weight_kg > 0 && hydrationFactor > 0 ? Math.round(hydration.weight_kg * hydrationFactor) : null;
+    parsed = { ...parsed, hydration: { ...hydration, estimated_total_water_ml: hydrationEstimate } };
     setSaving(true); setError(""); setMessage("");
     let planId = activePlan?.id;
     const planPayload = { patient_id: patientId, profissional_id: user.id, goal: profile.goal || "Objetivo a confirmar", duration_days: Number(duration), status, plan_content: parsed, model_name: modelName ?? activePlan?.model_name ?? null, updated_at: new Date().toISOString() };
@@ -185,6 +200,12 @@ function NutritionPlanningPage() {
     const { data } = await supabase.from("nutrition_plan_versions").select("id,version_number,plan_content,created_at,created_by").eq("plan_id", plan.id).order("version_number", { ascending: false });
     setVersions((data as PlanVersion[] | null) ?? []);
   }
+  function selectVersion(version: PlanVersion) {
+    setSyntheticTest(false);
+    setContentText(JSON.stringify(version.plan_content, null, 2));
+    setHydration(hydrationForPlan(version.plan_content, latestWeight(evaluations, applications)));
+  }
+
   async function approvePlan() {
     if (!activePlan?.id || !versions[0]) return;
     setSaving(true); const { data, error: approvalError } = await supabase.functions.invoke("nutrition-approve", { body: { plan_id: activePlan.id, version_id: versions[0].id } }); setSaving(false);
@@ -216,6 +237,19 @@ function NutritionPlanningPage() {
     line("PLANEJAMENTO ALIMENTAR", 18, true); line(`Paciente: ${selected.nome}`); line(`Data: ${new Date().toLocaleDateString("pt-BR")}`); line(`Objetivo: ${plan.objective || activePlan?.goal || profile.goal || "A confirmar"}`); line(`Status: ${statusNames[activePlan?.status ?? "draft"] ?? "Rascunho"}`, 10, true); y += 8;
     for (const meal of plan.meals ?? []) { line(meal.name, 13, true); for (const item of meal.items ?? []) { line(`- ${item.food}: ${item.portion}`); if (item.alternatives?.length) line(`Alternativas: ${item.alternatives.join(", ")}`); } if (meal.notes) line(`Observacoes: ${meal.notes}`); y += 8; }
     for (const observation of plan.observations ?? []) line(`Orientacao: ${observation}`);
+    if (plan.hydration?.professional_reviewed) {
+      const hydrationPlan = plan.hydration;
+      line("HIDRATACAO DIARIA - ORIENTACAO REVISADA", 13, true);
+      line(`Peso usado: ${display(hydrationPlan.weight_kg, " kg")} · Origem: ${hydrationPlan.weight_source ?? "Não informada"} · Data: ${hydrationPlan.weight_date ?? "Não informada"}`);
+      line("Estimativa de água total diária (alimentos + bebidas; não equivale à água pura a beber):", 9);
+      if (hydrationPlan.estimated_total_water_ml !== null) {
+        line(`Fórmula: ${hydrationPlan.weight_kg} kg × ${hydrationPlan.factor_ml_per_kg} mL/kg/dia = ${hydrationPlan.estimated_total_water_ml} mL/dia (${(hydrationPlan.estimated_total_water_ml / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} L/dia).`);
+      } else line("Estimativa automática não calculada; requer avaliação específica do profissional.");
+      if (hydrationPlan.adjusted_pure_water_ml !== null) line(`Ajuste profissional de água pura a beber: ${hydrationPlan.adjusted_pure_water_ml} mL/dia.`);
+      if (hydrationPlan.activity) line(`Atividade física: ${hydrationPlan.activity}`);
+      if (hydrationPlan.climate) line(`Clima/temperatura: ${hydrationPlan.climate}`);
+      if (hydrationPlan.observations) line(`Observações: ${hydrationPlan.observations}`);
+    }
     if (activePlan?.status === "approved" && activePlan.approved_by) {
       const { data: nutritionist } = await supabase.from("nutritionist_credentials").select("full_name,crn").eq("profissional_id", activePlan.approved_by).eq("verification_status", "verified").maybeSingle();
       if (!nutritionist) { setError("Não foi possível carregar a identificação do nutricionista verificado."); return; }
@@ -234,6 +268,7 @@ function NutritionPlanningPage() {
     </>}
     {alerts.length > 0 && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4"><h3 className="flex items-center gap-2 font-semibold text-amber-900"><AlertTriangle className="size-4" /> Conferir antes de planejar</h3><ul className="mt-2 list-inside list-disc space-y-1 text-sm text-amber-800">{alerts.map((alert) => <li key={alert}>{alert}</li>)}</ul></div>}
     <SectionCard title="5. Perfil nutricional complementar"><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{[["height_cm","Altura (cm)"],["reference_weight_kg","Peso de referência (kg)"],["desired_meals","Número de refeições desejado"]].map(([key,label]) => <div key={key}><Label>{label}</Label><Input className="mt-1" type="number" value={profile[key as keyof Profile] as string} onChange={(e) => setField(key as keyof Profile, e.target.value)} /></div>)}<div><Label>Atividade física</Label><Select value={profile.activity_level} onValueChange={(value) => setField("activity_level", value)}><SelectTrigger className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent>{["Sedentário", "Leve", "Moderado", "Intenso", "Muito intenso"].map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent></Select></div>{[["wake_time","Horário de acordar"],["sleep_time","Horário de dormir"]].map(([key,label]) => <div key={key}><Label>{label}</Label><Input className="mt-1" type="time" value={profile[key as keyof Profile] as string} onChange={(e) => setField(key as keyof Profile, e.target.value)} /></div>)}<div className="sm:col-span-2 lg:col-span-3"><Label>Objetivo alimentar</Label><Textarea className="mt-1" value={profile.goal} onChange={(e) => setField("goal", e.target.value)} placeholder="Objetivo acordado para avaliação do profissional" /></div>{textFields.map(([key,label]) => <div key={key} className="grid gap-1"><Label>{label}</Label><Textarea value={profile[key] as string} onChange={(e) => setField(key, e.target.value)} /></div>)}<div className="grid gap-1 sm:col-span-2"><Label>Horários habituais das refeições (um por linha)</Label><Textarea value={profile.meal_schedule} onChange={(e) => setField("meal_schedule", e.target.value)} /></div></div><div className="mt-4 flex flex-wrap gap-4 text-sm">{([["simple_meals_preference","Prefere refeições simples"],["affordable_food_preference","Priorizar alimentos acessíveis"]] as [keyof Profile,string][]).map(([key,label]) => <label key={key} className="flex items-center gap-2"><input type="checkbox" checked={profile[key] as boolean} onChange={(e) => setField(key,e.target.checked)} />{label}</label>)}</div><div className="mt-5 flex flex-wrap items-center gap-3"><Button type="button" variant="outline" onClick={() => void saveProfile()} disabled={saving}>{saving ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Save className="mr-2 size-4" />}Salvar perfil</Button></div></SectionCard>
+    <HydrationSection value={hydration} onChange={setHydration} patientAge={ageFrom(selected.data_nascimento)} onSave={() => void savePlan("draft")} saving={saving} canSave={Boolean(contentText)} />
     <SectionCard title="6. Configuração da proposta e geração">
       <div className="grid gap-4 md:grid-cols-2">
         <div><Label>Objetivo da proposta</Label><Input className="mt-1" value={profile.goal} onChange={(e) => setField("goal", e.target.value)} placeholder="Ex.: organizar rotina alimentar" /></div>
@@ -245,7 +280,7 @@ function NutritionPlanningPage() {
       {error && <p className="mt-3 text-sm text-red-600" role="alert">{error}</p>}
     </SectionCard>
     {(activePlan || contentText) && <SectionCard title={syntheticTest ? "Teste Gemini — somente dados fictícios" : "7. Proposta editável"}><p className="mb-3 text-sm text-slate-500">Edite os dados estruturados em JSON para ajustar refeições, alimentos, porções, alternativas e observações. A prévia abaixo é organizada por refeição.</p><Textarea className="min-h-[24rem] font-mono text-xs" value={contentText} onChange={(event) => setContentText(event.target.value)} disabled={syntheticTest || activePlan?.status === "approved"} /><NutritionPlanPreview raw={contentText} /><div className="mt-4 flex flex-wrap gap-2"><Button type="button" onClick={() => void savePlan("draft")} disabled={saving || syntheticTest || activePlan?.status === "approved"}>{saving ? "Salvando..." : "Salvar nova versão"}</Button><Button type="button" variant="outline" onClick={() => void savePlan("pending_review")} disabled={saving || syntheticTest || activePlan?.status === "approved"}>Enviar para revisão</Button><Button type="button" variant="outline" onClick={() => void exportPdf()} disabled={syntheticTest}>Exportar PDF</Button>{!syntheticTest && activePlan?.status === "pending_review" && <Button type="button" onClick={() => void approvePlan()} disabled={saving}>Aprovar como nutricionista</Button>}</div>{syntheticTest && <p className="mt-3 text-sm font-medium text-amber-800">Conteúdo fictício de teste. Não salve, aprove ou use como recomendação clínica.</p>}{!syntheticTest && activePlan?.status === "approved" && <p className="mt-3 text-sm text-amber-800">Versão aprovada protegida contra edição. Gere outro plano para criar uma proposta nova.</p>}</SectionCard>}
-    <SectionCard title="8. Histórico de planejamentos"><div className="space-y-3">{plans.length ? plans.map((plan) => <button key={plan.id} type="button" onClick={() => void loadVersions(plan)} className={`flex w-full flex-wrap items-center justify-between gap-3 rounded-xl border p-4 text-left ${activePlan?.id === plan.id ? "border-[#2f8f82] bg-[#f2f9f7]" : "border-slate-200 bg-white"}`}><span><strong>{plan.goal}</strong><span className="ml-2 rounded-full bg-slate-100 px-2 py-1 text-xs">{statusNames[plan.status] ?? plan.status}</span><span className="mt-1 block text-xs text-slate-500">{new Date(plan.created_at).toLocaleString("pt-BR")} · {plan.duration_days} dia(s) · {versions.length} versão(ões)</span></span><span className="text-sm text-[#26786e]">Ver versões</span></button>) : <div className="flex items-center gap-3 text-sm text-slate-500"><ClipboardList className="size-5" />Nenhum planejamento salvo para este paciente.</div>}{versions.length > 0 && <div className="border-t pt-4"><h3 className="font-semibold">Versões do plano selecionado</h3><div className="mt-2 flex flex-wrap gap-2">{versions.map((version) => <Button key={version.id} type="button" size="sm" variant="outline" onClick={() => setContentText(JSON.stringify(version.plan_content,null,2))}>v{version.version_number} · {new Date(version.created_at).toLocaleDateString("pt-BR")}</Button>)}</div></div>}</div></SectionCard>
+    <SectionCard title="8. Histórico de planejamentos"><div className="space-y-3">{plans.length ? plans.map((plan) => <button key={plan.id} type="button" onClick={() => void loadVersions(plan)} className={`flex w-full flex-wrap items-center justify-between gap-3 rounded-xl border p-4 text-left ${activePlan?.id === plan.id ? "border-[#2f8f82] bg-[#f2f9f7]" : "border-slate-200 bg-white"}`}><span><strong>{plan.goal}</strong><span className="ml-2 rounded-full bg-slate-100 px-2 py-1 text-xs">{statusNames[plan.status] ?? plan.status}</span><span className="mt-1 block text-xs text-slate-500">{new Date(plan.created_at).toLocaleString("pt-BR")} · {plan.duration_days} dia(s) · {versions.length} versão(ões)</span></span><span className="text-sm text-[#26786e]">Ver versões</span></button>) : <div className="flex items-center gap-3 text-sm text-slate-500"><ClipboardList className="size-5" />Nenhum planejamento salvo para este paciente.</div>}{versions.length > 0 && <div className="border-t pt-4"><h3 className="font-semibold">Versões do plano selecionado</h3><div className="mt-2 flex flex-wrap gap-2">{versions.map((version) => <Button key={version.id} type="button" size="sm" variant="outline" onClick={() => selectVersion(version)}>v{version.version_number} · {new Date(version.created_at).toLocaleDateString("pt-BR")}</Button>)}</div></div>}</div></SectionCard>
     </>}
   </div></AdminLayout>;
 }
