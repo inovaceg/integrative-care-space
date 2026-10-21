@@ -1,16 +1,4 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowUpRight, ClipboardList, Loader2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { useAuth } from "@/components/auth/auth-provider";
-import { AdminLayout, EmptyState, PageIntro, SearchInput } from "@/components/admin/admin-ui";
-import { Card, CardContent } from "@/components/ui/card";
-import { fetchPatients, type PatientRecord } from "@/lib/admin/records";
-import { supabase } from "@/integrations/supabase/client";
-
-type CompletedForm = { id: string; paciente_id: string; preenchido_em: string; updated_at: string | null; created_at: string | null };
-type ListedForm = CompletedForm & { patient: PatientRecord };
-
-import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowUpRight, ClipboardList, Loader2, TestTubeDiagonal } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
