@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { calculateMifflinStJeor, cmFromMeters, isTrustedNutritionSource, kgFromGrams, sumVerifiedMeal, validateEnergyApproval } from "./nutrition-calculations";
+import { activityFactorForLevel, calculateMifflinStJeor, cmFromMeters, isTrustedNutritionSource, kgFromGrams, sumVerifiedMeal, validateEnergyApproval } from "./nutrition-calculations";
 
 describe("cálculos nutricionais", () => {
   test("calcula Mifflin–St Jeor e o total com um só fator de atividade", () => {
@@ -9,6 +9,11 @@ describe("cálculos nutricionais", () => {
     expect(calculateMifflinStJeor({ weightKg: 70, heightCm: 170, ageYears: 30, sex: null, activityFactor: 1.2 })).toBeNull();
     expect(calculateMifflinStJeor({ weightKg: 70, heightCm: 170, ageYears: 17, sex: "male", activityFactor: 1.2 })).toBeNull();
     expect(calculateMifflinStJeor({ weightKg: 70, heightCm: 170, ageYears: 30, sex: "male", activityFactor: Number.NaN })).toBeNull();
+  });
+  test("normaliza atividade registrada e seleciona um fator único", () => {
+    expect(activityFactorForLevel("moderado")).toBe(1.55);
+    expect(activityFactorForLevel("Muito intenso")).toBe(1.9);
+    expect(activityFactorForLevel("exercícios intensos")).toBeNull();
   });
   test("converte unidades sem inferência", () => {
     expect(kgFromGrams(1250)).toBe(1.25);

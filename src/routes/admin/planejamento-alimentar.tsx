@@ -6,7 +6,7 @@ import { NutritionPlanPreview } from "@/components/admin/nutrition-plan-preview"
 import { HydrationSection, type HydrationPlan } from "@/components/admin/hydration-section";
 import { ProteinSection, type ProteinPlan } from "@/components/admin/protein-section";
 import { EnergySection, type EnergyPlan } from "@/components/admin/energy-section";
-import { calculateMifflinStJeor, isTrustedNutritionSource, sumVerifiedMeal, validateEnergyApproval } from "@/lib/admin/nutrition-calculations";
+import { activityFactorForLevel, calculateMifflinStJeor, isTrustedNutritionSource, sumVerifiedMeal, validateEnergyApproval } from "@/lib/admin/nutrition-calculations";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -214,14 +214,18 @@ function NutritionPlanningPage() {
     if (protein.adjusted_target_g !== null && (!Number.isFinite(protein.adjusted_target_g) || protein.adjusted_target_g < 1 || protein.adjusted_target_g > 1000 || !protein.observations.trim())) { setError("A meta manual deve estar entre 1 e 1.000 g/dia e exige justificativa profissional."); return; }
     if (energy.adjusted_daily_kcal !== null && (!Number.isFinite(energy.adjusted_daily_kcal) || energy.adjusted_daily_kcal < 500 || energy.adjusted_daily_kcal > 10000 || !energy.observations.trim())) { setError("A meta energética definida deve estar entre 500 e 10.000 kcal/dia e exige justificativa profissional."); return; }
     if (energy.professional_reviewed && !validateEnergyApproval(energy.adjusted_daily_kcal, energy.observations, true)) { setError("A meta energética só pode ser aprovada após definição explícita e justificativa profissional."); return; }
-    const energyCalculation = calculateMifflinStJeor({ weightKg: energy.weight_kg, heightCm: energy.height_cm, ageYears: energy.age_years, sex: energy.sex_parameter, activityFactor: ({ "Sedentário": 1.2, "Leve": 1.375, "Moderado": 1.55, "Intenso": 1.725, "Muito intenso": 1.9 } as Record<string, number>)[energy.activity_level || profile.activity_level] ?? null });
+    const registeredWeight = latestWeight(evaluations, applications);
+    const registeredHeight = evaluations.find((row) => row.height_cm !== null && row.height_cm >= 100 && row.height_cm <= 250)?.height_cm ?? (Number(profile.height_cm) >= 100 && Number(profile.height_cm) <= 250 ? Number(profile.height_cm) : null);
+    const energyParams: EnergyPlan = { ...energy, weight_kg: energy.weight_kg ?? registeredWeight?.weight_kg ?? null, weight_source: energy.weight_source ?? registeredWeight?.weight_source ?? null, weight_date: energy.weight_date ?? registeredWeight?.weight_date ?? null, height_cm: energy.height_cm ?? registeredHeight, height_source: energy.height_source ?? (registeredHeight === null ? null : "Cadastro/avaliação mais recente"), age_years: energy.age_years ?? ageFrom(selected.data_nascimento), age_source: energy.age_source ?? "Data de nascimento do cadastro", activity_level: energy.activity_level || profile.activity_level, activity_context: energy.activity_context || [anamnesis?.atividade_fisica, profile.work_routine, profile.exercise_details].filter(Boolean).join(" · ") };
+    const energyFactor = activityFactorForLevel(energyParams.activity_level);
+    const energyCalculation = calculateMifflinStJeor({ weightKg: energyParams.weight_kg, heightCm: energyParams.height_cm, ageYears: energyParams.age_years, sex: energyParams.sex_parameter, activityFactor: energyFactor });
     const hydrationNeedsReview = hydration.pregnancy || hydration.breastfeeding || hydration.kidney_disease || hydration.cardiac_disease || hydration.fluid_restriction;
     const hydrationFactor = Number(hydration.factor_ml_per_kg);
     const hydrationEstimate = ageFrom(selected.data_nascimento) !== null && ageFrom(selected.data_nascimento)! >= 18 && !hydrationNeedsReview && hydration.weight_kg !== null && hydration.weight_kg > 0 && hydrationFactor > 0 ? Math.round(hydration.weight_kg * hydrationFactor) : null;
     const proteinBlocked = ageFrom(selected.data_nascimento) === null || ageFrom(selected.data_nascimento)! < 18 || !protein.clinical_info_sufficient || protein.kidney_disease || protein.special_clinical_condition || protein.weight_kg === null || protein.weight_kg <= 0;
     const proteinFactor = proteinFactorInput;
     const proteinEstimate = !proteinBlocked ? Math.round(protein.weight_kg! * proteinFactor * 100) / 100 : null;
-    parsed = { ...parsed, hydration: { ...hydration, estimated_total_water_ml: hydrationEstimate }, protein: { ...protein, calculated_target_g: proteinEstimate }, energy: { ...energy, method: "Mifflin-St Jeor", activity_level: energy.activity_level || profile.activity_level, activity_factor: energyCalculation ? ({ "Sedentário": 1.2, "Leve": 1.375, "Moderado": 1.55, "Intenso": 1.725, "Muito intenso": 1.9 } as Record<string, number>)[energy.activity_level || profile.activity_level] : null, bmr_kcal: energyCalculation?.bmrKcal ?? null, estimated_daily_kcal: energyCalculation?.totalKcal ?? null, professional_reviewed: Boolean(energy.professional_reviewed && energy.adjusted_daily_kcal !== null), reviewed_at: energy.professional_reviewed && energy.adjusted_daily_kcal !== null ? energy.reviewed_at ?? new Date().toISOString() : null, weight_source: energy.weight_source ?? latestWeight(evaluations, applications)?.weight_source ?? null, weight_date: energy.weight_date ?? latestWeight(evaluations, applications)?.weight_date ?? null } };
+    parsed = { ...parsed, hydration: { ...hydration, estimated_total_water_ml: hydrationEstimate }, protein: { ...protein, calculated_target_g: proteinEstimate }, energy: { ...energyParams, method: "Mifflin-St Jeor", activity_factor: energyFactor, bmr_kcal: energyCalculation?.bmrKcal ?? null, estimated_daily_kcal: energyCalculation?.totalKcal ?? null, calculated_at: new Date().toISOString(), professional_reviewed: Boolean(energy.professional_reviewed && energy.adjusted_daily_kcal !== null), reviewed_at: energy.professional_reviewed && energy.adjusted_daily_kcal !== null ? energy.reviewed_at ?? new Date().toISOString() : null } };
     setSaving(true); setError(""); setMessage("");
     let planId = activePlan?.id;
     const planPayload = { patient_id: patientId, profissional_id: user.id, goal: profile.goal || "Objetivo a confirmar", duration_days: Number(duration), status, plan_content: parsed, model_name: modelName ?? activePlan?.model_name ?? null, updated_at: new Date().toISOString() };
@@ -375,7 +379,7 @@ function NutritionPlanningPage() {
       if (proteinPlan.observations) line(`Justificativa/observações: ${proteinPlan.observations}`);
       const completeMeals = (plan.meals ?? []).map((meal) => {
         const items = meal.items ?? [];
-        const complete = items.length > 0 && items.every((item) => typeof item.protein_g === "number" && Number.isFinite(item.protein_g) && item.protein_g >= 0 && typeof item.protein_source === "string" && item.protein_source.trim());
+        const complete = items.length > 0 && items.every((item) => typeof item.protein_g === "number" && Number.isFinite(item.protein_g) && item.protein_g >= 0 && isTrustedNutritionSource(item.protein_source));
         return { name: meal.name, total: complete ? items.reduce((sum, item) => sum + (item.protein_g ?? 0), 0) : null };
       });
       for (const meal of completeMeals) if (meal.total !== null) line(`Proteína estimada — ${meal.name}: ${meal.total.toFixed(1)} g.`);
@@ -384,6 +388,8 @@ function NutritionPlanningPage() {
         line(`Total estimado do planejamento: ${dailyProtein.toFixed(1)} g/dia.`);
         if (target !== null) line(`Diferença para a meta: ${(dailyProtein - target >= 0 ? "+" : "")}${(dailyProtein - target).toFixed(1)} g.`);
       } else line("Total de proteína das refeições não calculado: faltam valores por porção e/ou fontes nutricionais confiáveis.");
+    }
+    if (activePlan?.status === "approved") {
       const macroFields = [["Calorias", "calories_kcal", "calories_source", "kcal"], ["Carboidratos", "carbohydrate_g", "carbohydrate_source", "g"], ["Gorduras", "fat_g", "fat_source", "g"]] as const;
       for (const [label, nutrient, source, unit] of macroFields) {
         const mealValues = (plan.meals ?? []).map((meal) => sumVerifiedMeal((meal.items ?? []) as unknown as Array<Record<string, unknown>>, nutrient, source));
@@ -394,8 +400,9 @@ function NutritionPlanningPage() {
     if (activePlan?.status === "approved" && plan.energy?.professional_reviewed) {
       const energyPlan = plan.energy;
       line("NECESSIDADE CALÓRICA - REVISADA PELA NUTRICIONISTA", 13, true);
-      line(`Objetivo: ${energyPlan.objective ?? "não informado"} · Método: ${energyPlan.method} · Data da revisão: ${energyPlan.reviewed_at ? new Date(energyPlan.reviewed_at).toLocaleString("pt-BR") : "não informada"}`);
-      line(`Parâmetros: peso ${display(energyPlan.weight_kg, " kg")} (${energyPlan.weight_source ?? "origem não informada"}; ${energyPlan.weight_date ?? "data não informada"}); altura ${display(energyPlan.height_cm, " cm")} (${energyPlan.height_source ?? "origem não informada"}); idade ${display(energyPlan.age_years, " anos")}; parâmetro confirmado: ${energyPlan.sex_parameter ?? "não informado"}.`);
+      const objectiveLabel = energyPlan.objective === "maintenance" ? "Manutenção de peso" : energyPlan.objective === "weight_loss" ? "Emagrecimento" : energyPlan.objective === "weight_gain" ? "Ganho de peso" : "Não informado";
+      line(`Objetivo: ${objectiveLabel} · Método: ${energyPlan.method} · Cálculo: ${energyPlan.calculated_at ? new Date(energyPlan.calculated_at).toLocaleString("pt-BR") : "não informado"} · Revisão: ${energyPlan.reviewed_at ? new Date(energyPlan.reviewed_at).toLocaleString("pt-BR") : "não informada"}`);
+      line(`Parâmetros: peso ${display(energyPlan.weight_kg, " kg")} (${energyPlan.weight_source ?? "origem não informada"}; ${energyPlan.weight_date ?? "data não informada"}); altura ${display(energyPlan.height_cm, " cm")} (${energyPlan.height_source ?? "origem não informada"}); idade ${display(energyPlan.age_years, " anos")} (${energyPlan.age_source ?? "origem não informada"}); parâmetro confirmado: ${energyPlan.sex_parameter ?? "não informado"}.`);
       if (energyPlan.bmr_kcal !== null && energyPlan.activity_factor !== null && energyPlan.estimated_daily_kcal !== null) line(`Mifflin–St Jeor: basal estimado ${energyPlan.bmr_kcal} kcal/dia × fator único ${energyPlan.activity_factor} (${energyPlan.activity_level}) = gasto total estimado ${energyPlan.estimated_daily_kcal} kcal/dia.`);
       if (energyPlan.adjusted_daily_kcal !== null) line(`Meta definida e aprovada pela nutricionista: ${energyPlan.adjusted_daily_kcal} kcal/dia.`);
       if (energyPlan.activity_context) line(`Contexto considerado para seleção do fator (sem fator duplicado): ${energyPlan.activity_context}`);
