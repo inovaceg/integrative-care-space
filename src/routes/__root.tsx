@@ -2,7 +2,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
   Link,
-  ScrollRestoration,
   createRootRouteWithContext,
   useRouter,
   useRouterState,
@@ -153,7 +152,6 @@ function RootComponent() {
           </>
         )}
       </AuthProvider>
-      <ScrollRestoration />
     </QueryClientProvider>
   );
 }

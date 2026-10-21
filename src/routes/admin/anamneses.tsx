@@ -1,5 +1,4 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { z } from "zod";
 import { ArrowUpRight, ClipboardList, Loader2, TestTubeDiagonal } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
@@ -11,17 +10,12 @@ import { supabase } from "@/integrations/supabase/client";
 type CompletedForm = { id: string; paciente_id: string; preenchido_em: string; updated_at: string | null; created_at: string | null };
 type ListedForm = CompletedForm & { patient: PatientRecord };
 
-export const Route = createFileRoute("/admin/anamneses")({
-  validateSearch: z.object({ q: z.string().catch("") }),
-  component: AnamnesesPage,
-});
+export const Route = createFileRoute("/admin/anamneses")({ component: AnamnesesPage });
 
 function AnamnesesPage() {
   const { user, isLoading: authLoading } = useAuth();
-  const navigate = Route.useNavigate();
-  const { q: search } = Route.useSearch();
-  const setSearch = (q: string) => void navigate({ search: (previous) => ({ ...previous, q }), replace: true });
   const [forms, setForms] = useState<ListedForm[]>([]);
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 

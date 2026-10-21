@@ -55,16 +55,15 @@ function PatientProfilePage() {
   const { id } = useParams({ from: "/admin/pacientes/$id" });
   const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const routeSearch = Route.useSearch();
-  const activeTab = routeSearch.tab ?? "overview";
   const [patient, setPatient] = useState<PatientRecord | null>(null);
   const [history, setHistory] = useState<AppointmentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
 
   function selectTab(value: string) {
-    void navigate({ search: (previous) => ({ ...previous, tab: value as typeof routeSearch.tab }), replace: true });
+    setActiveTab(value);
   }
 
   async function loadProfile() {

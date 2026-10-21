@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { z } from "zod";
 import { CalendarDays, ChevronLeft, ChevronRight, Clock3, Filter, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
@@ -13,16 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { createAppointment, deleteAppointment, fetchAppointments, fetchPatientOptions, updateAppointment, updateAppointmentStatus, type AppointmentRecord, type PatientOption } from "@/lib/admin/records";
 
-export const Route = createFileRoute("/admin/agenda")({
-  validateSearch: z.object({
-    view: z.enum(["Dia", "Semana", "Mês"]).catch("Dia"),
-    date: z.string().catch(localDateValue(new Date())),
-    patient: z.string().catch("all"),
-    type: z.string().catch("all"),
-    status: z.enum(["all", "pending", "confirmed", "completed", "cancelled"]).catch("all"),
-  }),
-  component: AgendaPage,
-});
+export const Route = createFileRoute("/admin/agenda")({ component: AgendaPage });
 
 type View = "Dia" | "Semana" | "Mês";
 const statuses = [{ value: "pending", label: "Pendente" }, { value: "confirmed", label: "Confirmado" }, { value: "completed", label: "Concluído" }, { value: "cancelled", label: "Cancelado" }];
@@ -125,17 +115,13 @@ function EditAppointmentDialog({ appointment, patients, onSaved }: { appointment
 
 function AgendaPage() {
   const { user, isLoading: authLoading } = useAuth();
-  const navigate = Route.useNavigate();
-  const { view, date: selectedDate, patient: patientFilter, type: typeFilter, status: statusFilter } = Route.useSearch();
-  const updateSearch = (changes: Partial<{ view: View; date: string; patient: string; type: string; status: typeof statusFilter }>) =>
-    void navigate({ search: (previous) => ({ ...previous, ...changes }), replace: true });
-  const setView = (value: View) => updateSearch({ view: value });
-  const setSelectedDate = (value: string) => updateSearch({ date: value });
-  const setPatientFilter = (value: string) => updateSearch({ patient: value });
-  const setTypeFilter = (value: string) => updateSearch({ type: value });
-  const setStatusFilter = (value: string) => updateSearch({ status: value as typeof statusFilter });
   const [patients, setPatients] = useState<PatientOption[]>([]);
   const [appointments, setAppointments] = useState<AppointmentRecord[]>([]);
+  const [view, setView] = useState<View>("Dia");
+  const [selectedDate, setSelectedDate] = useState(localDateValue(new Date()));
+  const [patientFilter, setPatientFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [mutating, setMutating] = useState("");
