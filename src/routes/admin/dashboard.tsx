@@ -49,20 +49,19 @@ function DashboardPage() {
   useEffect(() => {
     if (authLoading || loading || !user) return;
     const key = `admin:dashboard-scroll:${user.id}`;
-    let frame = requestAnimationFrame(() => {
-      frame = requestAnimationFrame(() => {
-        const savedPosition = Number(window.sessionStorage.getItem(key));
-        if (Number.isFinite(savedPosition) && savedPosition > 0) window.scrollTo(0, savedPosition);
-        window.addEventListener("scroll", savePosition, { passive: true });
-      });
-    });
+    const savedPosition = Number(window.sessionStorage.getItem(key));
+    const restoreTimer = window.setTimeout(() => {
+      if (Number.isFinite(savedPosition) && savedPosition > 0) window.scrollTo(0, savedPosition);
+    }, 100);
     function savePosition() {
       window.sessionStorage.setItem(key, String(window.scrollY));
     }
+    window.addEventListener("scroll", savePosition, { passive: true });
+    document.addEventListener("click", savePosition, true);
     return () => {
-      cancelAnimationFrame(frame);
+      window.clearTimeout(restoreTimer);
       window.removeEventListener("scroll", savePosition);
-      savePosition();
+      document.removeEventListener("click", savePosition, true);
     };
   }, [authLoading, loading, user?.id]);
 
