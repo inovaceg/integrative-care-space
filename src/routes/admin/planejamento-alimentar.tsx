@@ -5,6 +5,7 @@ import { AdminLayout, AdminNotice, PageIntro, SectionCard } from "@/components/a
 import { NutritionPlanPreview } from "@/components/admin/nutrition-plan-preview";
 import { HydrationSection, type HydrationPlan } from "@/components/admin/hydration-section";
 import { ProteinSection, type ProteinPlan } from "@/components/admin/protein-section";
+import { EnergySection, calculateEnergyEstimate, type EnergyPlan } from "@/components/admin/energy-section";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,8 +20,8 @@ type Evaluation = { id: string; evaluation_date: string; weight_kg: number | nul
 type Application = { id: string; procedure_name: string; current_weight_kg: number; application_date: string; notes: string | null };
 type Anamnesis = { alimentacao: string | null; atividade_fisica: string | null; qualidade_sono: string | null; doencas_fisicas: string | null; medicamentos_atuais: string | null; usa_medicamentos: boolean | null; sintomas_atuais: unknown };
 type Profile = { height_cm: string; reference_weight_kg: string; goal: string; activity_level: string; exercise_details: string; wake_time: string; sleep_time: string; meal_schedule: string; desired_meals: string; work_routine: string; cooking_availability: string; food_budget: string; preferred_foods: string; avoided_foods: string; cultural_restrictions: string; simple_meals_preference: boolean; affordable_food_preference: boolean; allergies: string; intolerances: string; diagnosed_conditions: string; pregnancy_or_breastfeeding: string; medications: string; supplements: string; eating_disorder_history: string };
-type Meal = { name: string; items: { food: string; portion: string; alternatives?: string[]; protein_g?: number; protein_source?: string }[]; notes?: string };
-type PlanContent = { summary: string; objective: string; warnings: string[]; meals: Meal[]; observations: string[]; professional_confirmations: string[]; hydration?: HydrationPlan; protein?: ProteinPlan };
+type Meal = { name: string; items: { food: string; portion: string; alternatives?: string[]; protein_g?: number; protein_source?: string; calories_kcal?: number; calories_source?: string }[]; notes?: string };
+type PlanContent = { summary: string; objective: string; warnings: string[]; meals: Meal[]; observations: string[]; professional_confirmations: string[]; hydration?: HydrationPlan; protein?: ProteinPlan; energy?: EnergyPlan };
 type Plan = { id: string; goal: string; duration_days: number; status: string; plan_content: PlanContent; model_name: string | null; created_at: string; approved_at: string | null; approved_by: string | null; approved_version_id: string | null };
 type WeightMeasurement = { weight_kg: number; weight_date: string; weight_source: string };
 const emptyHydration: HydrationPlan = { weight_kg: null, weight_date: null, weight_source: null, factor_ml_per_kg: 33, estimated_total_water_ml: null, adjusted_pure_water_ml: null, activity: "", climate: "", pregnancy: false, breastfeeding: false, kidney_disease: false, cardiac_disease: false, fluid_restriction: false, observations: "", professional_reviewed: false };
@@ -28,13 +29,15 @@ const emptyProtein: ProteinPlan = { weight_kg: null, weight_date: null, weight_s
 const latestWeight = (evaluations: Evaluation[], applications: Application[]): WeightMeasurement | null => [...evaluations.flatMap((item) => item.weight_kg !== null && item.weight_kg > 0 ? [{ weight_kg: item.weight_kg, weight_date: item.evaluation_date, weight_source: "Avaliação corporal" }] : []), ...applications.flatMap((item) => item.current_weight_kg > 0 ? [{ weight_kg: item.current_weight_kg, weight_date: item.application_date, weight_source: `Aplicação: ${item.procedure_name}` }] : [])].sort((a, b) => b.weight_date.localeCompare(a.weight_date))[0] ?? null;
 const hydrationForPlan = (content: PlanContent | null | undefined, measurements: WeightMeasurement | null): HydrationPlan => content?.hydration ?? { ...emptyHydration, ...(measurements ?? {}) };
 const proteinForPlan = (content: PlanContent | null | undefined, measurements: WeightMeasurement | null): ProteinPlan => content?.protein ?? { ...emptyProtein, ...(measurements ?? {}) };
+const emptyEnergy: EnergyPlan = { method: "Mifflin-St Jeor", bmr_kcal: null, activity_factor: null, estimated_daily_kcal: null, adjusted_daily_kcal: null, observations: "", professional_reviewed: false };
+const energyForPlan = (content: PlanContent | null | undefined): EnergyPlan => content?.energy ?? { ...emptyEnergy };
 type PlanVersion = { id: string; version_number: number; plan_content: PlanContent; created_at: string; created_by: string };
 const emptyProfile: Profile = { height_cm: "", reference_weight_kg: "", goal: "", activity_level: "", exercise_details: "", wake_time: "", sleep_time: "", meal_schedule: "", desired_meals: "", work_routine: "", cooking_availability: "", food_budget: "", preferred_foods: "", avoided_foods: "", cultural_restrictions: "", simple_meals_preference: false, affordable_food_preference: false, allergies: "", intolerances: "", diagnosed_conditions: "", pregnancy_or_breastfeeding: "", medications: "", supplements: "", eating_disorder_history: "" };
 const asProfile = (row: Record<string, unknown> | null): Profile => row ? Object.fromEntries(Object.keys(emptyProfile).map((key) => [key, key === "meal_schedule" ? Array.isArray(row[key]) ? (row[key] as string[]).join("\n") : "" : key.endsWith("preference") ? Boolean(row[key]) : row[key] == null ? "" : String(row[key])])) as Profile : { ...emptyProfile };
 const ageFrom = (date: string | null) => { if (!date) return null; const birth = new Date(`${date}T00:00:00`); if (Number.isNaN(birth.getTime())) return null; const now = new Date(); return now.getFullYear() - birth.getFullYear() - (now < new Date(now.getFullYear(), birth.getMonth(), birth.getDate()) ? 1 : 0); };
 const display = (value: string | number | null | undefined, unit = "") => value === null || value === undefined || value === "" ? "Não informado" : `${value}${unit}`;
 const statusNames: Record<string, string> = { draft: "Rascunho", pending_review: "Aguardando revisão", approved: "Aprovado por nutricionista", archived: "Arquivado" };
-type PlanningDraft = { patientId?: string; profile?: Profile; hydration?: HydrationPlan; protein?: ProteinPlan; activePlanId?: string | null; contentText?: string; duration?: string };
+type PlanningDraft = { patientId?: string; profile?: Profile; hydration?: HydrationPlan; protein?: ProteinPlan; energy?: EnergyPlan; activePlanId?: string | null; contentText?: string; duration?: string };
 const planningDraftKey = (userId: string) => `admin:planning-alimentar:draft:${userId}`;
 const readPlanningDraft = (userId: string): PlanningDraft => {
   if (typeof window === "undefined") return {};
@@ -70,6 +73,7 @@ function NutritionPlanningPage() {
   const [profile, setProfile] = useState<Profile>({ ...emptyProfile });
   const [hydration, setHydration] = useState<HydrationPlan>({ ...emptyHydration });
   const [protein, setProtein] = useState<ProteinPlan>({ ...emptyProtein });
+  const [energy, setEnergy] = useState<EnergyPlan>({ ...emptyEnergy });
   const [plans, setPlans] = useState<Plan[]>([]);
   const [versions, setVersions] = useState<PlanVersion[]>([]);
   const [activePlan, setActivePlan] = useState<Plan | null>(null);
@@ -92,6 +96,7 @@ function NutritionPlanningPage() {
     if (draft.profile) setProfile({ ...emptyProfile, ...draft.profile });
     if (draft.hydration) setHydration({ ...emptyHydration, ...draft.hydration });
     if (draft.protein) setProtein({ ...emptyProtein, ...draft.protein });
+    if (draft.energy) setEnergy({ ...emptyEnergy, ...draft.energy });
     setContentText(draft.contentText ?? "");
     setDuration(draft.duration ?? "1");
   }, [user]);
@@ -120,7 +125,7 @@ function NutritionPlanningPage() {
     return found;
   }, [currentEvaluation, profile.height_cm, selected]);
 
-  function selectPlan(plan: Plan) { setSyntheticTest(false); setActivePlan(plan); setContentText(JSON.stringify(plan.plan_content, null, 2)); setDuration(String(plan.duration_days)); const measurements = latestWeight(evaluations, applications); setHydration(hydrationForPlan(plan.plan_content, measurements)); setProtein(proteinForPlan(plan.plan_content, measurements)); }
+  function selectPlan(plan: Plan) { setSyntheticTest(false); setActivePlan(plan); setContentText(JSON.stringify(plan.plan_content, null, 2)); setDuration(String(plan.duration_days)); const measurements = latestWeight(evaluations, applications); setHydration(hydrationForPlan(plan.plan_content, measurements)); setProtein(proteinForPlan(plan.plan_content, measurements)); setEnergy(energyForPlan(plan.plan_content)); }
 
   useEffect(() => {
     if (authLoading || !user) return;
@@ -130,7 +135,7 @@ function NutritionPlanningPage() {
   }, [authLoading, user]);
 
   useEffect(() => {
-    if (!patientId || !user) { loadedPatientId.current = null; setSyntheticTest(false); setEvaluations([]); setApplications([]); setAnamnesis(null); setProfile({ ...emptyProfile }); setHydration({ ...emptyHydration }); setProtein({ ...emptyProtein }); setPlans([]); setActivePlan(null); return; }
+    if (!patientId || !user) { loadedPatientId.current = null; setSyntheticTest(false); setEvaluations([]); setApplications([]); setAnamnesis(null); setProfile({ ...emptyProfile }); setHydration({ ...emptyHydration }); setProtein({ ...emptyProtein }); setEnergy({ ...emptyEnergy }); setPlans([]); setActivePlan(null); return; }
     setSyntheticTest(false);
     let active = true;
     setLoading(true); setError(""); setActivePlan(null); setContentText("");
