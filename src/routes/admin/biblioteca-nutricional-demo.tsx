@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
+import { demoFoodToNutritionRow, nutritionRowToDemoFood, tacoCsvRowToNutritionFood } from "@/lib/admin/nutrition-library-db";
 import { demoFoods, demoMealTemplates, generateDemoPlan, isDemoFoodAllowed, parseDemoFoodCsv, recalculateDemoPlan, type DemoFood, type DemoGenerationInput, type DemoMealTemplate, type DemoPlan } from "@/lib/admin/nutrition-demo-engine";
 
 export const Route = createFileRoute("/admin/biblioteca-nutricional-demo")({ component: NutritionLibraryDemoPage });
@@ -34,6 +36,8 @@ function NutritionLibraryDemoPage() {
   const [csvFile, setCsvFile] = useState("");
   const [csvParsed, setCsvParsed] = useState<ReturnType<typeof parseDemoFoodCsv> | null>(null);
   const [csvImportMessage, setCsvImportMessage] = useState("");
+  const [libraryLoading, setLibraryLoading] = useState(true);
+  const [libraryError, setLibraryError] = useState("");
   const [mealName, setMealName] = useState("");
   const [editingMealId, setEditingMealId] = useState<string | null>(null);
   const [mealCategory, setMealCategory] = useState("Lanche");
@@ -51,9 +55,41 @@ function NutritionLibraryDemoPage() {
   const [generationError, setGenerationError] = useState("");
 
   useEffect(() => {
+    let active = true;
     const stored = readDemoStore();
     setFoods(stored.foods);
     setMeals(stored.meals);
+
+    async function loadFoodLibrary() {
+      try {
+        let { data, error } = await supabase.from("nutrition_food_library").select("*").order("name");
+        if (error) throw error;
+        if (!data?.length) {
+          const response = await fetch("/taco_importacao_biblioteca_rascunhos.csv");
+          if (!response.ok) throw new Error("Não foi possível carregar a planilha da biblioteca.");
+          const parsed = parseDemoFoodCsv(await response.text());
+          if (parsed.errors.length) throw new Error(parsed.errors.join(" "));
+          const rows = parsed.rows.map(tacoCsvRowToNutritionFood);
+          for (let index = 0; index < rows.length; index += 100) {
+            const { error: insertError } = await supabase.from("nutrition_food_library").upsert(rows.slice(index, index + 100), { onConflict: "source_code" });
+            if (insertError) throw insertError;
+          }
+          const refreshed = await supabase.from("nutrition_food_library").select("*").order("name");
+          if (refreshed.error) throw refreshed.error;
+          data = refreshed.data;
+        }
+        if (!active) return;
+        const databaseFoods = (data ?? []).map((row) => nutritionRowToDemoFood(row));
+        setFoods((current) => [...new Map([...current, ...databaseFoods].map((food) => [food.importCode ?? food.id, food])).values()]);
+      } catch (error) {
+        if (active) setLibraryError(error instanceof Error ? error.message : "Não foi possível carregar a biblioteca persistente.");
+      } finally {
+        if (active) setLibraryLoading(false);
+      }
+    }
+
+    void loadFoodLibrary();
+    return () => { active = false; };
   }, []);
   useEffect(() => {
     if (foods.length || meals.length) window.localStorage.setItem(storeKey, JSON.stringify({ foods, meals }));
@@ -100,26 +136,29 @@ function NutritionLibraryDemoPage() {
     setCsvFile("taco_importacao_biblioteca_rascunhos.csv");
     setCsvParsed(parseDemoFoodCsv(await response.text()));
   }
-  function importCsvRows() {
+  async function importCsvRows() {
     if (!csvParsed) return;
     const blockedLines = new Set(csvParsed.errors.map((error) => Number(error.match(/Linha (\d+)/)?.[1])).filter(Number.isFinite));
     const duplicatedNames = new Set(csvParsed.duplicates.map((item) => normalized(item.match(/“(.*)”/)?.[1] ?? "")));
-    const toAdd: DemoFood[] = [];
-    csvParsed.rows.forEach((row, index) => {
+    const rows = csvParsed.rows.filter((row, index) => {
       const rowName = row.nome ?? "";
-      if (blockedLines.has(index + 2) || duplicatedNames.has(normalized(rowName)) || uniqueNameDuplicate(rowName)) return;
-      const numeric = (key: string) => Number((row[key] ?? "0").replace(",", "."));
-      const glutenValue = (row.gluten_status ?? "").toLocaleLowerCase("pt-BR");
-      const lactoseValue = (row.lactose_status ?? "").toLocaleLowerCase("pt-BR");
-      const gluten: DemoFood["gluten"] = glutenValue === "free" || glutenValue === "livre" || glutenValue === "não" ? "free" : glutenValue === "contains" || glutenValue === "contém" || glutenValue === "sim" ? "contains" : "unknown";
-      const lactose: DemoFood["lactose"] = lactoseValue === "free" || lactoseValue === "livre" || lactoseValue === "não" ? "free" : lactoseValue === "contains" || lactoseValue === "contém" || lactoseValue === "sim" ? "contains" : "unknown";
-      const missing = (row.nutrition_missing ?? "").split("|").filter(Boolean);
-      toAdd.push({ id: `csv-${crypto.randomUUID()}`, name: (row.nome ?? "").trim(), category: (row.categoria ?? "TACO importado").trim(), kcal100g: numeric("calorias_kcal_100g"), protein100g: numeric("proteina_g_100g"), carbs100g: numeric("carboidrato_g_100g"), fat100g: numeric("gordura_g_100g"), fiber100g: numeric("fibras_g_100g"), calciumMg100g: numeric("calcio_mg_100g"), ironMg100g: numeric("ferro_mg_100g"), sodiumMg100g: numeric("sodio_mg_100g"), potassiumMg100g: numeric("potassio_mg_100g"), nutritionMissing: missing, importCode: row.codigo_taco, importNotes: row.observacoes_importacao, householdMeasure: row.medida_caseira || "Não informada", allergens: (row.alergenicos || "").split(/[|;]/).map((value) => value.trim().toLocaleLowerCase("pt-BR")).filter((value) => value && value !== "nenhum"), allergenInfoKnown: Boolean(row.alergenicos?.trim()) && row.status_alergenicos !== "desconhecido", restrictions: [], gluten, lactose, source: (row.fonte ?? "").trim(), license: (row.licenca ?? "").trim(), status: "draft", demoOnly: true });
-    });
-    setFoods((current) => [...current, ...toAdd]);
-    setCsvImportMessage(`${toAdd.length} alimento(s) importado(s) como rascunho local${csvParsed.rows.length > toAdd.length ? `; ${csvParsed.rows.length - toAdd.length} ignorado(s) por duplicidade ou erro.` : "."}`);
-    setCsvParsed(null);
-    setCsvFile("");
+      return !blockedLines.has(index + 2) && !duplicatedNames.has(normalized(rowName)) && !uniqueNameDuplicate(rowName);
+    }).map(tacoCsvRowToNutritionFood);
+    const imported: DemoFood[] = [];
+    try {
+      for (let index = 0; index < rows.length; index += 100) {
+        const { data, error } = await supabase.from("nutrition_food_library").upsert(rows.slice(index, index + 100), { onConflict: "source_code" }).select("*");
+        if (error) throw error;
+        imported.push(...(data ?? []).map((row) => nutritionRowToDemoFood(row)));
+      }
+      setFoods((current) => [...new Map([...current, ...imported].map((food) => [food.importCode ?? food.id, food])).values()]);
+      setLibraryError("");
+      setCsvImportMessage(`${imported.length} alimento(s) gravado(s) na biblioteca central como rascunho${csvParsed.rows.length > rows.length ? `; ${csvParsed.rows.length - rows.length} ignorado(s) por duplicidade ou erro.` : "."}`);
+      setCsvParsed(null);
+      setCsvFile("");
+    } catch (error) {
+      setLibraryError(error instanceof Error ? error.message : "A importação não foi gravada no banco de dados.");
+    }
   }
 
   function addMealItem() {
@@ -174,12 +213,14 @@ function NutritionLibraryDemoPage() {
   }
 
   return <AdminLayout>
-    <PageIntro eyebrow="Demonstração isolada" title="Biblioteca Nutricional" description="Protótipo local para cadastro, CSV e simulação determinística. Não usa nem salva dados de pacientes." />
+    <PageIntro eyebrow="Alimentos no banco central · simulação local" title="Biblioteca Nutricional" description="Pesquise o catálogo compartilhado, cadastre alimentos e faça simulações locais sem usar dados de pacientes." />
     <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
-      <p><strong>AMBIENTE DEMONSTRATIVO:</strong> catálogo e composições são fictícios, ficam somente neste navegador e não são dados verificados nem utilizáveis em planos reais.</p>
+      <p><strong>IMPORTANTE:</strong> os itens da planilha entram como rascunhos com fonte declarada, mas licença e alergênicos não verificados. Não são recomendações nem prescrição clínica.</p>
       <Link to="/admin/planejamento-alimentar" className="inline-flex items-center gap-2 font-medium underline"><ArrowLeft className="size-4" /> Voltar ao planejamento</Link>
     </div>
-    <SectionCard title="Biblioteca local — sem banco de dados">
+    {libraryLoading && <p role="status" className="mb-4 rounded-lg bg-slate-100 p-3 text-sm text-slate-700">Carregando e preparando o catálogo compartilhado…</p>}
+    {libraryError && <p role="alert" className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-800">Falha ao sincronizar o catálogo central: {libraryError}</p>}
+    <SectionCard title="Alimentos compartilhados · refeições locais">
       <Tabs defaultValue="generator">
         <TabsList className="grid h-auto w-full grid-cols-3"><TabsTrigger value="foods">Alimentos ({foods.length})</TabsTrigger><TabsTrigger value="meals">Refeições ({meals.length})</TabsTrigger><TabsTrigger value="generator">Gerador demonstrativo</TabsTrigger></TabsList>
         <TabsContent value="foods" className="space-y-6 pt-4">
@@ -199,7 +240,7 @@ function NutritionLibraryDemoPage() {
           </form>
           <div className="grid gap-3 rounded-xl border p-4 md:grid-cols-[1fr_220px]">
             <div><Label>Importar CSV para pré-visualização</Label><Input className="mt-1" type="file" accept=".csv,text/csv" onChange={(event) => handleCsvFile(event.target.files?.[0])} /><Button type="button" className="mt-2" variant="outline" onClick={loadBundledTacoFile}>Carregar planilha TACO anexada</Button></div>
-            <p className="self-end text-xs text-slate-500">Importação somente neste navegador; novas linhas entram como rascunho. A planilha TACO fica disponível para pré-visualizar e importar aqui.</p>
+            <p className="self-end text-xs text-slate-500">A importação é gravada na biblioteca central do sistema como rascunho; confira a prévia antes de confirmar.</p>
             {csvFile && <p className="text-sm md:col-span-2">Arquivo: {csvFile}</p>}
             {csvImportMessage && <p role="status" className="rounded-lg bg-green-50 p-3 text-sm text-green-800 md:col-span-2">{csvImportMessage}</p>}
             {csvParsed && <div className="space-y-3 md:col-span-2">
