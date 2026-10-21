@@ -6,6 +6,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { fetchAnamneseStatus, generateAnamneseLink, getAnamneseStatus, invalidateAnamneseLink, type AnamneseRecord } from '@/lib/admin/anamnese'
 import { displayAnswer, getAnamneseSections, getAnamneseConsents, hasAnswer } from '@/lib/admin/anamnese-display'
 import { analyzeAnamnese } from '@/lib/admin/anamnese-analysis'
+import { buildAnamnesePdf } from '@/lib/admin/anamnese-pdf'
+import { downloadDocumentPdf } from '@/lib/admin/document-layout'
 import { AnamneseReport } from '@/components/admin/anamnese-report'
 import type { PatientRecord } from '@/lib/admin/records'
 
@@ -37,6 +39,19 @@ export function AnamneseTab({ patient }: { patient: Pick<PatientRecord, 'id' | '
     completedAt: record.preenchido_em,
     demoMode: false,
   }) : null
+
+  async function generatePdf() {
+    if (!record?.preenchido_em || !analysisResult) return
+    setMessage('')
+    const pdfSections = [...sections, ['Consentimentos e assinatura', getAnamneseConsents(record)] as [string, Array<[string, unknown]>]]
+    const safeName = patient.nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase()
+    try {
+      await downloadDocumentPdf(buildAnamnesePdf(patient.nome, record.preenchido_em, pdfSections, analysisResult), `ficha-anamnese-${safeName}`, true)
+      setMessage('PDF da ficha e do relatório de análise clínica gerado.')
+    } catch (failure) {
+      setMessage(failure instanceof Error ? failure.message : 'Não foi possível gerar o PDF.')
+    }
+  }
 
   if (loading) return <div className="mt-4 flex items-center gap-2 text-sm text-slate-500"><Loader2 className="size-4 animate-spin" />Carregando anamnese...</div>
   return (
@@ -70,14 +85,14 @@ export function AnamneseTab({ patient }: { patient: Pick<PatientRecord, 'id' | '
       {record?.preenchido_em && <>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => window.print()}><FileText className="mr-2 size-4" />Visualizar ficha</Button>
-          <Button variant="outline" onClick={() => window.print()}><FileText className="mr-2 size-4" />Gerar PDF</Button>
+          <Button variant="outline" onClick={() => void generatePdf()}><FileText className="mr-2 size-4" />Gerar PDF da ficha e análise</Button>
         </div>
         {currentRisk && <div className="flex gap-3 rounded-lg border border-red-300 bg-red-50 p-4 text-sm font-semibold text-red-800"><ShieldAlert className="size-5 shrink-0" />ATENÇÃO — NECESSITA AVALIAÇÃO PRIORITÁRIA</div>}
         {sections.map(([title, items]) => <DetailSection key={title} title={title} items={items} alert={title === 'Histórico de saúde' && Boolean(answers['alergias_detalhes'] || answers['anticoagulante'] === 'Sim' || answers['gestacao_amamentacao'] === 'Sim')} />)}
         <DetailSection title="Consentimentos e assinatura" items={getAnamneseConsents(record)} />
       </>}
 
-      {record?.preenchido_em && analysisResult && <AnamneseReport result={analysisResult} onPrint={() => window.print()} onIncludeInPdf={() => {}} />}
+      {record?.preenchido_em && analysisResult && <AnamneseReport result={analysisResult} onPrint={() => void generatePdf()} onIncludeInPdf={() => void generatePdf()} />}
     </div>
   )
 }

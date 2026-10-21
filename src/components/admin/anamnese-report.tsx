@@ -225,7 +225,7 @@ export function AnamneseReport({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="outline" onClick={onPrint} disabled={!onPrint}>
-                    <Printer className="mr-2 size-4" />Imprimir / Salvar PDF
+                    <Printer className="mr-2 size-4" />Gerar PDF
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top">Imprime o relatório ou salva como PDF</TooltipContent>
