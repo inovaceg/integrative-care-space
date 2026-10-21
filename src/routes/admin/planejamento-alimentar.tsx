@@ -4,6 +4,7 @@ import { AlertTriangle, Activity, ClipboardList, HeartPulse, Loader2, Save, Spar
 import { AdminLayout, AdminNotice, PageIntro, SectionCard } from "@/components/admin/admin-ui";
 import { NutritionPlanPreview } from "@/components/admin/nutrition-plan-preview";
 import { HydrationSection, type HydrationPlan } from "@/components/admin/hydration-section";
+import { ProteinSection, type ProteinPlan } from "@/components/admin/protein-section";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,13 +19,15 @@ type Evaluation = { id: string; evaluation_date: string; weight_kg: number | nul
 type Application = { id: string; procedure_name: string; current_weight_kg: number; application_date: string; notes: string | null };
 type Anamnesis = { alimentacao: string | null; atividade_fisica: string | null; qualidade_sono: string | null; doencas_fisicas: string | null; medicamentos_atuais: string | null; usa_medicamentos: boolean | null; sintomas_atuais: unknown };
 type Profile = { height_cm: string; reference_weight_kg: string; goal: string; activity_level: string; exercise_details: string; wake_time: string; sleep_time: string; meal_schedule: string; desired_meals: string; work_routine: string; cooking_availability: string; food_budget: string; preferred_foods: string; avoided_foods: string; cultural_restrictions: string; simple_meals_preference: boolean; affordable_food_preference: boolean; allergies: string; intolerances: string; diagnosed_conditions: string; pregnancy_or_breastfeeding: string; medications: string; supplements: string; eating_disorder_history: string };
-type Meal = { name: string; items: { food: string; portion: string; alternatives?: string[] }[]; notes?: string };
-type PlanContent = { summary: string; objective: string; warnings: string[]; meals: Meal[]; observations: string[]; professional_confirmations: string[]; hydration?: HydrationPlan };
+type Meal = { name: string; items: { food: string; portion: string; alternatives?: string[]; protein_g?: number; protein_source?: string }[]; notes?: string };
+type PlanContent = { summary: string; objective: string; warnings: string[]; meals: Meal[]; observations: string[]; professional_confirmations: string[]; hydration?: HydrationPlan; protein?: ProteinPlan };
 type Plan = { id: string; goal: string; duration_days: number; status: string; plan_content: PlanContent; model_name: string | null; created_at: string; approved_at: string | null; approved_by: string | null; approved_version_id: string | null };
 type WeightMeasurement = { weight_kg: number; weight_date: string; weight_source: string };
 const emptyHydration: HydrationPlan = { weight_kg: null, weight_date: null, weight_source: null, factor_ml_per_kg: 33, estimated_total_water_ml: null, adjusted_pure_water_ml: null, activity: "", climate: "", pregnancy: false, breastfeeding: false, kidney_disease: false, cardiac_disease: false, fluid_restriction: false, observations: "", professional_reviewed: false };
+const emptyProtein: ProteinPlan = { weight_kg: null, weight_date: null, weight_source: null, factor_g_per_kg: 1.2, calculated_target_g: null, adjusted_target_g: null, kidney_disease: false, special_clinical_condition: false, clinical_info_sufficient: false, observations: "", professional_reviewed: false };
 const latestWeight = (evaluations: Evaluation[], applications: Application[]): WeightMeasurement | null => [...evaluations.flatMap((item) => item.weight_kg !== null && item.weight_kg > 0 ? [{ weight_kg: item.weight_kg, weight_date: item.evaluation_date, weight_source: "Avaliação corporal" }] : []), ...applications.flatMap((item) => item.current_weight_kg > 0 ? [{ weight_kg: item.current_weight_kg, weight_date: item.application_date, weight_source: `Aplicação: ${item.procedure_name}` }] : [])].sort((a, b) => b.weight_date.localeCompare(a.weight_date))[0] ?? null;
 const hydrationForPlan = (content: PlanContent | null | undefined, measurements: WeightMeasurement | null): HydrationPlan => content?.hydration ?? { ...emptyHydration, ...(measurements ?? {}) };
+const proteinForPlan = (content: PlanContent | null | undefined, measurements: WeightMeasurement | null): ProteinPlan => content?.protein ?? { ...emptyProtein, ...(measurements ?? {}) };
 type PlanVersion = { id: string; version_number: number; plan_content: PlanContent; created_at: string; created_by: string };
 const emptyProfile: Profile = { height_cm: "", reference_weight_kg: "", goal: "", activity_level: "", exercise_details: "", wake_time: "", sleep_time: "", meal_schedule: "", desired_meals: "", work_routine: "", cooking_availability: "", food_budget: "", preferred_foods: "", avoided_foods: "", cultural_restrictions: "", simple_meals_preference: false, affordable_food_preference: false, allergies: "", intolerances: "", diagnosed_conditions: "", pregnancy_or_breastfeeding: "", medications: "", supplements: "", eating_disorder_history: "" };
 const asProfile = (row: Record<string, unknown> | null): Profile => row ? Object.fromEntries(Object.keys(emptyProfile).map((key) => [key, key === "meal_schedule" ? Array.isArray(row[key]) ? (row[key] as string[]).join("\n") : "" : key.endsWith("preference") ? Boolean(row[key]) : row[key] == null ? "" : String(row[key])])) as Profile : { ...emptyProfile };
@@ -43,6 +46,7 @@ function NutritionPlanningPage() {
   const [anamnesis, setAnamnesis] = useState<Anamnesis | null>(null);
   const [profile, setProfile] = useState<Profile>({ ...emptyProfile });
   const [hydration, setHydration] = useState<HydrationPlan>({ ...emptyHydration });
+  const [protein, setProtein] = useState<ProteinPlan>({ ...emptyProtein });
   const [plans, setPlans] = useState<Plan[]>([]);
   const [versions, setVersions] = useState<PlanVersion[]>([]);
   const [activePlan, setActivePlan] = useState<Plan | null>(null);
@@ -69,7 +73,7 @@ function NutritionPlanningPage() {
     return found;
   }, [currentEvaluation, profile.height_cm, selected]);
 
-  function selectPlan(plan: Plan) { setSyntheticTest(false); setActivePlan(plan); setContentText(JSON.stringify(plan.plan_content, null, 2)); setDuration(String(plan.duration_days)); setHydration(hydrationForPlan(plan.plan_content, latestWeight(evaluations, applications))); }
+  function selectPlan(plan: Plan) { setSyntheticTest(false); setActivePlan(plan); setContentText(JSON.stringify(plan.plan_content, null, 2)); setDuration(String(plan.duration_days)); const measurements = latestWeight(evaluations, applications); setHydration(hydrationForPlan(plan.plan_content, measurements)); setProtein(proteinForPlan(plan.plan_content, measurements)); }
 
   useEffect(() => {
     if (authLoading || !user) return;
@@ -79,7 +83,7 @@ function NutritionPlanningPage() {
   }, [authLoading, user]);
 
   useEffect(() => {
-    if (!patientId || !user) { setSyntheticTest(false); setEvaluations([]); setApplications([]); setAnamnesis(null); setProfile({ ...emptyProfile }); setHydration({ ...emptyHydration }); setPlans([]); setActivePlan(null); return; }
+    if (!patientId || !user) { setSyntheticTest(false); setEvaluations([]); setApplications([]); setAnamnesis(null); setProfile({ ...emptyProfile }); setHydration({ ...emptyHydration }); setProtein({ ...emptyProtein }); setPlans([]); setActivePlan(null); return; }
     setSyntheticTest(false);
     let active = true;
     setLoading(true); setError(""); setActivePlan(null); setContentText("");
@@ -98,8 +102,8 @@ function NutritionPlanningPage() {
       setEvaluations(evaluationRows); setApplications(applicationRows); setAnamnesis((anamnesisResult.data as Anamnesis | null) ?? null); setProfile(asProfile(profileResult.data as Record<string, unknown> | null));
       const list = (planResult.data as Plan[] | null) ?? []; setPlans(list);
       const lastWeight = latestWeight(evaluationRows, applicationRows);
-      if (list.length) { setActivePlan(list[0]); setContentText(JSON.stringify(list[0].plan_content, null, 2)); setDuration(String(list[0].duration_days)); setHydration(hydrationForPlan(list[0].plan_content, lastWeight)); }
-      else setHydration(hydrationForPlan(null, lastWeight));
+      if (list.length) { setActivePlan(list[0]); setContentText(JSON.stringify(list[0].plan_content, null, 2)); setDuration(String(list[0].duration_days)); setHydration(hydrationForPlan(list[0].plan_content, lastWeight)); setProtein(proteinForPlan(list[0].plan_content, lastWeight)); }
+      else { setHydration(hydrationForPlan(null, lastWeight)); setProtein(proteinForPlan(null, lastWeight)); }
       setLoading(false);
     });
     return () => { active = false; };
@@ -130,7 +134,10 @@ function NutritionPlanningPage() {
     const hydrationNeedsReview = hydration.pregnancy || hydration.breastfeeding || hydration.kidney_disease || hydration.cardiac_disease || hydration.fluid_restriction;
     const hydrationFactor = Number(hydration.factor_ml_per_kg);
     const hydrationEstimate = ageFrom(selected.data_nascimento) !== null && ageFrom(selected.data_nascimento)! >= 18 && !hydrationNeedsReview && hydration.weight_kg !== null && hydration.weight_kg > 0 && hydrationFactor > 0 ? Math.round(hydration.weight_kg * hydrationFactor) : null;
-    parsed = { ...parsed, hydration: { ...hydration, estimated_total_water_ml: hydrationEstimate } };
+    const proteinBlocked = ageFrom(selected.data_nascimento) === null || ageFrom(selected.data_nascimento)! < 18 || !protein.clinical_info_sufficient || protein.kidney_disease || protein.special_clinical_condition || protein.weight_kg === null || protein.weight_kg <= 0;
+    const proteinFactor = Number(protein.factor_g_per_kg);
+    const proteinEstimate = !proteinBlocked && Number.isFinite(proteinFactor) && proteinFactor > 0 ? Math.round(protein.weight_kg! * proteinFactor * 10) / 10 : null;
+    parsed = { ...parsed, hydration: { ...hydration, estimated_total_water_ml: hydrationEstimate }, protein: { ...protein, calculated_target_g: proteinEstimate } };
     setSaving(true); setError(""); setMessage("");
     let planId = activePlan?.id;
     const planPayload = { patient_id: patientId, profissional_id: user.id, goal: profile.goal || "Objetivo a confirmar", duration_days: Number(duration), status, plan_content: parsed, model_name: modelName ?? activePlan?.model_name ?? null, updated_at: new Date().toISOString() };
@@ -149,7 +156,7 @@ function NutritionPlanningPage() {
   async function refreshPlans(selectId?: string) {
     if (!user || !patientId) return;
     const { data } = await supabase.from("nutrition_plans").select("id,goal,duration_days,status,plan_content,model_name,created_at,approved_at,approved_by,approved_version_id").eq("patient_id", patientId).eq("profissional_id", user.id).order("created_at", { ascending: false });
-    const list = (data as Plan[] | null) ?? []; setPlans(list); const match = list.find((plan) => plan.id === (selectId ?? activePlan?.id)) ?? list[0]; if (match) { setActivePlan(match); setContentText(JSON.stringify(match.plan_content, null, 2)); const { data: versionData } = await supabase.from("nutrition_plan_versions").select("id,version_number,plan_content,created_at,created_by").eq("plan_id", match.id).order("version_number", { ascending: false }); setVersions((versionData as PlanVersion[] | null) ?? []); }
+    const list = (data as Plan[] | null) ?? []; setPlans(list); const match = list.find((plan) => plan.id === (selectId ?? activePlan?.id)) ?? list[0]; if (match) { setActivePlan(match); setContentText(JSON.stringify(match.plan_content, null, 2)); const measurements = latestWeight(evaluations, applications); setHydration(hydrationForPlan(match.plan_content, measurements)); setProtein(proteinForPlan(match.plan_content, measurements)); const { data: versionData } = await supabase.from("nutrition_plan_versions").select("id,version_number,plan_content,created_at,created_by").eq("plan_id", match.id).order("version_number", { ascending: false }); setVersions((versionData as PlanVersion[] | null) ?? []); }
   }
 
   async function generatePlan(testMode = false) {
@@ -203,7 +210,9 @@ function NutritionPlanningPage() {
   function selectVersion(version: PlanVersion) {
     setSyntheticTest(false);
     setContentText(JSON.stringify(version.plan_content, null, 2));
-    setHydration(hydrationForPlan(version.plan_content, latestWeight(evaluations, applications)));
+    const measurements = latestWeight(evaluations, applications);
+    setHydration(hydrationForPlan(version.plan_content, measurements));
+    setProtein(proteinForPlan(version.plan_content, measurements));
   }
 
   async function approvePlan() {
@@ -237,7 +246,7 @@ function NutritionPlanningPage() {
     line("PLANEJAMENTO ALIMENTAR", 18, true); line(`Paciente: ${selected.nome}`); line(`Data: ${new Date().toLocaleDateString("pt-BR")}`); line(`Objetivo: ${plan.objective || activePlan?.goal || profile.goal || "A confirmar"}`); line(`Status: ${statusNames[activePlan?.status ?? "draft"] ?? "Rascunho"}`, 10, true); y += 8;
     for (const meal of plan.meals ?? []) { line(meal.name, 13, true); for (const item of meal.items ?? []) { line(`- ${item.food}: ${item.portion}`); if (item.alternatives?.length) line(`Alternativas: ${item.alternatives.join(", ")}`); } if (meal.notes) line(`Observacoes: ${meal.notes}`); y += 8; }
     for (const observation of plan.observations ?? []) line(`Orientacao: ${observation}`);
-    if (plan.hydration?.professional_reviewed) {
+    if (activePlan?.status === "approved" && plan.hydration?.professional_reviewed) {
       const hydrationPlan = plan.hydration;
       line("HIDRATACAO DIARIA - ORIENTACAO REVISADA", 13, true);
       line(`Peso usado: ${display(hydrationPlan.weight_kg, " kg")} · Origem: ${hydrationPlan.weight_source ?? "Não informada"} · Data: ${hydrationPlan.weight_date ?? "Não informada"}`);
@@ -249,6 +258,26 @@ function NutritionPlanningPage() {
       if (hydrationPlan.activity) line(`Atividade física: ${hydrationPlan.activity}`);
       if (hydrationPlan.climate) line(`Clima/temperatura: ${hydrationPlan.climate}`);
       if (hydrationPlan.observations) line(`Observações: ${hydrationPlan.observations}`);
+    }
+    if (plan.protein?.professional_reviewed) {
+      const proteinPlan = plan.protein;
+      const target = proteinPlan.adjusted_target_g ?? proteinPlan.calculated_target_g;
+      line("NECESSIDADE DIARIA DE PROTEINAS - META REVISADA", 13, true);
+      line(`Peso de referência: ${display(proteinPlan.weight_kg, " kg")} · Origem: ${proteinPlan.weight_source ?? "Não informada"} · Data: ${proteinPlan.weight_date ?? "Não informada"}`);
+      if (proteinPlan.calculated_target_g !== null) line(`Referência: ${proteinPlan.weight_kg} kg × ${proteinPlan.factor_g_per_kg} g/kg/dia = ${proteinPlan.calculated_target_g.toFixed(1)} g/dia.`);
+      if (target !== null) line(`Meta revisada pela nutricionista: ${target.toFixed(1)} g/dia${proteinPlan.adjusted_target_g !== null ? " (ajuste manual)" : " (referência calculada)"}.`);
+      if (proteinPlan.observations) line(`Justificativa/observações: ${proteinPlan.observations}`);
+      const completeMeals = (plan.meals ?? []).map((meal) => {
+        const items = meal.items ?? [];
+        const complete = items.length > 0 && items.every((item) => typeof item.protein_g === "number" && Number.isFinite(item.protein_g) && item.protein_g >= 0 && typeof item.protein_source === "string" && item.protein_source.trim());
+        return { name: meal.name, total: complete ? items.reduce((sum, item) => sum + (item.protein_g ?? 0), 0) : null };
+      });
+      for (const meal of completeMeals) if (meal.total !== null) line(`Proteína estimada — ${meal.name}: ${meal.total.toFixed(1)} g.`);
+      if (completeMeals.length > 0 && completeMeals.every((meal) => meal.total !== null)) {
+        const dailyProtein = completeMeals.reduce((sum, meal) => sum + (meal.total ?? 0), 0);
+        line(`Total estimado do planejamento: ${dailyProtein.toFixed(1)} g/dia.`);
+        if (target !== null) line(`Diferença para a meta: ${(dailyProtein - target >= 0 ? "+" : "")}${(dailyProtein - target).toFixed(1)} g.`);
+      } else line("Total de proteína das refeições não calculado: faltam valores por porção e/ou fontes nutricionais confiáveis.");
     }
     if (activePlan?.status === "approved" && activePlan.approved_by) {
       const { data: nutritionist } = await supabase.from("nutritionist_credentials").select("full_name,crn").eq("profissional_id", activePlan.approved_by).eq("verification_status", "verified").maybeSingle();
@@ -269,6 +298,7 @@ function NutritionPlanningPage() {
     {alerts.length > 0 && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4"><h3 className="flex items-center gap-2 font-semibold text-amber-900"><AlertTriangle className="size-4" /> Conferir antes de planejar</h3><ul className="mt-2 list-inside list-disc space-y-1 text-sm text-amber-800">{alerts.map((alert) => <li key={alert}>{alert}</li>)}</ul></div>}
     <SectionCard title="5. Perfil nutricional complementar"><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{[["height_cm","Altura (cm)"],["reference_weight_kg","Peso de referência (kg)"],["desired_meals","Número de refeições desejado"]].map(([key,label]) => <div key={key}><Label>{label}</Label><Input className="mt-1" type="number" value={profile[key as keyof Profile] as string} onChange={(e) => setField(key as keyof Profile, e.target.value)} /></div>)}<div><Label>Atividade física</Label><Select value={profile.activity_level} onValueChange={(value) => setField("activity_level", value)}><SelectTrigger className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent>{["Sedentário", "Leve", "Moderado", "Intenso", "Muito intenso"].map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent></Select></div>{[["wake_time","Horário de acordar"],["sleep_time","Horário de dormir"]].map(([key,label]) => <div key={key}><Label>{label}</Label><Input className="mt-1" type="time" value={profile[key as keyof Profile] as string} onChange={(e) => setField(key as keyof Profile, e.target.value)} /></div>)}<div className="sm:col-span-2 lg:col-span-3"><Label>Objetivo alimentar</Label><Textarea className="mt-1" value={profile.goal} onChange={(e) => setField("goal", e.target.value)} placeholder="Objetivo acordado para avaliação do profissional" /></div>{textFields.map(([key,label]) => <div key={key} className="grid gap-1"><Label>{label}</Label><Textarea value={profile[key] as string} onChange={(e) => setField(key, e.target.value)} /></div>)}<div className="grid gap-1 sm:col-span-2"><Label>Horários habituais das refeições (um por linha)</Label><Textarea value={profile.meal_schedule} onChange={(e) => setField("meal_schedule", e.target.value)} /></div></div><div className="mt-4 flex flex-wrap gap-4 text-sm">{([["simple_meals_preference","Prefere refeições simples"],["affordable_food_preference","Priorizar alimentos acessíveis"]] as [keyof Profile,string][]).map(([key,label]) => <label key={key} className="flex items-center gap-2"><input type="checkbox" checked={profile[key] as boolean} onChange={(e) => setField(key,e.target.checked)} />{label}</label>)}</div><div className="mt-5 flex flex-wrap items-center gap-3"><Button type="button" variant="outline" onClick={() => void saveProfile()} disabled={saving}>{saving ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Save className="mr-2 size-4" />}Salvar perfil</Button></div></SectionCard>
     <HydrationSection value={hydration} onChange={setHydration} patientAge={ageFrom(selected.data_nascimento)} onSave={() => void savePlan("draft")} saving={saving} canSave={Boolean(contentText)} />
+    <ProteinSection value={protein} onChange={setProtein} patientAge={ageFrom(selected.data_nascimento)} rawPlan={contentText} onSave={() => void savePlan("draft")} saving={saving} canSave={Boolean(contentText)} />
     <SectionCard title="6. Configuração da proposta e geração">
       <div className="grid gap-4 md:grid-cols-2">
         <div><Label>Objetivo da proposta</Label><Input className="mt-1" value={profile.goal} onChange={(e) => setField("goal", e.target.value)} placeholder="Ex.: organizar rotina alimentar" /></div>
