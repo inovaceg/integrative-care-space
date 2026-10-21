@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, Activity, ClipboardList, HeartPulse, Loader2, Save, Sparkles } from "lucide-react";
 import { AdminLayout, AdminNotice, PageIntro, SectionCard } from "@/components/admin/admin-ui";
 import { NutritionPlanPreview } from "@/components/admin/nutrition-plan-preview";
@@ -34,11 +34,34 @@ const asProfile = (row: Record<string, unknown> | null): Profile => row ? Object
 const ageFrom = (date: string | null) => { if (!date) return null; const birth = new Date(`${date}T00:00:00`); if (Number.isNaN(birth.getTime())) return null; const now = new Date(); return now.getFullYear() - birth.getFullYear() - (now < new Date(now.getFullYear(), birth.getMonth(), birth.getDate()) ? 1 : 0); };
 const display = (value: string | number | null | undefined, unit = "") => value === null || value === undefined || value === "" ? "Não informado" : `${value}${unit}`;
 const statusNames: Record<string, string> = { draft: "Rascunho", pending_review: "Aguardando revisão", approved: "Aprovado por nutricionista", archived: "Arquivado" };
+type PlanningDraft = { patientId?: string; profile?: Profile; hydration?: HydrationPlan; protein?: ProteinPlan; activePlanId?: string | null; contentText?: string; duration?: string };
+const planningDraftKey = (userId: string) => `admin:planning-alimentar:draft:${userId}`;
+const readPlanningDraft = (userId: string): PlanningDraft => {
+  if (typeof window === "undefined") return {};
+  try { return JSON.parse(window.sessionStorage.getItem(planningDraftKey(userId)) ?? "{}") as PlanningDraft; }
+  catch { return {}; }
+};
+const savePlanningDraft = (userId: string, draft: PlanningDraft) => {
+  try { window.sessionStorage.setItem(planningDraftKey(userId), JSON.stringify(draft)); }
+  catch { return; }
+};
+const scrollDraftKey = "admin:planning-alimentar:scroll";
+const saveScrollPosition = () => {
+  try { window.sessionStorage.setItem(scrollDraftKey, String(window.scrollY)); }
+  catch { return; }
+};
+const readScrollPosition = () => {
+  try { return Number(window.sessionStorage.getItem(scrollDraftKey)); }
+  catch { return 0; }
+};
 
 export const Route = createFileRoute("/admin/planejamento-alimentar")({ component: NutritionPlanningPage });
 
 function NutritionPlanningPage() {
   const { user, isLoading: authLoading } = useAuth();
+  const [entryDraft, setEntryDraft] = useState<PlanningDraft>({});
+  const loadedPatientId = useRef<string | null>(null);
+  const scrollRestored = useRef(false);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [patientId, setPatientId] = useState("");
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
@@ -60,6 +83,30 @@ function NutritionPlanningPage() {
   const [message, setMessage] = useState("");
   const selected = patients.find((patient) => patient.id === patientId) ?? null;
   const currentEvaluation = evaluations[0] ?? null;
+  useEffect(() => {
+    if (!user) return;
+    const draft = readPlanningDraft(user.id);
+    setEntryDraft(draft);
+    if (!draft.patientId) return;
+    setPatientId(draft.patientId);
+    if (draft.profile) setProfile({ ...emptyProfile, ...draft.profile });
+    if (draft.hydration) setHydration({ ...emptyHydration, ...draft.hydration });
+    if (draft.protein) setProtein({ ...emptyProtein, ...draft.protein });
+    setContentText(draft.contentText ?? "");
+    setDuration(draft.duration ?? "1");
+  }, [user]);
+  useEffect(() => {
+    let timer: number | undefined;
+    const onScroll = () => { if (timer !== undefined) window.clearTimeout(timer); timer = window.setTimeout(saveScrollPosition, 100); };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => { window.removeEventListener("scroll", onScroll); if (timer !== undefined) window.clearTimeout(timer); saveScrollPosition(); };
+  }, []);
+  useEffect(() => {
+    if (scrollRestored.current || !patientId || loadedPatientId.current !== patientId) return;
+    const position = readScrollPosition();
+    if (Number.isFinite(position) && position > 0) requestAnimationFrame(() => window.scrollTo(0, position));
+    scrollRestored.current = true;
+  }, [patientId, loading]);
   const alerts = useMemo(() => {
     const found: string[] = [];
     if (!currentEvaluation) found.push("Não há avaliação corporal registrada.");
@@ -99,22 +146,41 @@ function NutritionPlanningPage() {
       if (failed) setError("Não foi possível carregar todos os dados. Confira as permissões e tente novamente.");
       const evaluationRows = (evaluationResult.data as Evaluation[] | null) ?? [];
       const applicationRows = (applicationResult.data as Application[] | null) ?? [];
-      setEvaluations(evaluationRows); setApplications(applicationRows); setAnamnesis((anamnesisResult.data as Anamnesis | null) ?? null); setProfile(asProfile(profileResult.data as Record<string, unknown> | null));
-      const list = (planResult.data as Plan[] | null) ?? []; setPlans(list);
+      const list = (planResult.data as Plan[] | null) ?? [];
+      const savedDraft = readPlanningDraft();
+      const resume = savedDraft.patientId === patientId;
+      const selectedPlan = list.find((plan) => plan.id === savedDraft.activePlanId) ?? list[0] ?? null;
+      setEvaluations(evaluationRows); setApplications(applicationRows); setAnamnesis((anamnesisResult.data as Anamnesis | null) ?? null); setProfile(resume && savedDraft.profile ? savedDraft.profile : asProfile(profileResult.data as Record<string, unknown> | null));
+      setPlans(list); setActivePlan(selectedPlan);
       const lastWeight = latestWeight(evaluationRows, applicationRows);
-      if (list.length) { setActivePlan(list[0]); setContentText(JSON.stringify(list[0].plan_content, null, 2)); setDuration(String(list[0].duration_days)); setHydration(hydrationForPlan(list[0].plan_content, lastWeight)); setProtein(proteinForPlan(list[0].plan_content, lastWeight)); }
-      else { setHydration(hydrationForPlan(null, lastWeight)); setProtein(proteinForPlan(null, lastWeight)); }
+      if (selectedPlan) {
+        setContentText(resume && savedDraft.contentText !== undefined ? savedDraft.contentText : JSON.stringify(selectedPlan.plan_content, null, 2));
+        setDuration(resume && savedDraft.duration ? savedDraft.duration : String(selectedPlan.duration_days));
+        setHydration(resume && savedDraft.hydration ? savedDraft.hydration : hydrationForPlan(selectedPlan.plan_content, lastWeight));
+        setProtein(resume && savedDraft.protein ? savedDraft.protein : proteinForPlan(selectedPlan.plan_content, lastWeight));
+      } else {
+        setContentText(resume ? savedDraft.contentText ?? "" : "");
+        setHydration(resume && savedDraft.hydration ? savedDraft.hydration : hydrationForPlan(null, lastWeight));
+        setProtein(resume && savedDraft.protein ? savedDraft.protein : proteinForPlan(null, lastWeight));
+      }
+      loadedPatientId.current = patientId;
       setLoading(false);
     });
     return () => { active = false; };
   }, [patientId, user]);
 
   useEffect(() => {
+    if (!patientId || loading || loadedPatientId.current !== patientId) return;
+    savePlanningDraft({ patientId, profile, hydration, protein, activePlanId: activePlan?.id ?? null, contentText, duration });
+  }, [patientId, loading, profile, hydration, protein, activePlan, contentText, duration]);
+
+  useEffect(() => {
+    if (entryDraft.patientId === patientId && entryDraft.profile) return;
     const latestWeight = evaluations[0]?.weight_kg;
     if (latestWeight !== null && latestWeight !== undefined) {
       setProfile((current) => ({ ...current, reference_weight_kg: String(latestWeight) }));
     }
-  }, [evaluations]);
+  }, [entryDraft, evaluations, patientId]);
 
   async function saveProfile(): Promise<boolean> {
     if (!user || !patientId) return false;
