@@ -1,15 +1,23 @@
 import { useEffect, useLayoutEffect, useRef } from 'react'
-import { useRouterState } from '@tanstack/react-router'
+import { useRouter, useRouterState } from '@tanstack/react-router'
 
 const storagePrefix = 'app:scroll-position:'
 const useClientLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect
 
 export function ScrollPositionRestoration() {
+  const router = useRouter()
   const routeKey = useRouterState({
     select: (state) => `${state.location.pathname}${state.location.searchStr}${state.location.hash}`,
   })
   const currentKey = useRef(routeKey)
   const restoring = useRef(false)
+
+  const savePosition = () => {
+    if (!restoring.current) {
+      const scrollTop = document.scrollingElement?.scrollTop ?? window.scrollY
+      window.sessionStorage.setItem(`${storagePrefix}${currentKey.current}`, String(scrollTop))
+    }
+  }
 
   useClientLayoutEffect(() => {
     currentKey.current = routeKey
@@ -44,18 +52,17 @@ export function ScrollPositionRestoration() {
   }, [routeKey])
 
   useEffect(() => {
-    const savePosition = () => {
-      if (!restoring.current) {
-        window.sessionStorage.setItem(`${storagePrefix}${currentKey.current}`, String(window.scrollY))
-      }
-    }
+    const unsubscribe = router.subscribe('onBeforeNavigate', savePosition)
     window.addEventListener('scroll', savePosition, { passive: true })
+    document.addEventListener('scroll', savePosition, { passive: true, capture: true })
     window.addEventListener('pagehide', savePosition)
     return () => {
+      unsubscribe()
       window.removeEventListener('scroll', savePosition)
+      document.removeEventListener('scroll', savePosition, true)
       window.removeEventListener('pagehide', savePosition)
     }
-  }, [])
+  }, [router])
 
   return null
 }
