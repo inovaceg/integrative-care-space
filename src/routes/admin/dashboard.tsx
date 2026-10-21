@@ -21,6 +21,7 @@ function DashboardPage() {
   const [patients, setPatients] = useState<PatientRecord[]>([]);
   const [appointments, setAppointments] = useState<AppointmentRecord[]>([]);
   const [applications, setApplications] = useState<Array<{ id: string; patient_id: string; current_weight_kg: number; application_date: string; created_at: string }>>([]);
+  const [evaluations, setEvaluations] = useState<Array<{ id: string; patient_id: string; weight_kg: number | null; evaluation_date: string; created_at: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -32,12 +33,14 @@ function DashboardPage() {
       fetchPatients(user.id),
       fetchAppointments(user.id),
       supabase.from("patient_applications").select("id,patient_id,current_weight_kg,application_date,created_at").eq("profissional_id", user.id).order("application_date", { ascending: false }).order("created_at", { ascending: false }),
-    ]).then(([patientResult, appointmentResult, applicationResult]) => {
+      supabase.from("body_evaluations").select("id,patient_id,weight_kg,evaluation_date,created_at").eq("profissional_id", user.id).not("weight_kg", "is", null).order("evaluation_date", { ascending: false }).order("created_at", { ascending: false }),
+    ]).then(([patientResult, appointmentResult, applicationResult, evaluationResult]) => {
       if (!mounted) return;
-      if (patientResult.error || appointmentResult.error || applicationResult.error) setError(patientResult.error?.message ?? appointmentResult.error?.message ?? applicationResult.error?.message ?? "Não foi possível carregar o resumo.");
+      if (patientResult.error || appointmentResult.error || applicationResult.error || evaluationResult.error) setError(patientResult.error?.message ?? appointmentResult.error?.message ?? applicationResult.error?.message ?? evaluationResult.error?.message ?? "Não foi possível carregar o resumo.");
       setPatients((patientResult.data as PatientRecord[] | null) ?? []);
       setAppointments((appointmentResult.data as AppointmentRecord[] | null) ?? []);
       setApplications((applicationResult.data as typeof applications | null) ?? []);
+      setEvaluations((evaluationResult.data as typeof evaluations | null) ?? []);
       setLoading(false);
     });
     return () => { mounted = false; };
@@ -91,18 +94,20 @@ function DashboardPage() {
   }, [appointments, patients]);
   const monthAppointments = useMemo(() => { const now = new Date(); return appointments.filter((appointment) => { const date = new Date(appointment.start_time); return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth(); }); }, [appointments]);
   const greatestWeightLoss = useMemo(() => {
-    const grouped = new Map<string, typeof applications>();
-    applications.forEach((application) => grouped.set(application.patient_id, [...(grouped.get(application.patient_id) ?? []), application]));
+    const grouped = new Map<string, typeof evaluations>();
+    evaluations.forEach((evaluation) => grouped.set(evaluation.patient_id, [...(grouped.get(evaluation.patient_id) ?? []), evaluation]));
     return [...grouped.entries()].flatMap(([patientId, records]) => {
-      const ordered = [...records].sort((a, b) => new Date(b.application_date).getTime() - new Date(a.application_date).getTime() || new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      const ordered = [...records].sort((a, b) => new Date(a.evaluation_date).getTime() - new Date(b.evaluation_date).getTime() || new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
       if (ordered.length < 2) return [];
-      const current = ordered[0];
-      const previous = ordered[1];
-      const loss = Number(previous.current_weight_kg) - Number(current.current_weight_kg);
+      const previous = ordered[0];
+      const current = ordered[ordered.length - 1];
+      if (previous.weight_kg === null || current.weight_kg === null) return [];
+      const loss = Number(previous.weight_kg) - Number(current.weight_kg);
       const patient = patients.find((item) => item.id === patientId);
-      return loss > 0 && patient ? [{ patient, current, previous, loss }] : [];
+      const lastApplication = applications.filter((application) => application.patient_id === patientId).sort((a, b) => new Date(b.application_date).getTime() - new Date(a.application_date).getTime() || new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0] ?? null;
+      return loss > 0 && patient ? [{ patient, current: { ...current, application_date: lastApplication?.application_date ?? current.evaluation_date, current_weight_kg: current.weight_kg }, previous: { ...previous, current_weight_kg: previous.weight_kg }, loss }] : [];
     }).sort((a, b) => b.loss - a.loss)[0] ?? null;
-  }, [applications, patients]);
+  }, [applications, evaluations, patients]);
   const stats = [{ label: "Pacientes cadastrados", value: String(patients.length), trend: "Atualizado agora", tone: "teal" as const, note: "cadastros deste profissional" }, { label: "Atendimentos no mês", value: String(monthAppointments.length), trend: "Agenda real", tone: "blue" as const, note: "agendamentos registrados" }, { label: "Próximos atendimentos", value: String(upcoming.length), trend: "Próximos", tone: "amber" as const, note: "não cancelados" }, { label: "Agenda concluída", value: String(appointments.filter((appointment) => appointment.status === "completed").length), trend: "Total", tone: "violet" as const, note: "atendimentos concluídos" }];
 
   const now = new Date();
