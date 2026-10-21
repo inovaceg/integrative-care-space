@@ -6,7 +6,7 @@ import { NutritionPlanPreview } from "@/components/admin/nutrition-plan-preview"
 import { HydrationSection, type HydrationPlan } from "@/components/admin/hydration-section";
 import { ProteinSection, type ProteinPlan } from "@/components/admin/protein-section";
 import { EnergySection, type EnergyPlan } from "@/components/admin/energy-section";
-import { activityFactorForLevel, calculateMifflinStJeor, isTrustedNutritionSource, sumVerifiedMeal, validateEnergyApproval } from "@/lib/admin/nutrition-calculations";
+import { activityFactorForLevel, calculateMifflinStJeor, clonePlanSnapshot, isTrustedNutritionSource, sumVerifiedMeal, validateEnergyApproval } from "@/lib/admin/nutrition-calculations";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -172,7 +172,8 @@ function NutritionPlanningPage() {
         setHydration(resume && savedDraft.hydration ? savedDraft.hydration : hydrationForPlan(null, lastWeight));
         setProtein(resume && savedDraft.protein ? savedDraft.protein : proteinForPlan(null, lastWeight));
         const latestHeight = evaluationRows.find((row) => row.height_cm !== null && row.height_cm >= 100 && row.height_cm <= 250)?.height_cm ?? (Number(profileResult.data?.height_cm) >= 100 && Number(profileResult.data?.height_cm) <= 250 ? Number(profileResult.data?.height_cm) : null);
-        const measure = lastWeight;
+        const profileWeight = Number(profileResult.data?.reference_weight_kg);
+        const measure = lastWeight ?? (Number.isFinite(profileWeight) && profileWeight >= 20 && profileWeight <= 350 ? { weight_kg: profileWeight, weight_date: "", weight_source: "Peso de referência do perfil nutricional" } : null);
         setEnergy(resume && savedDraft.energy ? savedDraft.energy : { ...emptyEnergy, weight_kg: measure?.weight_kg ?? null, weight_date: measure?.weight_date ?? null, weight_source: measure?.weight_source ?? null, height_cm: latestHeight, height_source: latestHeight === null ? null : evaluationRows.some((row) => row.height_cm === latestHeight) ? "Avaliação corporal" : "Perfil nutricional", age_years: ageFrom(patients.find((p) => p.id === patientId)?.data_nascimento ?? null), age_source: "Data de nascimento do cadastro", activity_level: (resume && savedDraft.profile ? savedDraft.profile : asProfile(profileResult.data as Record<string, unknown> | null)).activity_level, activity_context: [anamnesisResult.data?.atividade_fisica, (resume && savedDraft.profile ? savedDraft.profile : asProfile(profileResult.data as Record<string, unknown> | null)).work_routine, (resume && savedDraft.profile ? savedDraft.profile : asProfile(profileResult.data as Record<string, unknown> | null)).exercise_details].filter(Boolean).join(" · ") });
       }
       loadedPatientId.current = patientId;
@@ -214,7 +215,9 @@ function NutritionPlanningPage() {
     if (protein.adjusted_target_g !== null && (!Number.isFinite(protein.adjusted_target_g) || protein.adjusted_target_g < 1 || protein.adjusted_target_g > 1000 || !protein.observations.trim())) { setError("A meta manual deve estar entre 1 e 1.000 g/dia e exige justificativa profissional."); return; }
     if (energy.adjusted_daily_kcal !== null && (!Number.isFinite(energy.adjusted_daily_kcal) || energy.adjusted_daily_kcal < 500 || energy.adjusted_daily_kcal > 10000 || !energy.observations.trim())) { setError("A meta energética definida deve estar entre 500 e 10.000 kcal/dia e exige justificativa profissional."); return; }
     if (energy.professional_reviewed && !validateEnergyApproval(energy.adjusted_daily_kcal, energy.observations, true)) { setError("A meta energética só pode ser aprovada após definição explícita e justificativa profissional."); return; }
-    const registeredWeight = latestWeight(evaluations, applications);
+    const latestRegisteredWeight = latestWeight(evaluations, applications);
+    const profileWeight = Number(profile.reference_weight_kg);
+    const registeredWeight = latestRegisteredWeight ?? (Number.isFinite(profileWeight) && profileWeight >= 20 && profileWeight <= 350 ? { weight_kg: profileWeight, weight_date: "", weight_source: "Peso de referência do perfil nutricional" } : null);
     const registeredHeight = evaluations.find((row) => row.height_cm !== null && row.height_cm >= 100 && row.height_cm <= 250)?.height_cm ?? (Number(profile.height_cm) >= 100 && Number(profile.height_cm) <= 250 ? Number(profile.height_cm) : null);
     const energyParams: EnergyPlan = { ...energy, weight_kg: energy.weight_kg ?? registeredWeight?.weight_kg ?? null, weight_source: energy.weight_source ?? registeredWeight?.weight_source ?? null, weight_date: energy.weight_date ?? registeredWeight?.weight_date ?? null, height_cm: energy.height_cm ?? registeredHeight, height_source: energy.height_source ?? (registeredHeight === null ? null : "Cadastro/avaliação mais recente"), age_years: energy.age_years ?? ageFrom(selected.data_nascimento), age_source: energy.age_source ?? "Data de nascimento do cadastro", activity_level: energy.activity_level || profile.activity_level, activity_context: energy.activity_context || [anamnesis?.atividade_fisica, profile.work_routine, profile.exercise_details].filter(Boolean).join(" · ") };
     const energyFactor = activityFactorForLevel(energyParams.activity_level);
@@ -226,11 +229,12 @@ function NutritionPlanningPage() {
     const proteinFactor = proteinFactorInput;
     const proteinEstimate = !proteinBlocked ? Math.round(protein.weight_kg! * proteinFactor * 100) / 100 : null;
     parsed = { ...parsed, hydration: { ...hydration, estimated_total_water_ml: hydrationEstimate }, protein: { ...protein, calculated_target_g: proteinEstimate }, energy: { ...energyParams, method: "Mifflin-St Jeor", activity_factor: energyFactor, bmr_kcal: energyCalculation?.bmrKcal ?? null, estimated_daily_kcal: energyCalculation?.totalKcal ?? null, calculated_at: new Date().toISOString(), professional_reviewed: Boolean(energy.professional_reviewed && energy.adjusted_daily_kcal !== null), reviewed_at: energy.professional_reviewed && energy.adjusted_daily_kcal !== null ? energy.reviewed_at ?? new Date().toISOString() : null } };
+    const versionContent = clonePlanSnapshot(parsed);
     setSaving(true); setError(""); setMessage("");
     let planId = activePlan?.id;
-    const planPayload = { patient_id: patientId, profissional_id: user.id, goal: profile.goal || "Objetivo a confirmar", duration_days: Number(duration), status, plan_content: parsed, model_name: modelName ?? activePlan?.model_name ?? null, updated_at: new Date().toISOString() };
+    const planPayload = { patient_id: patientId, profissional_id: user.id, goal: profile.goal || "Objetivo a confirmar", duration_days: Number(duration), status, plan_content: versionContent, model_name: modelName ?? activePlan?.model_name ?? null, updated_at: new Date().toISOString() };
     if (activePlan && activePlan.status !== "approved") {
-      const { error: updateError } = await supabase.from("nutrition_plans").update({ goal: planPayload.goal, duration_days: planPayload.duration_days, status, plan_content: parsed, model_name: planPayload.model_name, updated_at: planPayload.updated_at }).eq("id", activePlan.id).eq("profissional_id", user.id);
+      const { error: updateError } = await supabase.from("nutrition_plans").update({ goal: planPayload.goal, duration_days: planPayload.duration_days, status, plan_content: versionContent, model_name: planPayload.model_name, updated_at: planPayload.updated_at }).eq("id", activePlan.id).eq("profissional_id", user.id);
       if (updateError) { setSaving(false); setError("Não foi possível atualizar o plano."); return; }
     } else {
       const { data, error: insertError } = await supabase.from("nutrition_plans").insert(planPayload).select("id").single();

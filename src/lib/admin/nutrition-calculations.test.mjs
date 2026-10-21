@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { activityFactorForLevel, calculateMifflinStJeor, cmFromMeters, isTrustedNutritionSource, kgFromGrams, sumVerifiedMeal, validateEnergyApproval } from "./nutrition-calculations";
+import { activityFactorForLevel, calculateMifflinStJeor, clonePlanSnapshot, cmFromMeters, isTrustedNutritionSource, kgFromGrams, sumVerifiedMeal, validateEnergyApproval } from "./nutrition-calculations";
 
 describe("cálculos nutricionais", () => {
   test("calcula Mifflin–St Jeor e o total com um só fator de atividade", () => {
@@ -9,6 +9,9 @@ describe("cálculos nutricionais", () => {
     expect(calculateMifflinStJeor({ weightKg: 70, heightCm: 170, ageYears: 30, sex: null, activityFactor: 1.2 })).toBeNull();
     expect(calculateMifflinStJeor({ weightKg: 70, heightCm: 170, ageYears: 17, sex: "male", activityFactor: 1.2 })).toBeNull();
     expect(calculateMifflinStJeor({ weightKg: 70, heightCm: 170, ageYears: 30, sex: "male", activityFactor: Number.NaN })).toBeNull();
+    expect(calculateMifflinStJeor({ weightKg: 19, heightCm: 170, ageYears: 30, sex: "female", activityFactor: 1.2 })).toBeNull();
+    expect(calculateMifflinStJeor({ weightKg: 70, heightCm: 170, ageYears: 30.5, sex: "female", activityFactor: 1.2 })).toBeNull();
+    expect(calculateMifflinStJeor({ weightKg: 70, heightCm: 170, ageYears: 30, sex: "unknown", activityFactor: 1.2 })).toBeNull();
   });
   test("normaliza atividade registrada e seleciona um fator único", () => {
     expect(activityFactorForLevel("moderado")).toBe(1.55);
@@ -25,6 +28,13 @@ describe("cálculos nutricionais", () => {
     expect(sumVerifiedMeal([...verified, { calories_kcal: 10 }], "calories_kcal", "calories_source")).toBeNull();
     expect(isTrustedNutritionSource("fonte desconhecida")).toBe(false);
     expect(isTrustedNutritionSource("TBCA - item 123" )).toBe(true);
+  });
+  test("snapshot JSON preserva parâmetros, fontes e composição da versão sem compartilhar referência mutável", () => {
+    const original = { energy: { method: "Mifflin-St Jeor", adjusted_daily_kcal: 2000, professional_reviewed: true }, meals: [{ items: [{ carbohydrate_g: 30, carbohydrate_source: "TBCA" }] }] };
+    const snapshot = clonePlanSnapshot(original);
+    original.energy.adjusted_daily_kcal = 1800;
+    expect(snapshot.energy.adjusted_daily_kcal).toBe(2000);
+    expect(snapshot.meals[0].items[0].carbohydrate_source).toBe("TBCA");
   });
   test("aprovação energética requer meta, justificativa e revisão", () => {
     expect(validateEnergyApproval(2000, "Ajuste individual", true)).toBe(true);

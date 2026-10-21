@@ -29,6 +29,10 @@ export function sumVerifiedMeal(items: Array<Record<string, unknown>>, nutrient:
   return items.reduce((total, item) => total + (item[nutrient] as number), 0);
 }
 
+export function clonePlanSnapshot<T>(content: T): T {
+  return JSON.parse(JSON.stringify(content)) as T;
+}
+
 export function validateEnergyApproval(target: number | null, justification: string, reviewed: boolean): boolean {
   return target !== null && Number.isFinite(target) && target >= 500 && target <= 10000 && reviewed && Boolean(justification.trim());
 }
