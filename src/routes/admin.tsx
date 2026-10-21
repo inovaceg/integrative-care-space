@@ -25,7 +25,9 @@ function AdminRoute() {
   useEffect(() => {
     if (isLoading) return;
     if (isIndex) {
-      void navigate({ to: isAdmin ? "/admin/dashboard" : "/admin/login", replace: true });
+      const lastPage = window.sessionStorage.getItem("admin:last-page");
+      const destination = lastPage?.startsWith("/admin/") && lastPage !== "/admin/login" ? lastPage : "/admin/dashboard";
+      void navigate({ to: isAdmin ? destination as never : "/admin/login", replace: true });
     } else if (!isLogin && !isAdmin) {
       void navigate({ to: "/admin/login", replace: true });
     }

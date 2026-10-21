@@ -259,7 +259,7 @@ function NutritionPlanningPage() {
       if (hydrationPlan.climate) line(`Clima/temperatura: ${hydrationPlan.climate}`);
       if (hydrationPlan.observations) line(`Observações: ${hydrationPlan.observations}`);
     }
-    if (plan.protein?.professional_reviewed) {
+    if (activePlan?.status === "approved" && plan.protein?.professional_reviewed) {
       const proteinPlan = plan.protein;
       const target = proteinPlan.adjusted_target_g ?? proteinPlan.calculated_target_g;
       line("NECESSIDADE DIARIA DE PROTEINAS - META REVISADA", 13, true);

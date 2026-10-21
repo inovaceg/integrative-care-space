@@ -26,7 +26,7 @@ import {
   UsersRound,
   X,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -117,6 +117,11 @@ export function AdminLayout({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  useEffect(() => {
+    if (pathname.startsWith("/admin/") && pathname !== "/admin/login") {
+      window.sessionStorage.setItem("admin:last-page", pathname);
+    }
+  }, [pathname]);
   return <div className="min-h-screen bg-[#f4f7f7] text-slate-900"><div className="flex min-h-screen"><AdminSidebar collapsed={collapsed} mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} onToggle={() => setCollapsed((value) => !value)} /><div className="flex min-w-0 flex-1 flex-col"><AdminHeader onMenu={() => setMobileOpen(true)} /><main className="flex-1 px-4 py-6 sm:px-8 sm:py-8"><div className="mx-auto max-w-[1480px]">{pathname === "/admin/planejamento-alimentar" && <NutritionistCredentialCard />}{children}</div></main></div></div></div>;
 }
 
