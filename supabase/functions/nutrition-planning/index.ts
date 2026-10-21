@@ -92,7 +92,9 @@ serve(async (req) => {
   }
   if (!aiResponse.ok) {
     console.error(`[${functionName}] OpenAI returned status ${aiResponse.status}`);
-    return jsonResponse({ error: aiResponse.status === 429 ? "Limite de geração atingido. Tente novamente mais tarde." : "O serviço de geração não concluiu a solicitação." }, aiResponse.status === 429 ? 429 : 502);
+    const failure = await aiResponse.json().catch(() => null) as { error?: { message?: string } } | null;
+    const detail = failure?.error?.message;
+    return jsonResponse({ error: aiResponse.status === 429 ? "Limite de geração atingido. Tente novamente mais tarde." : detail ? `OpenAI: ${detail}` : `OpenAI recusou a solicitação (HTTP ${aiResponse.status}).` }, aiResponse.status === 429 ? 429 : 502);
   }
 
   try {

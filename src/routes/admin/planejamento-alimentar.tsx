@@ -141,11 +141,8 @@ function NutritionPlanningPage() {
       return;
     }
     setError("");
-    setMessage("Salvando perfil e preparando a proposta...");
-    const profileSaved = await saveProfile();
+    setMessage("Iniciando geração do planejamento...");
     setGenerating(true);
-    setError("");
-    setMessage(profileSaved ? "Gerando planejamento. Isso pode levar alguns instantes..." : "O perfil não foi salvo; tentando gerar com os dados atuais mesmo assim...");
     try {
       const { data, error: functionError } = await supabase.functions.invoke("nutrition-planning", { body: { patient_id: patientId, goal: profile.goal.trim(), duration_days: Number(duration), desired_meals: profile.desired_meals ? Number(profile.desired_meals) : null, nutritional_profile: profile } });
       if (functionError || !data?.plan) {
