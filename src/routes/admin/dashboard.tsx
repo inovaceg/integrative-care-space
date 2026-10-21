@@ -46,6 +46,26 @@ function DashboardPage() {
     return () => { mounted = false; };
   }, [authLoading, user?.id]);
 
+  useEffect(() => {
+    if (authLoading || loading || !user) return;
+    const key = `admin:dashboard-scroll:${user.id}`;
+    let frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => {
+        const savedPosition = Number(window.sessionStorage.getItem(key));
+        if (Number.isFinite(savedPosition) && savedPosition > 0) window.scrollTo(0, savedPosition);
+        window.addEventListener("scroll", savePosition, { passive: true });
+      });
+    });
+    function savePosition() {
+      window.sessionStorage.setItem(key, String(window.scrollY));
+    }
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", savePosition);
+      savePosition();
+    };
+  }, [authLoading, loading, user?.id]);
+
   const upcoming = useMemo(() => {
     const now = new Date();
     return appointments
