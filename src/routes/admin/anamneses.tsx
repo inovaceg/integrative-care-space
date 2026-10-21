@@ -10,6 +10,18 @@ import { supabase } from "@/integrations/supabase/client";
 type CompletedForm = { id: string; paciente_id: string; preenchido_em: string; updated_at: string | null; created_at: string | null };
 type ListedForm = CompletedForm & { patient: PatientRecord };
 
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ArrowUpRight, ClipboardList, Loader2, TestTubeDiagonal } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/components/auth/auth-provider";
+import { AdminLayout, EmptyState, PageIntro, SearchInput } from "@/components/admin/admin-ui";
+import { Card, CardContent } from "@/components/ui/card";
+import { fetchPatients, type PatientRecord } from "@/lib/admin/records";
+import { supabase } from "@/integrations/supabase/client";
+
+type CompletedForm = { id: string; paciente_id: string; preenchido_em: string; updated_at: string | null; created_at: string | null };
+type ListedForm = CompletedForm & { patient: PatientRecord };
+
 export const Route = createFileRoute("/admin/anamneses")({ component: AnamnesesPage });
 
 function AnamnesesPage() {
@@ -62,7 +74,7 @@ function AnamnesesPage() {
   }, [forms, search]);
 
   return <AdminLayout>
-    <PageIntro eyebrow="Prontuários" title="Ficha de anamnese" description="Acesse as fichas concluídas, organizadas por paciente. Os dados clínicos completos só são exibidos ao abrir uma ficha autorizada." />
+    <PageIntro eyebrow="Prontuários" title="Ficha de anamnese" description="Acesse as fichas concluídas, organizadas por paciente. Os dados clínicos completos só são exibidos ao abrir uma ficha autorizada." action={<Link to="/admin/anamneses/demo" className="inline-flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"><TestTubeDiagonal className="size-4" />Demo do motor de análise</Link>} />
     <div className="mt-6 space-y-4">
       <SearchInput value={search} onChange={setSearch} placeholder="Buscar pelo nome da paciente..." />
       {error && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">Não foi possível carregar as fichas: {error}</p>}

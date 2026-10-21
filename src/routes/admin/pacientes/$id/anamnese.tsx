@@ -6,6 +6,8 @@ import { AdminLayout, PageIntro } from '@/components/admin/admin-ui'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { displayAnswer, getAnamneseSections, getAnamneseConsents } from '@/lib/admin/anamnese-display'
+import { analyzeAnamnese } from '@/lib/admin/anamnese-analysis'
+import { AnamneseReport } from '@/components/admin/anamnese-report'
 import { fetchCompletedAnamnese, type AnamneseRecord } from '@/lib/admin/anamnese'
 import { downloadDocumentPdf, type DocumentPage } from '@/lib/admin/document-layout'
 
@@ -63,6 +65,11 @@ function CompletedAnamnesePage() {
   if (error) return <AdminLayout><p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</p></AdminLayout>
   if (!patient || !record) return <AdminLayout><div className="space-y-4"><Link to="/admin/pacientes" className="inline-flex items-center gap-2 text-sm text-slate-500"><ArrowLeft className="size-4" />Voltar para pacientes</Link><p className="rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-500">Nenhuma anamnese concluída encontrada para este paciente.</p></div></AdminLayout>
   const sections = [...getAnamneseSections(record.respostas ?? {}), ['Consentimentos e assinatura', getAnamneseConsents(record)] as [string, Array<[string, unknown]>]]
+  const analysisResult = analyzeAnamnese(record.respostas ?? {}, {
+    patientName: patient.nome,
+    completedAt: record.preenchido_em ?? undefined,
+    demoMode: false,
+  })
   async function generatePdf() {
     if (!patient || !record.preenchido_em) return
     setPdfError('')
@@ -89,6 +96,7 @@ function CompletedAnamnesePage() {
           </dl>
         </CardContent>
       </Card>)}
+      <AnamneseReport result={analysisResult} onPrint={() => window.print()} onIncludeInPdf={() => {}} />
     </div>
   </AdminLayout>
 }

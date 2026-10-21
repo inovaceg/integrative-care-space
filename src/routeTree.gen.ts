@@ -42,6 +42,7 @@ import { Route as AdminRelatoriosRouteImport } from './routes/admin/relatorios'
 import { Route as AnamneseTokenRouteImport } from './routes/anamnese/$token'
 import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
 import { Route as CompletarCadastroTokenRouteImport } from './routes/completar-cadastro/$token'
+import { Route as AdminAnamnesesDemoRouteImport } from './routes/admin/anamneses/demo'
 import { Route as AdminPacientesIdRouteImport } from './routes/admin/pacientes/$id'
 import { Route as AdminPacientesIdAnamneseRouteImport } from './routes/admin/pacientes/$id/anamnese'
 
@@ -212,6 +213,11 @@ const CompletarCadastroTokenRoute = CompletarCadastroTokenRouteImport.update({
   path: '/completar-cadastro/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminAnamnesesDemoRoute = AdminAnamnesesDemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
+  getParentRoute: () => AdminAnamnesesRoute,
+} as any)
 const AdminPacientesIdRoute = AdminPacientesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -238,7 +244,7 @@ export interface FileRoutesByFullPath {
   '/sobre': typeof SobreRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/admin/agenda': typeof AdminAgendaRoute
-  '/admin/anamneses': typeof AdminAnamnesesRoute
+  '/admin/anamneses': typeof AdminAnamnesesRouteWithChildren
   '/admin/aplicacoes': typeof AdminAplicacoesRoute
   '/admin/biblioteca-nutricional-demo': typeof AdminBibliotecaNutricionalDemoRoute
   '/admin/blog': typeof AdminBlogRoute
@@ -258,6 +264,7 @@ export interface FileRoutesByFullPath {
   '/blog/$slug': typeof BlogSlugRoute
   '/completar-cadastro/$token': typeof CompletarCadastroTokenRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/anamneses/demo': typeof AdminAnamnesesDemoRoute
   '/admin/pacientes/$id': typeof AdminPacientesIdRouteWithChildren
   '/admin/pacientes/$id/anamnese': typeof AdminPacientesIdAnamneseRoute
 }
@@ -274,7 +281,7 @@ export interface FileRoutesByTo {
   '/sobre': typeof SobreRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/admin/agenda': typeof AdminAgendaRoute
-  '/admin/anamneses': typeof AdminAnamnesesRoute
+  '/admin/anamneses': typeof AdminAnamnesesRouteWithChildren
   '/admin/aplicacoes': typeof AdminAplicacoesRoute
   '/admin/biblioteca-nutricional-demo': typeof AdminBibliotecaNutricionalDemoRoute
   '/admin/blog': typeof AdminBlogRoute
@@ -294,6 +301,7 @@ export interface FileRoutesByTo {
   '/blog/$slug': typeof BlogSlugRoute
   '/completar-cadastro/$token': typeof CompletarCadastroTokenRoute
   '/admin': typeof AdminIndexRoute
+  '/admin/anamneses/demo': typeof AdminAnamnesesDemoRoute
   '/admin/pacientes/$id': typeof AdminPacientesIdRouteWithChildren
   '/admin/pacientes/$id/anamnese': typeof AdminPacientesIdAnamneseRoute
 }
@@ -312,7 +320,7 @@ export interface FileRoutesById {
   '/sobre': typeof SobreRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/admin/agenda': typeof AdminAgendaRoute
-  '/admin/anamneses': typeof AdminAnamnesesRoute
+  '/admin/anamneses': typeof AdminAnamnesesRouteWithChildren
   '/admin/aplicacoes': typeof AdminAplicacoesRoute
   '/admin/biblioteca-nutricional-demo': typeof AdminBibliotecaNutricionalDemoRoute
   '/admin/blog': typeof AdminBlogRoute
@@ -332,6 +340,7 @@ export interface FileRoutesById {
   '/blog/$slug': typeof BlogSlugRoute
   '/completar-cadastro/$token': typeof CompletarCadastroTokenRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/anamneses/demo': typeof AdminAnamnesesDemoRoute
   '/admin/pacientes/$id': typeof AdminPacientesIdRouteWithChildren
   '/admin/pacientes/$id/anamnese': typeof AdminPacientesIdAnamneseRoute
 }
@@ -371,6 +380,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/completar-cadastro/$token'
     | '/admin/'
+    | '/admin/anamneses/demo'
     | '/admin/pacientes/$id'
     | '/admin/pacientes/$id/anamnese'
   fileRoutesByTo: FileRoutesByTo
@@ -407,6 +417,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/completar-cadastro/$token'
     | '/admin'
+    | '/admin/anamneses/demo'
     | '/admin/pacientes/$id'
     | '/admin/pacientes/$id/anamnese'
   id:
@@ -444,6 +455,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/completar-cadastro/$token'
     | '/admin/'
+    | '/admin/anamneses/demo'
     | '/admin/pacientes/$id'
     | '/admin/pacientes/$id/anamnese'
   fileRoutesById: FileRoutesById
@@ -698,6 +710,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompletarCadastroTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/anamneses/demo': {
+      id: '/admin/anamneses/demo'
+      path: '/demo'
+      fullPath: '/admin/anamneses/demo'
+      preLoaderRoute: typeof AdminAnamnesesDemoRouteImport
+      parentRoute: typeof AdminAnamnesesRoute
+    }
     '/admin/pacientes/$id': {
       id: '/admin/pacientes/$id'
       path: '/$id'
@@ -714,6 +733,18 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AdminAnamnesesRouteChildren {
+  AdminAnamnesesDemoRoute: typeof AdminAnamnesesDemoRoute
+}
+
+const AdminAnamnesesRouteChildren: AdminAnamnesesRouteChildren = {
+  AdminAnamnesesDemoRoute: AdminAnamnesesDemoRoute,
+}
+
+const AdminAnamnesesRouteWithChildren = AdminAnamnesesRoute._addFileChildren(
+  AdminAnamnesesRouteChildren,
+)
 
 interface AdminPacientesIdRouteChildren {
   AdminPacientesIdAnamneseRoute: typeof AdminPacientesIdAnamneseRoute
@@ -740,7 +771,7 @@ const AdminPacientesRouteWithChildren = AdminPacientesRoute._addFileChildren(
 
 interface AdminRouteChildren {
   AdminAgendaRoute: typeof AdminAgendaRoute
-  AdminAnamnesesRoute: typeof AdminAnamnesesRoute
+  AdminAnamnesesRoute: typeof AdminAnamnesesRouteWithChildren
   AdminAplicacoesRoute: typeof AdminAplicacoesRoute
   AdminBibliotecaNutricionalDemoRoute: typeof AdminBibliotecaNutricionalDemoRoute
   AdminBlogRoute: typeof AdminBlogRoute
@@ -761,7 +792,7 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAgendaRoute: AdminAgendaRoute,
-  AdminAnamnesesRoute: AdminAnamnesesRoute,
+  AdminAnamnesesRoute: AdminAnamnesesRouteWithChildren,
   AdminAplicacoesRoute: AdminAplicacoesRoute,
   AdminBibliotecaNutricionalDemoRoute: AdminBibliotecaNutricionalDemoRoute,
   AdminBlogRoute: AdminBlogRoute,

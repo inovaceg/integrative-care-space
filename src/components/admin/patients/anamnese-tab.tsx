@@ -5,6 +5,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { fetchAnamneseStatus, generateAnamneseLink, getAnamneseStatus, invalidateAnamneseLink, type AnamneseRecord } from '@/lib/admin/anamnese'
 import { displayAnswer, getAnamneseSections, getAnamneseConsents, hasAnswer } from '@/lib/admin/anamnese-display'
+import { analyzeAnamnese } from '@/lib/admin/anamnese-analysis'
+import { AnamneseReport } from '@/components/admin/anamnese-report'
 import type { PatientRecord } from '@/lib/admin/records'
 
 function formatDate(value: string | null | undefined) { return value ? new Date(value).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '—' }
@@ -30,7 +32,17 @@ export function AnamneseTab({ patient }: { patient: Pick<PatientRecord, 'id' | '
   function whatsapp() { if (!link) return; const phone = (patient.telefone ?? '').replace(/\D/g, ''); const number = phone.length >= 10 ? `55${phone.replace(/^55/, '')}` : ''; const text = `Olá, ${firstName(patient.nome)}. Para continuarmos seu atendimento, peço que preencha sua ficha de anamnese pelo link abaixo. As informações são confidenciais e serão utilizadas exclusivamente para seu atendimento. ${link}`; window.open(`https://wa.me/${number}?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer') }
   const sections = getAnamneseSections(answers)
 
+  const analysisResult = record?.preenchido_em ? analyzeAnamnese(answers, {
+    patientName: patient.nome,
+    completedAt: record.preenchido_em,
+    demoMode: false,
+  }) : null
+
   if (loading) return <div className="mt-4 flex items-center gap-2 text-sm text-slate-500"><Loader2 className="size-4 animate-spin" />Carregando anamnese...</div>
   return <div className="mt-4 space-y-5"><Card className="border-slate-200"><CardContent className="p-5"><div className="flex flex-col justify-between gap-4 sm:flex-row"><div><p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Status da anamnese</p><p className="mt-1 font-display text-xl font-semibold text-slate-800">{status}</p><dl className="mt-4 grid gap-2 text-sm text-slate-600"><div>Data de geração: {formatDate(record?.link_gerado_em)}</div><div>Validade: {formatDate(expiresAt)}</div><div>Preenchimento: {formatDate(record?.preenchido_em)}</div></dl></div><div className="flex flex-wrap content-start gap-2"><Button disabled={busy} onClick={() => void generate()} className="bg-[#2f8f82] hover:bg-[#26796e]"><Link2 className="mr-2 size-4" />{token ? 'Gerar novo link' : 'Gerar link da anamnese'}</Button>{link && <><Button variant="outline" disabled={busy} onClick={() => void copy()}><Copy className="mr-2 size-4" />Copiar link</Button><Button variant="outline" disabled={busy} onClick={whatsapp}><MessageCircle className="mr-2 size-4" />Enviar pelo WhatsApp</Button><Button variant="outline" asChild><a href={link} target="_blank" rel="noreferrer"><ExternalLink className="mr-2 size-4" />Abrir link</a></Button><Button variant="outline" disabled={busy} onClick={() => void invalidate()} className="text-red-600 hover:text-red-700"><XCircle className="mr-2 size-4" />Invalidar link</Button></>}</div></div>{message && <p role="status" className="mt-4 text-sm text-slate-600">{message}</p>}</CardContent></Card>
+
     {record?.preenchido_em && <><div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => window.print()}><FileText className="mr-2 size-4" />Visualizar ficha</Button><Button variant="outline" onClick={() => window.print()}><FileText className="mr-2 size-4" />Gerar PDF</Button></div>{currentRisk && <div className="flex gap-3 rounded-lg border border-red-300 bg-red-50 p-4 text-sm font-semibold text-red-800"><ShieldAlert className="size-5 shrink-0" />ATENÇÃO — NECESSITA AVALIAÇÃO PRIORITÁRIA</div>}{sections.map(([title, items]) => <DetailSection key={title} title={title} items={items} alert={title === 'Histórico de saúde' && Boolean(answers['alergias_detalhes'] || answers['anticoagulante'] === 'Sim' || answers['gestacao_amamentacao'] === 'Sim')} />)}<DetailSection title="Consentimentos e assinatura" items={getAnamneseConsents(record)} /></>}</div>
+
+    {record?.preenchido_em && analysisResult && <AnamneseReport result={analysisResult} onPrint={() => window.print()} onIncludeInPdf={() => {}} />}
+  </div>
 }
