@@ -1,4 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { NutritionistCredentialCard } from "@/components/admin/nutritionist-credential-card";
 import {
   Activity,
   BarChart3,
@@ -115,7 +116,8 @@ export function AdminHeader({ onMenu }: { onMenu: () => void }) {
 export function AdminLayout({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  return <div className="min-h-screen bg-[#f4f7f7] text-slate-900"><div className="flex min-h-screen"><AdminSidebar collapsed={collapsed} mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} onToggle={() => setCollapsed((value) => !value)} /><div className="flex min-w-0 flex-1 flex-col"><AdminHeader onMenu={() => setMobileOpen(true)} /><main className="flex-1 px-4 py-6 sm:px-8 sm:py-8"><div className="mx-auto max-w-[1480px]">{children}</div></main></div></div></div>;
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  return <div className="min-h-screen bg-[#f4f7f7] text-slate-900"><div className="flex min-h-screen"><AdminSidebar collapsed={collapsed} mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} onToggle={() => setCollapsed((value) => !value)} /><div className="flex min-w-0 flex-1 flex-col"><AdminHeader onMenu={() => setMobileOpen(true)} /><main className="flex-1 px-4 py-6 sm:px-8 sm:py-8"><div className="mx-auto max-w-[1480px]">{pathname === "/admin/planejamento-alimentar" && <NutritionistCredentialCard />}{children}</div></main></div></div></div>;
 }
 
 export function PageIntro({ eyebrow, title, description, action }: { eyebrow?: string; title: string; description: string; action?: ReactNode }) {
