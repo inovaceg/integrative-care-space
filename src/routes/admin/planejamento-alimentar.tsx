@@ -144,7 +144,7 @@ function NutritionPlanningPage() {
       return;
     }
     setError("");
-    setMessage(testMode ? "Enviando somente dados fictícios para o teste do Gemini..." : "Enviando os dados autorizados do paciente ao Gemini...");
+    setMessage(testMode ? "Testando o Gemini com dados fictícios..." : "Gerando com o Gemini. A resposta pode levar até 45 segundos...");
     setGenerating(true);
     try {
       const body = testMode
