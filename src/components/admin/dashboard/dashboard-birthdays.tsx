@@ -24,7 +24,7 @@ interface BirthdayPatient {
 }
 
 type ListedBirthdayPatient = BirthdayPatient & { nextBirthday: { month: number; day: number; isToday: boolean }; age: number }
-type MessageTemplate = 'warm' | 'short'
+type MessageTemplate = 'warm' | 'short' | 'professional' | 'celebratory' | 'gentle' | 'gratitude'
 
 function localDate(dateString: string): Date {
   const [year, month, day] = dateString.slice(0, 10).split('-').map(Number)
@@ -56,8 +56,15 @@ function normalizeWhatsAppPhone(phone: string | null): string | null {
 
 function birthdayMessage(patient: ListedBirthdayPatient, template: MessageTemplate): string {
   const firstName = patient.nome.trim().split(/\s+/)[0] || patient.nome
-  if (template === 'short') return `Olá, ${firstName}! Feliz aniversário! Desejo a você um dia muito especial e um novo ciclo cheio de saúde e alegrias. — Dr. Frederick`
-  return `Olá, ${firstName}! Hoje é um dia especial: feliz aniversário! Desejo que seu novo ciclo seja repleto de saúde, alegrias e bons momentos. Espero que aproveite muito o seu dia. Um abraço, Dr. Frederick.`
+  const messages: Record<MessageTemplate, string> = {
+    warm: `Olá, ${firstName}! Hoje é um dia especial: feliz aniversário! Desejo que seu novo ciclo seja repleto de saúde, alegrias e bons momentos. Espero que aproveite muito o seu dia. Um abraço, Dr. Frederick.`,
+    short: `Olá, ${firstName}! Feliz aniversário! Desejo a você um dia muito especial e um novo ciclo cheio de saúde e alegrias. — Dr. Frederick`,
+    professional: `Olá, ${firstName}. Parabéns pelo seu aniversário! Desejo um excelente novo ciclo, com saúde, realizações e muitos momentos felizes. Atenciosamente, Dr. Frederick.`,
+    celebratory: `Feliz aniversário, ${firstName}! Que hoje não faltem motivos para sorrir e celebrar. Muitas felicidades e um novo ano de vida maravilhoso para você! — Dr. Frederick`,
+    gentle: `Olá, ${firstName}! Passando para desejar um feliz aniversário e um dia tranquilo, feliz e cheio de carinho. Que seu novo ciclo traga muitas coisas boas. Um abraço, Dr. Frederick.`,
+    gratitude: `Parabéns pelo seu dia, ${firstName}! Que este novo ciclo venha cheio de saúde, alegrias e boas surpresas. Obrigado pela confiança. Feliz aniversário! — Dr. Frederick`,
+  }
+  return messages[template]
 }
 
 function formatBirthday(dateString: string): string {
@@ -154,7 +161,7 @@ export function DashboardBirthdays() {
             <div className="rounded-xl bg-[#f1f8f6] p-4"><p className="font-semibold text-slate-900">{selectedPatient.nome}</p><p className="mt-1 text-sm text-slate-600">Aniversário: {formatBirthday(selectedPatient.data_nascimento!)}</p><p className="text-sm text-slate-600">Telefone: {selectedPatient.telefone || 'Não cadastrado'}</p></div>
             {!selectedPatient.nextBirthday.isToday && <div role="alert" className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">A data de aniversário não é hoje. Confira a data antes de enviar para evitar uma mensagem antecipada.</div>}
             <p className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-600">Antes de contatar, confirme que a paciente aceita receber mensagens e não se opôs a esse tipo de contato. A preferência de comunicação não está registrada nos dados disponíveis neste módulo.</p>
-            <div className="grid gap-2"><Label htmlFor="birthday-message-template">Modelo da mensagem</Label><Select value={template} onValueChange={(value) => chooseTemplate(value as MessageTemplate)}><SelectTrigger id="birthday-message-template"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="warm">Acolhedor</SelectItem><SelectItem value="short">Curto</SelectItem></SelectContent></Select></div>
+            <div className="grid gap-2"><Label htmlFor="birthday-message-template">Modelo da mensagem</Label><Select value={template} onValueChange={(value) => chooseTemplate(value as MessageTemplate)}><SelectTrigger id="birthday-message-template"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="warm">Acolhedor</SelectItem><SelectItem value="short">Curto</SelectItem><SelectItem value="professional">Profissional</SelectItem><SelectItem value="celebratory">Celebrativo</SelectItem><SelectItem value="gentle">Delicado</SelectItem><SelectItem value="gratitude">Com agradecimento</SelectItem></SelectContent></Select></div>
             <div className="grid gap-2"><Label htmlFor="birthday-message">Mensagem (editável)</Label><Textarea id="birthday-message" value={message} onChange={(event) => { setMessage(event.target.value); setCopied(false) }} rows={5} maxLength={1000} /></div>
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <Button type="button" variant="outline" onClick={() => void copyMessage()} disabled={!message.trim()}><Copy className="mr-2 size-4" />{copied ? 'Mensagem copiada' : 'Copiar mensagem'}</Button>
