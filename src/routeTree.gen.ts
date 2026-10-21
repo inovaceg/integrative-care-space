@@ -33,6 +33,7 @@ import { Route as AdminFinanceiroRouteImport } from './routes/admin/financeiro'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
 import { Route as AdminMedicamentosRouteImport } from './routes/admin/medicamentos'
 import { Route as AdminPacientesRouteImport } from './routes/admin/pacientes'
+import { Route as AdminPlanejamentoAlimentarRouteImport } from './routes/admin/planejamento-alimentar'
 import { Route as AdminReceituarioRouteImport } from './routes/admin/receituario'
 import { Route as AdminRecibosRouteImport } from './routes/admin/recibos'
 import { Route as AdminRelatoriosRouteImport } from './routes/admin/relatorios'
@@ -162,6 +163,12 @@ const AdminPacientesRoute = AdminPacientesRouteImport.update({
   path: '/pacientes',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminPlanejamentoAlimentarRoute =
+  AdminPlanejamentoAlimentarRouteImport.update({
+    id: '/planejamento-alimentar',
+    path: '/planejamento-alimentar',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminReceituarioRoute = AdminReceituarioRouteImport.update({
   id: '/receituario',
   path: '/receituario',
@@ -228,6 +235,7 @@ export interface FileRoutesByFullPath {
   '/admin/login': typeof AdminLoginRoute
   '/admin/medicamentos': typeof AdminMedicamentosRoute
   '/admin/pacientes': typeof AdminPacientesRouteWithChildren
+  '/admin/planejamento-alimentar': typeof AdminPlanejamentoAlimentarRoute
   '/admin/receituario': typeof AdminReceituarioRoute
   '/admin/recibos': typeof AdminRecibosRoute
   '/admin/relatorios': typeof AdminRelatoriosRoute
@@ -261,6 +269,7 @@ export interface FileRoutesByTo {
   '/admin/login': typeof AdminLoginRoute
   '/admin/medicamentos': typeof AdminMedicamentosRoute
   '/admin/pacientes': typeof AdminPacientesRouteWithChildren
+  '/admin/planejamento-alimentar': typeof AdminPlanejamentoAlimentarRoute
   '/admin/receituario': typeof AdminReceituarioRoute
   '/admin/recibos': typeof AdminRecibosRoute
   '/admin/relatorios': typeof AdminRelatoriosRoute
@@ -296,6 +305,7 @@ export interface FileRoutesById {
   '/admin/login': typeof AdminLoginRoute
   '/admin/medicamentos': typeof AdminMedicamentosRoute
   '/admin/pacientes': typeof AdminPacientesRouteWithChildren
+  '/admin/planejamento-alimentar': typeof AdminPlanejamentoAlimentarRoute
   '/admin/receituario': typeof AdminReceituarioRoute
   '/admin/recibos': typeof AdminRecibosRoute
   '/admin/relatorios': typeof AdminRelatoriosRoute
@@ -332,6 +342,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/medicamentos'
     | '/admin/pacientes'
+    | '/admin/planejamento-alimentar'
     | '/admin/receituario'
     | '/admin/recibos'
     | '/admin/relatorios'
@@ -365,6 +376,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/medicamentos'
     | '/admin/pacientes'
+    | '/admin/planejamento-alimentar'
     | '/admin/receituario'
     | '/admin/recibos'
     | '/admin/relatorios'
@@ -399,6 +411,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/medicamentos'
     | '/admin/pacientes'
+    | '/admin/planejamento-alimentar'
     | '/admin/receituario'
     | '/admin/recibos'
     | '/admin/relatorios'
@@ -597,6 +610,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPacientesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/planejamento-alimentar': {
+      id: '/admin/planejamento-alimentar'
+      path: '/planejamento-alimentar'
+      fullPath: '/admin/planejamento-alimentar'
+      preLoaderRoute: typeof AdminPlanejamentoAlimentarRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/receituario': {
       id: '/admin/receituario'
       path: '/receituario'
@@ -691,6 +711,7 @@ interface AdminRouteChildren {
   AdminLoginRoute: typeof AdminLoginRoute
   AdminMedicamentosRoute: typeof AdminMedicamentosRoute
   AdminPacientesRoute: typeof AdminPacientesRouteWithChildren
+  AdminPlanejamentoAlimentarRoute: typeof AdminPlanejamentoAlimentarRoute
   AdminReceituarioRoute: typeof AdminReceituarioRoute
   AdminRecibosRoute: typeof AdminRecibosRoute
   AdminRelatoriosRoute: typeof AdminRelatoriosRoute
@@ -709,6 +730,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminLoginRoute: AdminLoginRoute,
   AdminMedicamentosRoute: AdminMedicamentosRoute,
   AdminPacientesRoute: AdminPacientesRouteWithChildren,
+  AdminPlanejamentoAlimentarRoute: AdminPlanejamentoAlimentarRoute,
   AdminReceituarioRoute: AdminReceituarioRoute,
   AdminRecibosRoute: AdminRecibosRoute,
   AdminRelatoriosRoute: AdminRelatoriosRoute,
