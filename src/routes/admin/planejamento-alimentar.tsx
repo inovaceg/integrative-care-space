@@ -44,6 +44,7 @@ function NutritionPlanningPage() {
   const [duration, setDuration] = useState("1");
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [syntheticTest, setSyntheticTest] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -62,7 +63,7 @@ function NutritionPlanningPage() {
     return found;
   }, [currentEvaluation, profile.height_cm, selected]);
 
-  function selectPlan(plan: Plan) { setActivePlan(plan); setContentText(JSON.stringify(plan.plan_content, null, 2)); setDuration(String(plan.duration_days)); }
+  function selectPlan(plan: Plan) { setSyntheticTest(false); setActivePlan(plan); setContentText(JSON.stringify(plan.plan_content, null, 2)); setDuration(String(plan.duration_days)); }
 
   useEffect(() => {
     if (authLoading || !user) return;
@@ -72,7 +73,8 @@ function NutritionPlanningPage() {
   }, [authLoading, user]);
 
   useEffect(() => {
-    if (!patientId || !user) { setEvaluations([]); setApplications([]); setAnamnesis(null); setProfile({ ...emptyProfile }); setPlans([]); setActivePlan(null); return; }
+    if (!patientId || !user) { setSyntheticTest(false); setEvaluations([]); setApplications([]); setAnamnesis(null); setProfile({ ...emptyProfile }); setPlans([]); setActivePlan(null); return; }
+    setSyntheticTest(false);
     let active = true;
     setLoading(true); setError(""); setActivePlan(null); setContentText("");
     void Promise.all([
@@ -109,6 +111,7 @@ function NutritionPlanningPage() {
   const setField = (key: keyof Profile, value: string | boolean) => setProfile((old) => ({ ...old, [key]: value }));
 
   async function savePlan(status: "draft" | "pending_review" = "draft", contentOverride?: PlanContent, modelName?: string) {
+    if (syntheticTest) { setError("O resultado do teste é fictício e não pode ser salvo como plano de paciente."); return; }
     if (!user || !patientId || !selected) return;
     let parsed: PlanContent;
     try { parsed = contentOverride ?? JSON.parse(contentText) as PlanContent; if (!parsed || !Array.isArray(parsed.meals)) throw new Error(); }
@@ -135,16 +138,12 @@ function NutritionPlanningPage() {
   }
 
   async function generatePlan() {
-    if (!patientId || !user) return;
-    if (profile.goal.trim().length < 3) {
-      setError("Preencha um objetivo com pelo menos 3 caracteres antes de gerar a proposta.");
-      return;
-    }
+    if (!user) return;
     setError("");
-    setMessage("Iniciando geração do planejamento...");
+    setMessage("Enviando somente dados fictícios para o teste do Gemini...");
     setGenerating(true);
     try {
-      const { data, error: functionError } = await supabase.functions.invoke("nutrition-planning", { body: { patient_id: patientId, goal: profile.goal.trim(), duration_days: Number(duration), desired_meals: profile.desired_meals ? Number(profile.desired_meals) : null, nutritional_profile: profile } });
+      const { data, error: functionError } = await supabase.functions.invoke("nutrition-planning", { body: { test_mode: true } });
       if (functionError || !data?.plan) {
         let responseError: string | undefined;
         const response = functionError?.context as Response | undefined;
@@ -152,16 +151,15 @@ function NutritionPlanningPage() {
           const body = await response.json().catch(() => null) as { error?: string } | null;
           responseError = body?.error;
         }
-        setError(data?.error ?? responseError ?? functionError?.message ?? "Não foi possível gerar a proposta. Confira a configuração do serviço e tente novamente.");
+        setError(data?.error ?? responseError ?? functionError?.message ?? "Não foi possível testar a integração Gemini.");
         setMessage("");
         return;
       }
-      const nextContent = data.plan as PlanContent;
-      setContentText(JSON.stringify(nextContent, null, 2));
-      setMessage("Proposta gerada. Revise e edite todo o conteúdo antes de salvar.");
-      await savePlan("draft", nextContent, data.model ?? null);
+      setSyntheticTest(true);
+      setContentText(JSON.stringify(data.plan as PlanContent, null, 2));
+      setMessage("Teste Gemini concluído com dados inteiramente fictícios. Este resultado não foi salvo no paciente.");
     } catch {
-      setError("Ocorreu um erro ao chamar o serviço de geração. Tente novamente.");
+      setError("Ocorreu um erro ao testar o serviço Gemini.");
       setMessage("");
     } finally {
       setGenerating(false);
@@ -181,6 +179,7 @@ function NutritionPlanningPage() {
   }
 
   async function exportPdf(_draftMark?: boolean) {
+    if (syntheticTest) { setError("O resultado do teste é fictício e não pode ser exportado como documento de paciente."); return; }
     if (!selected) return;
     let plan: PlanContent;
     try { plan = JSON.parse(contentText) as PlanContent; } catch { setError("Revise o conteúdo: não foi possível interpretar o planejamento para o PDF."); return; }
@@ -227,12 +226,12 @@ function NutritionPlanningPage() {
         <div><Label>Objetivo da proposta</Label><Input className="mt-1" value={profile.goal} onChange={(e) => setField("goal", e.target.value)} placeholder="Ex.: organizar rotina alimentar" /></div>
         <div><Label>Período</Label><Select value={duration} onValueChange={setDuration}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="1">1 dia</SelectItem><SelectItem value="3">3 dias</SelectItem><SelectItem value="7">7 dias</SelectItem></SelectContent></Select></div>
       </div>
-      <p className="mt-4 text-sm text-slate-500">A geração só ocorre após sua solicitação. Não define metas calóricas nem substitui avaliação de nutricionista.</p>
-      <Button type="button" className="mt-4" onClick={() => void generatePlan()} disabled={generating || saving}><Sparkles className="mr-2 size-4" />{generating ? "Gerando proposta..." : "Gerar planejamento com IA"}</Button>
-      {message && <p className="mt-3 text-sm text-[#26786e]" role="status">{message}</p>}
+      <p className="mt-4 text-sm text-amber-800">A geração com dados reais está bloqueada enquanto a privacidade do serviço gratuito não for validada. Este teste envia somente dados fictícios e o resultado não pode ser salvo nem exportado como plano de paciente.</p>
+      <Button type="button" className="mt-4" onClick={() => void generatePlan()} disabled={generating || saving}><Sparkles className="mr-2 size-4" />{generating ? "Testando Gemini..." : "Testar Gemini com dados fictícios"}</Button>
+      {message && <p className="mt-3 text-sm text-[#26786e]" role="status">{message}</p>
       {error && <p className="mt-3 text-sm text-red-600" role="alert">{error}</p>}
     </SectionCard>
-    {(activePlan || contentText) && <SectionCard title="7. Proposta editável"><p className="mb-3 text-sm text-slate-500">Edite os dados estruturados em JSON para ajustar refeições, alimentos, porções, alternativas e observações. A prévia abaixo é organizada por refeição.</p><Textarea className="min-h-[24rem] font-mono text-xs" value={contentText} onChange={(event) => setContentText(event.target.value)} disabled={activePlan?.status === "approved"} /><NutritionPlanPreview raw={contentText} /><div className="mt-4 flex flex-wrap gap-2"><Button type="button" onClick={() => void savePlan("draft")} disabled={saving || activePlan?.status === "approved"}>{saving ? "Salvando..." : "Salvar nova versão"}</Button><Button type="button" variant="outline" onClick={() => void savePlan("pending_review")} disabled={saving || activePlan?.status === "approved"}>Enviar para revisão</Button><Button type="button" variant="outline" onClick={() => void exportPdf()}>Exportar PDF</Button>{activePlan?.status === "pending_review" && <Button type="button" onClick={() => void approvePlan()} disabled={saving}>Aprovar como nutricionista</Button>}</div>{activePlan?.status === "approved" && <p className="mt-3 text-sm text-amber-800">Versão aprovada protegida contra edição. Gere outro plano para criar uma proposta nova.</p>}</SectionCard>}
+    {(activePlan || contentText) && <SectionCard title={syntheticTest ? "Teste Gemini — somente dados fictícios" : "7. Proposta editável"}><p className="mb-3 text-sm text-slate-500">Edite os dados estruturados em JSON para ajustar refeições, alimentos, porções, alternativas e observações. A prévia abaixo é organizada por refeição.</p><Textarea className="min-h-[24rem] font-mono text-xs" value={contentText} onChange={(event) => setContentText(event.target.value)} disabled={syntheticTest || activePlan?.status === "approved"} /><NutritionPlanPreview raw={contentText} /><div className="mt-4 flex flex-wrap gap-2"><Button type="button" onClick={() => void savePlan("draft")} disabled={saving || syntheticTest || activePlan?.status === "approved"}>{saving ? "Salvando..." : "Salvar nova versão"}</Button><Button type="button" variant="outline" onClick={() => void savePlan("pending_review")} disabled={saving || syntheticTest || activePlan?.status === "approved"}>Enviar para revisão</Button><Button type="button" variant="outline" onClick={() => void exportPdf()} disabled={syntheticTest}>Exportar PDF</Button>{!syntheticTest && activePlan?.status === "pending_review" && <Button type="button" onClick={() => void approvePlan()} disabled={saving}>Aprovar como nutricionista</Button>}</div>{syntheticTest && <p className="mt-3 text-sm font-medium text-amber-800">Conteúdo fictício de teste. Não salve, aprove ou use como recomendação clínica.</p>}{!syntheticTest && activePlan?.status === "approved" && <p className="mt-3 text-sm text-amber-800">Versão aprovada protegida contra edição. Gere outro plano para criar uma proposta nova.</p>}</SectionCard>}
     <SectionCard title="8. Histórico de planejamentos"><div className="space-y-3">{plans.length ? plans.map((plan) => <button key={plan.id} type="button" onClick={() => void loadVersions(plan)} className={`flex w-full flex-wrap items-center justify-between gap-3 rounded-xl border p-4 text-left ${activePlan?.id === plan.id ? "border-[#2f8f82] bg-[#f2f9f7]" : "border-slate-200 bg-white"}`}><span><strong>{plan.goal}</strong><span className="ml-2 rounded-full bg-slate-100 px-2 py-1 text-xs">{statusNames[plan.status] ?? plan.status}</span><span className="mt-1 block text-xs text-slate-500">{new Date(plan.created_at).toLocaleString("pt-BR")} · {plan.duration_days} dia(s) · {versions.length} versão(ões)</span></span><span className="text-sm text-[#26786e]">Ver versões</span></button>) : <div className="flex items-center gap-3 text-sm text-slate-500"><ClipboardList className="size-5" />Nenhum planejamento salvo para este paciente.</div>}{versions.length > 0 && <div className="border-t pt-4"><h3 className="font-semibold">Versões do plano selecionado</h3><div className="mt-2 flex flex-wrap gap-2">{versions.map((version) => <Button key={version.id} type="button" size="sm" variant="outline" onClick={() => setContentText(JSON.stringify(version.plan_content,null,2))}>v{version.version_number} · {new Date(version.created_at).toLocaleDateString("pt-BR")}</Button>)}</div></div>}</div></SectionCard>
     </>}
   </div></AdminLayout>;
