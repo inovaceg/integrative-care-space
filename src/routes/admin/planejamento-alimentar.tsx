@@ -145,7 +145,7 @@ function NutritionPlanningPage() {
       const failed = evaluationResult.error || applicationResult.error || anamnesisResult.error || profileResult.error || planResult.error;
       if (failed) setError("Não foi possível carregar todos os dados. Confira as permissões e tente novamente.");
       const evaluationRows = (evaluationResult.data as Evaluation[] | null) ?? [];
-      const applicationRows = (applicationResult.data as Application[] | null) ?? [];
+      const applicationRows = ((applicationResult.data as Application[] | null) ?? []).slice(0, 1);
       const list = (planResult.data as Plan[] | null) ?? [];
       const savedDraft = readPlanningDraft(user.id);
       const resume = savedDraft.patientId === patientId;
