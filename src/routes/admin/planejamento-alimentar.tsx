@@ -92,6 +92,13 @@ function NutritionPlanningPage() {
     return () => { active = false; };
   }, [patientId, user]);
 
+  useEffect(() => {
+    const latestWeight = evaluations[0]?.weight_kg;
+    if (latestWeight !== null && latestWeight !== undefined) {
+      setProfile((current) => ({ ...current, reference_weight_kg: String(latestWeight) }));
+    }
+  }, [evaluations]);
+
   async function saveProfile(): Promise<boolean> {
     if (!user || !patientId) return false;
     setSaving(true); setError(""); setMessage("");
