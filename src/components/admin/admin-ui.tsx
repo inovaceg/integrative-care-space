@@ -124,6 +124,49 @@ export function AdminLayout({ children }: { children: ReactNode }) {
       window.sessionStorage.setItem("admin:last-page", pathname);
     }
   }, [pathname]);
+  useEffect(() => {
+    const key = `admin:scroll:${pathname}`;
+    const savedPosition = Number(window.sessionStorage.getItem(key) ?? 0);
+    let restored = savedPosition <= 0;
+    let userMoved = false;
+    const observer = new ResizeObserver(() => restorePosition());
+
+    function savePosition() {
+      if (restored) window.sessionStorage.setItem(key, String(window.scrollY));
+    }
+
+    function restorePosition() {
+      if (restored || userMoved) return;
+      if (document.documentElement.scrollHeight >= savedPosition + window.innerHeight) {
+        window.scrollTo(0, savedPosition);
+        restored = true;
+        observer.disconnect();
+      }
+    }
+
+    function markUserMoved() {
+      userMoved = true;
+      restored = true;
+      observer.disconnect();
+    }
+
+    window.addEventListener("scroll", savePosition, { passive: true });
+    window.addEventListener("wheel", markUserMoved, { passive: true, once: true });
+    window.addEventListener("touchstart", markUserMoved, { passive: true, once: true });
+    document.addEventListener("click", savePosition, true);
+    if (!restored) {
+      observer.observe(document.documentElement);
+      requestAnimationFrame(restorePosition);
+    }
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("scroll", savePosition);
+      window.removeEventListener("wheel", markUserMoved);
+      window.removeEventListener("touchstart", markUserMoved);
+      document.removeEventListener("click", savePosition, true);
+    };
+  }, [pathname]);
   return <div className="min-h-screen bg-[#f4f7f7] text-slate-900"><div className="flex min-h-screen"><AdminSidebar collapsed={collapsed} mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} onToggle={() => setCollapsed((value) => !value)} /><div className="flex min-w-0 flex-1 flex-col"><AdminHeader onMenu={() => setMobileOpen(true)} /><main className="flex-1 px-4 py-6 sm:px-8 sm:py-8"><div className="mx-auto max-w-[1480px]">{pathname === "/admin/planejamento-alimentar" && <NutritionistCredentialCard />}{children}</div></main></div></div></div>;
 }
 
