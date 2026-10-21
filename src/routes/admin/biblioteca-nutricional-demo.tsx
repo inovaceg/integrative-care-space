@@ -33,6 +33,7 @@ function NutritionLibraryDemoPage() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [csvFile, setCsvFile] = useState("");
   const [csvParsed, setCsvParsed] = useState<ReturnType<typeof parseDemoFoodCsv> | null>(null);
+  const [csvImportMessage, setCsvImportMessage] = useState("");
   const [mealName, setMealName] = useState("");
   const [editingMealId, setEditingMealId] = useState<string | null>(null);
   const [mealCategory, setMealCategory] = useState("Lanche");
@@ -93,6 +94,12 @@ function NutritionLibraryDemoPage() {
     reader.onload = () => setCsvParsed(parseDemoFoodCsv(String(reader.result ?? "")));
     reader.readAsText(file);
   }
+  async function loadBundledTacoFile() {
+    const response = await fetch("/taco_importacao_biblioteca_rascunhos.csv");
+    if (!response.ok) return;
+    setCsvFile("taco_importacao_biblioteca_rascunhos.csv");
+    setCsvParsed(parseDemoFoodCsv(await response.text()));
+  }
   function importCsvRows() {
     if (!csvParsed) return;
     const blockedLines = new Set(csvParsed.errors.map((error) => Number(error.match(/Linha (\d+)/)?.[1])).filter(Number.isFinite));
@@ -101,10 +108,16 @@ function NutritionLibraryDemoPage() {
     csvParsed.rows.forEach((row, index) => {
       const rowName = row.nome ?? "";
       if (blockedLines.has(index + 2) || duplicatedNames.has(normalized(rowName)) || uniqueNameDuplicate(rowName)) return;
-      const numeric = (key: string) => Number((row[key] ?? "").replace(",", "."));
-      toAdd.push({ id: `csv-${crypto.randomUUID()}`, name: (row.nome ?? "").trim(), category: (row.categoria ?? "").trim(), kcal100g: numeric("calorias_kcal_100g"), protein100g: numeric("proteina_g_100g"), carbs100g: numeric("carboidrato_g_100g"), fat100g: numeric("gordura_g_100g"), householdMeasure: row.medida_caseira || "Não informada", allergens: (row.alergenicos || "").split(/[|;]/).map((value) => value.trim().toLocaleLowerCase("pt-BR")).filter((value) => value && value !== "nenhum"), allergenInfoKnown: Boolean(row.alergenicos?.trim()), restrictions: [], gluten: (row.gluten_status as DemoFood["gluten"]) || "unknown", lactose: (row.lactose_status as DemoFood["lactose"]) || "unknown", source: (row.fonte ?? "").trim(), license: (row.licenca ?? "").trim(), status: "draft", demoOnly: true });
+      const numeric = (key: string) => Number((row[key] ?? "0").replace(",", "."));
+      const glutenValue = (row.gluten_status ?? "").toLocaleLowerCase("pt-BR");
+      const lactoseValue = (row.lactose_status ?? "").toLocaleLowerCase("pt-BR");
+      const gluten: DemoFood["gluten"] = glutenValue === "free" || glutenValue === "livre" || glutenValue === "não" ? "free" : glutenValue === "contains" || glutenValue === "contém" || glutenValue === "sim" ? "contains" : "unknown";
+      const lactose: DemoFood["lactose"] = lactoseValue === "free" || lactoseValue === "livre" || lactoseValue === "não" ? "free" : lactoseValue === "contains" || lactoseValue === "contém" || lactoseValue === "sim" ? "contains" : "unknown";
+      const missing = (row.nutrition_missing ?? "").split("|").filter(Boolean);
+      toAdd.push({ id: `csv-${crypto.randomUUID()}`, name: (row.nome ?? "").trim(), category: (row.categoria ?? "TACO importado").trim(), kcal100g: numeric("calorias_kcal_100g"), protein100g: numeric("proteina_g_100g"), carbs100g: numeric("carboidrato_g_100g"), fat100g: numeric("gordura_g_100g"), fiber100g: numeric("fibras_g_100g"), calciumMg100g: numeric("calcio_mg_100g"), ironMg100g: numeric("ferro_mg_100g"), sodiumMg100g: numeric("sodio_mg_100g"), potassiumMg100g: numeric("potassio_mg_100g"), nutritionMissing: missing, importCode: row.codigo_taco, importNotes: row.observacoes_importacao, householdMeasure: row.medida_caseira || "Não informada", allergens: (row.alergenicos || "").split(/[|;]/).map((value) => value.trim().toLocaleLowerCase("pt-BR")).filter((value) => value && value !== "nenhum"), allergenInfoKnown: Boolean(row.alergenicos?.trim()) && row.status_alergenicos !== "desconhecido", restrictions: [], gluten, lactose, source: (row.fonte ?? "").trim(), license: (row.licenca ?? "").trim(), status: "draft", demoOnly: true });
     });
     setFoods((current) => [...current, ...toAdd]);
+    setCsvImportMessage(`${toAdd.length} alimento(s) importado(s) como rascunho local${csvParsed.rows.length > toAdd.length ? `; ${csvParsed.rows.length - toAdd.length} ignorado(s) por duplicidade ou erro.` : "."}`);
     setCsvParsed(null);
     setCsvFile("");
   }
@@ -185,11 +198,13 @@ function NutritionLibraryDemoPage() {
             {uniqueNameDuplicate(foodForm.name, editingFoodId) && <p className="text-sm text-red-700 sm:col-span-2 lg:col-span-4">Já existe um alimento local com esse nome.</p>}
           </form>
           <div className="grid gap-3 rounded-xl border p-4 md:grid-cols-[1fr_220px]">
-            <div><Label>Importar CSV para pré-visualização</Label><Input className="mt-1" type="file" accept=".csv,text/csv" onChange={(event) => handleCsvFile(event.target.files?.[0])} /></div>
-            <p className="self-end text-xs text-slate-500">Importação somente local; novas linhas entram como rascunho de demonstração.</p>
+            <div><Label>Importar CSV para pré-visualização</Label><Input className="mt-1" type="file" accept=".csv,text/csv" onChange={(event) => handleCsvFile(event.target.files?.[0])} /><Button type="button" className="mt-2" variant="outline" onClick={loadBundledTacoFile}>Carregar planilha TACO anexada</Button></div>
+            <p className="self-end text-xs text-slate-500">Importação somente neste navegador; novas linhas entram como rascunho. A planilha TACO fica disponível para pré-visualizar e importar aqui.</p>
             {csvFile && <p className="text-sm md:col-span-2">Arquivo: {csvFile}</p>}
+            {csvImportMessage && <p role="status" className="rounded-lg bg-green-50 p-3 text-sm text-green-800 md:col-span-2">{csvImportMessage}</p>}
             {csvParsed && <div className="space-y-3 md:col-span-2">
-              {csvParsed.errors.length > 0 && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-800">{csvParsed.errors.map((error) => <p key={error}>{error}</p>)}</div>}
+              <p className="text-sm">Prévia: {csvParsed.rows.length} linhas · {csvParsed.errors.length} erro(s) · {csvParsed.duplicates.length} duplicidade(s) no arquivo.</p>
+              {csvParsed.errors.length > 0 && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-800">{csvParsed.errors.map((error) => <p key={error}>{error}</p>)}</div>
               {csvParsed.duplicates.length > 0 && <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">Duplicidades no arquivo: {csvParsed.duplicates.map((item) => <p key={item}>{item}</p>)}</div>}
               {existingCsvDuplicates.length > 0 && <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">Já existem no catálogo local (serão ignorados): {[...new Set(existingCsvDuplicates)].map((name) => <p key={name}>{name}</p>)}</div>}
               <div className="max-h-56 overflow-auto rounded-lg border"><table className="w-full text-left text-xs"><thead><tr>{Object.keys(csvParsed.rows[0] ?? {}).map((header) => <th className="p-2" key={header}>{header}</th>)}</tr></thead><tbody>{csvParsed.rows.map((row, index) => <tr className="border-t" key={index}>{Object.values(row).map((value, i) => <td className="p-2" key={i}>{value}</td>)}</tr>)}</tbody></table></div>
@@ -200,7 +215,7 @@ function NutritionLibraryDemoPage() {
             <div className="relative min-w-56 flex-1"><Search className="absolute left-3 top-3 size-4 text-slate-400" /><Input className="pl-9" value={foodQuery} onChange={(event) => setFoodQuery(event.target.value)} placeholder="Pesquisar alimento" /></div>
             <select className="h-10 rounded-md border bg-background px-3 text-sm" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}><option value="all">Todas as categorias</option>{categories.map((category) => <option key={category}>{category}</option>)}</select>
           </div>
-          <div className="space-y-3">{filteredFoods.map((food) => <article key={food.id} className="rounded-xl border p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="font-semibold">{food.name}</h3><p className="text-xs text-slate-500">{food.category} · {food.status === "draft" ? "Rascunho demo" : "Validação demo — não verificada"}</p></div><div className="flex gap-2"><Button size="sm" variant="outline" onClick={() => editFood(food)}>Editar</Button>{food.status === "draft" && <Button size="sm" variant="outline" onClick={() => setFoods((current) => current.map((item) => item.id === food.id ? { ...item, status: "demo_validated" } : item))}>Marcar validado (demo)</Button>}</div></div><div className="mt-3 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4"><span>{food.kcal100g} kcal/100 g</span><span>P {food.protein100g} g</span><span>C {food.carbs100g} g</span><span>G {food.fat100g} g</span></div><p className="mt-2 text-xs text-slate-500">Medida: {food.householdMeasure} · Alergênicos: {food.allergens.join(", ") || "não informados no dado demo"} · Glúten: {food.gluten} · Lactose: {food.lactose}</p><p className="mt-1 text-xs text-amber-700">{food.source} · {food.license} · Dado fictício; não usar clinicamente.</p></article>)}{!filteredFoods.length && <p className="text-sm text-slate-500">Nenhum alimento encontrado.</p>}</div>
+          <div className="space-y-3">{filteredFoods.map((food) => <article key={food.id} className="rounded-xl border p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="font-semibold">{food.name}</h3><p className="text-xs text-slate-500">{food.category} · {food.status === "draft" ? "Rascunho demo" : "Validação demo — não verificada"}{food.importCode ? ` · Código TACO ${food.importCode}` : ""}</p></div><div className="flex gap-2"><Button size="sm" variant="outline" onClick={() => editFood(food)}>Editar</Button>{food.status === "draft" && <Button size="sm" variant="outline" disabled={!food.allergenInfoKnown || Boolean(food.nutritionMissing?.some((key) => ["energia_kcal_100g", "proteinas_g_100g", "carboidratos_g_100g", "gorduras_g_100g"].includes(key)))} onClick={() => setFoods((current) => current.map((item) => item.id === food.id ? { ...item, status: "demo_validated" } : item))}>Marcar validado (demo)</Button>}</div></div><div className="mt-3 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4"><span>{food.kcal100g} kcal/100 g</span><span>P {food.protein100g} g</span><span>C {food.carbs100g} g</span><span>G {food.nutritionMissing?.includes("gorduras_g_100g") ? "não informado" : food.fat100g} g</span></div>{food.fiber100g !== undefined && <p className="mt-2 text-xs text-slate-600">Fibra {food.nutritionMissing?.includes("fibras_g_100g") ? "não informada" : `${food.fiber100g} g`} · Cálcio {food.nutritionMissing?.includes("calcio_mg_100g") ? "não informado" : `${food.calciumMg100g} mg`} · Ferro {food.nutritionMissing?.includes("ferro_mg_100g") ? "não informado" : `${food.ironMg100g} mg`} · Sódio {food.nutritionMissing?.includes("sodio_mg_100g") ? "não informado" : `${food.sodiumMg100g} mg`} · Potássio {food.nutritionMissing?.includes("potassio_mg_100g") ? "não informado" : `${food.potassiumMg100g} mg`} / 100 g</p>}<p className="mt-2 text-xs text-slate-500">Medida: {food.householdMeasure} · Alergênicos: {food.allergens.join(", ") || "não informados"} · Glúten: {food.gluten} · Lactose: {food.lactose}</p><p className="mt-1 text-xs text-amber-700">{food.source} · {food.license} · {food.importNotes ? `${food.importNotes} · ` : ""}Dado demonstrativo; requer validação independente, inclusive origem/licença e alergênicos.</p></article>)}{!filteredFoods.length && <p className="text-sm text-slate-500">Nenhum alimento encontrado.</p>}</div>
         </TabsContent>
         <TabsContent value="meals" className="space-y-5 pt-4">
           <form onSubmit={saveMeal} className="grid gap-3 rounded-xl border p-4 md:grid-cols-2">

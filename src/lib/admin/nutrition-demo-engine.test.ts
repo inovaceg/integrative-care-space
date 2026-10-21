@@ -35,6 +35,7 @@ describe("motor local de demonstração nutricional", () => {
     if (!food) return;
     expect(isDemoFoodAllowed({ ...food, status: "draft" }, [], [])).toBe(false);
     expect(isDemoFoodAllowed({ ...food, allergenInfoKnown: false }, [], [])).toBe(false);
+    expect(isDemoFoodAllowed({ ...food, nutritionMissing: ["gorduras_g_100g"] }, [], [])).toBe(false);
     expect(isDemoFoodAllowed(food, ["peixe"], [])).toBe(false);
     expect(isDemoFoodAllowed(food, [], ["sem glúten"])).toBe(true);
   });
@@ -73,5 +74,16 @@ describe("motor local de demonstração nutricional", () => {
     expect(parseDemoFoodCsv("nome,categoria\nItem,Cereais").errors[0]).toContain("Colunas obrigatórias ausentes");
     const invalidCsv = csv.replace(",100,5,20,2,", ",-10,5,20,2,");
     expect(parseDemoFoodCsv(invalidCsv).errors.some((error) => error.includes("não negativo"))).toBe(true);
+  });
+
+  test("importa o formato TACO com separador ponto e vírgula e preserva valores ausentes", () => {
+    const taco = "codigo_taco;nome;categoria;energia_kcal_100g;proteinas_g_100g;carboidratos_g_100g;gorduras_g_100g;fibras_g_100g;calcio_mg_100g;ferro_mg_100g;sodio_mg_100g;potassio_mg_100g;medidas_caseiras;alergenicos;status_alergenicos;contem_gluten;contem_lactose;fonte;licenca;status_validacao;observacoes_importacao\n1;Item TACO;;100;5;20;;3;4;0.5;8;90;;;desconhecido;desconhecido;desconhecido;TACO; ;rascunho;gorduras_g_100g: Tr";
+    const parsed = parseDemoFoodCsv(taco);
+    expect(parsed.errors).toHaveLength(0);
+    expect(parsed.rows[0]?.nome).toBe("Item TACO");
+    expect(parsed.rows[0]?.categoria).toBe("TACO importado");
+    expect(parsed.rows[0]?.calorias_kcal_100g).toBe("100");
+    expect(parsed.rows[0]?.fibras_g_100g).toBe("3");
+    expect(parsed.rows[0]?.nutrition_missing).toContain("gorduras_g_100g");
   });
 });

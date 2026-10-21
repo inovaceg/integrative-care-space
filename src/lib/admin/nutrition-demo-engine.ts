@@ -16,6 +16,14 @@ export type DemoFood = {
   license: string;
   status: "draft" | "demo_validated";
   demoOnly: true;
+  fiber100g?: number | null;
+  calciumMg100g?: number | null;
+  ironMg100g?: number | null;
+  sodiumMg100g?: number | null;
+  potassiumMg100g?: number | null;
+  nutritionMissing?: string[];
+  importCode?: string;
+  importNotes?: string;
 };
 
 export type DemoItem = { foodId: string; grams: number; alternatives: string[] };
@@ -88,9 +96,10 @@ function totalsForItems(items: DemoItem[], foods: DemoFood[]): Nutrients {
 }
 
 const roundNutrients = (value: Nutrients): Nutrients => ({ kcal: Math.round(value.kcal), protein: Math.round(value.protein * 10) / 10, carbs: Math.round(value.carbs * 10) / 10, fat: Math.round(value.fat * 10) / 10 });
+const hasCompleteMacros = (food: DemoFood) => !food.nutritionMissing?.some((key) => ["energia_kcal_100g", "proteinas_g_100g", "carboidratos_g_100g", "gorduras_g_100g"].includes(key));
 
 export function isDemoFoodAllowed(food: DemoFood, allergies: string[], restrictions: string[]): boolean {
-  return food.status === "demo_validated" && food.demoOnly && food.allergenInfoKnown !== false && !matchesRestriction(food, allergies, restrictions);
+  return food.status === "demo_validated" && food.demoOnly && food.allergenInfoKnown !== false && hasCompleteMacros(food) && !matchesRestriction(food, allergies, restrictions);
 }
 
 export function recalculateDemoMeal(meal: DemoMealTemplate, foods: DemoFood[]): DemoMeal {
@@ -113,7 +122,7 @@ export function generateDemoPlan(input: DemoGenerationInput, foods: DemoFood[] =
   const targetKcal = input.targetKcal;
   const targetProtein = input.targetProtein;
 
-  const usableFoods = foods.filter((food) => food.status === "demo_validated" && food.demoOnly);
+  const usableFoods = foods.filter((food) => food.status === "demo_validated" && food.demoOnly && hasCompleteMacros(food));
   const safeTemplates = templates.filter((template) => template.items.length > 0 && template.items.every((item) => {
     const food = usableFoods.find((candidate) => candidate.id === item.foodId);
     return Boolean(food && food.allergenInfoKnown !== false && !matchesRestriction(food, input.allergies, input.restrictions));
@@ -164,19 +173,35 @@ export function parseDemoFoodCsv(text: string): { rows: Array<Record<string, str
     return cells;
   };
   const headers = parseLine(headerLine).map((header) => header.toLocaleLowerCase("pt-BR"));
-  const required = ["nome", "categoria", "calorias_kcal_100g", "proteina_g_100g", "carboidrato_g_100g", "gordura_g_100g", "alergenicos", "fonte", "licenca"];
+  const isTaco = headers.includes("codigo_taco") && headers.includes("energia_kcal_100g");
+  const required = isTaco
+    ? ["nome", "energia_kcal_100g", "proteinas_g_100g", "carboidratos_g_100g"]
+    : ["nome", "categoria", "calorias_kcal_100g", "proteina_g_100g", "carboidrato_g_100g", "gordura_g_100g", "alergenicos", "fonte", "licenca"];
   const missing = required.filter((header) => !headers.includes(header));
   if (missing.length) return { rows: [], errors: [`Colunas obrigatórias ausentes: ${missing.join(", ")}.`], duplicates: [] };
-  const rows = lines.slice(1).map((line) => Object.fromEntries(headers.map((header, index) => [header, parseLine(line)[index] ?? ""])));
+  const rawRows = lines.slice(1).map((line) => Object.fromEntries(headers.map((header, index) => [header, parseLine(line)[index] ?? ""])));
+  const rows = isTaco ? rawRows.map((raw) => {
+    const nutrientKeys = ["energia_kcal_100g", "proteinas_g_100g", "carboidratos_g_100g", "gorduras_g_100g", "fibras_g_100g", "calcio_mg_100g", "ferro_mg_100g", "sodio_mg_100g", "potassio_mg_100g"];
+    const mapped: Record<string, string> = { ...raw, categoria: raw.categoria || "TACO importado", calorias_kcal_100g: raw.energia_kcal_100g ?? "", proteina_g_100g: raw.proteinas_g_100g ?? "", carboidrato_g_100g: raw.carboidratos_g_100g ?? "", gordura_g_100g: raw.gorduras_g_100g ?? "", alergenicos: raw.alergenicos || "", fonte: raw.fonte || "TACO — origem declarada no arquivo recebido", licenca: raw.licenca || "Não informada no arquivo — manter como rascunho", medida_caseira: raw.medidas_caseiras || "", gluten_status: raw.contem_gluten || "unknown", lactose_status: raw.contem_lactose || "unknown" };
+    mapped.nutrition_missing = nutrientKeys.filter((key) => {
+      const value = raw[key]?.trim() ?? "";
+      return !value || !Number.isFinite(Number(value.replace(",", "."))) || Number(value.replace(",", ".")) < 0;
+    }).join("|");
+    for (const key of nutrientKeys) {
+      const value = raw[key]?.trim() ?? "";
+      if (!value || !Number.isFinite(Number(value.replace(",", "."))) || Number(value.replace(",", ".")) < 0) raw[key] = "0";
+    }
+    return mapped;
+  }) : rawRows;
   const errors: string[] = [];
   rows.forEach((row, index) => {
     const line = index + 2;
-    if (!row.nome?.trim() || !row.categoria?.trim() || !row.fonte?.trim() || !row.licenca?.trim()) errors.push(`Linha ${line}: nome, categoria, fonte e licença são obrigatórios.`);
-    for (const key of ["calorias_kcal_100g", "proteina_g_100g", "carboidrato_g_100g", "gordura_g_100g"]) {
+    if (!row.nome?.trim() || (!isTaco && (!row.categoria?.trim() || !row.fonte?.trim() || !row.licenca?.trim()))) errors.push(`Linha ${line}: nome, categoria, fonte e licença são obrigatórios.`);
+    const requiredValues = isTaco ? ["calorias_kcal_100g", "proteina_g_100g", "carboidrato_g_100g"] : ["calorias_kcal_100g", "proteina_g_100g", "carboidrato_g_100g", "gordura_g_100g"];
+    for (const key of requiredValues) {
       const value = Number(row[key]?.replace(",", "."));
       if (row[key]?.trim() === "" || !Number.isFinite(value) || value < 0) errors.push(`Linha ${line}: ${key} deve ser um número não negativo.`);
     }
-    if (!row.licenca?.trim()) errors.push(`Linha ${line}: licença/condição de uso não informada.`);
   });
   const names = new Set<string>();
   const duplicates: string[] = [];

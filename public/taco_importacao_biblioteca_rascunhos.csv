@@ -1,0 +1,598 @@
+﻿codigo_taco;nome;categoria;energia_kcal_100g;proteinas_g_100g;carboidratos_g_100g;gorduras_g_100g;fibras_g_100g;calcio_mg_100g;ferro_mg_100g;sodio_mg_100g;potassio_mg_100g;medidas_caseiras;alergenicos;status_alergenicos;contem_gluten;contem_lactose;fonte;licenca;status_validacao;observacoes_importacao
+1;Arroz integral cozido;;124;2.6;25.8;1.0;2.7;5;0.3;1;75;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+2;Arroz integral cru;;360;7.3;77.5;1.9;4.8;8;0.9;2;173;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+3;Arroz tipo 1 cozido;;128;2.5;28.1;0.2;1.6;4;0.1;1;15;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+4;Arroz tipo 1 cru;;358;7.2;78.8;0.3;1.6;4;0.7;1;62;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+5;Arroz tipo 2 cozido;;130;2.6;28.2;0.4;1.1;3;0.1;2;20;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+6;Arroz tipo 2 cru;;358;7.2;78.9;0.3;1.7;5;0.6;1;57;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+7;Aveia flocos crua;;394;13.9;66.6;8.5;9.1;48;4.4;5;336;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+8;Biscoito doce maisena;;443;8.1;75.2;12.0;2.1;54;1.8;352;142;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+9;Biscoito doce recheado com chocolate;;472;6.4;70.5;19.6;3.0;27;2.3;239;232;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+10;Biscoito doce recheado com morango;;471;5.7;71.0;19.6;1.5;36;1.5;230;113;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+11;Biscoito doce wafer recheado de chocolate;;502;5.6;67.5;24.7;1.8;23;2.4;137;240;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+12;Biscoito doce wafer recheado de morango;;513;4.5;67.4;26.4;0.8;14;1.1;120;75;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+13;Biscoito salgado cream cracker;;432;10.1;68.7;14.4;2.5;20;2.2;854;181;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+14;Bolo mistura para;;419;6.2;84.7;6.1;1.7;59;1.2;463;75;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+15;Bolo pronto aipim;;324;4.4;47.9;12.7;0.7;85;0.5;111;135;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+16;Bolo pronto chocolate;;410;6.2;54.7;18.5;1.4;75;2.1;283;212;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+17;Bolo pronto coco;;333;5.7;52.3;11.3;1.1;57;0.8;190;143;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+18;Bolo pronto milho;;311;4.8;45.1;12.4;0.7;83;0.7;134;118;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+19;Canjica branca crua;;358;7.2;78.1;1.0;5.5;2;0.3;1;93;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+20;Canjica com leite integral;;112;2.4;23.6;1.2;1.2;43;0.1;28;70;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+21;Cereais milho flocos com sal;;370;7.3;80.8;1.6;5.3;2;0.5;272;69;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+22;Cereais milho flocos sem sal;;363;6.9;80.4;1.2;1.8;2;1.7;31;29;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+23;Cereais mingau milho infantil;;394;6.4;87.3;1.1;3.2;219;3.0;399;82;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+24;Cereais mistura para vitamina trigo cevada e aveia;;381;8.9;81.6;2.1;5.0;584;12.6;1163;244;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+25;Cereal matinal milho;;365;7.2;83.8;1.0;4.1;143;3.1;655;83;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+26;Cereal matinal milho açúcar;;377;4.7;88.8;0.7;2.1;56;3.9;405;52;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+27;Creme de arroz pó;;386;7.0;83.9;1.2;1.1;7;0.6;1;115;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+28;Creme de milho pó;;333;4.8;86.1;1.6;3.7;323;4.3;594;166;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+29;Curau milho verde;;78;2.4;13.9;1.6;0.5;53;0.4;21;162;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+30;Curau milho verde mistura para;;402;2.2;79.8;13.4;2.5;31;0.9;223;55;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+31;Farinha de arroz enriquecida;;363;1.3;85.5;0.3;0.6;1;31.4;17;13;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+32;Farinha de centeio integral;;336;12.5;73.3;1.8;15.5;34;4.7;41;334;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+33;Farinha de milho amarela;;351;7.2;79.1;1.5;5.5;1;2.3;45;58;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+34;Farinha de rosca;;371;11.4;75.8;1.5;4.8;35;6.7;333;212;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+35;Farinha de trigo;;360;9.8;75.1;1.4;2.3;18;1.0;1;151;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+36;Farinha láctea de cereais;;415;11.9;77.8;5.8;1.9;196;8.7;125;366;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+37;Lasanha massa fresca cozida;;164;5.8;32.5;1.2;1.6;10;1.2;207;54;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+38;Lasanha massa fresca crua;;220;7.0;45.1;1.3;1.6;17;1.9;667;137;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+39;Macarrão instantâneo;;436;8.8;62.4;17.2;5.6;18;0.8;1516;148;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+40;Macarrão trigo cru;;371;10.0;77.9;1.3;2.9;17;0.9;7;147;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+41;Macarrão trigo cru com ovos;;371;10.3;76.6;2.0;2.3;19;0.9;15;134;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+42;Milho amido cru;;361;0.6;87.1;;0.7;1;0.1;8;9;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;gorduras_g_100g: valor original Tr (não numérico)
+43;Milho fubá cru;;353;7.2;78.9;1.9;4.7;3;0.9;;168;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+44;Milho verde cru;;138;6.6;28.6;0.6;3.9;2;0.4;1;185;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+45;Milho verde enlatado drenado;;98;3.2;17.1;2.4;4.6;2;0.6;260;162;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+46;Mingau tradicional pó;;373;0.6;89.3;0.4;0.9;522;42.0;15;;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;potassio_mg_100g: valor original Tr (não numérico)
+47;Pamonha barra para cozimento pré-cozida;;171;2.6;30.7;4.8;2.4;4;0.4;132;125;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+48;Pão aveia forma;;343;12.4;59.6;5.7;6.0;109;4.7;606;210;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+49;Pão de soja;;309;11.3;56.5;3.6;5.7;90;3.3;663;296;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+50;Pão glúten forma;;253;12.0;44.1;2.7;2.5;156;5.7;22;65;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+51;Pão milho forma;;292;8.3;56.4;3.1;4.3;78;3.0;507;89;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+52;Pão trigo forma integral;;253;9.4;49.9;3.7;6.9;132;3.0;506;163;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+53;Pão trigo francês;;300;8.0;58.6;3.1;2.3;16;1.0;648;142;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+54;Pão trigo sovado;;311;8.4;61.5;2.8;2.4;52;2.3;431;91;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+55;Pastel de carne cru;;289;10.7;42.0;8.8;1.0;17;2.0;1309;166;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+56;Pastel de carne frito;;388;10.1;43.8;20.1;1.0;13;2.5;1040;156;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+57;Pastel de queijo cru;;308;9.9;45.9;9.6;1.1;155;1.0;985;103;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+58;Pastel de queijo frito;;422;8.7;48.1;22.7;0.9;126;1.3;821;124;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+59;Pastel massa crua;;310;6.9;57.4;5.5;1.4;13;1.1;1344;167;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+60;Pastel massa frita;;570;6.0;49.3;40.9;1.3;11;1.4;1175;143;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+61;Pipoca com óleo de soja sem sal;;448;9.9;70.3;15.9;14.3;3;1.2;4;256;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+62;Polenta pré-cozida;;103;2.3;23.3;0.3;2.4;1;;442;100;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;ferro_mg_100g: valor original Tr (não numérico)
+63;Torrada pão francês;;377;10.5;74.6;3.3;3.4;19;1.2;829;189;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+64;Abóbora cabotian cozida;;48;1.4;10.8;0.7;2.5;8;0.3;1;199;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+65;Abóbora cabotian crua;;39;1.7;8.4;0.5;2.2;18;0.4;;351;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+66;Abóbora menina brasileira crua;;14;0.6;3.3;;1.2;9;0.2;;165;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"gorduras_g_100g: valor original Tr (não numérico); sodio_mg_100g: valor original Tr (não numérico)"
+67;Abóbora moranga crua;;12;1.0;2.7;0.1;1.7;3;;;125;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"ferro_mg_100g: valor original Tr (não numérico); sodio_mg_100g: valor original Tr (não numérico)"
+68;Abóbora moranga refogada;;29;0.4;6.0;0.8;1.5;19;0.1;3;183;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+69;Abobora pescoço crua;;24;0.7;6.1;0.1;2.3;9;0.3;1;264;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+70;Abobrinha italiana cozida;;15;1.1;3.0;0.2;1.6;17;0.2;1;126;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+71;Abobrinha italiana crua;;19;1.1;4.3;0.1;1.4;15;0.2;;253;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+72;Abobrinha italiana refogada;;24;1.1;4.2;0.8;1.4;21;0.4;2;194;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+73;Abobrinha paulista crua;;31;0.6;7.9;0.1;2.6;19;0.2;1;213;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+74;Acelga crua;;21;1.4;4.6;0.1;1.1;43;0.3;1;240;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+75;Agrião cru;;17;2.7;2.3;0.2;2.1;133;3.1;7;218;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+76;Aipo cru;;19;0.8;4.3;0.1;1.0;65;0.7;10;274;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+77;Alface americana crua;;9;0.6;1.7;0.1;1.0;14;0.3;7;136;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+78;Alface crespa crua;;11;1.3;1.7;0.2;1.8;38;0.4;3;267;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+79;Alface lisa crua;;14;1.7;2.4;0.1;2.3;28;0.6;4;349;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+80;Alface roxa crua;;13;0.9;2.5;0.2;2.0;34;2.5;7;308;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+81;Alfavaca crua;;29;2.7;5.2;0.5;4.1;258;1.3;5;261;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+82;Alho cru;;113;7.0;23.9;0.2;4.3;14;0.8;5;535;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+83;Alho-poró cru;;32;1.4;6.9;0.1;2.5;34;0.6;2;224;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+84;Almeirão cru;;18;1.8;3.3;0.2;2.6;19;0.7;2;369;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+85;Almeirão refogado;;65;1.7;5.7;4.8;3.4;63;1.6;15;315;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+86;Batata baroa cozida;;80;0.9;18.9;0.2;1.8;12;0.4;2;258;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+87;Batata baroa crua;;101;1.0;24.0;0.2;2.1;17;0.3;;505;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+88;Batata doce cozida;;77;0.6;18.4;0.1;2.2;17;0.2;3;148;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+89;Batata doce crua;;118;1.3;28.2;0.1;2.6;21;0.4;9;340;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+90;Batata frita tipo chips industrializada;;543;5.6;51.2;36.6;2.5;12;0.7;607;1014;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+91;Batata inglesa cozida;;52;1.2;11.9;;1.3;4;0.2;2;161;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;gorduras_g_100g: valor original Tr (não numérico)
+92;Batata inglesa crua;;64;1.8;14.7;;1.2;4;0.4;;302;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"gorduras_g_100g: valor original Tr (não numérico); sodio_mg_100g: valor original Tr (não numérico)"
+93;Batata inglesa frita;;267;5.0;35.6;13.1;8.1;6;0.4;2;489;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+94;Batata inglesa sauté;;68;1.3;14.1;0.9;1.4;4;0.3;8;199;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+95;Berinjela cozida;;19;0.7;4.5;0.1;2.5;11;0.2;1;105;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+96;Berinjela crua;;20;1.2;4.4;0.1;2.9;9;0.2;;205;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+97;Beterraba cozida;;32;1.3;7.2;0.1;1.9;15;0.2;23;245;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+98;Beterraba crua;;49;1.9;11.1;0.1;3.4;18;0.3;10;375;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+99;Biscoito polvilho doce;;438;1.3;80.5;12.2;1.2;30;1.8;98;54;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+100;Brócolis cozido;;25;2.1;4.4;0.5;3.4;51;0.5;2;119;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+101;Brócolis cru;;25;3.6;4.0;0.3;2.9;86;0.6;3;322;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+102;Cará cozido;;78;1.5;18.9;0.1;2.6;5;0.3;1;203;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+103;Cará cru;;96;2.3;23.0;0.1;7.3;4;0.2;;212;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+104;Caruru cru;;34;3.2;6.0;0.6;4.5;455;4.5;14;279;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+105;Catalonha crua;;24;1.9;4.8;0.3;2.0;57;3.1;9;412;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+106;Catalonha refogada;;63;2.0;4.8;4.8;3.7;63;1.2;25;452;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+107;Cebola crua;;39;1.7;8.9;0.1;2.2;14;0.2;1;176;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+108;Cebolinha crua;;20;1.9;3.4;0.4;3.6;80;0.6;2;206;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+109;Cenoura cozida;;30;0.8;6.7;0.2;2.6;26;0.1;8;176;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+110;Cenoura crua;;34;1.3;7.7;0.2;3.2;23;0.2;3;315;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+111;Chicória crua;;14;1.1;2.9;0.1;2.2;45;0.5;14;425;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+112;Chuchu cozido;;19;0.4;4.8;;1.0;8;0.1;2;54;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;gorduras_g_100g: valor original Tr (não numérico)
+113;Chuchu cru;;17;0.7;4.1;0.1;1.3;12;0.2;;126;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+114;Coentro folhas desidratadas;;309;20.9;48.0;10.4;37.3;784;81.4;18;3223;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+115;Couve manteiga crua;;27;2.9;4.3;0.5;3.1;131;0.5;6;403;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+116;Couve manteiga refogada;;90;1.7;8.7;6.6;5.7;177;0.5;11;315;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+117;Couve-flor crua;;23;1.9;4.5;0.2;2.4;18;0.5;3;256;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+118;Couve-flor cozida;;19;1.2;3.9;0.3;2.1;16;0.1;2;80;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+119;Espinafre  Nova Zelândia cru;;16;2.0;2.6;0.2;2.1;98;0.4;17;336;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+120;Espinafre Nova Zelândia refogado;;67;2.7;4.2;5.4;2.5;112;0.6;47;149;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+121;Farinha de mandioca crua;;361;1.6;87.9;0.3;6.4;65;1.1;1;340;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+122;Farinha de mandioca torrada;;365;1.2;89.2;0.3;6.5;76;1.2;10;328;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+123;Farinha de puba;;360;1.6;87.3;0.5;4.2;41;1.4;4;338;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+124;Fécula de mandioca;;331;0.5;81.1;0.3;0.6;12;0.1;2;48;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+125;Feijão broto cru;;39;4.2;7.8;0.1;2.0;14;0.8;2;189;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+126;Inhame cru;;97;2.1;23.2;0.2;1.7;12;0.4;;568;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+127;Jiló cru;;27;1.4;6.2;0.2;4.8;20;0.3;;213;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+128;Jurubeba crua;;126;4.4;23.1;3.9;23.9;151;0.9;1;619;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+129;Mandioca cozida;;125;0.6;30.1;0.3;1.6;19;0.1;1;100;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+130;Mandioca crua;;151;1.1;36.2;0.3;1.9;15;0.3;2;208;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+131;Mandioca farofa temperada;;406;2.1;80.3;9.1;7.8;66;1.4;575;201;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+132;Mandioca frita;;300;1.4;50.3;11.2;1.9;23;0.3;9;176;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+133;Manjericão cru;;21;2.0;3.6;0.4;3.3;211;1.0;4;252;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+134;Maxixe cru;;14;1.4;2.7;0.1;2.2;21;0.4;11;328;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+135;Mostarda folha crua;;18;2.1;3.2;0.2;1.9;68;1.1;3;364;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+136;Nhoque batata cozido;;181;5.9;36.8;1.9;1.8;11;1.6;7;164;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+137;Nabo cru;;18;1.2;4.1;0.1;2.6;42;0.2;2;280;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+138;Palmito juçara em conserva;;23;1.8;4.3;0.4;3.2;58;0.3;514;244;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+139;Palmito pupunha em conserva;;29;2.5;5.5;0.5;2.6;32;0.2;563;206;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+140;Pão de queijo assado;;363;5.1;34.2;24.6;0.6;102;0.3;773;93;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+141;Pão de queijo cru;;295;3.6;38.5;14.0;1.0;88;0.3;405;58;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+142;Pepino cru;;10;0.9;2.0;;1.1;10;0.1;;154;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"gorduras_g_100g: valor original Tr (não numérico); sodio_mg_100g: valor original Tr (não numérico)"
+143;Pimentão amarelo cru;;28;1.2;6.0;0.4;1.9;10;0.4;;221;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+144;Pimentão verde cru;;21;1.1;4.9;0.2;2.6;9;0.4;;174;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+145;Pimentão vermelho cru;;23;1.0;5.5;0.1;1.6;6;0.3;;211;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+146;Polvilho doce;;351;0.4;86.8;;0.2;27;0.5;2;38;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;gorduras_g_100g: valor original Tr (não numérico)
+147;Quiabo cru;;30;1.9;6.4;0.3;4.6;112;0.4;1;249;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+148;Rabanete cru;;14;1.4;2.7;0.1;2.2;21;0.4;11;328;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+149;Repolho branco cru;;17;0.9;3.9;0.1;1.9;35;0.2;4;150;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+150;Repolho roxo cru;;31;1.9;7.2;0.1;2.0;44;0.5;2;328;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+151;Repolho roxo refogado;;42;1.8;7.6;1.2;1.8;43;0.5;3;321;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+152;Rúcula crua;;13;1.8;2.2;0.1;1.7;117;0.9;9;233;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+153;Salsa crua;;33;3.3;5.7;0.6;1.9;179;3.2;2;711;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+154;Seleta de legumes enlatada;;57;3.4;12.7;0.4;3.1;16;1.1;398;122;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+155;Serralha crua;;30;2.7;4.9;0.7;3.5;126;1.3;19;265;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+156;Taioba crua;;34;2.9;5.4;0.9;4.5;141;1.9;1;290;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+157;Tomate com semente cru;;15;1.1;3.1;0.2;1.2;7;0.2;1;222;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+158;Tomate extrato;;61;2.4;15.0;0.2;2.8;29;2.1;498;680;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+159;Tomate molho industrializado;;38;1.4;7.7;0.9;3.1;12;1.6;418;388;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+160;Tomate purê;;28;1.4;6.9;;1.0;13;1.3;104;308;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;gorduras_g_100g: valor original Tr (não numérico)
+161;Tomate salada;;21;0.8;5.1;;2.3;7;0.3;5;161;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;gorduras_g_100g: valor original Tr (não numérico)
+162;Vagem crua;;25;1.8;5.3;0.2;2.4;41;0.4;;208;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+163;Abacate cru;;96;1.2;6.0;8.4;6.3;8;0.2;;206;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+164;Abacaxi cru;;48;0.9;12.3;0.1;1.0;22;0.3;;131;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+165;Abacaxi polpa congelada;;31;0.5;7.8;0.1;0.3;14;0.4;1;107;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+166;Abiu cru;;62;0.8;14.9;0.7;1.7;6;0.2;;128;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+167;Açaí polpa com xarope de guaraná e glucose;;110;0.7;21.5;3.7;1.7;22;0.3;15;75;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+168;Açaí polpa congelada;;58;0.8;6.2;3.9;2.6;35;0.4;5;124;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+169;Acerola crua;;33;0.9;8.0;0.2;1.5;13;0.2;;165;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+170;Acerola polpa congelada;;22;0.6;5.5;;0.7;8;0.2;1;112;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;gorduras_g_100g: valor original Tr (não numérico)
+171;Ameixa calda enlatada;;183;0.4;46.9;;0.5;13;2.2;3;221;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;gorduras_g_100g: valor original Tr (não numérico)
+172;Ameixa crua;;53;0.8;13.9;;2.4;6;0.1;;134;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"gorduras_g_100g: valor original Tr (não numérico); sodio_mg_100g: valor original Tr (não numérico)"
+173;Ameixa em calda enlatada drenada;;177;1.0;47.7;0.3;4.5;39;2.7;3;263;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+174;Atemóia crua;;97;1.0;25.3;0.3;2.1;23;0.2;1;300;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+175;Banana da terra crua;;128;1.4;33.7;0.2;1.5;4;0.3;;328;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+176;Banana doce em barra;;280;2.2;75.7;0.1;3.8;12;0.6;10;518;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+177;Banana figo crua;;105;1.1;27.8;0.1;2.8;6;0.2;;387;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+178;Banana maçã crua;;87;1.8;22.3;0.1;2.6;3;0.2;;264;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+179;Banana nanica crua;;92;1.4;23.8;0.1;1.9;3;0.3;;376;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+180;Banana ouro crua;;112;1.5;29.3;0.2;2.0;3;0.3;;355;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+181;Banana pacova crua;;78;1.2;20.3;0.1;2.0;5;0.4;1;267;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+182;Banana prata crua;;98;1.3;26.0;0.1;2.0;8;0.4;;358;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+183;Cacau cru;;74;1.0;19.4;0.1;2.2;12;0.3;1;72;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+184;Cajá-Manga cru;;46;1.3;11.4;;2.6;13;0.2;1;119;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;gorduras_g_100g: valor original Tr (não numérico)
+185;Cajá polpa congelada;;26;0.6;6.4;0.2;1.4;9;0.3;7;148;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+186;Caju cru;;43;1.0;10.3;0.3;1.7;1;0.2;3;124;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+187;Caju polpa congelada;;37;0.5;9.4;0.2;0.8;1;0.1;4;88;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+188;Caju suco concentrado envasado;;45;0.4;10.7;0.2;0.6;1;0.1;45;107;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+189;Caqui chocolate cru;;71;0.4;19.3;0.1;6.5;18;0.1;2;164;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+190;Carambola crua;;46;0.9;11.5;0.2;2.0;5;0.2;4;133;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+191;Ciriguela crua;;76;1.4;18.9;0.4;3.9;27;0.4;2;248;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+192;Cupuaçu cru;;49;1.2;10.4;1.0;3.1;13;0.5;3;331;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+193;Cupuaçu polpa congelada;;49;0.8;11.4;0.6;1.6;5;0.3;1;291;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+194;Figo cru;;41;1.0;10.2;0.2;1.8;27;0.2;;174;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+195;Figo enlatado em calda;;184;0.6;50.3;0.2;2.0;33;0.5;7;39;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+196;Fruta-pão crua;;67;1.1;17.2;0.2;5.5;34;0.2;1;188;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+197;Goiaba branca com casca crua;;52;0.9;12.4;0.5;6.3;5;0.2;;220;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+198;Goiaba doce em pasta;;269;0.6;74.1;0.0;3.7;10;0.4;4;165;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+199;Goiaba doce cascão;;286;0.4;78.7;0.1;4.4;15;0.4;11;251;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+200;Goiaba vermelha com casca crua;;54;1.1;13.0;0.4;6.2;4;0.2;;198;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+201;Graviola crua;;62;0.8;15.8;0.2;1.9;40;0.2;4;250;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+202;Graviola polpa congelada;;38;0.6;9.8;0.1;1.2;6;0.1;3;170;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+203;Jabuticaba crua;;58;0.6;15.3;0.1;2.3;8;0.1;;130;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+204;Jaca crua;;88;1.4;22.5;0.3;2.4;11;0.4;2;234;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+205;Jambo cru;;27;0.9;6.5;0.1;5.1;14;0.1;22;135;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+206;Jamelão cru;;41;0.5;10.6;0.1;1.8;3;0.0;1;394;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+207;Kiwi cru;;51;1.3;11.5;0.6;2.7;24;0.3;;269;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+208;Laranja baía crua;;45;1.0;11.5;0.1;1.1;35;0.1;;174;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+209;Laranja baía suco;;37;0.7;8.7;;;6;0.1;;173;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"gorduras_g_100g: valor original Tr (não numérico); fibras_g_100g: valor original Tr (não numérico); sodio_mg_100g: valor original Tr (não numérico)"
+210;Laranja da terra crua;;51;1.1;12.9;0.2;4.0;51;0.1;1;173;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+211;Laranja da terra suco;;41;0.7;9.6;0.1;1.0;13;0.1;;145;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+212;Laranja lima crua;;46;1.1;11.5;0.1;1.8;31;0.1;1;130;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+213;Laranja lima suco;;39;0.7;9.2;0.1;0.4;8;;;129;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"ferro_mg_100g: valor original Tr (não numérico); sodio_mg_100g: valor original Tr (não numérico)"
+214;Laranja pêra crua;;37;1.0;8.9;0.1;0.8;22;0.1;;163;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+215;Laranja pêra suco;;33;0.7;7.6;0.1;;7;;;149;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"fibras_g_100g: valor original Tr (não numérico); ferro_mg_100g: valor original Tr (não numérico); sodio_mg_100g: valor original Tr (não numérico)"
+216;Laranja valência crua;;46;0.8;11.7;0.2;1.7;34;0.1;1;158;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+217;Laranja valência suco;;36;0.5;8.6;0.1;0.4;9;;;143;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"ferro_mg_100g: valor original Tr (não numérico); sodio_mg_100g: valor original Tr (não numérico)"
+218;Limão cravo suco;;14;0.3;5.2;;;10;0.1;;120;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"gorduras_g_100g: valor original Tr (não numérico); fibras_g_100g: valor original Tr (não numérico); sodio_mg_100g: valor original Tr (não numérico)"
+219;Limão galego suco;;22;0.6;7.3;0.1;;5;0.1;;113;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"fibras_g_100g: valor original Tr (não numérico); sodio_mg_100g: valor original Tr (não numérico)"
+220;Limão tahiti cru;;32;0.9;11.1;0.1;1.2;51;0.2;1;128;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+221;Maçã Argentina com casca crua;;63;0.2;16.6;0.2;2.0;3;0.1;1;117;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+222;Maçã Fuji com casca crua;;56;0.3;15.2;;1.3;2;0.1;;75;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"gorduras_g_100g: valor original Tr (não numérico); sodio_mg_100g: valor original Tr (não numérico)"
+223;Macaúba crua;;404;2.1;13.9;40.7;13.4;67;0.8;1;306;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+224;Mamão doce em calda drenado;;196;0.2;54.0;0.1;1.3;20;0.1;3;68;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+225;Mamão Formosa cru;;45;0.8;11.6;0.1;1.8;25;0.2;3;222;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+226;Mamão Papaia cru;;40;0.5;10.4;0.1;1.0;22;0.2;2;126;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+227;Mamão verde doce em calda drenado;;209;0.3;57.6;0.1;1.2;12;0.2;5;9;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+228;Manga Haden crua;;64;0.4;16.7;0.3;1.6;12;0.1;1;148;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+229;Manga Palmer crua;;72;0.4;19.4;0.2;1.6;12;0.1;2;157;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+230;Manga polpa congelada;;48;0.4;12.5;0.2;1.1;7;0.1;7;131;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+231;Manga Tommy Atkins crua;;51;0.9;12.8;0.2;2.1;8;0.1;;138;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+232;Maracujá cru;;68;2.0;12.3;2.1;1.1;5;0.6;2;338;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+233;Maracujá polpa congelada;;39;0.8;9.6;0.2;0.5;5;0.3;8;228;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+234;Maracujá suco concentrado envasado;;42;0.8;9.6;0.2;0.4;4;0.3;22;201;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+235;Melancia crua;;33;0.9;8.1;;0.1;8;0.2;;104;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"gorduras_g_100g: valor original Tr (não numérico); sodio_mg_100g: valor original Tr (não numérico)"
+236;Melão cru;;29;0.7;7.5;;0.3;3;0.2;11;216;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;gorduras_g_100g: valor original Tr (não numérico)
+237;Mexerica Murcote crua;;58;0.9;14.9;0.1;3.1;33;0.1;1;159;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+238;Mexerica Rio crua;;37;0.7;9.3;0.1;2.7;17;0.1;2;125;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+239;Morango cru;;30;0.9;6.8;0.3;1.7;11;0.3;;184;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+240;Nêspera crua;;43;0.3;11.5;;3.0;20;0.1;;113;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"gorduras_g_100g: valor original Tr (não numérico); sodio_mg_100g: valor original Tr (não numérico)"
+241;Pequi cru;;205;2.3;13.0;18.0;19.0;32;0.3;;298;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+242;Pêra Park crua;;61;0.2;16.1;0.2;3.0;9;0.3;1;102;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+243;Pêra Williams crua;;53;0.6;14.0;0.1;3.0;8;0.1;;116;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+244;Pêssego Aurora cru;;36;0.8;9.3;;1.4;3;0.2;;124;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"gorduras_g_100g: valor original Tr (não numérico); sodio_mg_100g: valor original Tr (não numérico)"
+245;Pêssego enlatado em calda;;63;0.7;16.9;;1.0;4;0.6;3;95;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;gorduras_g_100g: valor original Tr (não numérico)
+246;Pinha crua;;88;1.5;22.4;0.3;3.4;21;0.2;1;283;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+247;Pitanga crua;;41;0.9;10.2;0.2;3.2;18;0.4;2;113;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+248;Pitanga polpa congelada;;19;0.3;4.8;0.1;0.7;8;0.4;5;87;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+249;Romã crua;;56;0.4;15.1;;0.4;5;0.3;1;485;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;gorduras_g_100g: valor original Tr (não numérico)
+250;Tamarindo cru;;276;3.2;72.5;0.5;6.4;37;0.6;0;723;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+251;Tangerina Poncã crua;;38;0.8;9.6;0.1;0.9;13;0.1;;131;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+252;Tangerina Poncã suco;;36;0.5;8.8;;;4;;;119;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"gorduras_g_100g: valor original Tr (não numérico); fibras_g_100g: valor original Tr (não numérico); ferro_mg_100g: valor original Tr (não numérico); sodio_mg_100g: valor original Tr (não numérico)"
+253;Tucumã cru;;262;2.1;26.5;19.1;12.7;46;0.6;4;401;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+254;Umbu cru;;37;0.8;9.4;;2.0;12;0.1;;152;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"gorduras_g_100g: valor original Tr (não numérico); sodio_mg_100g: valor original Tr (não numérico)"
+255;Umbu polpa congelada;;34;0.5;8.8;0.1;1.3;11;0.2;6;154;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+256;Uva Itália crua;;53;0.7;13.6;0.2;0.9;7;0.1;;162;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+257;Uva Rubi crua;;49;0.6;12.7;0.2;0.9;8;0.2;8;159;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+258;Uva suco concentrado envasado;;58;;14.7;;0.2;9;0.1;10;54;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"proteinas_g_100g: valor original Tr (não numérico); gorduras_g_100g: valor original Tr (não numérico)"
+259;Azeite de dendê;;884;;;100.0;;;;;;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"proteinas_g_100g: valor original NA (não numérico); carboidratos_g_100g: valor original NA (não numérico); fibras_g_100g: valor original NA (não numérico)"
+260;Azeite de oliva extra virgem;;884;;;100.0;;;;;;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"proteinas_g_100g: valor original NA (não numérico); carboidratos_g_100g: valor original NA (não numérico); fibras_g_100g: valor original NA (não numérico)"
+261;Manteiga com sal;;726;0.4;0.1;82.4;;9;0.2;579;15;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+262;Manteiga sem sal;;758;0.4;0.0;86.0;;4;;4;5;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"fibras_g_100g: valor original NA (não numérico); ferro_mg_100g: valor original Tr (não numérico)"
+263;Margarina com óleo hidrogenado com sal (65% de lipídeos);;596;;0.0;67.4;;6;0.1;894;21;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"proteinas_g_100g: valor original Tr (não numérico); fibras_g_100g: valor original NA (não numérico)"
+264;Margarina com óleo hidrogenado sem sal (80% de lipídeos);;723;;0.0;81.7;;3;0.1;78;2;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"proteinas_g_100g: valor original Tr (não numérico); fibras_g_100g: valor original NA (não numérico)"
+265;Margarina com óleo interesterificado com sal (65%de lipídeos);;594;;0.0;67.2;;5;;561;15;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"proteinas_g_100g: valor original Tr (não numérico); fibras_g_100g: valor original NA (não numérico); ferro_mg_100g: valor original Tr (não numérico)"
+266;Margarina com óleo interesterificado sem sal (65% de lipídeos);;593;;0.0;67.1;;5;0.1;33;5;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"proteinas_g_100g: valor original Tr (não numérico); fibras_g_100g: valor original NA (não numérico)"
+267;Óleo de babaçu;;884;;;100.0;;;;;;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"proteinas_g_100g: valor original NA (não numérico); carboidratos_g_100g: valor original NA (não numérico); fibras_g_100g: valor original NA (não numérico)"
+268;Óleo de canola;;884;;;100.0;;;;;;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"proteinas_g_100g: valor original NA (não numérico); carboidratos_g_100g: valor original NA (não numérico); fibras_g_100g: valor original NA (não numérico)"
+269;Óleo de girassol;;884;;;100.0;;;;;;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"proteinas_g_100g: valor original NA (não numérico); carboidratos_g_100g: valor original NA (não numérico); fibras_g_100g: valor original NA (não numérico)"
+270;Óleo de milho;;884;;;100.0;;;;;;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"proteinas_g_100g: valor original NA (não numérico); carboidratos_g_100g: valor original NA (não numérico); fibras_g_100g: valor original NA (não numérico)"
+271;Óleo de pequi;;884;;;100.0;;;;;;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"proteinas_g_100g: valor original NA (não numérico); carboidratos_g_100g: valor original NA (não numérico); fibras_g_100g: valor original NA (não numérico)"
+272;Óleo de soja;;884;;;100.0;;;;;;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"proteinas_g_100g: valor original NA (não numérico); carboidratos_g_100g: valor original NA (não numérico); fibras_g_100g: valor original NA (não numérico)"
+273;Abadejo filé congelado assado;;112;23.5;0.0;1.2;;23;0.5;334;156;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+274;Abadejo filé congelado.cozido;;91;19.3;0.0;0.9;;17;0.3;189;146;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+275;Abadejo filé congelado cru;;59;13.1;0.0;0.4;;10;0.1;79;148;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+276;Abadejo filé congelado grelhado;;130;27.6;0.0;1.3;;20;0.3;305;279;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+277;Atum conserva em óleo;;166;26.2;0.0;6.0;;7;1.2;362;280;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+278;Atum fresco cru;;118;25.7;0.0;0.9;;7;1.3;30;308;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+279;Bacalhau salgado cru;;136;29.0;0.0;1.3;;157;0.9;13585;434;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+280;Bacalhau salgado refogado;;140;24.0;1.2;3.6;;59;0.2;1256;50;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+281;Cação posta com farinha de trigo frita;;208;25.0;3.1;10.0;0.5;30;1.0;160;420;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+282;Cação posta cozida;;116;25.6;0.0;0.7;;10;0.3;115;249;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+283;Cação posta crua;;83;17.9;0.0;0.8;;9;0.2;176;299;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+284;Camarão Rio Grande grande cozido;;90;19.0;0.0;1.0;;90;1.3;367;102;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+285;Camarão Rio Grande grande cru;;47;10.0;0.0;0.5;;51;0.7;201;72;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+286;Camarão Sete Barbas sem cabeça com casca frito;;231;18.4;2.9;15.6;;960;2.4;99;107;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+287;Caranguejo cozido;;83;18.5;0.0;0.4;;357;2.9;360;186;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+288;Corimba cru;;128;17.4;0.0;6.0;;40;0.5;47;317;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+289;Corimbatá assado;;261;19.9;0.0;19.6;;22;1.0;40;326;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+290;Corimbatá cozido;;239;20.1;0.0;16.9;;65;0.6;37;254;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+291;Corvina de água doce crua;;101;18.9;0.0;2.2;;39;0.3;45;293;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+292;Corvina do mar crua;;94;18.6;0.0;1.6;;;0.4;68;339;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+293;Corvina grande assada;;147;26.8;0.0;3.6;;60;0.5;85;291;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+294;Corvina grande cozida;;100;23.4;0.0;2.6;;69;0.6;68;194;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+295;Dourada de água doce fresca;;131;18.8;0.0;5.6;;12;0.2;40;393;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+296;Lambari congelado cru;;131;16.8;0.0;6.5;;1181;0.9;48;244;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+297;Lambari congelado frito;;327;28.4;0.0;22.8;;1881;0.8;65;331;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+298;Lambari fresco cru;;152;15.7;0.0;9.4;;590;0.6;41;207;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+299;Manjuba com farinha de trigo frita;;344;23.5;10.2;22.6;0.4;763;3.0;37;319;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+300;Manjuba frita;;349;30.1;0.0;24.5;;575;0.9;41;318;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+301;Merluza filé assado;;122;26.6;0.0;0.9;;36;0.4;120;364;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+302;Merluza filé cru;;89;16.6;0.0;2.0;;20;0.2;80;340;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+303;Merluza filé frito;;192;26.9;0.0;8.5;;36;0.4;90;447;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+304;Pescada branca crua;;111;16.3;0.0;4.6;;16;0.2;76;261;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+305;Pescada branca frita;;223;27.4;0.0;11.8;;378;0.5;107;355;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+306;Pescada filé com farinha de trigo frito;;283;21.4;5.0;19.1;;26;0.9;91;216;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original Tr (não numérico)
+307;Pescada filé cru;;107;16.7;0.0;4.0;;14;0.2;77;253;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+308;Pescada filé frito;;154;28.6;0.0;3.6;;10;0.3;115;249;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+309;Pescada filé molho escabeche;;142;11.8;5.0;8.0;0.8;20;1.5;51;208;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+310;Pescadinha crua;;76;15.5;0.0;1.1;;332;0.5;120;304;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+311;Pintado assado;;192;36.5;0.0;4.0;;114;0.8;81;527;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+312;Pintado cru;;91;18.6;0.0;1.3;;12;0.2;43;294;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+313;Pintado grelhado;;152;30.8;0.0;2.3;;69;0.5;53;360;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+314;Porquinho cru;;93;20.5;0.0;0.6;;26;0.4;67;313;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+315;Salmão filé com pele fresco  grelhado;;229;23.9;0.0;14.0;;29;0.5;85;384;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+316;Salmão sem pele fresco cru;;170;19.3;0.0;9.7;;9;0.2;64;376;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+317;Salmão sem pele fresco grelhado;;243;26.1;0.0;14.5;;15;0.4;96;518;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+318;Sardinha assada;;164;32.2;0.0;3.0;;438;1.3;74;574;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+319;Sardinha conserva em óleo;;285;15.9;0.0;24.0;;550;3.5;666;367;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+320;Sardinha frita;;257;33.4;0.0;12.7;;482;1.1;60;460;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+321;Sardinha inteira crua;;114;21.1;0.0;2.7;;167;1.3;60;312;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+322;Tucunaré filé congelado cru;;88;18.0;0.0;1.2;;19;0.3;57;288;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+323;Apresuntado;;129;13.5;2.9;6.7;;23;0.9;943;270;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+324;Caldo de carne tablete;;241;7.8;15.1;16.6;0.6;129;;22180;218;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;ferro_mg_100g: valor original Tr (não numérico)
+325;Caldo de galinha tablete;;251;6.3;10.6;20.4;11.8;16;0.7;22300;68;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+326;Carne bovina acém moído cozido;;212;26.7;0.0;10.9;;4;2.7;52;256;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+327;Carne bovina acém moído cru;;137;19.4;0.0;5.9;;3;1.8;49;237;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+328;Carne bovina acém sem gordura cozido;;215;27.3;0.0;10.9;;7;2.4;56;254;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+329;Carne bovina acém sem gordura cru;;144;20.8;0.0;6.1;;5;1.5;50;234;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+330;Carne bovina almôndegas cruas;;189;12.3;9.8;11.2;;22;1.6;621;328;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+331;Carne bovina almôndegas fritas;;272;18.2;14.3;15.8;;27;1.9;1030;536;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+332;Carne bovina bucho cozido;;133;21.6;0.0;4.5;;13;0.6;38;70;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+333;Carne bovina bucho cru;;137;20.5;0.0;5.5;;9;0.5;45;85;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+334;Carne bovina capa de contra-filé com gordura crua;;217;19.2;0.0;15.0;;6;1.5;58;267;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+335;Carne bovina capa de contra-filé com gordura grelhada;;312;30.7;0.0;20.0;;7;2.6;81;323;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+336;Carne bovina capa de contra-filé sem gordura crua;;131;21.5;0.0;4.3;;6;2.0;79;325;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+337;Carne bovina capa de contra-filé sem gordura grelhada;;239;35.1;0.0;10.0;;9;2.8;83;385;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+338;Carne bovina charque cozido;;263;36.4;0.0;11.9;;15;3.5;1443;90;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+339;Carne bovina charque cru;;249;22.7;0.0;16.8;;15;1.5;5875;236;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+340;Carne bovina contra-filé à milanesa;;352;20.6;12.2;24.0;0.4;15;2.9;77;271;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+341;Carne bovina contra-filé de costela cru;;202;19.8;0.0;13.1;;3;1.6;39;245;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+342;Carne bovina contra-filé de costela grelhado;;275;29.9;0.0;16.3;;4;2.8;51;383;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+343;Carne bovina contra-filé com gordura cru;;206;21.2;0.0;12.8;;4;1.3;44;285;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+344;Carne bovina contra-filé com gordura grelhado;;278;32.4;0.0;15.5;;4;2.4;57;352;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+345;Carne bovina contra-filé sem gordura cru;;157;24.0;0.0;6.0;;4;1.7;53;335;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+346;Carne bovina contra-filé sem gordura grelhado;;194;35.9;0.0;4.5;;5;2.4;58;386;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+347;Carne bovina costela assada;;373;28.8;0.0;27.7;;28;2.2;92;270;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+348;Carne bovina costela crua;;358;16.7;0.0;31.8;;;1.2;70;151;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+349;Carne bovina coxão duro sem gordura cozido;;217;31.9;0.0;8.9;;4;1.7;41;252;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+350;Carne bovina coxão duro sem gordura cru;;148;21.5;0.0;6.2;;3;1.9;49;358;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+351;Carne bovina coxão mole sem gordura cozido;;219;32.4;0.0;8.9;;4;2.6;44;239;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+352;Carne bovina coxão mole sem gordura cru;;169;21.2;0.0;8.7;;3;1.9;61;335;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+353;Carne bovina cupim assado;;330;28.6;0.0;23.0;;8;2.7;72;321;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+354;Carne bovina cupim cru;;221;19.5;0.0;15.3;;4;1.1;47;151;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+355;Carne bovina fígado cru;;141;20.7;1.1;5.4;;4;5.6;76;265;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+356;Carne bovina fígado grelhado;;225;29.9;4.2;9.0;;6;5.8;82;309;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+357;Carne bovina filé mingnon sem gordura cru;;143;21.6;0.0;5.6;;3;1.9;49;322;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+358;Carne bovina filé mingnon sem gordura grelhado;;220;32.8;0.0;8.8;;4;2.9;58;326;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+359;Carne bovina flanco sem gordura cozido;;196;29.4;0.0;7.8;;4;2.8;42;249;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+360;Carne bovina flanco sem gordura cru;;141;20.0;0.0;6.2;;3;1.6;54;324;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+361;Carne bovina fraldinha com gordura cozida;;338;24.2;0.0;26.0;;3;2.0;39;207;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+362;Carne bovina fraldinha com gordura crua;;221;17.6;0.0;16.1;;3;1.5;51;274;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+363;Carne bovina lagarto cozido;;222;32.9;0.0;9.1;;4;1.9;48;254;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+364;Carne bovina lagarto cru;;135;20.5;0.0;5.2;;3;1.3;54;362;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+365;Carne bovina língua cozida;;315;21.4;0.0;24.8;;6;2.1;59;175;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+366;Carne bovina língua crua;;215;17.1;0.0;15.8;;5;1.7;73;251;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+367;Carne bovina maminha crua;;153;20.9;0.0;7.0;;3;1.1;37;274;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+368;Carne bovina maminha grelhada;;153;30.7;0.0;2.4;;4;2.4;58;386;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+369;Carne bovina miolo de alcatra sem gordura cru;;163;21.6;0.0;7.8;;3;2.0;43;299;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+370;Carne bovina miolo de alcatra sem gordura grelhado;;241;31.9;0.0;11.6;;5;3.2;52;385;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+371;Carne bovina músculo sem gordura cozido;;194;31.2;0.0;6.7;;5;2.4;62;253;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+372;Carne bovina músculo sem gordura cru;;142;21.6;0.0;5.5;;4;1.9;66;296;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+373;Carne bovina paleta com gordura crua;;159;21.4;0.0;7.5;;4;1.8;65;250;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+374;Carne bovina paleta sem gordura cozida;;194;29.7;0.0;7.4;;6;2.2;58;250;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+375;Carne bovina paleta sem gordura crua;;141;21.0;0.0;5.7;;4;1.9;66;319;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+376;Carne bovina patinho sem gordura cru;;133;21.7;0.0;4.5;;3;1.8;49;318;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+377;Carne bovina patinho sem gordura grelhado;;219;35.9;0.0;7.3;;5;3.0;60;421;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+378;Carne bovina peito sem gordura cozido;;338;22.2;0.0;27.0;;4;1.6;56;204;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+379;Carne bovina peito sem gordura cru;;259;17.6;0.0;20.4;;4;1.3;64;241;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+380;Carne bovina picanha com gordura crua;;213;18.8;0.0;14.7;;2;1.7;38;232;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+381;Carne bovina picanha com gordura grelhada;;289;26.4;0.0;19.5;;4;3.2;60;355;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+382;Carne bovina picanha sem gordura crua;;134;21.3;0.0;4.7;;3;2.1;61;322;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+383;Carne bovina picanha sem gordura grelhada;;238;31.9;0.0;11.3;;4;3.6;61;377;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+384;Carne bovina seca cozida;;313;26.9;0.0;21.9;;13;1.9;1943;86;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+385;Carne bovina seca crua;;313;19.7;0.0;25.4;;14;1.3;4440;190;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+386;Coxinha de frango frita;;283;9.6;34.5;11.8;5.0;18;1.3;532;166;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+387;Croquete de carne cru;;246;12.0;13.9;15.6;;15;2.5;711;221;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+388;Croquete de carne frito;;347;16.9;18.1;22.7;;18;2.3;916;313;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+389;Empada de frango pré-cozida assada;;358;6.9;47.5;15.6;2.2;16;1.2;525;138;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+390;Empada de frango pré-cozida;;377;7.3;35.5;22.9;2.2;14;0.7;771;156;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+391;Frango asa com pele crua;;213;18.1;0.0;15.1;;11;0.6;96;211;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+392;Frango caipira inteiro com pele cozido;;243;23.9;0.0;15.6;;17;1.7;56;210;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+393;Frango caipira inteiro sem pele cozido;;196;29.6;0.0;7.7;;66;2.1;53;224;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+394;Frango coração cru;;222;12.6;0.0;18.6;;6;4.1;95;220;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+395;Frango coração grelhado;;207;22.4;0.6;12.1;;8;6.5;128;243;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+396;Frango coxa com pele assada;;215;28.5;0.1;10.4;;8;1.2;95;318;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+397;Frango coxa com pele crua;;161;17.1;0.0;9.8;;8;0.7;95;275;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+398;Frango coxa sem pele cozida;;167;26.9;0.0;5.8;;12;0.8;64;191;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+399;Frango coxa sem pele crua;;120;17.8;0.0;4.9;;8;0.8;98;291;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+400;Frango fígado cru;;106;17.6;0.0;3.5;;6;9.5;82;281;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+401;Frango filé à milanesa;;221;28.5;7.5;7.8;1.1;9;1.1;122;408;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+402;Frango inteiro com pele cru;;226;16.4;0.0;17.3;;6;0.6;63;217;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+403;Frango inteiro sem pele assado;;187;28.0;0.0;7.5;;9;0.6;70;283;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+404;Frango inteiro sem pele cozido;;170;25.0;0.0;7.1;;8;0.5;51;217;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+405;Frango inteiro sem pele cru;;129;20.6;0.0;4.6;;7;0.5;73;238;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+406;Frango peito com pele assado;;212;33.4;0.0;7.6;;8;0.5;56;380;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+407;Frango peito com pele cru;;149;20.8;0.0;6.7;;8;0.4;62;252;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+408;Frango peito sem pele cozido;;163;31.5;0.0;3.2;;6;0.3;36;231;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+409;Frango peito sem pele cru;;119;21.5;0.0;3.0;;7;0.4;56;267;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+410;Frango peito sem pele grelhado;;159;32.0;0.0;2.5;;5;0.3;50;387;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+411;Frango sobrecoxa com pele assada;;260;28.7;0.0;15.2;;11;1.2;96;323;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+412;Frango sobrecoxa com pele crua;;255;15.5;0.0;20.9;;7;0.7;68;190;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+413;Frango sobrecoxa sem pele assada;;233;29.2;0.0;12.0;;12;1.2;106;382;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+414;Frango sobrecoxa sem pele crua;;162;17.6;0.0;9.6;;6;0.9;80;241;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+415;Hambúrguer bovino cru;;215;13.2;4.2;16.2;;34;1.9;869;383;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+416;Hambúrguer bovino frito;;258;20.0;6.3;17.0;;62;3.0;1252;660;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+417;Hambúrguer bovino grelhado;;210;13.2;11.3;12.4;;56;2.6;1090;538;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+418;Lingüiça frango crua;;218;14.2;0.0;17.4;;11;0.5;1126;280;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+419;Lingüiça frango frita;;245;18.3;0.0;18.5;;15;0.8;1374;364;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+420;Lingüiça frango grelhada;;244;18.2;0.0;18.4;;14;0.7;1351;356;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+421;Lingüiça porco crua;;227;16.1;0.0;17.6;;6;0.4;1176;316;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+422;Lingüiça porco frita;;280;20.5;0.0;21.3;;8;0.9;1432;409;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+423;Lingüiça porco grelhada;;296;23.2;0.0;21.9;;8;1.0;1456;427;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+424;Mortadela;;269;12.0;5.8;21.6;;67;1.5;1212;247;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+425;Peru congelado assado;;163;26.2;0.0;5.7;;14;0.6;628;175;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+426;Peru congelado cru;;94;18.1;0.0;1.8;;10;0.9;711;281;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+427;Porco bisteca crua;;164;21.5;0.0;8.0;;6;0.5;54;335;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+428;Porco bisteca frita;;311;33.7;0.0;18.5;;69;0.8;63;404;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+429;Porco bisteca grelhada;;280;28.9;0.0;17.4;;34;0.9;51;366;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+430;Porco costela assada;;402;30.2;0.0;30.3;;17;1.0;63;246;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+431;Porco costela crua;;256;18.0;0.0;19.8;;15;0.9;88;248;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+432;Porco lombo assado;;210;35.7;0.0;6.4;;20;0.5;39;311;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+433;Porco lombo cru;;176;22.6;0.0;8.8;;4;0.5;53;334;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+434;Porco orelha salgada crua;;258;18.5;0.0;19.9;;5;1.4;616;228;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+435;Porco pernil assado;;262;32.1;0.0;13.9;;18;1.3;62;395;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+436;Porco pernil cru;;186;20.1;0.0;11.1;;13;0.9;102;256;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+437;Porco rabo salgado cru;;377;15.6;0.0;34.5;;22;0.6;1158;24;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+438;Presunto com capa de gordura;;128;14.4;1.4;6.8;;12;0.7;1021;295;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+439;Presunto sem capa de gordura;;94;14.3;2.1;2.7;;23;0.8;1039;307;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+440;Quibe assado;;136;14.6;12.9;2.7;1.9;16;2.2;40;288;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+441;Quibe cru;;109;12.4;10.8;1.7;1.6;12;1.7;39;242;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+442;Quibe frito;;254;14.9;12.3;15.8;;22;2.0;836;322;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+443;Salame;;398;25.8;2.9;30.6;;87;1.3;1574;548;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+444;Toucinho cru;;593;11.5;0.0;60.3;;2;0.4;50;58;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+445;Toucinho frito;;697;27.3;0.0;64.3;;9;0.9;125;171;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+446;Bebida láctea pêssego;;55;2.1;7.6;1.9;0.3;89;;46;62;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;ferro_mg_100g: valor original Tr (não numérico)
+447;Creme de Leite;;221;1.5;4.5;22.5;;83;0.3;52;119;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+448;Iogurte natural;;51;4.1;1.9;3.0;;143;;52;71;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"fibras_g_100g: valor original NA (não numérico); ferro_mg_100g: valor original Tr (não numérico)"
+449;Iogurte natural desnatado;;41;3.8;5.8;0.3;;157;;60;182;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"fibras_g_100g: valor original NA (não numérico); ferro_mg_100g: valor original Tr (não numérico)"
+450;Iogurte sabor abacaxi;;;;;;;;;;;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+451;Iogurte sabor morango;;70;2.7;9.7;2.3;0.2;101;;38;52;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;ferro_mg_100g: valor original Tr (não numérico)
+452;Iogurte sabor pêssego;;68;2.5;9.4;2.3;0.7;95;0.1;37;52;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+453;Leite condensado;;313;7.7;57.0;6.7;;246;0.1;94;329;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+454;Leite de cabra;;66;3.1;5.2;3.8;;112;0.1;74;140;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+455;Leite de vaca achocolatado;;83;2.1;14.2;2.2;0.6;70;0.5;72;155;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+456;Leite de vaca desnatado pó;;362;34.7;53.0;0.9;;1363;0.9;432;1556;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+457;Leite de vaca desnatado UHT;;;;;;;134;;51;140;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"fibras_g_100g: valor original NA (não numérico); ferro_mg_100g: valor original Tr (não numérico)"
+458;Leite de vaca integral;;;;;;;123;;64;133;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"fibras_g_100g: valor original NA (não numérico); ferro_mg_100g: valor original Tr (não numérico)"
+459;Leite de vaca integral pó;;497;25.4;39.2;26.9;;890;0.5;323;1132;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+460;Leite fermentado;;70;1.9;15.7;0.1;;72;;33;94;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"fibras_g_100g: valor original NA (não numérico); ferro_mg_100g: valor original Tr (não numérico)"
+461;Queijo minas frescal;;264;17.4;3.2;20.2;;579;0.9;31;105;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+462;Queijo minas meia cura;;321;21.2;3.6;24.6;;696;0.2;501;120;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+463;Queijo mozarela;;330;22.6;3.0;25.2;;875;0.3;581;62;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+464;Queijo parmesão;;453;35.6;1.7;33.5;;992;0.5;1844;96;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+465;Queijo pasteurizado;;303;9.4;5.7;27.4;;323;0.3;780;194;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+466;Queijo petit suisse morango;;121;5.8;18.5;2.8;;731;0.1;412;121;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+467;Queijo prato;;360;22.7;1.9;29.1;;940;0.3;580;73;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+468;Queijo requeijão cremoso;;257;9.6;2.4;23.4;;259;0.1;558;93;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+469;Queijo ricota;;140;12.6;3.8;8.1;;253;0.1;283;112;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+470;Bebida isotônica sabores variados;;26;0.0;6.4;0.0;;1;0.7;44;13;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+471;Café infusão 10%;;9;0.7;1.5;0.1;;3;;1;156;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"fibras_g_100g: valor original NA (não numérico); ferro_mg_100g: valor original Tr (não numérico)"
+473;Cana caldo de;;65;;18.2;;0.1;9;0.8;;18;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"proteinas_g_100g: valor original Tr (não numérico); gorduras_g_100g: valor original Tr (não numérico); sodio_mg_100g: valor original Tr (não numérico)"
+475;Chá erva-doce infusão 5%;;1;0.0;0.4;0.0;;2;;1;10;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"fibras_g_100g: valor original NA (não numérico); ferro_mg_100g: valor original Tr (não numérico)"
+476;Chá mate infusão 5%;;3;0.0;0.6;0.1;;1;;;5;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"fibras_g_100g: valor original NA (não numérico); ferro_mg_100g: valor original Tr (não numérico); sodio_mg_100g: valor original Tr (não numérico)"
+477;Chá preto infusão 5%;;2;0.0;0.6;0.0;;0;;;13;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"fibras_g_100g: valor original NA (não numérico); ferro_mg_100g: valor original Tr (não numérico); sodio_mg_100g: valor original Tr (não numérico)"
+478;Coco água de;;22;0.0;5.3;0.0;0.1;19;;2;162;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;ferro_mg_100g: valor original Tr (não numérico)
+479;Refrigerante tipo água tônica;;31;0.0;8.0;0.0;;1;;8;2;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"fibras_g_100g: valor original NA (não numérico); ferro_mg_100g: valor original Tr (não numérico)"
+480;Refrigerante tipo cola;;34;0.0;8.7;0.0;;1;;7;1;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"fibras_g_100g: valor original NA (não numérico); ferro_mg_100g: valor original Tr (não numérico)"
+481;Refrigerante tipo guaraná;;39;0.0;10.0;0.0;;1;;9;1;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"fibras_g_100g: valor original NA (não numérico); ferro_mg_100g: valor original Tr (não numérico)"
+482;Refrigerante tipo laranja;;46;0.0;11.8;0.0;;2;;9;16;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"fibras_g_100g: valor original NA (não numérico); ferro_mg_100g: valor original Tr (não numérico)"
+483;Refrigerante tipo limão;;40;0.0;10.3;0.0;;2;;9;4;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"fibras_g_100g: valor original NA (não numérico); ferro_mg_100g: valor original Tr (não numérico)"
+484;Omelete de queijo;;268;15.6;0.4;22.0;;166;1.4;216;127;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+485;Ovo de codorna inteiro cru;;177;13.7;0.8;12.7;;79;3.3;129;79;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+486;Ovo de galinha clara cozida/10minutos;;59;13.4;0.0;0.1;;6;0.1;181;146;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+487;Ovo de galinha gema cozida/10minutos;;353;15.9;1.6;30.8;;114;2.9;45;87;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+488;Ovo de galinha inteiro cozido/10minutos;;146;13.3;0.6;9.5;;49;1.5;146;139;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+489;Ovo de galinha inteiro cru;;143;13.0;1.6;8.9;;42;1.6;168;150;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+490;Ovo de galinha inteiro frito;;240;15.6;1.2;18.6;;73;2.1;166;184;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+491;Achocolatado pó;;401;4.2;91.2;2.2;3.9;44;5.4;65;496;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+492;Açúcar cristal;;387;0.3;99.6;;;8;0.2;;3;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"gorduras_g_100g: valor original Tr (não numérico); fibras_g_100g: valor original NA (não numérico); sodio_mg_100g: valor original Tr (não numérico)"
+493;Açúcar mascavo;;369;0.8;94.5;0.1;;127;8.3;25;522;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+494;Açúcar refinado;;387;0.3;99.5;;;4;0.1;12;6;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"gorduras_g_100g: valor original Tr (não numérico); fibras_g_100g: valor original NA (não numérico)"
+495;Chocolate ao leite;;540;7.2;59.6;30.3;2.2;191;1.6;77;355;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+496;Chocolate ao leite com castanha do Pará;;559;7.4;55.4;34.2;2.5;171;1.5;64;431;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+497;Chocolate ao leite dietético;;557;6.9;56.3;33.8;2.8;188;3.3;85;458;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+498;Chocolate meio amargo;;475;4.9;62.4;29.9;4.9;45;3.6;9;432;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+499;Cocada branca;;449;1.1;81.4;13.6;3.6;7;1.2;29;183;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+500;Doce de abóbora cremoso;;199;0.9;54.6;0.2;2.3;13;0.9;;137;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+501;Doce de leite cremoso;;306;5.5;59.5;6.0;;195;0.1;120;259;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+502;Geléia mocotó natural;;106;2.1;24.2;0.1;;4;0.1;43;2;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+503;Glicose de milho;;292;0.0;79.4;0.0;;6;0.1;59;5;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+504;Maria mole;;301;3.8;73.6;0.2;0.7;13;0.4;15;24;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+505;Maria mole coco queimado;;307;3.9;75.1;0.1;0.6;19;0.5;14;36;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+506;Marmelada;;257;0.4;70.8;0.1;4.1;11;0.7;11;83;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+507;Mel de abelha;;309;0.0;84.0;0.0;;10;0.3;6;99;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+508;Melado;;297;0.0;76.6;0.0;;102;5.4;4;395;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+509;Quindim;;411;4.7;46.3;24.4;3.2;37;1.4;27;111;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+510;Rapadura;;352;1.0;90.8;0.1;;30;4.4;22;459;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+511;Café pó torrado;;419;14.7;65.8;11.9;51.2;107;8.1;1;1609;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+512;Capuccino pó;;417;11.3;73.6;8.6;2.4;467;2.3;382;886;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+513;Fermento em pó químico;;90;0.5;43.9;0.1;;;;10052;;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+514;Fermento biológico levedura tablete;;90;17.0;7.7;1.5;4.2;18;2.6;40;576;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+515;Gelatina sabores variados pó;;380;8.9;89.2;;;27;0.3;235;7;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"gorduras_g_100g: valor original Tr (não numérico); fibras_g_100g: valor original NA (não numérico)"
+516;Sal dietético;;;;;;;;;23432;20468;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"energia_kcal_100g: valor original NA (não numérico); proteinas_g_100g: valor original NA (não numérico); carboidratos_g_100g: valor original NA (não numérico); gorduras_g_100g: valor original NA (não numérico); fibras_g_100g: valor original NA (não numérico)"
+517;Sal grosso;;;;;;;;;39943;;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"energia_kcal_100g: valor original NA (não numérico); proteinas_g_100g: valor original NA (não numérico); carboidratos_g_100g: valor original NA (não numérico); gorduras_g_100g: valor original NA (não numérico); fibras_g_100g: valor original NA (não numérico)"
+518;Shoyu;;61;3.3;11.6;0.3;;15;0.5;5024;165;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+519;Tempero a base de sal;;21;2.7;2.1;0.3;0.6;;;32560;;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+520;Azeitona preta conserva;;194;1.2;5.5;20.3;4.6;59;5.5;1567;79;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+521;Azeitona verde conserva;;137;0.9;4.1;14.2;3.8;46;0.2;1347;20;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+522;Chantilly spray com gordura vegetal;;315;0.5;16.9;27.3;;2;;110;5;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"fibras_g_100g: valor original NA (não numérico); ferro_mg_100g: valor original Tr (não numérico)"
+523;Leite de coco;;166;1.0;2.2;18.4;0.7;6;0.5;44;144;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+524;Maionese tradicional com ovos;;302;0.6;7.9;30.5;;3;0.1;787;16;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+525;Acarajé;;289;8.3;19.1;19.9;9.4;124;1.9;305;354;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+526;Arroz carreteiro;;154;10.8;11.6;7.1;1.5;13;1.0;1622;87;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+527;Baião de dois arroz e feijão-de-corda;;136;6.2;20.4;3.2;5.1;33;0.6;93;157;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+528;Barreado;;165;18.3;0.2;9.5;0.1;15;2.4;48;295;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+529;Bife à cavalo com contra filé;;291;23.7;0.0;21.1;;26;2.1;83;272;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+530;Bolinho de arroz;;274;8.0;41.7;8.3;2.7;24;2.1;59;96;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+531;Camarão à baiana;;101;7.9;3.2;6.0;0.4;43;1.4;85;139;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+532;Charuto de repolho;;78;6.8;10.1;1.1;1.5;23;0.9;12;184;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+533;Cuscuz de milho cozido com sal;;113;2.2;25.3;0.7;2.1;2;0.2;248;11;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+534;Cuscuz paulista;;142;2.6;22.5;4.6;2.4;14;0.3;236;53;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+535;Cuxá molho;;80;5.6;5.7;3.6;3.0;105;0.9;1344;124;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+536;Dobradinha;;125;19.8;0.0;4.4;;11;1.0;29;58;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original NA (não numérico)
+537;Estrogonofe de carne;;173;15.0;3.0;10.8;;28;2.7;123;322;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+538;Estrogonofe de frango;;157;17.6;2.6;8.0;;26;1.5;99;307;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+539;Feijão tropeiro mineiro;;152;10.2;19.6;6.8;3.6;41;2.2;365;349;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+540;Feijoada;;117;8.7;11.6;6.5;5.1;32;1.3;278;303;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+541;Frango com açafrão;;113;9.7;4.1;6.2;0.2;13;0.8;29;256;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+542;Macarrão molho bolognesa;;120;4.9;22.5;0.9;0.8;11;1.4;9;84;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+543;Maniçoba;;134;10.0;3.4;8.7;2.2;66;3.2;407;148;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+544;Quibebe;;86;8.6;6.6;2.7;1.7;8;0.8;247;153;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+545;Salada de legumes com maionese;;96;1.1;8.9;7.0;2.2;12;0.2;228;141;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+546;Salada de legumes cozida no vapor;;35;2.0;7.1;0.3;2.5;33;0.4;3;244;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+547;Salpicão de frango;;148;13.9;4.6;7.8;0.4;9;0.3;248;149;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+548;Sarapatel;;123;18.5;1.1;4.4;;12;7.2;216;199;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+549;Tabule;;57;2.0;10.6;1.2;2.1;19;0.6;1;188;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+550;Tacacá;;47;7.0;3.4;0.4;0.2;45;0.9;1349;240;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+551;Tapioca com manteiga;;348;0.1;63.6;10.9;;30;0.2;158;19;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;fibras_g_100g: valor original Tr (não numérico)
+552;Tucupi com pimenta-de-cheiro;;27;2.1;4.7;0.3;0.2;28;1.1;5;391;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+553;Vaca atolada;;145;5.1;10.1;9.3;2.3;63;0.7;26;220;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+554;Vatapá;;255;6.0;9.7;23.2;1.7;47;1.4;880;209;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+555;Virado à paulista;;307;10.2;14.1;25.6;2.2;41;1.1;346;237;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+556;Yakisoba;;113;7.5;18.3;2.6;1.1;14;0.6;794;159;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+557;Amendoim grão cru;;544;27.2;20.3;43.9;8.0;;2.5;;580;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;"calcio_mg_100g: valor original Tr (não numérico); sodio_mg_100g: valor original Tr (não numérico)"
+558;Amendoim torrado salgado;;606;22.5;18.7;54.0;7.8;39;1.3;376;496;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+559;Ervilha em vagem;;88;7.5;14.2;0.5;9.7;24;1.4;;311;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+560;Ervilha enlatada drenada;;74;4.6;13.4;0.4;5.1;22;1.4;372;147;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+561;Feijão carioca cozido;;76;4.8;13.6;0.5;8.5;27;1.3;2;255;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+562;Feijão carioca cru;;329;20.0;61.2;1.3;18.4;123;8.0;;1352;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+563;Feijão fradinho cozido;;78;5.1;13.5;0.6;7.5;17;1.1;1;253;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+564;Feijão fradinho cru;;339;20.2;61.2;2.4;23.6;78;5.1;10;1083;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+565;Feijão jalo cozido;;93;6.1;16.5;0.5;13.9;29;1.9;1;348;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+566;Feijão jalo cru;;328;20.1;61.5;0.9;30.3;98;7.0;25;1276;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+567;Feijão preto cozido;;77;4.5;14.0;0.5;8.4;29;1.5;2;256;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+568;Feijão preto cru;;324;21.3;58.8;1.2;21.8;111;6.5;;1416;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+569;Feijão rajado cozido;;85;5.5;15.3;0.4;9.3;29;1.4;1;315;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+570;Feijão rajado cru;;326;17.3;62.9;1.2;24.0;111;18.6;14;1135;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+571;Feijão rosinha cozido;;68;4.5;11.8;0.5;4.8;19;1.2;2;241;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+572;Feijão rosinha cru;;337;20.9;62.2;1.3;20.6;68;5.3;24;1109;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+573;Feijão roxo cozido;;77;5.7;12.9;0.5;11.5;23;1.4;1;268;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+574;Feijão roxo cru;;331;22.2;60.0;1.2;33.8;120;6.9;10;1221;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+575;Grão-de-bico cru;;355;21.2;57.9;5.4;12.4;114;5.4;5;1116;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+576;Guandu cru;;344;19.0;64.0;2.1;21.3;129;1.9;2;1215;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+577;Lentilha cozida;;93;6.3;16.3;0.5;7.9;16;1.5;1;220;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+578;Lentilha crua;;339;23.2;62.0;0.8;16.9;54;7.0;;887;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;sodio_mg_100g: valor original Tr (não numérico)
+579;Paçoca amendoim;;487;16.0;52.4;26.1;7.3;22;1.1;167;348;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+580;Pé-de-moleque amendoim;;503;13.2;54.7;28.0;3.4;27;1.3;16;355;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+581;Soja farinha;;404;36.0;38.4;14.6;20.2;206;13.1;6;1922;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+582;Soja extrato solúvel natural fluido;;39;2.4;4.3;1.6;0.4;17;0.4;57;121;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+583;Soja extrato solúvel pó;;459;35.7;28.5;26.2;7.3;359;7.0;83;1607;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+584;Soja queijo (tofu);;64;6.6;2.1;4.0;0.8;81;1.4;1;182;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+585;Tremoço cru;;381;33.6;43.8;10.3;32.3;177;2.8;3;708;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+586;Tremoço em conserva;;121;11.1;12.4;3.8;14.4;16;0.3;1809;5;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+587;Amêndoa torrada salgada;;581;18.6;29.5;47.3;11.6;237;3.1;279;640;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+588;Castanha-de-caju torrada salgada;;570;18.5;29.1;46.3;3.7;33;5.2;125;671;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+589;Castanha-do-Brasil crua;;643;14.5;15.1;63.5;7.9;146;2.3;1;651;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+590;Coco cru;;406;3.7;10.4;42.0;5.4;6;1.8;15;354;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+591;Coco  verde cru;;;;;;;;;;;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+592;Farinha de mesocarpo de babaçu crua;;329;1.4;79.2;0.2;17.9;61;18.3;12;362;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+593;Gergelim semente;;584;21.2;21.6;50.4;11.9;825;5.4;3;546;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+594;Linhaça semente;;495;14.1;43.3;32.3;33.5;211;4.7;9;869;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+595;Pinhão cozido;;174;3.0;43.9;0.7;15.6;16;0.8;1;727;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+596;Pupunha cozida;;219;2.5;29.6;12.8;4.3;28;0.5;1;303;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+597;Noz crua;;620;14.0;18.4;59.4;7.2;105;2.0;5;533;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;rascunho;
+472;;;;;;;;;;;;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;revisao_manual;Linha 473 do arquivo taco-db-nutrientes.csv: Colunas excedentes: revisão manual obrigatória
+474;;;;;;;;;;;;;;desconhecido;desconhecido;desconhecido;TACO (origem declarada nos arquivos enviados);;revisao_manual;Linha 475 do arquivo taco-db-nutrientes.csv: Colunas excedentes: revisão manual obrigatória
