@@ -210,7 +210,7 @@ function NutritionPlanningPage() {
     if (protein.adjusted_target_g !== null && (!Number.isFinite(protein.adjusted_target_g) || protein.adjusted_target_g < 1 || protein.adjusted_target_g > 1000 || !protein.observations.trim())) { setError("A meta manual deve estar entre 1 e 1.000 g/dia e exige justificativa profissional."); return; }
     if (energy.adjusted_daily_kcal !== null && (!Number.isFinite(energy.adjusted_daily_kcal) || energy.adjusted_daily_kcal < 500 || energy.adjusted_daily_kcal > 10000 || !energy.observations.trim())) { setError("A meta energética manual deve estar entre 500 e 10.000 kcal/dia e exige justificativa profissional."); return; }
     const energyHeight = currentEvaluation?.height_cm ?? (profile.height_cm ? Number(profile.height_cm) : null);
-    const energyCalculation = calculateEnergyEstimate(latestWeight(evaluations, applications)?.weight_kg ?? null, energyHeight, ageFrom(selected.data_nascimento), selected.genero, profile.activity_level);
+    const energyCalculation = calculateEnergyEstimate(latestWeight(evaluations, applications)?.weight_kg ?? null, energyHeight, ageFrom(selected.data_nascimento), selected.genero, profile.activity_level, energy.sex_parameter);
     const hydrationNeedsReview = hydration.pregnancy || hydration.breastfeeding || hydration.kidney_disease || hydration.cardiac_disease || hydration.fluid_restriction;
     const hydrationFactor = Number(hydration.factor_ml_per_kg);
     const hydrationEstimate = ageFrom(selected.data_nascimento) !== null && ageFrom(selected.data_nascimento)! >= 18 && !hydrationNeedsReview && hydration.weight_kg !== null && hydration.weight_kg > 0 && hydrationFactor > 0 ? Math.round(hydration.weight_kg * hydrationFactor) : null;

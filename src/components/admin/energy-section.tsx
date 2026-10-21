@@ -59,7 +59,10 @@ export function EnergySection({ value, onChange, weightKg, heightCm, patientAge,
     else if (Number.isFinite(value.adjusted_daily_kcal)) setManualInput(String(value.adjusted_daily_kcal));
   }, [value.adjusted_daily_kcal]);
 
-  const calculation = calculateEnergyEstimate(weightKg, heightCm, patientAge, gender, activityLevel, value.sex_parameter);
+  const registeredGender = gender?.trim().toLocaleLowerCase("pt-BR") ?? "";
+  const registeredSexParameter = ["feminino", "mulher", "female"].includes(registeredGender) ? "female" : ["masculino", "homem", "male"].includes(registeredGender) ? "male" : null;
+  const sexParameter = value.sex_parameter ?? registeredSexParameter;
+  const calculation = calculateEnergyEstimate(weightKg, heightCm, patientAge, gender, activityLevel, sexParameter);
   const activityFactor = calculation?.activity_factor ?? null;
   const bmr = calculation?.bmr_kcal ?? null;
   const estimate = calculation?.estimated_daily_kcal ?? null;
@@ -72,6 +75,7 @@ export function EnergySection({ value, onChange, weightKg, heightCm, patientAge,
   return <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
     <header className="flex items-center gap-2 border-b border-slate-100 px-5 py-4"><Flame className="size-5 text-[#2f8f82]" /><h2 className="font-display text-base font-semibold text-slate-800">Avaliação Energética</h2></header>
     <div className="space-y-4 p-5">
+      <div><Label>Parâmetro utilizado pela equação</Label><Select value={sexParameter ?? "none"} onValueChange={(selected) => set("sex_parameter", selected === "none" ? null : selected as "female" | "male")}><SelectTrigger className="mt-1 max-w-sm"><SelectValue placeholder="Selecione o parâmetro" /></SelectTrigger><SelectContent><SelectItem value="none">Não informado</SelectItem><SelectItem value="female">Feminino</SelectItem><SelectItem value="male">Masculino</SelectItem></SelectContent></Select><p className="mt-1 text-xs text-slate-500">Usado apenas para aplicar a equação Mifflin–St Jeor; não altera o cadastro do paciente.</p></div>
       <p className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-950">Estimativa pelo método Mifflin–St Jeor × fator de atividade. Não aplica déficit calórico nem constitui prescrição. A avaliação e a meta final são responsabilidade da nutricionista.</p>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 text-sm"><div><p className="text-slate-500">Peso mais recente</p><p className="font-medium">{weightKg === null ? "Não informado" : `${weightKg} kg`}</p></div><div><p className="text-slate-500">Altura utilizada</p><p className="font-medium">{heightCm === null ? "Não informada" : `${heightCm} cm`}</p></div><div><p className="text-slate-500">Idade</p><p className="font-medium">{patientAge === null ? "Não informada" : `${patientAge} anos`}</p></div><div><p className="text-slate-500">Atividade registrada</p><p className="font-medium">{activityLevel || "Não informada"}</p></div></div>
       {estimate !== null ? <div className="rounded-xl border border-slate-200 bg-slate-50 p-4"><h3 className="font-semibold text-slate-900">Estimativa de manutenção</h3><p className="mt-2 text-2xl font-semibold text-[#21655f]">{estimate.toLocaleString("pt-BR")} kcal/dia</p><p className="mt-2 text-sm text-slate-600">Metabolismo basal estimado: {bmr!.toLocaleString("pt-BR")} kcal/dia × fator de atividade {activityFactor}.</p><p className="mt-1 text-xs text-slate-500">Método: Mifflin–St Jeor. O metabolismo basal registrado na avaliação não é usado no cálculo.</p></div> : <div className="flex gap-2 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900" role="alert"><AlertTriangle className="size-5 shrink-0" /><p>Não é possível estimar sem peso, altura, idade adulta, gênero compatível com a equação e nível de atividade reconhecido. Complete os dados no perfil do paciente e confira a avaliação profissional.</p></div>}
