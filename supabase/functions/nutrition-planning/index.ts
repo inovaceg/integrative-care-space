@@ -194,7 +194,7 @@ serve(async (req) => {
     } catch (error) {
       const timedOut = error instanceof DOMException && error.name === "TimeoutError";
       console.error(`[${functionName}] Gemini request ${timedOut ? "timed out" : "network failed"}`);
-      return jsonResponse({ error: timedOut ? "O Gemini excedeu o limite de 45 segundos. Tente novamente com um período menor." : "Não foi possível conectar ao serviço Gemini." }, 502);
+      return jsonResponse({ error: timedOut ? "A geração demorou mais que o esperado e não foi possível confirmar o resultado. Verifique a proposta antes de tentar novamente." : "Não foi possível conectar ao serviço de geração. Tente novamente mais tarde." }, 502);
     }
     if (response.ok) break;
 
@@ -202,38 +202,45 @@ serve(async (req) => {
     const details = providerFailure?.error?.details;
     const providerMessage = providerFailure?.error?.message ?? "";
     const detailsText = JSON.stringify(details ?? "");
-    const exhaustedQuota = response.status === 429 && /quota exceeded|free.?tier|per.day|limit:\s*0/i.test(`${providerMessage} ${detailsText}`);
-    console.error(`[${functionName}] Gemini response status=${response.status} status_code=${providerFailure?.error?.status ?? "none"} attempt=${attempt} model=${model}`);
-    if (response.status !== 429 || exhaustedQuota || attempt === maxAttempts) break;
+    const providerStatus = providerFailure?.error?.status ?? "";
+    const exhaustedQuota = /quota exceeded|quota.*exhaust|free.?tier|per.day|limit:\s*0/i.test(`${providerMessage} ${detailsText} ${providerStatus}`);
+    const transientFailure = response.status === 429 || [500, 502, 503, 504].includes(response.status) || ["UNAVAILABLE", "INTERNAL", "DEADLINE_EXCEEDED", "RESOURCE_EXHAUSTED"].includes(providerStatus);
+    console.error(`[${functionName}] Gemini response status=${response.status} status_code=${providerStatus || "none"} attempt=${attempt} model=${model}`);
+    if (!transientFailure || exhaustedQuota || attempt === maxAttempts) break;
 
     const retryHeader = retryAfterMs(response.headers.get("Retry-After"));
     const retryDetail = retryDelayFromDetails(details);
-    const delay = Math.max(retryHeader ?? 0, retryDetail ?? 0, Math.min(1000 * (2 ** (attempt - 1)), maxRetryWaitMs));
+    const progressiveDelay = Math.min(1000 * (2 ** (attempt - 1)), maxRetryWaitMs);
+    const providerDelay = retryHeader ?? retryDetail;
+    const delay = providerDelay === null ? progressiveDelay : Math.max(providerDelay, progressiveDelay);
     if (delay > maxRetryWaitMs) break;
     await wait(delay);
   }
 
   if (!response?.ok) {
     const status = response?.status ?? 502;
-    const providerStatus = providerFailure?.error?.status;
+    const providerStatus = providerFailure?.error?.status ?? "";
     const details = JSON.stringify(providerFailure?.error?.details ?? "");
     const providerMessage = providerFailure?.error?.message ?? "";
-    const exhaustedQuota = status === 429 && /quota exceeded|free.?tier|per.day|limit:\s*0/i.test(`${providerMessage} ${details}`);
-    const invalidKey = /api.?key.*(invalid|not valid)|invalid.*api.?key/i.test(providerMessage) || status === 401;
+    const exhaustedQuota = /quota exceeded|quota.*exhaust|free.?tier|per.day|limit:\s*0/i.test(`${providerMessage} ${details} ${providerStatus}`);
+    const invalidKey = status === 401 || (/api.?key.*(invalid|not valid)|invalid.*api.?key/i.test(providerMessage) && status === 403);
+    const authenticationDenied = status === 403;
+    const transientFailure = status === 429 || [500, 502, 503, 504].includes(status) || ["UNAVAILABLE", "INTERNAL", "DEADLINE_EXCEEDED", "RESOURCE_EXHAUSTED"].includes(providerStatus);
     const error = exhaustedQuota
-      ? "A cota gratuita do Gemini foi esgotada. Aguarde a renovação do limite ou confira os limites do projeto no Google AI Studio."
+      ? "O limite de uso do serviço de geração foi atingido. Aguarde a renovação da cota antes de tentar novamente."
       : invalidKey
-        ? "O Gemini rejeitou GEMINI_API_KEY. Confira se a chave é válida e pertence ao projeto correto do Google AI Studio."
-        : status === 429
-          ? "O Gemini está limitando temporariamente as solicitações. Foram feitas tentativas limitadas; aguarde e tente novamente."
-          : status === 403
-            ? "O Gemini negou acesso. Confira a chave, o projeto e se a API Gemini está habilitada."
-            : status === 404
-              ? `O modelo ${model} não está disponível para este projeto. Confira o acesso ao modelo Gemini.`
-              : providerStatus || providerMessage
-                ? `O Gemini recusou a solicitação (${providerStatus ?? status}): ${providerMessage || "erro sem detalhes"}`
-                : `O Gemini recusou a solicitação (HTTP ${status}).`;
-    return jsonResponse({ error, provider: "gemini", http_status: status, provider_status: providerStatus ?? null, model }, status === 429 ? 429 : 502);
+        ? "O serviço de geração não está autenticado corretamente. Avise o suporte técnico."
+        : authenticationDenied
+          ? "O serviço de geração não autorizou esta solicitação. Avise o suporte técnico."
+          : status === 429
+            ? "O serviço está recebendo muitas solicitações. Aguarde um pouco e tente novamente."
+            : transientFailure
+              ? "O serviço de geração está temporariamente indisponível. Aguarde um pouco e tente novamente."
+              : status === 404
+                ? "O serviço de geração não encontrou o modelo configurado. Avise o suporte técnico."
+                : "Não foi possível gerar a proposta neste momento. Tente novamente mais tarde.";
+    const clientStatus = invalidKey ? 503 : authenticationDenied ? 503 : exhaustedQuota ? 429 : status === 429 ? 429 : transientFailure ? 503 : 502;
+    return jsonResponse({ error }, clientStatus);
   }
 
   try {
@@ -246,6 +253,6 @@ serve(async (req) => {
     return jsonResponse({ plan, model, provider: "gemini", test_mode: testMode });
   } catch {
     console.error(`[${functionName}] Gemini returned invalid structured output`);
-    return jsonResponse({ error: "O Gemini retornou um formato inesperado. Nenhum dado de paciente foi enviado; tente novamente." }, 502);
+    return jsonResponse({ error: "A resposta do serviço veio em formato inesperado. O conteúdo atual foi preservado; tente novamente." }, 502);
   }
 });

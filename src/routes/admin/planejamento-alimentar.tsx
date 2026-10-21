@@ -272,7 +272,7 @@ function NutritionPlanningPage() {
           const body = await response.json().catch(() => null) as { error?: string } | null;
           responseError = body?.error;
         }
-        setError(data?.error ?? responseError ?? functionError?.message ?? "Não foi possível gerar o planejamento no Gemini.");
+        setError(data?.error ?? responseError ?? "Não foi possível concluir a geração. Sua proposta atual foi preservada; aguarde e tente novamente.");
         setMessage("");
         return;
       }
