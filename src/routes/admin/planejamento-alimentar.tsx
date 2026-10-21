@@ -143,7 +143,7 @@ function NutritionPlanningPage() {
     setLoading(true); setError(""); setActivePlan(null); setContentText("");
     void Promise.all([
       supabase.from("body_evaluations").select("id,evaluation_date,weight_kg,height_cm,bmi,waist_cm,abdomen_cm,hip_cm,body_fat_percentage,muscle_mass_kg,visceral_fat_level,body_water_percentage,basal_metabolism_kcal,clinical_notes").eq("patient_id", patientId).eq("profissional_id", user.id).order("evaluation_date", { ascending: false }),
-      supabase.from("patient_applications").select("id,procedure_name,current_weight_kg,application_date,notes").eq("patient_id", patientId).eq("profissional_id", user.id).order("application_date", { ascending: false }),
+      supabase.from("patient_applications").select("id,procedure_name,current_weight_kg,application_date,notes").eq("patient_id", patientId).eq("profissional_id", user.id).order("application_date", { ascending: false }).limit(1),
       supabase.from("anamneses").select("alimentacao,atividade_fisica,qualidade_sono,doencas_fisicas,medicamentos_atuais,usa_medicamentos,sintomas_atuais").eq("paciente_id", patientId).eq("profissional_id", user.id).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("patient_nutrition_profiles").select("*").eq("patient_id", patientId).eq("profissional_id", user.id).maybeSingle(),
       supabase.from("nutrition_plans").select("id,goal,duration_days,status,plan_content,model_name,created_at,approved_at,approved_by,approved_version_id").eq("patient_id", patientId).eq("profissional_id", user.id).order("created_at", { ascending: false }),
