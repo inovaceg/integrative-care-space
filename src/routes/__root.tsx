@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
   Link,
+  ScrollRestoration,
   createRootRouteWithContext,
   useRouter,
   useRouterState,
@@ -14,7 +15,6 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { trackAnalyticsEvent } from "../lib/analytics";
 import { AuthProvider } from "../components/auth/auth-provider";
-import { ScrollPositionRestoration } from "../components/scroll-position-restoration";
 import { SiteLayout } from "../components/site-shell";
 import { localBusinessJsonLd } from "../lib/seo";
 
@@ -153,7 +153,7 @@ function RootComponent() {
           </>
         )}
       </AuthProvider>
-      <ScrollPositionRestoration />
+      <ScrollRestoration />
     </QueryClientProvider>
   );
 }

@@ -1,4 +1,5 @@
 import { createFileRoute, Link, Outlet, useChildMatches, useNavigate } from "@tanstack/react-router";
+import { z } from "zod";
 import { Clipboard, ExternalLink, FileText, Link2, Loader2, Pencil, Trash2, UserRoundPlus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
@@ -16,7 +17,14 @@ import { PatientReports } from "@/components/admin/patients/patient-reports";
 import { ExamAttachments } from "@/components/admin/patients/exam-attachments";
 import { createPatient, deletePatient, fetchPatient, fetchPatients, generatePatientCompletionLink, updatePatient, type PatientInput, type PatientRecord } from "@/lib/admin/records";
 
-export const Route = createFileRoute("/admin/pacientes")({ component: PatientsRouteComponent });
+export const Route = createFileRoute("/admin/pacientes")({
+  validateSearch: z.object({
+    q: z.string().catch(""),
+    status: z.enum(["all", "pendente", "ativo", "inativo"]).catch("all"),
+    tab: z.enum(["overview", "anamnese", "history", "documents", "edit"]).optional(),
+  }),
+  component: PatientsRouteComponent,
+});
 
 function PatientsRouteComponent() {
   const hasChildMatches = useChildMatches({ select: (matches) => matches.length > 0 });
@@ -348,11 +356,15 @@ function PatientDeleteDialog({ patient, onDeleted, trigger }: PatientDeleteDialo
 
 function PatientsPage() {
   const { user, isLoading: authLoading } = useAuth();
+  const navigate = Route.useNavigate();
+  const { q: search, status } = Route.useSearch();
   const [patients, setPatients] = useState<PatientRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("all");
+  const updateSearch = (q: string) => void navigate({ search: (previous) => ({ ...previous, q }), replace: true });
+  const updateStatus = (nextStatus: string) => void navigate({ search: (previous) => ({ ...previous, status: nextStatus as typeof status }), replace: true });
+  const setSearch = updateSearch;
+  const setStatus = updateStatus;
 
   async function loadPatients() {
     if (!user) return;
