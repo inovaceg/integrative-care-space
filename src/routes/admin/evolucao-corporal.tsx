@@ -36,6 +36,9 @@ import {
 } from "@/lib/admin/body-progress";
 
 export const Route = createFileRoute("/admin/evolucao-corporal")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    patientId: typeof search.patientId === "string" ? search.patientId : undefined,
+  }),
   component: BodyProgressPage,
 });
 
@@ -540,6 +543,7 @@ let bodyProgressDraftState = {
 
 function BodyProgressPage() {
   const { user } = useAuth();
+  const { patientId: requestedPatientId } = Route.useSearch();
   const [patients, setPatients] = useState<{ id: string; nome: string }[]>([]);
   const [patientId, setPatientId] = useState(bodyProgressDraftState.patientId);
   const [items, setItems] = useState<BodyEvaluation[]>([]);
@@ -552,6 +556,10 @@ function BodyProgressPage() {
   const [saving, setSaving] = useState(false);
   const draftRef = useRef(draft);
   draftRef.current = draft;
+
+  useEffect(() => {
+    if (requestedPatientId && patients.some((patient) => patient.id === requestedPatientId)) setPatientId(requestedPatientId);
+  }, [patients, requestedPatientId]);
 
   useEffect(() => {
     bodyProgressDraftState = { patientId, editingId, date, values, draft };
