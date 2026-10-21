@@ -45,12 +45,12 @@ serve(async (req) => {
   if (typeof input.goal !== "string" || input.goal.trim().length < 3 || input.goal.length > 1000) return jsonResponse({ error: "Informe um objetivo com até 1.000 caracteres." }, 400);
   if (input.desired_meals !== null && input.desired_meals !== undefined && (!Number.isInteger(input.desired_meals) || input.desired_meals < 1 || input.desired_meals > 10)) return jsonResponse({ error: "Quantidade de refeições inválida." }, 400);
 
-  const { data: patient, error: patientError } = await supabase.from("pacientes").select("id,data_nascimento,genero,area,queixa_principal,observacoes_iniciais").eq("id", input.patient_id).eq("profissional_id", userId).maybeSingle();
+  const { data: patient, error: patientError } = await supabase.from("pacientes").select("id,data_nascimento,genero,area").eq("id", input.patient_id).eq("profissional_id", userId).maybeSingle();
   if (patientError || !patient) return jsonResponse({ error: "Paciente não encontrado ou sem autorização." }, 404);
   const [profileResult, evalResult, applicationResult, anamnesisResult] = await Promise.all([
     supabase.from("patient_nutrition_profiles").select("height_cm,reference_weight_kg,goal,activity_level,exercise_details,wake_time,sleep_time,meal_schedule,desired_meals,work_routine,cooking_availability,food_budget,preferred_foods,avoided_foods,cultural_restrictions,simple_meals_preference,affordable_food_preference,allergies,intolerances,diagnosed_conditions,pregnancy_or_breastfeeding,medications,supplements,eating_disorder_history").eq("patient_id", input.patient_id).eq("profissional_id", userId).maybeSingle(),
     supabase.from("body_evaluations").select("evaluation_date,weight_kg,height_cm,bmi,waist_cm,abdomen_cm,hip_cm,body_fat_percentage,muscle_mass_kg,visceral_fat_level,body_water_percentage,basal_metabolism_kcal").eq("patient_id", input.patient_id).eq("profissional_id", userId).order("evaluation_date", { ascending: false }).limit(12),
-    supabase.from("patient_applications").select("procedure_name,application_date,current_weight_kg,notes").eq("patient_id", input.patient_id).eq("profissional_id", userId).order("application_date", { ascending: false }).limit(20),
+    supabase.from("patient_applications").select("procedure_name,application_date,current_weight_kg").eq("patient_id", input.patient_id).eq("profissional_id", userId).order("application_date", { ascending: false }).limit(20),
     supabase.from("anamneses").select("alimentacao,atividade_fisica,qualidade_sono,doencas_fisicas,medicamentos_atuais,usa_medicamentos").eq("paciente_id", input.patient_id).eq("profissional_id", userId).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
   ]);
   if (profileResult.error || evalResult.error || applicationResult.error || anamnesisResult.error) {
