@@ -93,7 +93,7 @@ function DashboardPage() {
     }, []).slice(0, 4);
   }, [appointments, patients]);
   const monthAppointments = useMemo(() => { const now = new Date(); return appointments.filter((appointment) => { const date = new Date(appointment.start_time); return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth(); }); }, [appointments]);
-  const greatestWeightLoss = useMemo(() => {
+  const weightLossRanking = useMemo(() => {
     const grouped = new Map<string, typeof evaluations>();
     evaluations.forEach((evaluation) => grouped.set(evaluation.patient_id, [...(grouped.get(evaluation.patient_id) ?? []), evaluation]));
     return [...grouped.entries()].flatMap(([patientId, records]) => {
@@ -106,8 +106,9 @@ function DashboardPage() {
       const patient = patients.find((item) => item.id === patientId);
       const lastApplication = applications.filter((application) => application.patient_id === patientId).sort((a, b) => new Date(b.application_date).getTime() - new Date(a.application_date).getTime() || new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0] ?? null;
       return loss > 0 && patient ? [{ patient, current: { ...current, application_date: lastApplication?.application_date ?? current.evaluation_date, current_weight_kg: current.weight_kg }, previous: { ...previous, current_weight_kg: previous.weight_kg }, loss }] : [];
-    }).sort((a, b) => b.loss - a.loss)[0] ?? null;
+    }).sort((a, b) => b.loss - a.loss).slice(0, 10);
   }, [applications, evaluations, patients]);
+  const greatestWeightLoss = weightLossRanking[0] ?? null;
   const stats = [{ label: "Pacientes cadastrados", value: String(patients.length), trend: "Atualizado agora", tone: "teal" as const, note: "cadastros deste profissional" }, { label: "Atendimentos no mês", value: String(monthAppointments.length), trend: "Agenda real", tone: "blue" as const, note: "agendamentos registrados" }, { label: "Próximos atendimentos", value: String(upcoming.length), trend: "Próximos", tone: "amber" as const, note: "não cancelados" }, { label: "Agenda concluída", value: String(appointments.filter((appointment) => appointment.status === "completed").length), trend: "Total", tone: "violet" as const, note: "atendimentos concluídos" }];
 
   const now = new Date();
@@ -128,6 +129,7 @@ function DashboardPage() {
     {error && <p role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">Não foi possível carregar o resumo: {error}</p>}
     {loading || authLoading ? <div className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-12 text-sm text-slate-500"><Loader2 className="mr-2 size-4 animate-spin" /> Carregando resumo...</div> : <>
       <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{stats.map((stat) => <DashboardCard key={stat.label} {...stat} />)}</div>
+      {weightLossRanking.length > 0 && <SectionCard title="Ranking · 10 pacientes com maior perda de peso" className="mt-6"><div className="divide-y divide-slate-100">{weightLossRanking.map((item, index) => <Link key={item.patient.id} to="/admin/pacientes/$id" params={{ id: item.patient.id }} className="flex flex-wrap items-center gap-3 py-3 first:pt-0 last:pb-0 hover:bg-slate-50"><span className="grid size-8 shrink-0 place-items-center rounded-full bg-emerald-50 text-sm font-semibold text-emerald-800">{index + 1}</span><PatientAvatar initials={initials(item.patient.nome)} /><span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-800">{item.patient.nome}</span><span className="text-right text-sm"><strong className="text-emerald-700">−{item.loss.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg</strong><span className="ml-2 text-slate-500">{Number(item.previous.current_weight_kg).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} → {Number(item.current.current_weight_kg).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg</span></span></Link>)}</div></SectionCard>}
       {greatestWeightLoss && <Card className="mt-6 overflow-hidden border-emerald-200 bg-gradient-to-r from-emerald-50 to-white shadow-sm"><CardContent className="p-5 sm:p-6"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">Destaque de evolução · maior perda entre aplicações</p><h2 className="mt-2 font-display text-xl font-semibold text-slate-900">{greatestWeightLoss.patient.nome}</h2><div className="mt-4 grid gap-3 text-sm sm:grid-cols-3"><p><span className="text-slate-500">Última aplicação</span><br /><strong>{new Date(`${greatestWeightLoss.current.application_date}T00:00:00`).toLocaleDateString("pt-BR")}</strong></p><p><span className="text-slate-500">Peso anterior</span><br /><strong>{Number(greatestWeightLoss.previous.current_weight_kg).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg</strong></p><p><span className="text-slate-500">Peso atual</span><br /><strong>{Number(greatestWeightLoss.current.current_weight_kg).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg</strong><span className="ml-2 text-emerald-700">−{greatestWeightLoss.loss.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg</span></p></div></CardContent></Card>}
       <div className="mt-6 grid gap-4 md:grid-cols-2">
         <DashboardCard label="A receber" value={pendingAppointmentsTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} trend="Status pendente" tone="teal" note="Consultas pendentes de hoje e futuras, com valor maior que zero" />
