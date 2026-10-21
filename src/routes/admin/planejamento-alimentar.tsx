@@ -136,15 +136,33 @@ function NutritionPlanningPage() {
 
   async function generatePlan() {
     if (!patientId || !user) return;
+    if (profile.goal.trim().length < 3) {
+      setError("Preencha um objetivo com pelo menos 3 caracteres antes de gerar a proposta.");
+      return;
+    }
+    setError("");
+    setMessage("Salvando perfil e preparando a proposta...");
     if (!await saveProfile()) return;
-    setGenerating(true); setError(""); setMessage("");
-    const { data, error: functionError } = await supabase.functions.invoke("nutrition-planning", { body: { patient_id: patientId, goal: profile.goal, duration_days: Number(duration), desired_meals: profile.desired_meals ? Number(profile.desired_meals) : null } });
-    setGenerating(false);
-    if (functionError || !data?.plan) { setError(data?.error ?? "Não foi possível gerar a proposta. Confira a configuração do serviço e tente novamente."); return; }
-    const nextContent = data.plan as PlanContent;
-    setContentText(JSON.stringify(nextContent, null, 2));
-    setMessage("Proposta gerada. Revise e edite todo o conteúdo antes de salvar.");
-    await savePlan("draft", nextContent, data.model ?? null);
+    setGenerating(true);
+    setError("");
+    setMessage("Gerando planejamento. Isso pode levar alguns instantes...");
+    try {
+      const { data, error: functionError } = await supabase.functions.invoke("nutrition-planning", { body: { patient_id: patientId, goal: profile.goal.trim(), duration_days: Number(duration), desired_meals: profile.desired_meals ? Number(profile.desired_meals) : null } });
+      if (functionError || !data?.plan) {
+        setError(data?.error ?? functionError?.message ?? "Não foi possível gerar a proposta. Confira a configuração do serviço e tente novamente.");
+        setMessage("");
+        return;
+      }
+      const nextContent = data.plan as PlanContent;
+      setContentText(JSON.stringify(nextContent, null, 2));
+      setMessage("Proposta gerada. Revise e edite todo o conteúdo antes de salvar.");
+      await savePlan("draft", nextContent, data.model ?? null);
+    } catch {
+      setError("Ocorreu um erro ao chamar o serviço de geração. Tente novamente.");
+      setMessage("");
+    } finally {
+      setGenerating(false);
+    }
   }
 
   async function loadVersions(plan: Plan) {
