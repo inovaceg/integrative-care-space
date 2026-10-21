@@ -103,8 +103,6 @@ serve(async (req) => {
     if (typeof input.goal !== "string" || input.goal.trim().length < 3 || input.goal.length > 1000) return jsonResponse({ error: "Informe um objetivo com até 1.000 caracteres." }, 400);
     if (input.desired_meals !== null && input.desired_meals !== undefined && (!Number.isInteger(input.desired_meals) || input.desired_meals < 1 || input.desired_meals > 10)) return jsonResponse({ error: "Quantidade de refeições inválida." }, 400);
   }
-  if (!testMode) return jsonResponse({ error: "Geração com dados reais temporariamente desabilitada enquanto a avaliação de privacidade e segurança de dados sensíveis estiver pendente." }, 403);
-
   const syntheticData = {
     patient_internal_id: "PACIENTE-FICTICIO-001",
     age_years: 35,

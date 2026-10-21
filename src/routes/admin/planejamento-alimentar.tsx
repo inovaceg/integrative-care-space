@@ -253,7 +253,6 @@ function NutritionPlanningPage() {
 
   async function generatePlan(testMode = false) {
     if (!user) return;
-    if (!testMode) { setError("A geração com dados reais está temporariamente bloqueada até concluir a avaliação de privacidade, segurança e tratamento de dados sensíveis do provedor Gemini."); setMessage(""); return; }
     if (!testMode && (!patientId || profile.goal.trim().length < 3)) {
       setError("Selecione um paciente e informe um objetivo com pelo menos 3 caracteres.");
       return;
@@ -436,8 +435,8 @@ function NutritionPlanningPage() {
         <div><Label>Objetivo da proposta</Label><Input className="mt-1" value={profile.goal} onChange={(e) => setField("goal", e.target.value)} placeholder="Ex.: organizar rotina alimentar" /></div>
         <div><Label>Período</Label><Select value={duration} onValueChange={setDuration}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="1">1 dia</SelectItem><SelectItem value="3">3 dias</SelectItem><SelectItem value="7">7 dias</SelectItem></SelectContent></Select></div>
       </div>
-      <p className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">A geração com dados reais está bloqueada até verificarmos privacidade, segurança e tratamento de dados sensíveis pelo provedor de IA. O teste Gemini abaixo usa dados exclusivamente fictícios.</p>
-      <div className="mt-4 flex flex-wrap gap-2"><Button type="button" disabled><Sparkles className="mr-2 size-4" />Geração real bloqueada</Button><Button type="button" variant="outline" onClick={() => void generatePlan(true)} disabled={generating || saving}>Testar somente com dados fictícios</Button></div>
+      <p className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">A geração real enviará ao Google Gemini dados clínicos e nutricionais do paciente selecionado. Use somente após obter as autorizações necessárias e revise cuidadosamente a proposta; ela não substitui avaliação ou aprovação profissional.</p>
+      <div className="mt-4 flex flex-wrap gap-2"><Button type="button" onClick={() => void generatePlan(false)} disabled={generating || saving || !patientId || profile.goal.trim().length < 3}><Sparkles className="mr-2 size-4" />{generating ? "Gerando..." : "Gerar proposta real"}</Button><Button type="button" variant="outline" onClick={() => void generatePlan(true)} disabled={generating || saving}>Testar somente com dados fictícios</Button></div>
       {message && <p className="mt-3 text-sm text-[#26786e]" role="status">{message}</p>}
       {error && <p className="mt-3 text-sm text-red-600" role="alert">{error}</p>}
     </SectionCard>
