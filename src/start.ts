@@ -10,7 +10,10 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
       throw error;
     }
     console.error(error);
-    return new Response(renderErrorPage(), {
+    const details = import.meta.env.DEV
+      ? error instanceof Error ? error.stack ?? error.message : String(error)
+      : undefined;
+    return new Response(renderErrorPage(details), {
       status: 500,
       headers: { "content-type": "text/html; charset=utf-8" },
     });

@@ -1,4 +1,15 @@
-export function renderErrorPage(): string {
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  })[character] ?? character);
+}
+
+export function renderErrorPage(details?: string): string {
+  const diagnostic = details ? `<pre class="diagnostic">${escapeHtml(details)}</pre>` : '';
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -10,6 +21,7 @@ export function renderErrorPage(): string {
       .card { max-width: 28rem; width: 100%; text-align: center; padding: 2rem; }
       h1 { font-size: 1.25rem; margin: 0 0 0.5rem; }
       p { color: #4b5563; margin: 0 0 1.5rem; }
+      .diagnostic { margin: 1rem 0; padding: 0.75rem; max-height: 12rem; overflow: auto; text-align: left; white-space: pre-wrap; overflow-wrap: anywhere; background: #f1f5f9; border-radius: 0.375rem; font: 12px/1.5 ui-monospace, monospace; }
       .actions { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
       a, button { padding: 0.5rem 1rem; border-radius: 0.375rem; font: inherit; cursor: pointer; text-decoration: none; border: 1px solid transparent; }
       .primary { background: #111; color: #fff; }
@@ -20,6 +32,7 @@ export function renderErrorPage(): string {
     <div class="card">
       <h1>This page didn't load</h1>
       <p>Something went wrong on our end. You can try refreshing or head back home.</p>
+      ${diagnostic}
       <div class="actions">
         <button class="primary" onclick="location.reload()">Try again</button>
         <a class="secondary" href="/">Go home</a>
