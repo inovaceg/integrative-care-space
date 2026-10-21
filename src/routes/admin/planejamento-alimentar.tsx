@@ -198,12 +198,15 @@ function NutritionPlanningPage() {
     let parsed: PlanContent;
     try { parsed = contentOverride ?? JSON.parse(contentText) as PlanContent; if (!parsed || !Array.isArray(parsed.meals)) throw new Error(); }
     catch { setError("O conteúdo precisa ser um JSON válido com uma lista de refeições."); return; }
+    const proteinFactorInput = Number(protein.factor_g_per_kg);
+    if (!Number.isFinite(proteinFactorInput) || proteinFactorInput < 0.1 || proteinFactorInput > 10) { setError("O fator de proteína deve estar entre 0,1 e 10 g/kg/dia."); return; }
+    if (protein.adjusted_target_g !== null && (!Number.isFinite(protein.adjusted_target_g) || protein.adjusted_target_g < 1 || protein.adjusted_target_g > 1000 || !protein.observations.trim())) { setError("A meta manual deve estar entre 1 e 1.000 g/dia e exige justificativa profissional."); return; }
     const hydrationNeedsReview = hydration.pregnancy || hydration.breastfeeding || hydration.kidney_disease || hydration.cardiac_disease || hydration.fluid_restriction;
     const hydrationFactor = Number(hydration.factor_ml_per_kg);
     const hydrationEstimate = ageFrom(selected.data_nascimento) !== null && ageFrom(selected.data_nascimento)! >= 18 && !hydrationNeedsReview && hydration.weight_kg !== null && hydration.weight_kg > 0 && hydrationFactor > 0 ? Math.round(hydration.weight_kg * hydrationFactor) : null;
     const proteinBlocked = ageFrom(selected.data_nascimento) === null || ageFrom(selected.data_nascimento)! < 18 || !protein.clinical_info_sufficient || protein.kidney_disease || protein.special_clinical_condition || protein.weight_kg === null || protein.weight_kg <= 0;
-    const proteinFactor = Number(protein.factor_g_per_kg);
-    const proteinEstimate = !proteinBlocked && Number.isFinite(proteinFactor) && proteinFactor > 0 ? Math.round(protein.weight_kg! * proteinFactor * 10) / 10 : null;
+    const proteinFactor = proteinFactorInput;
+    const proteinEstimate = !proteinBlocked ? Math.round(protein.weight_kg! * proteinFactor * 100) / 100 : null;
     parsed = { ...parsed, hydration: { ...hydration, estimated_total_water_ml: hydrationEstimate }, protein: { ...protein, calculated_target_g: proteinEstimate } };
     setSaving(true); setError(""); setMessage("");
     let planId = activePlan?.id;
@@ -331,8 +334,8 @@ function NutritionPlanningPage() {
       const target = proteinPlan.adjusted_target_g ?? proteinPlan.calculated_target_g;
       line("NECESSIDADE DIARIA DE PROTEINAS - META REVISADA", 13, true);
       line(`Peso de referência: ${display(proteinPlan.weight_kg, " kg")} · Origem: ${proteinPlan.weight_source ?? "Não informada"} · Data: ${proteinPlan.weight_date ?? "Não informada"}`);
-      if (proteinPlan.calculated_target_g !== null) line(`Referência: ${proteinPlan.weight_kg} kg × ${proteinPlan.factor_g_per_kg} g/kg/dia = ${proteinPlan.calculated_target_g.toFixed(1)} g/dia.`);
-      if (target !== null) line(`Meta revisada pela nutricionista: ${target.toFixed(1)} g/dia${proteinPlan.adjusted_target_g !== null ? " (ajuste manual)" : " (referência calculada)"}.`);
+      if (proteinPlan.calculated_target_g !== null) line(`Referência: ${proteinPlan.weight_kg} kg × ${proteinPlan.factor_g_per_kg} g/kg/dia = ${proteinPlan.calculated_target_g.toFixed(2)} g/dia.`);
+      if (target !== null) line(`Meta revisada pela nutricionista: ${target.toFixed(2)} g/dia${proteinPlan.adjusted_target_g !== null ? " (ajuste manual)" : " (referência calculada)"}.`);
       if (proteinPlan.observations) line(`Justificativa/observações: ${proteinPlan.observations}`);
       const completeMeals = (plan.meals ?? []).map((meal) => {
         const items = meal.items ?? [];
