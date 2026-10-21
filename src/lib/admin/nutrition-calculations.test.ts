@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { calculateMifflinStJeor, cmFromMeters, kgFromGrams, sumVerifiedMeal, validateEnergyApproval } from "./nutrition-calculations";
+import { calculateMifflinStJeor, cmFromMeters, isTrustedNutritionSource, kgFromGrams, sumVerifiedMeal, validateEnergyApproval } from "./nutrition-calculations";
 
 describe("cálculos nutricionais", () => {
   test("calcula Mifflin–St Jeor e o total com um só fator de atividade", () => {
@@ -18,6 +18,8 @@ describe("cálculos nutricionais", () => {
     const verified = [{ calories_kcal: 100, calories_source: "TBCA" }, { calories_kcal: 50, calories_source: "Rótulo" }];
     expect(sumVerifiedMeal(verified, "calories_kcal", "calories_source")).toBe(150);
     expect(sumVerifiedMeal([...verified, { calories_kcal: 10 }], "calories_kcal", "calories_source")).toBeNull();
+    expect(isTrustedNutritionSource("fonte desconhecida")).toBe(false);
+    expect(isTrustedNutritionSource("TBCA - item 123" )).toBe(true);
   });
   test("aprovação energética requer meta, justificativa e revisão", () => {
     expect(validateEnergyApproval(2000, "Ajuste individual", true)).toBe(true);

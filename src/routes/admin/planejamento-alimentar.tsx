@@ -6,7 +6,7 @@ import { NutritionPlanPreview } from "@/components/admin/nutrition-plan-preview"
 import { HydrationSection, type HydrationPlan } from "@/components/admin/hydration-section";
 import { ProteinSection, type ProteinPlan } from "@/components/admin/protein-section";
 import { EnergySection, type EnergyPlan } from "@/components/admin/energy-section";
-import { calculateMifflinStJeor, validateEnergyApproval } from "@/lib/admin/nutrition-calculations";
+import { calculateMifflinStJeor, isTrustedNutritionSource, sumVerifiedMeal, validateEnergyApproval } from "@/lib/admin/nutrition-calculations";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +31,7 @@ const emptyProtein: ProteinPlan = { weight_kg: null, weight_date: null, weight_s
 const latestWeight = (evaluations: Evaluation[], applications: Application[]): WeightMeasurement | null => [...evaluations.flatMap((item) => item.weight_kg !== null && item.weight_kg >= 20 && item.weight_kg <= 350 && item.evaluation_date ? [{ weight_kg: item.weight_kg, weight_date: item.evaluation_date, weight_source: "Avaliação corporal" }] : []), ...applications.flatMap((item) => item.current_weight_kg >= 20 && item.current_weight_kg <= 350 && item.application_date ? [{ weight_kg: item.current_weight_kg, weight_date: item.application_date, weight_source: `Aplicação: ${item.procedure_name}` }] : [])].sort((a, b) => b.weight_date.localeCompare(a.weight_date))[0] ?? null;
 const hydrationForPlan = (content: PlanContent | null | undefined, measurements: WeightMeasurement | null): HydrationPlan => content?.hydration ?? { ...emptyHydration, ...(measurements ?? {}) };
 const proteinForPlan = (content: PlanContent | null | undefined, measurements: WeightMeasurement | null): ProteinPlan => content?.protein ?? { ...emptyProtein, ...(measurements ?? {}) };
-const emptyEnergy: EnergyPlan = { method: "Mifflin-St Jeor", sex_parameter: null, weight_kg: null, height_cm: null, age_years: null, weight_source: null, weight_date: null, height_source: null, activity_level: "", activity_factor: null, activity_context: "", objective: null, bmr_kcal: null, estimated_daily_kcal: null, adjusted_daily_kcal: null, observations: "", professional_reviewed: false, reviewed_at: null };
+const emptyEnergy: EnergyPlan = { method: "Mifflin-St Jeor", sex_parameter: null, weight_kg: null, height_cm: null, age_years: null, age_source: null, weight_source: null, weight_date: null, calculated_at: null, height_source: null, activity_level: "", activity_factor: null, activity_context: "", objective: null, bmr_kcal: null, estimated_daily_kcal: null, adjusted_daily_kcal: null, observations: "", professional_reviewed: false, reviewed_at: null };
 const energyForPlan = (content: PlanContent | null | undefined): EnergyPlan => ({ ...emptyEnergy, ...(content?.energy ?? {}) });
 type PlanVersion = { id: string; version_number: number; plan_content: PlanContent; created_at: string; created_by: string };
 const emptyProfile: Profile = { height_cm: "", reference_weight_kg: "", goal: "", activity_level: "", exercise_details: "", wake_time: "", sleep_time: "", meal_schedule: "", desired_meals: "", work_routine: "", cooking_availability: "", food_budget: "", preferred_foods: "", avoided_foods: "", cultural_restrictions: "", simple_meals_preference: false, affordable_food_preference: false, allergies: "", intolerances: "", diagnosed_conditions: "", pregnancy_or_breastfeeding: "", medications: "", supplements: "", eating_disorder_history: "" };
@@ -173,7 +173,7 @@ function NutritionPlanningPage() {
         setProtein(resume && savedDraft.protein ? savedDraft.protein : proteinForPlan(null, lastWeight));
         const latestHeight = evaluationRows.find((row) => row.height_cm !== null && row.height_cm >= 100 && row.height_cm <= 250)?.height_cm ?? (Number(profileResult.data?.height_cm) >= 100 && Number(profileResult.data?.height_cm) <= 250 ? Number(profileResult.data?.height_cm) : null);
         const measure = lastWeight;
-        setEnergy(resume && savedDraft.energy ? savedDraft.energy : { ...emptyEnergy, weight_kg: measure?.weight_kg ?? null, weight_date: measure?.weight_date ?? null, weight_source: measure?.weight_source ?? null, height_cm: latestHeight, height_source: latestHeight === null ? null : evaluationRows.some((row) => row.height_cm === latestHeight) ? "Avaliação corporal" : "Perfil nutricional", age_years: ageFrom(patients.find((p) => p.id === patientId)?.data_nascimento ?? null), activity_level: (resume && savedDraft.profile ? savedDraft.profile : asProfile(profileResult.data as Record<string, unknown> | null)).activity_level, activity_context: [anamnesisResult.data?.atividade_fisica, (resume && savedDraft.profile ? savedDraft.profile : asProfile(profileResult.data as Record<string, unknown> | null)).work_routine, (resume && savedDraft.profile ? savedDraft.profile : asProfile(profileResult.data as Record<string, unknown> | null)).exercise_details].filter(Boolean).join(" · ") });
+        setEnergy(resume && savedDraft.energy ? savedDraft.energy : { ...emptyEnergy, weight_kg: measure?.weight_kg ?? null, weight_date: measure?.weight_date ?? null, weight_source: measure?.weight_source ?? null, height_cm: latestHeight, height_source: latestHeight === null ? null : evaluationRows.some((row) => row.height_cm === latestHeight) ? "Avaliação corporal" : "Perfil nutricional", age_years: ageFrom(patients.find((p) => p.id === patientId)?.data_nascimento ?? null), age_source: "Data de nascimento do cadastro", activity_level: (resume && savedDraft.profile ? savedDraft.profile : asProfile(profileResult.data as Record<string, unknown> | null)).activity_level, activity_context: [anamnesisResult.data?.atividade_fisica, (resume && savedDraft.profile ? savedDraft.profile : asProfile(profileResult.data as Record<string, unknown> | null)).work_routine, (resume && savedDraft.profile ? savedDraft.profile : asProfile(profileResult.data as Record<string, unknown> | null)).exercise_details].filter(Boolean).join(" · ") });
       }
       loadedPatientId.current = patientId;
       setLoading(false);
@@ -330,7 +330,27 @@ function NutritionPlanningPage() {
     };
     if (activePlan?.status !== "approved") line("RASCUNHO - NAO UTILIZAR COMO PRESCRICAO", 13, true);
     line("PLANEJAMENTO ALIMENTAR", 18, true); line(`Paciente: ${selected.nome}`); line(`Data: ${new Date().toLocaleDateString("pt-BR")}`); line(`Objetivo: ${plan.objective || activePlan?.goal || profile.goal || "A confirmar"}`); line(`Status: ${statusNames[activePlan?.status ?? "draft"] ?? "Rascunho"}`, 10, true); y += 8;
-    for (const meal of plan.meals ?? []) { line(meal.name, 13, true); for (const item of meal.items ?? []) { line(`- ${item.food}: ${item.portion}`); if (typeof item.protein_g === "number" && item.protein_source?.trim()) line(`Proteína por porção: ${item.protein_g.toFixed(2)} g (${item.protein_source}).`); if (typeof item.calories_kcal === "number" && item.calories_source?.trim()) line(`Energia por porção: ${item.calories_kcal.toFixed(2)} kcal (${item.calories_source}).`); if (typeof item.carbohydrate_g === "number" && item.carbohydrate_source?.trim()) line(`Carboidratos por porção: ${item.carbohydrate_g.toFixed(2)} g (${item.carbohydrate_source}).`); if (typeof item.fat_g === "number" && item.fat_source?.trim()) line(`Gorduras por porção: ${item.fat_g.toFixed(2)} g (${item.fat_source}).`); if (item.alternatives?.length) line(`Alternativas: ${item.alternatives.join(", ")}`); } if (meal.notes) line(`Observacoes: ${meal.notes}`); y += 8; }
+    for (const meal of plan.meals ?? []) {
+      line(meal.name, 13, true);
+      const mealItems = meal.items ?? [];
+      for (const item of mealItems) {
+        line(`- ${item.food}: ${item.portion}`);
+        if (typeof item.protein_g === "number" && isTrustedNutritionSource(item.protein_source)) line(`Proteína por porção: ${item.protein_g.toFixed(2)} g (${item.protein_source}).`);
+        if (typeof item.calories_kcal === "number" && isTrustedNutritionSource(item.calories_source)) line(`Energia por porção: ${item.calories_kcal.toFixed(2)} kcal (${item.calories_source}).`);
+        if (typeof item.carbohydrate_g === "number" && isTrustedNutritionSource(item.carbohydrate_source)) line(`Carboidratos por porção: ${item.carbohydrate_g.toFixed(2)} g (${item.carbohydrate_source}).`);
+        if (typeof item.fat_g === "number" && isTrustedNutritionSource(item.fat_source)) line(`Gorduras por porção: ${item.fat_g.toFixed(2)} g (${item.fat_source}).`);
+        if (item.alternatives?.length) line(`Alternativas: ${item.alternatives.join(", ")}`);
+      }
+      const mealTotals = [
+        ["Calorias", "calories_kcal", "calories_source", "kcal"], ["Proteínas", "protein_g", "protein_source", "g"], ["Carboidratos", "carbohydrate_g", "carbohydrate_source", "g"], ["Gorduras", "fat_g", "fat_source", "g"],
+      ] as const;
+      for (const [label, nutrient, source, unit] of mealTotals) {
+        const total = sumVerifiedMeal(mealItems as unknown as Array<Record<string, unknown>>, nutrient, source);
+        if (total !== null) line(`${label} da refeição: ${total.toFixed(1)} ${unit} (fontes registradas).`);
+      }
+      if (meal.notes) line(`Observacoes: ${meal.notes}`);
+      y += 8;
+    }
     for (const observation of plan.observations ?? []) line(`Orientacao: ${observation}`);
     if (activePlan?.status === "approved" && plan.hydration?.professional_reviewed) {
       const hydrationPlan = plan.hydration;
@@ -364,12 +384,18 @@ function NutritionPlanningPage() {
         line(`Total estimado do planejamento: ${dailyProtein.toFixed(1)} g/dia.`);
         if (target !== null) line(`Diferença para a meta: ${(dailyProtein - target >= 0 ? "+" : "")}${(dailyProtein - target).toFixed(1)} g.`);
       } else line("Total de proteína das refeições não calculado: faltam valores por porção e/ou fontes nutricionais confiáveis.");
+      const macroFields = [["Calorias", "calories_kcal", "calories_source", "kcal"], ["Carboidratos", "carbohydrate_g", "carbohydrate_source", "g"], ["Gorduras", "fat_g", "fat_source", "g"]] as const;
+      for (const [label, nutrient, source, unit] of macroFields) {
+        const mealValues = (plan.meals ?? []).map((meal) => sumVerifiedMeal((meal.items ?? []) as unknown as Array<Record<string, unknown>>, nutrient, source));
+        if (mealValues.length > 0 && mealValues.every((number): number is number => number !== null)) line(`Total diário de ${label.toLocaleLowerCase()}: ${mealValues.reduce((sum, number) => sum + number, 0).toFixed(1)} ${unit}.`);
+        else line(`Total diário de ${label.toLocaleLowerCase()} não calculado: composição incompleta ou fonte não confiável.`);
+      }
     }
     if (activePlan?.status === "approved" && plan.energy?.professional_reviewed) {
       const energyPlan = plan.energy;
       line("NECESSIDADE CALÓRICA - REVISADA PELA NUTRICIONISTA", 13, true);
       line(`Objetivo: ${energyPlan.objective ?? "não informado"} · Método: ${energyPlan.method} · Data da revisão: ${energyPlan.reviewed_at ? new Date(energyPlan.reviewed_at).toLocaleString("pt-BR") : "não informada"}`);
-      line(`Parâmetros: peso ${display(energyPlan.weight_kg, " kg")} (${energyPlan.weight_source ?? "origem não informada"}; ${energyPlan.weight_date ?? "data não informada"}); altura ${display(energyPlan.height_cm, " cm")} (${energyPlan.height_source ?? "origem não informada"}); idade ${display(energyPlan.age_years, " anos"); parâmetro confirmado: ${energyPlan.sex_parameter ?? "não informado"}.`);
+      line(`Parâmetros: peso ${display(energyPlan.weight_kg, " kg")} (${energyPlan.weight_source ?? "origem não informada"}; ${energyPlan.weight_date ?? "data não informada"}); altura ${display(energyPlan.height_cm, " cm")} (${energyPlan.height_source ?? "origem não informada"}); idade ${display(energyPlan.age_years, " anos")}; parâmetro confirmado: ${energyPlan.sex_parameter ?? "não informado"}.`);
       if (energyPlan.bmr_kcal !== null && energyPlan.activity_factor !== null && energyPlan.estimated_daily_kcal !== null) line(`Mifflin–St Jeor: basal estimado ${energyPlan.bmr_kcal} kcal/dia × fator único ${energyPlan.activity_factor} (${energyPlan.activity_level}) = gasto total estimado ${energyPlan.estimated_daily_kcal} kcal/dia.`);
       if (energyPlan.adjusted_daily_kcal !== null) line(`Meta definida e aprovada pela nutricionista: ${energyPlan.adjusted_daily_kcal} kcal/dia.`);
       if (energyPlan.activity_context) line(`Contexto considerado para seleção do fator (sem fator duplicado): ${energyPlan.activity_context}`);
