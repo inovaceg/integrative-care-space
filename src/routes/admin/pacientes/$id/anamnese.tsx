@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useParams } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate, useParams } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { ArrowLeft, Download, Loader2 } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-provider'
@@ -11,11 +11,13 @@ import { buildAnamnesePdf } from '@/lib/admin/anamnese-pdf'
 import { AnamneseReport } from '@/components/admin/anamnese-report'
 import { fetchCompletedAnamnese, type AnamneseRecord } from '@/lib/admin/anamnese'
 import { downloadDocumentPdf } from '@/lib/admin/document-layout'
+import { AnamneseActions } from '@/components/admin/patients/anamnese-actions'
 
 export const Route = createFileRoute('/admin/pacientes/$id/anamnese')({ component: CompletedAnamnesePage })
 
 function CompletedAnamnesePage() {
   const { id } = useParams({ from: '/admin/pacientes/$id/anamnese' })
+  const navigate = useNavigate()
   const { user, isLoading: authLoading } = useAuth()
   const [patient, setPatient] = useState<{ nome: string } | null>(null)
   const [record, setRecord] = useState<AnamneseRecord | null>(null)
@@ -62,6 +64,12 @@ function CompletedAnamnesePage() {
       <Link to="/admin/pacientes/$id" params={{ id }} className="inline-flex items-center gap-2 text-sm text-slate-500"><ArrowLeft className="size-4" />Voltar ao perfil</Link>
       <PageIntro eyebrow="Anamnese concluída" title={patient.nome} description={`Preenchida em ${new Date(record.preenchido_em!).toLocaleString('pt-BR')}`} action={<Button type="button" variant="outline" onClick={() => void generatePdf()}><Download className="mr-2 size-4" />Gerar PDF da ficha e análise</Button>} />
       {pdfError && <p role="alert" className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">{pdfError}</p>}
+      <AnamneseActions
+        record={record}
+        patientId={id}
+        onUpdated={setRecord}
+        onDeleted={() => void navigate({ to: '/admin/pacientes/$id', params: { id }, replace: true })}
+      />
       {sections.map(([title, items]) => <Card key={title}>
         <CardContent className="p-5">
           <h2 className="font-display text-lg font-semibold text-slate-800">{title}</h2>

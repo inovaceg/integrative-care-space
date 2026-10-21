@@ -9,6 +9,7 @@ import { analyzeAnamnese } from '@/lib/admin/anamnese-analysis'
 import { buildAnamnesePdf } from '@/lib/admin/anamnese-pdf'
 import { downloadDocumentPdf } from '@/lib/admin/document-layout'
 import { AnamneseReport } from '@/components/admin/anamnese-report'
+import { AnamneseActions } from '@/components/admin/patients/anamnese-actions'
 import type { PatientRecord } from '@/lib/admin/records'
 
 function formatDate(value: string | null | undefined) { return value ? new Date(value).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '—' }
@@ -83,6 +84,12 @@ export function AnamneseTab({ patient }: { patient: Pick<PatientRecord, 'id' | '
       </Card>
 
       {record?.preenchido_em && <>
+        <AnamneseActions
+          record={record}
+          patientId={patient.id}
+          onUpdated={setRecord}
+          onDeleted={() => { setRecord(null); setMessage('Anamnese excluída.') }}
+        />
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => window.print()}><FileText className="mr-2 size-4" />Visualizar ficha</Button>
           <Button variant="outline" onClick={() => void generatePdf()}><FileText className="mr-2 size-4" />Gerar PDF da ficha e análise</Button>
