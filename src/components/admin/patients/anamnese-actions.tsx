@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { anamneseFields } from '@/lib/admin/anamnese-display'
 import { invalidateAnamneseLink, type AnamneseAnswers, type AnamneseRecord } from '@/lib/admin/anamnese'
 import { supabase } from '@/integrations/supabase/client'
+import { formatWeightInput, normalizeWeightInput } from '@/lib/admin/weight-input'
 
 const fieldLabels = new Map(anamneseFields.flatMap(([, fields]) => fields))
 
@@ -122,7 +123,7 @@ export function AnamneseActions({
               const value = answers[key]
               return <label key={key} className="grid gap-1.5 text-sm font-medium text-slate-700">
                 {label}
-                {typeof value === 'boolean' ? <Select value={String(value)} onValueChange={(next) => updateAnswer(key, next === 'true')}>
+                {key === 'peso' ? <Input type="number" min="0" step="0.001" inputMode="decimal" value={normalizeWeightInput(String(value ?? ''))} onKeyDown={(event) => { if (['e', 'E', '+', '-'].includes(event.key)) event.preventDefault() }} onChange={(event) => updateAnswer(key, normalizeWeightInput(event.target.value).replace('.', ','))} onBlur={() => updateAnswer(key, formatWeightInput(String(answers[key] ?? '')))} /> : typeof value === 'boolean' ? <Select value={String(value)} onValueChange={(next) => updateAnswer(key, next === 'true')}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent><SelectItem value="true">Sim</SelectItem><SelectItem value="false">Não</SelectItem></SelectContent>
                 </Select> : Array.isArray(value) ? <Textarea rows={3} value={value.join('\n')} onChange={(event) => updateAnswer(key, event.target.value.split('\n').filter(Boolean))} /> : typeof value === 'number' ? <Input type="number" value={value} onChange={(event) => { if (event.target.value === '') clearAnswer(key); else updateAnswer(key, Number(event.target.value)) }} /> : <Textarea rows={3} value={String(value ?? '')} onChange={(event) => updateAnswer(key, event.target.value)} />}
