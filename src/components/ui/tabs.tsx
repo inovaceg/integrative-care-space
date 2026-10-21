@@ -23,7 +23,9 @@ TabsList.displayName = TabsPrimitive.List.displayName;
 const TabsTrigger = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
->(({ className, ...props }, ref) => (
+>(({ className, ...props }, ref) => {
+  if (props.value === "protein") return null;
+  return (
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
@@ -32,7 +34,8 @@ const TabsTrigger = React.forwardRef<
     )}
     {...props}
   />
-));
+  );
+});
 TabsTrigger.displayName = TabsPrimitive.Trigger.displayName;
 
 const TabsContent = React.forwardRef<
