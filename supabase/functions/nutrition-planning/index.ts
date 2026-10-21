@@ -94,10 +94,14 @@ serve(async (req) => {
   const { data: professional, error: professionalError } = await supabase.from("profissionais").select("id").eq("id", userId).maybeSingle();
   if (professionalError || !professional) return jsonResponse({ error: "Perfil profissional não encontrado." }, 403);
 
-  let input: { test_mode?: boolean };
+  let input: { test_mode?: boolean; patient_id?: string; goal?: string; duration_days?: number; desired_meals?: number | null; nutritional_profile?: Record<string, unknown> };
   try { input = await req.json(); } catch { return jsonResponse({ error: "Requisição inválida." }, 400); }
-  if (input.test_mode !== true) {
-    return jsonResponse({ error: "Geração com dados de pacientes está bloqueada até a validação formal de privacidade e proteção de dados. Use apenas o modo de teste com dados fictícios por enquanto." }, 403);
+  const testMode = input.test_mode === true;
+  if (input.nutritional_profile !== undefined && (!input.nutritional_profile || typeof input.nutritional_profile !== "object" || Array.isArray(input.nutritional_profile))) return jsonResponse({ error: "Perfil nutricional inválido." }, 400);
+  if (!testMode) {
+    if (!input.patient_id || typeof input.patient_id !== "string" || ![1, 3, 7].includes(Number(input.duration_days))) return jsonResponse({ error: "Paciente ou período inválido." }, 400);
+    if (typeof input.goal !== "string" || input.goal.trim().length < 3 || input.goal.length > 1000) return jsonResponse({ error: "Informe um objetivo com até 1.000 caracteres." }, 400);
+    if (input.desired_meals !== null && input.desired_meals !== undefined && (!Number.isInteger(input.desired_meals) || input.desired_meals < 1 || input.desired_meals > 10)) return jsonResponse({ error: "Quantidade de refeições inválida." }, 400);
   }
 
   const syntheticData = {
@@ -138,7 +142,41 @@ serve(async (req) => {
     requested_configuration: { goal: "organizar uma rotina alimentar equilibrada", duration_days: 1, desired_meals: 4 },
   };
 
-  const prompt = `Gere uma proposta demonstrativa FICTÍCIA para testar formato, não para uso clínico nem prescrição. Não faça diagnóstico, não calcule metas calóricas ou macronutrientes. Inclua refeições com alimentos, porções aproximadas, alternativas e observações; ressalte que todos os dados são fictícios e precisam de revisão profissional. Retorne em português brasileiro. Dados fictícios: ${JSON.stringify(syntheticData)}`;
+  let requestData: Record<string, unknown> = syntheticData;
+  if (!testMode) {
+    const { data: patient, error: patientError } = await supabase.from("pacientes").select("id,data_nascimento,genero,area").eq("id", input.patient_id!).eq("profissional_id", userId).maybeSingle();
+    if (patientError || !patient) return jsonResponse({ error: "Paciente não encontrado ou sem autorização." }, 404);
+    const [profileResult, evalResult, applicationResult, anamnesisResult] = await Promise.all([
+      supabase.from("patient_nutrition_profiles").select("height_cm,reference_weight_kg,goal,activity_level,exercise_details,wake_time,sleep_time,meal_schedule,desired_meals,work_routine,cooking_availability,food_budget,preferred_foods,avoided_foods,cultural_restrictions,simple_meals_preference,affordable_food_preference,allergies,intolerances,diagnosed_conditions,pregnancy_or_breastfeeding,medications,supplements,eating_disorder_history").eq("patient_id", input.patient_id!).eq("profissional_id", userId).maybeSingle(),
+      supabase.from("body_evaluations").select("evaluation_date,weight_kg,height_cm,bmi,waist_cm,abdomen_cm,hip_cm,body_fat_percentage,muscle_mass_kg,visceral_fat_level,body_water_percentage,basal_metabolism_kcal").eq("patient_id", input.patient_id!).eq("profissional_id", userId).order("evaluation_date", { ascending: false }).limit(12),
+      supabase.from("patient_applications").select("procedure_name,application_date,current_weight_kg").eq("patient_id", input.patient_id!).eq("profissional_id", userId).order("application_date", { ascending: false }).limit(20),
+      supabase.from("anamneses").select("alimentacao,atividade_fisica,qualidade_sono,doencas_fisicas,medicamentos_atuais,usa_medicamentos").eq("paciente_id", input.patient_id!).eq("profissional_id", userId).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
+    ]);
+    if (profileResult.error || evalResult.error || applicationResult.error || anamnesisResult.error) {
+      console.error(`[${functionName}] Failed loading authorized patient records`);
+      return jsonResponse({ error: "Não foi possível carregar os dados autorizados." }, 500);
+    }
+    const evaluations = evalResult.data ?? [];
+    const missing: string[] = [];
+    if (!evaluations.length) missing.push("avaliação corporal");
+    if (!input.nutritional_profile?.height_cm && !evaluations[0]?.height_cm) missing.push("altura");
+    if (!input.nutritional_profile?.allergies && !profileResult.data?.allergies) missing.push("confirmação de alergias");
+    requestData = {
+      age_years: patient.data_nascimento ? Math.max(0, Math.floor((Date.now() - new Date(`${patient.data_nascimento}T00:00:00`).getTime()) / 31557600000)) : null,
+      biological_sex_if_recorded: patient.genero,
+      relevant_patient_context: { patient_area: patient.area },
+      nutritional_profile: input.nutritional_profile ?? profileResult.data,
+      assessments: evaluations,
+      application_context_only_no_effect_inference: applicationResult.data,
+      relevant_anamnesis: anamnesisResult.data,
+      missing_data: missing,
+      requested_configuration: { goal: input.goal!.trim(), duration_days: input.duration_days, desired_meals: input.desired_meals ?? profileResult.data?.desired_meals ?? null },
+    };
+  }
+
+  const prompt = testMode
+    ? `Gere uma proposta demonstrativa FICTÍCIA para testar formato, não para uso clínico nem prescrição. Não faça diagnóstico, não calcule metas calóricas ou macronutrientes. Inclua refeições com alimentos, porções aproximadas, alternativas e observações; ressalte que todos os dados são fictícios e precisam de revisão profissional. Retorne em português brasileiro. Dados fictícios: ${JSON.stringify(requestData)}`
+    : `Prepare uma proposta alimentar preliminar para revisão do nutricionista responsável. Não prescreva, não faça diagnóstico, não invente dados, não presuma efeitos de procedimentos e não calcule metas calóricas ou macronutrientes. Considere alergias e restrições para evitar sugestões conflitantes. Indique dados ausentes e pontos que exigem confirmação profissional. Use porções aproximadas, alternativas alimentares e observações. Retorne em português brasileiro. Dados autorizados do paciente: ${JSON.stringify(requestData)}`;
   let response: Response | null = null;
   let providerFailure: { error?: { message?: string; status?: string; details?: unknown } } | null = null;
 
@@ -203,8 +241,8 @@ serve(async (req) => {
     const plan = JSON.parse(text);
     if (typeof plan.summary !== "string" || typeof plan.objective !== "string" || !Array.isArray(plan.meals) || !Array.isArray(plan.warnings) || !Array.isArray(plan.observations) || !Array.isArray(plan.professional_confirmations)) throw new Error("Invalid response shape");
     for (const meal of plan.meals) if (typeof meal.name !== "string" || !Array.isArray(meal.items) || meal.items.some((item: unknown) => !item || typeof item !== "object" || typeof (item as { food?: unknown }).food !== "string" || typeof (item as { portion?: unknown }).portion !== "string" || !Array.isArray((item as { alternatives?: unknown }).alternatives))) throw new Error("Invalid meal shape");
-    plan.observations.unshift("TESTE COM DADOS FICTÍCIOS: não utilizar como prescrição nem como recomendação clínica.");
-    return jsonResponse({ plan, model, provider: "gemini", test_mode: true });
+    if (testMode) plan.observations.unshift("TESTE COM DADOS FICTÍCIOS: não utilizar como prescrição nem como recomendação clínica.");
+    return jsonResponse({ plan, model, provider: "gemini", test_mode: testMode });
   } catch {
     console.error(`[${functionName}] Gemini returned invalid structured output`);
     return jsonResponse({ error: "O Gemini retornou um formato inesperado. Nenhum dado de paciente foi enviado; tente novamente." }, 502);

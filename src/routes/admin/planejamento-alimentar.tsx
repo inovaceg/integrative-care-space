@@ -110,8 +110,8 @@ function NutritionPlanningPage() {
   }
   const setField = (key: keyof Profile, value: string | boolean) => setProfile((old) => ({ ...old, [key]: value }));
 
-  async function savePlan(status: "draft" | "pending_review" = "draft", contentOverride?: PlanContent, modelName?: string) {
-    if (syntheticTest) { setError("O resultado do teste é fictício e não pode ser salvo como plano de paciente."); return; }
+  async function savePlan(status: "draft" | "pending_review" = "draft", contentOverride?: PlanContent, modelName?: string, allowFreshGeneratedPlan = false) {
+    if (syntheticTest && !allowFreshGeneratedPlan) { setError("O resultado do teste é fictício e não pode ser salvo como plano de paciente."); return; }
     if (!user || !patientId || !selected) return;
     let parsed: PlanContent;
     try { parsed = contentOverride ?? JSON.parse(contentText) as PlanContent; if (!parsed || !Array.isArray(parsed.meals)) throw new Error(); }
@@ -137,13 +137,20 @@ function NutritionPlanningPage() {
     const list = (data as Plan[] | null) ?? []; setPlans(list); const match = list.find((plan) => plan.id === (selectId ?? activePlan?.id)) ?? list[0]; if (match) { setActivePlan(match); setContentText(JSON.stringify(match.plan_content, null, 2)); const { data: versionData } = await supabase.from("nutrition_plan_versions").select("id,version_number,plan_content,created_at,created_by").eq("plan_id", match.id).order("version_number", { ascending: false }); setVersions((versionData as PlanVersion[] | null) ?? []); }
   }
 
-  async function generatePlan() {
+  async function generatePlan(testMode = false) {
     if (!user) return;
+    if (!testMode && (!patientId || profile.goal.trim().length < 3)) {
+      setError("Selecione um paciente e informe um objetivo com pelo menos 3 caracteres.");
+      return;
+    }
     setError("");
-    setMessage("Enviando somente dados fictícios para o teste do Gemini...");
+    setMessage(testMode ? "Enviando somente dados fictícios para o teste do Gemini..." : "Enviando os dados autorizados do paciente ao Gemini...");
     setGenerating(true);
     try {
-      const { data, error: functionError } = await supabase.functions.invoke("nutrition-planning", { body: { test_mode: true } });
+      const body = testMode
+        ? { test_mode: true }
+        : { patient_id: patientId, goal: profile.goal.trim(), duration_days: Number(duration), desired_meals: profile.desired_meals ? Number(profile.desired_meals) : null, nutritional_profile: profile };
+      const { data, error: functionError } = await supabase.functions.invoke("nutrition-planning", { body });
       if (functionError || !data?.plan) {
         let responseError: string | undefined;
         const response = functionError?.context as Response | undefined;
@@ -151,15 +158,21 @@ function NutritionPlanningPage() {
           const body = await response.json().catch(() => null) as { error?: string } | null;
           responseError = body?.error;
         }
-        setError(data?.error ?? responseError ?? functionError?.message ?? "Não foi possível testar a integração Gemini.");
+        setError(data?.error ?? responseError ?? functionError?.message ?? "Não foi possível gerar o planejamento no Gemini.");
         setMessage("");
         return;
       }
-      setSyntheticTest(true);
       setContentText(JSON.stringify(data.plan as PlanContent, null, 2));
-      setMessage("Teste Gemini concluído com dados inteiramente fictícios. Este resultado não foi salvo no paciente.");
+      if (testMode) {
+        setSyntheticTest(true);
+        setMessage("Teste Gemini concluído com dados fictícios. Este resultado não foi salvo no paciente.");
+      } else {
+        setSyntheticTest(false);
+        setMessage("Planejamento gerado. Revise o conteúdo antes de salvar ou enviar para aprovação.");
+        await savePlan("draft", data.plan as PlanContent, data.model ?? null, true);
+      }
     } catch {
-      setError("Ocorreu um erro ao testar o serviço Gemini.");
+      setError("Ocorreu um erro ao chamar o serviço Gemini.");
       setMessage("");
     } finally {
       setGenerating(false);
@@ -226,8 +239,8 @@ function NutritionPlanningPage() {
         <div><Label>Objetivo da proposta</Label><Input className="mt-1" value={profile.goal} onChange={(e) => setField("goal", e.target.value)} placeholder="Ex.: organizar rotina alimentar" /></div>
         <div><Label>Período</Label><Select value={duration} onValueChange={setDuration}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="1">1 dia</SelectItem><SelectItem value="3">3 dias</SelectItem><SelectItem value="7">7 dias</SelectItem></SelectContent></Select></div>
       </div>
-      <p className="mt-4 text-sm text-amber-800">A geração com dados reais está bloqueada enquanto a privacidade do serviço gratuito não for validada. Este teste envia somente dados fictícios e o resultado não pode ser salvo nem exportado como plano de paciente.</p>
-      <Button type="button" className="mt-4" onClick={() => void generatePlan()} disabled={generating || saving}><Sparkles className="mr-2 size-4" />{generating ? "Testando Gemini..." : "Testar Gemini com dados fictícios"}</Button>
+      <p className="mt-4 text-sm text-amber-800">A geração com dados reais encaminha informações clínicas ao Gemini conforme sua autorização e está sujeita aos termos de privacidade do Google. O modo de teste usa apenas dados fictícios.</p>
+      <div className="mt-4 flex flex-wrap gap-2"><Button type="button" onClick={() => void generatePlan()} disabled={generating || saving}><Sparkles className="mr-2 size-4" />{generating ? "Gerando..." : "Gerar planejamento alimentar"}</Button><Button type="button" variant="outline" onClick={() => void generatePlan(true)} disabled={generating || saving}>Testar somente com dados fictícios</Button></div>
       {message && <p className="mt-3 text-sm text-[#26786e]" role="status">{message}</p>}
       {error && <p className="mt-3 text-sm text-red-600" role="alert">{error}</p>}
     </SectionCard>
