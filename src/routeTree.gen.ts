@@ -24,6 +24,7 @@ import { Route as TermosDeUsoRouteImport } from './routes/termos-de-uso'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAgendaRouteImport } from './routes/admin/agenda'
 import { Route as AdminAplicacoesRouteImport } from './routes/admin/aplicacoes'
+import { Route as AdminBibliotecaNutricionalDemoRouteImport } from './routes/admin/biblioteca-nutricional-demo'
 import { Route as AdminBlogRouteImport } from './routes/admin/blog'
 import { Route as AdminConfiguracoesRouteImport } from './routes/admin/configuracoes'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
@@ -118,6 +119,12 @@ const AdminAplicacoesRoute = AdminAplicacoesRouteImport.update({
   path: '/aplicacoes',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminBibliotecaNutricionalDemoRoute =
+  AdminBibliotecaNutricionalDemoRouteImport.update({
+    id: '/biblioteca-nutricional-demo',
+    path: '/biblioteca-nutricional-demo',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminBlogRoute = AdminBlogRouteImport.update({
   id: '/blog',
   path: '/blog',
@@ -226,6 +233,7 @@ export interface FileRoutesByFullPath {
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/admin/agenda': typeof AdminAgendaRoute
   '/admin/aplicacoes': typeof AdminAplicacoesRoute
+  '/admin/biblioteca-nutricional-demo': typeof AdminBibliotecaNutricionalDemoRoute
   '/admin/blog': typeof AdminBlogRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
@@ -260,6 +268,7 @@ export interface FileRoutesByTo {
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/admin/agenda': typeof AdminAgendaRoute
   '/admin/aplicacoes': typeof AdminAplicacoesRoute
+  '/admin/biblioteca-nutricional-demo': typeof AdminBibliotecaNutricionalDemoRoute
   '/admin/blog': typeof AdminBlogRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
@@ -296,6 +305,7 @@ export interface FileRoutesById {
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/admin/agenda': typeof AdminAgendaRoute
   '/admin/aplicacoes': typeof AdminAplicacoesRoute
+  '/admin/biblioteca-nutricional-demo': typeof AdminBibliotecaNutricionalDemoRoute
   '/admin/blog': typeof AdminBlogRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
   '/admin/dashboard': typeof AdminDashboardRoute
@@ -333,6 +343,7 @@ export interface FileRouteTypes {
     | '/termos-de-uso'
     | '/admin/agenda'
     | '/admin/aplicacoes'
+    | '/admin/biblioteca-nutricional-demo'
     | '/admin/blog'
     | '/admin/configuracoes'
     | '/admin/dashboard'
@@ -367,6 +378,7 @@ export interface FileRouteTypes {
     | '/termos-de-uso'
     | '/admin/agenda'
     | '/admin/aplicacoes'
+    | '/admin/biblioteca-nutricional-demo'
     | '/admin/blog'
     | '/admin/configuracoes'
     | '/admin/dashboard'
@@ -402,6 +414,7 @@ export interface FileRouteTypes {
     | '/termos-de-uso'
     | '/admin/agenda'
     | '/admin/aplicacoes'
+    | '/admin/biblioteca-nutricional-demo'
     | '/admin/blog'
     | '/admin/configuracoes'
     | '/admin/dashboard'
@@ -545,6 +558,13 @@ declare module '@tanstack/react-router' {
       path: '/aplicacoes'
       fullPath: '/admin/aplicacoes'
       preLoaderRoute: typeof AdminAplicacoesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/biblioteca-nutricional-demo': {
+      id: '/admin/biblioteca-nutricional-demo'
+      path: '/biblioteca-nutricional-demo'
+      fullPath: '/admin/biblioteca-nutricional-demo'
+      preLoaderRoute: typeof AdminBibliotecaNutricionalDemoRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/blog': {
@@ -702,6 +722,7 @@ const AdminPacientesRouteWithChildren = AdminPacientesRoute._addFileChildren(
 interface AdminRouteChildren {
   AdminAgendaRoute: typeof AdminAgendaRoute
   AdminAplicacoesRoute: typeof AdminAplicacoesRoute
+  AdminBibliotecaNutricionalDemoRoute: typeof AdminBibliotecaNutricionalDemoRoute
   AdminBlogRoute: typeof AdminBlogRoute
   AdminConfiguracoesRoute: typeof AdminConfiguracoesRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
@@ -721,6 +742,7 @@ interface AdminRouteChildren {
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAgendaRoute: AdminAgendaRoute,
   AdminAplicacoesRoute: AdminAplicacoesRoute,
+  AdminBibliotecaNutricionalDemoRoute: AdminBibliotecaNutricionalDemoRoute,
   AdminBlogRoute: AdminBlogRoute,
   AdminConfiguracoesRoute: AdminConfiguracoesRoute,
   AdminDashboardRoute: AdminDashboardRoute,

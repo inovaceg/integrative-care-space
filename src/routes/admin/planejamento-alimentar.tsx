@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, Activity, ClipboardList, HeartPulse, Loader2, Save, Sparkles } from "lucide-react";
 import { AdminLayout, AdminNotice, PageIntro, SectionCard } from "@/components/admin/admin-ui";
@@ -435,8 +435,8 @@ function NutritionPlanningPage() {
         <div><Label>Objetivo da proposta</Label><Input className="mt-1" value={profile.goal} onChange={(e) => setField("goal", e.target.value)} placeholder="Ex.: organizar rotina alimentar" /></div>
         <div><Label>Período</Label><Select value={duration} onValueChange={setDuration}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="1">1 dia</SelectItem><SelectItem value="3">3 dias</SelectItem><SelectItem value="7">7 dias</SelectItem></SelectContent></Select></div>
       </div>
-      <p className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">A geração real enviará ao Google Gemini dados clínicos e nutricionais do paciente selecionado. Use somente após obter as autorizações necessárias e revise cuidadosamente a proposta; ela não substitui avaliação ou aprovação profissional.</p>
-      <div className="mt-4 flex flex-wrap gap-2"><Button type="button" onClick={() => void generatePlan(false)} disabled={generating || saving || !patientId || profile.goal.trim().length < 3}><Sparkles className="mr-2 size-4" />{generating ? "Gerando..." : "Gerar proposta real"}</Button><Button type="button" variant="outline" onClick={() => void generatePlan(true)} disabled={generating || saving}>Testar somente com dados fictícios</Button></div>
+      <p className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">A geração real está desabilitada enquanto a biblioteca validada e o motor interno não estiverem integrados e testados. A demonstração usa somente dados fictícios locais e não gera uma prescrição.</p>
+      <div className="mt-4 flex flex-wrap gap-2"><Button type="button" disabled><Sparkles className="mr-2 size-4" />GERAR PLANO ALIMENTAR AUTOMATICAMENTE</Button><Button type="button" variant="outline" asChild><Link to="/admin/biblioteca-nutricional-demo">Abrir Biblioteca e gerador demonstrativo</Link></Button></div>
       {message && <p className="mt-3 text-sm text-[#26786e]" role="status">{message}</p>}
       {error && <p className="mt-3 text-sm text-red-600" role="alert">{error}</p>}
     </SectionCard>

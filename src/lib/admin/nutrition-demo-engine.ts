@@ -1,0 +1,179 @@
+export type DemoFood = {
+  id: string;
+  name: string;
+  category: string;
+  kcal100g: number;
+  protein100g: number;
+  carbs100g: number;
+  fat100g: number;
+  householdMeasure: string;
+  allergens: string[];
+  allergenInfoKnown?: boolean;
+  restrictions: string[];
+  gluten: "free" | "contains" | "unknown";
+  lactose: "free" | "contains" | "unknown";
+  source: string;
+  license: string;
+  status: "draft" | "demo_validated";
+  demoOnly: true;
+};
+
+export type DemoItem = { foodId: string; grams: number; alternatives: string[] };
+export type DemoMealTemplate = {
+  id: string;
+  name: string;
+  category: string;
+  time: string;
+  items: DemoItem[];
+};
+export type DemoMeal = DemoMealTemplate & {
+  totals: Nutrients;
+};
+export type Nutrients = { kcal: number; protein: number; carbs: number; fat: number };
+export type DemoPlan = {
+  label: "SIMULAÇÃO FICTÍCIA — NÃO É PRESCRIÇÃO";
+  days: Array<{ day: number; meals: DemoMeal[]; totals: Nutrients }>;
+  targets: { kcal: number; protein: number };
+};
+export type DemoGenerationInput = {
+  days: number;
+  targetKcal: number | null;
+  targetProtein: number | null;
+  allergies: string[];
+  restrictions: string[];
+  clinicalReviewConfirmed: boolean;
+};
+
+export const demoFoods: DemoFood[] = [
+  { id: "demo-oats", name: "Aveia em flocos (fictícia)", category: "Cereais", kcal100g: 380, protein100g: 13, carbs100g: 68, fat100g: 7, householdMeasure: "1 colher de sopa = 10 g", allergens: ["glúten"], restrictions: [], gluten: "contains", lactose: "free", source: "DADO FICTÍCIO DE DEMONSTRAÇÃO", license: "Não licenciado para uso clínico", status: "demo_validated", demoOnly: true },
+  { id: "demo-yogurt", name: "Iogurte natural (fictício)", category: "Laticínios", kcal100g: 60, protein100g: 5, carbs100g: 7, fat100g: 2, householdMeasure: "1 pote = 170 g", allergens: ["leite"], restrictions: [], gluten: "free", lactose: "contains", source: "DADO FICTÍCIO DE DEMONSTRAÇÃO", license: "Não licenciado para uso clínico", status: "demo_validated", demoOnly: true },
+  { id: "demo-banana", name: "Banana (fictícia)", category: "Frutas", kcal100g: 89, protein100g: 1.1, carbs100g: 23, fat100g: 0.3, householdMeasure: "1 unidade média = 100 g", allergens: [], restrictions: [], gluten: "free", lactose: "free", source: "DADO FICTÍCIO DE DEMONSTRAÇÃO", license: "Não licenciado para uso clínico", status: "demo_validated", demoOnly: true },
+  { id: "demo-rice", name: "Arroz cozido (fictício)", category: "Cereais", kcal100g: 130, protein100g: 2.7, carbs100g: 28, fat100g: 0.3, householdMeasure: "1 colher de servir = 80 g", allergens: [], restrictions: [], gluten: "free", lactose: "free", source: "DADO FICTÍCIO DE DEMONSTRAÇÃO", license: "Não licenciado para uso clínico", status: "demo_validated", demoOnly: true },
+  { id: "demo-beans", name: "Feijão cozido (fictício)", category: "Leguminosas", kcal100g: 76, protein100g: 4.8, carbs100g: 14, fat100g: 0.5, householdMeasure: "1 concha pequena = 100 g", allergens: [], restrictions: [], gluten: "free", lactose: "free", source: "DADO FICTÍCIO DE DEMONSTRAÇÃO", license: "Não licenciado para uso clínico", status: "demo_validated", demoOnly: true },
+  { id: "demo-chicken", name: "Frango grelhado (fictício)", category: "Proteínas", kcal100g: 165, protein100g: 31, carbs100g: 0, fat100g: 3.6, householdMeasure: "1 filé pequeno = 100 g", allergens: [], restrictions: [], gluten: "free", lactose: "free", source: "DADO FICTÍCIO DE DEMONSTRAÇÃO", license: "Não licenciado para uso clínico", status: "demo_validated", demoOnly: true },
+  { id: "demo-vegetables", name: "Legumes cozidos (fictícios)", category: "Vegetais", kcal100g: 35, protein100g: 2, carbs100g: 7, fat100g: 0.2, householdMeasure: "1 xícara = 130 g", allergens: [], restrictions: [], gluten: "free", lactose: "free", source: "DADO FICTÍCIO DE DEMONSTRAÇÃO", license: "Não licenciado para uso clínico", status: "demo_validated", demoOnly: true },
+  { id: "demo-potato", name: "Batata cozida (fictícia)", category: "Tubérculos", kcal100g: 86, protein100g: 1.7, carbs100g: 20, fat100g: 0.1, householdMeasure: "1 unidade média = 150 g", allergens: [], restrictions: [], gluten: "free", lactose: "free", source: "DADO FICTÍCIO DE DEMONSTRAÇÃO", license: "Não licenciado para uso clínico", status: "demo_validated", demoOnly: true },
+  { id: "demo-fish", name: "Peixe grelhado (fictício)", category: "Proteínas", kcal100g: 140, protein100g: 26, carbs100g: 0, fat100g: 3, householdMeasure: "1 filé = 120 g", allergens: ["peixe"], restrictions: [], gluten: "free", lactose: "free", source: "DADO FICTÍCIO DE DEMONSTRAÇÃO", license: "Não licenciado para uso clínico", status: "demo_validated", demoOnly: true },
+];
+
+export const demoMealTemplates: DemoMealTemplate[] = [
+  { id: "demo-breakfast", name: "Desjejum demonstrativo", category: "Desjejum", time: "08:00", items: [{ foodId: "demo-oats", grams: 60, alternatives: [] }, { foodId: "demo-yogurt", grams: 200, alternatives: [] }, { foodId: "demo-banana", grams: 120, alternatives: [] }] },
+  { id: "demo-lunch", name: "Almoço demonstrativo", category: "Almoço", time: "12:30", items: [{ foodId: "demo-rice", grams: 200, alternatives: [] }, { foodId: "demo-beans", grams: 130, alternatives: [] }, { foodId: "demo-chicken", grams: 130, alternatives: ["demo-fish"] }, { foodId: "demo-vegetables", grams: 150, alternatives: [] }] },
+  { id: "demo-dinner", name: "Jantar demonstrativo", category: "Jantar", time: "19:30", items: [{ foodId: "demo-potato", grams: 300, alternatives: ["demo-rice"] }, { foodId: "demo-fish", grams: 120, alternatives: ["demo-chicken"] }, { foodId: "demo-vegetables", grams: 150, alternatives: [] }] },
+  { id: "demo-snack", name: "Lanche demonstrativo", category: "Lanche", time: "16:00", items: [{ foodId: "demo-banana", grams: 150, alternatives: [] }, { foodId: "demo-yogurt", grams: 170, alternatives: [] }] },
+];
+
+export class DemoGenerationError extends Error {}
+
+function matchesRestriction(food: DemoFood, allergies: string[], restrictions: string[]) {
+  const blockedAllergens = allergies.map((value) => value.trim().toLocaleLowerCase("pt-BR")).filter(Boolean);
+  const blockedRestrictions = restrictions.map((value) => value.trim().toLocaleLowerCase("pt-BR")).filter(Boolean);
+  if (food.allergens.some((allergen) => blockedAllergens.includes(allergen.toLocaleLowerCase("pt-BR")))) return true;
+  if (blockedRestrictions.includes("sem glúten") && food.gluten !== "free") return true;
+  if (blockedRestrictions.includes("sem lactose") && food.lactose !== "free") return true;
+  return food.restrictions.some((restriction) => blockedRestrictions.includes(restriction.toLocaleLowerCase("pt-BR")));
+}
+
+function totalsForItems(items: DemoItem[], foods: DemoFood[]): Nutrients {
+  return items.reduce((totals, item) => {
+    const food = foods.find((candidate) => candidate.id === item.foodId);
+    if (!food) return totals;
+    const factor = item.grams / 100;
+    totals.kcal += food.kcal100g * factor;
+    totals.protein += food.protein100g * factor;
+    totals.carbs += food.carbs100g * factor;
+    totals.fat += food.fat100g * factor;
+    return totals;
+  }, { kcal: 0, protein: 0, carbs: 0, fat: 0 });
+}
+
+const roundNutrients = (value: Nutrients): Nutrients => ({ kcal: Math.round(value.kcal), protein: Math.round(value.protein * 10) / 10, carbs: Math.round(value.carbs * 10) / 10, fat: Math.round(value.fat * 10) / 10 });
+
+export function recalculateDemoMeal(meal: DemoMealTemplate, foods: DemoFood[]): DemoMeal {
+  const items = meal.items.map((item) => ({ ...item, alternatives: [...item.alternatives] }));
+  return { ...meal, items, totals: roundNutrients(totalsForItems(items, foods)) };
+}
+
+export function recalculateDemoPlan(plan: DemoPlan, foods: DemoFood[]): DemoPlan {
+  return { ...plan, days: plan.days.map((day) => {
+    const meals = day.meals.map((meal) => recalculateDemoMeal(meal, foods));
+    return { ...day, meals, totals: roundNutrients(meals.reduce((total, meal) => ({ kcal: total.kcal + meal.totals.kcal, protein: total.protein + meal.totals.protein, carbs: total.carbs + meal.totals.carbs, fat: total.fat + meal.totals.fat }), { kcal: 0, protein: 0, carbs: 0, fat: 0 })) };
+  }) };
+}
+
+export function generateDemoPlan(input: DemoGenerationInput, foods: DemoFood[] = demoFoods, templates: DemoMealTemplate[] = demoMealTemplates): DemoPlan {
+  if (![1, 3, 7].includes(input.days)) throw new DemoGenerationError("Escolha um período de 1, 3 ou 7 dias.");
+  if (!input.targetKcal || !Number.isFinite(input.targetKcal) || input.targetKcal < 500) throw new DemoGenerationError("Informe uma meta energética demonstrativa válida.");
+  if (!input.targetProtein || !Number.isFinite(input.targetProtein) || input.targetProtein < 1) throw new DemoGenerationError("Informe uma meta proteica demonstrativa válida.");
+  if (!input.clinicalReviewConfirmed) throw new DemoGenerationError("Confirme que alergias, intolerâncias e restrições foram revisadas neste cenário fictício.");
+
+  const usableFoods = foods.filter((food) => food.status === "demo_validated" && food.demoOnly);
+  const safeTemplates = templates.filter((template) => template.items.length > 0 && template.items.every((item) => {
+    const food = usableFoods.find((candidate) => candidate.id === item.foodId);
+    return Boolean(food && food.allergenInfoKnown !== false && !matchesRestriction(food, input.allergies, input.restrictions));
+  }));
+  const mealCategories = [...new Set(safeTemplates.map((template) => template.category))];
+  if (mealCategories.length < 3) throw new DemoGenerationError("Não há refeições demonstrativas suficientes compatíveis com as restrições selecionadas.");
+
+  const baseDay = ["Desjejum", "Almoço", "Jantar"].map((category) => safeTemplates.find((template) => template.category === category)).filter((meal): meal is DemoMealTemplate => Boolean(meal));
+  if (baseDay.length !== 3) throw new DemoGenerationError("O catálogo demonstrativo não possui desjejum, almoço e jantar compatíveis.");
+  const baseKcal = baseDay.reduce((sum, meal) => sum + totalsForItems(meal.items, usableFoods).kcal, 0);
+  const portionFactor = input.targetKcal / baseKcal;
+  if (portionFactor < 0.75 || portionFactor > 1.25) throw new DemoGenerationError("A meta está fora da faixa de ajuste demonstrativa de porções (75% a 125%). Nenhuma proposta foi criada.");
+
+  const days = Array.from({ length: input.days }, (_, index) => {
+    const dailyMeals = baseDay.map((template) => recalculateDemoMeal({ ...template, items: template.items.map((item) => {
+      const alternate = index % 2 === 1
+        ? item.alternatives.map((id) => usableFoods.find((food) => food.id === id)).find((food) => food && !matchesRestriction(food, input.allergies, input.restrictions))
+        : undefined;
+      return { ...item, foodId: alternate?.id ?? item.foodId, grams: Math.round(item.grams * portionFactor) };
+    }) }, usableFoods));
+    return { day: index + 1, meals: dailyMeals, totals: roundNutrients(dailyMeals.reduce((sum, meal) => ({ kcal: sum.kcal + meal.totals.kcal, protein: sum.protein + meal.totals.protein, carbs: sum.carbs + meal.totals.carbs, fat: sum.fat + meal.totals.fat }), { kcal: 0, protein: 0, carbs: 0, fat: 0 })) };
+  });
+
+  if (days.some((day) => day.totals.protein < input.targetProtein)) throw new DemoGenerationError("As combinações demonstrativas compatíveis não alcançam a meta proteica informada dentro dos limites de porção.");
+  return { label: "SIMULAÇÃO FICTÍCIA — NÃO É PRESCRIÇÃO", days, targets: { kcal: input.targetKcal, protein: input.targetProtein } };
+}
+
+export function parseDemoFoodCsv(text: string): { rows: Array<Record<string, string>>; errors: string[]; duplicates: string[] } {
+  const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/).filter((line) => line.trim());
+  if (lines.length < 2) return { rows: [], errors: ["O CSV precisa conter cabeçalho e pelo menos uma linha."], duplicates: [] };
+  const delimiter = lines[0].includes(";") ? ";" : ",";
+  const parseLine = (line: string) => {
+    const cells: string[] = [];
+    let cell = "";
+    let quoted = false;
+    for (let i = 0; i < line.length; i += 1) {
+      const char = line[i];
+      if (char === '"' && line[i + 1] === '"' && quoted) { cell += '"'; i += 1; }
+      else if (char === '"') quoted = !quoted;
+      else if (char === delimiter && !quoted) { cells.push(cell.trim()); cell = ""; }
+      else cell += char;
+    }
+    cells.push(cell.trim());
+    return cells;
+  };
+  const headers = parseLine(lines[0]).map((header) => header.toLocaleLowerCase("pt-BR"));
+  const required = ["nome", "categoria", "calorias_kcal_100g", "proteina_g_100g", "carboidrato_g_100g", "gordura_g_100g", "alergenicos", "fonte", "licenca"];
+  const missing = required.filter((header) => !headers.includes(header));
+  if (missing.length) return { rows: [], errors: [`Colunas obrigatórias ausentes: ${missing.join(", ")}.`], duplicates: [] };
+  const rows = lines.slice(1).map((line) => Object.fromEntries(headers.map((header, index) => [header, parseLine(line)[index] ?? ""])));
+  const errors: string[] = [];
+  rows.forEach((row, index) => {
+    const line = index + 2;
+    if (!row.nome?.trim() || !row.categoria?.trim() || !row.fonte?.trim() || !row.licenca?.trim()) errors.push(`Linha ${line}: nome, categoria, fonte e licença são obrigatórios.`);
+    for (const key of ["calorias_kcal_100g", "proteina_g_100g", "carboidrato_g_100g", "gordura_g_100g"]) {
+      const value = Number(row[key]?.replace(",", "."));
+      if (row[key]?.trim() === "" || !Number.isFinite(value) || value < 0) errors.push(`Linha ${line}: ${key} deve ser um número não negativo.`);
+    }
+    if (!row.licenca?.trim()) errors.push(`Linha ${line}: licença/condição de uso não informada.`);
+  });
+  const names = new Set<string>();
+  const duplicates: string[] = [];
+  rows.forEach((row, index) => {
+    const normalized = row.nome.trim().toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (names.has(normalized)) duplicates.push(`Linha ${index + 2}: “${row.nome}” aparece mais de uma vez no arquivo.`);
+    names.add(normalized);
+  });
+  return { rows, errors: [...new Set(errors)], duplicates };
+}
