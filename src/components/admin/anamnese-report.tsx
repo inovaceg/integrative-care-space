@@ -6,19 +6,15 @@ import {
   FileText,
   Printer,
   ChevronDown,
-  ChevronUp,
   ShieldAlert,
   Clock,
   HelpCircle,
-  XCircle,
   CheckCircle2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import type { AnalysisResult, AnalysisAlert, AnalysisPending, AnalysisScale } from '@/lib/admin/anamnese-analysis'
 
@@ -66,7 +62,6 @@ function AlertCard({ alert, index }: { alert: AnalysisAlert; index: number }) {
   const categoryConfig = CATEGORY_CONFIG[alert.category]
   const Icon = config.icon
   const CategoryIcon = categoryConfig.icon
-  const [open, setOpen] = useState(false)
 
   return (
     <Card className={`border-l-4 ${config.color.replace('bg-', 'border-l-')}`}>
@@ -112,8 +107,6 @@ function AlertCard({ alert, index }: { alert: AnalysisAlert; index: number }) {
 }
 
 function PendingCard({ pending, index }: { pending: AnalysisPending; index: number }) {
-  const [open, setOpen] = useState(false)
-
   return (
     <Card className="border-l-4 border-amber-300 bg-amber-50/50">
       <CardContent className="p-4">
@@ -222,7 +215,7 @@ export function AnamneseReport({
                   <Badge variant="secondary" className="text-xs">Modo demonstração</Badge>
                 )}
               </div>
-              <CardTitle className="mt-1 font-display text-xl">Anamnese — {patientName ?? 'Paciente'}</CardTitle>
+              <CardTitle className="mt-1 font-display text-xl">{patientName ?? 'Paciente'}</CardTitle>
               <p className="mt-1 text-sm text-slate-500">
                 {completedAt ? `Preenchida em ${formatDate(completedAt)}` : 'Anamnese em andamento'}
                 {demoMode && ' · Dados fictícios para validação das regras'}

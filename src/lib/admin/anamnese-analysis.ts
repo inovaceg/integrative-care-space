@@ -138,7 +138,7 @@ export function analyzeAnamnese(
   const get = (key: string): unknown => answers[key]
 
   // =========================================================================
-  #region Escala de prejuízo, ansiedade e tristeza (regra 4: sem limiares automáticos)
+  // Escala de prejuízo, ansiedade e tristeza (regra 4: sem limiares automáticos)
   // =========================================================================
   const prejuizo = Number(answers['escala_prejuizo'] ?? 0)
   const ansiedade = Number(answers['escala_ansiedade'] ?? 0)
@@ -170,7 +170,7 @@ export function analyzeAnamnese(
   }
 
   // =========================================================================
-  #region Pensamentos de morte, autolesão ou suicídio (regras 1, 2, 3, 6)
+  // Pensamentos de morte, autolesão ou suicídio (regras 1, 2, 3, 6)
   // =========================================================================
   const pensamentosMorte = get('pensamentos_morte')
   const pensamentosPresentes = get('pensamentos_presentes_agora')
@@ -376,7 +376,7 @@ export function analyzeAnamnese(
   }
 
   // =========================================================================
-  #region Traumas (regra 3: "Prefiro conversar pessoalmente" → pendência)
+  // Traumas (regra 3: "Prefiro conversar pessoalmente" → pendência)
   // =========================================================================
   const traumas = get('traumas')
   const traumasDetalhes = get('traumas_detalhes')
@@ -414,7 +414,7 @@ export function analyzeAnamnese(
   }
 
   // =========================================================================
-  #region Sexualidade (regra 3: "Prefiro conversar pessoalmente" → pendência)
+  // Sexualidade (regra 3: "Prefiro conversar pessoalmente" → pendência)
   // =========================================================================
   const sexualidade = get('sexualidade')
   const sexualidadeDetalhes = get('sexualidade_detalhes')
@@ -442,7 +442,7 @@ export function analyzeAnamnese(
   }
 
   // =========================================================================
-  #region Exames (regra 7: "Vou apresentar durante a consulta" → pendência)
+  // Exames (regra 7: "Vou apresentar durante a consulta" → pendência)
   // =========================================================================
   const exames = get('exames')
   if (exames === 'Vou apresentar durante a consulta') {
@@ -458,7 +458,7 @@ export function analyzeAnamnese(
   }
 
   // =========================================================================
-  #region Informações ausentes/contraditórias/ambíguas (regra 7)
+  // Informações ausentes/contraditórias/ambíguas (regra 7)
   // =========================================================================
   // Doenças físicas
   const doencas = get('doencas')
@@ -581,7 +581,7 @@ export function analyzeAnamnese(
   }
 
   // =========================================================================
-  #region Conclusão e resumo
+  // Conclusão e resumo
   // =========================================================================
   const highSeverityAlerts = alerts.filter(a => a.severity === 'alta')
   const mediumSeverityAlerts = alerts.filter(a => a.severity === 'media')
