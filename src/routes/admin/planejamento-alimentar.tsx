@@ -142,12 +142,12 @@ function NutritionPlanningPage() {
     }
     setError("");
     setMessage("Salvando perfil e preparando a proposta...");
-    if (!await saveProfile()) return;
+    const profileSaved = await saveProfile();
     setGenerating(true);
     setError("");
-    setMessage("Gerando planejamento. Isso pode levar alguns instantes...");
+    setMessage(profileSaved ? "Gerando planejamento. Isso pode levar alguns instantes..." : "O perfil não foi salvo; tentando gerar com os dados atuais mesmo assim...");
     try {
-      const { data, error: functionError } = await supabase.functions.invoke("nutrition-planning", { body: { patient_id: patientId, goal: profile.goal.trim(), duration_days: Number(duration), desired_meals: profile.desired_meals ? Number(profile.desired_meals) : null } });
+      const { data, error: functionError } = await supabase.functions.invoke("nutrition-planning", { body: { patient_id: patientId, goal: profile.goal.trim(), duration_days: Number(duration), desired_meals: profile.desired_meals ? Number(profile.desired_meals) : null, nutritional_profile: profile } });
       if (functionError || !data?.plan) {
         let responseError: string | undefined;
         const response = functionError?.context as Response | undefined;

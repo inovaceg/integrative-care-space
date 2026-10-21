@@ -39,9 +39,10 @@ serve(async (req) => {
   const { data: professional, error: professionalError } = await supabase.from("profissionais").select("id").eq("id", userId).maybeSingle();
   if (professionalError || !professional) return jsonResponse({ error: "Perfil profissional não encontrado." }, 403);
 
-  let input: { patient_id?: string; goal?: string; duration_days?: number; desired_meals?: number | null };
+  let input: { patient_id?: string; goal?: string; duration_days?: number; desired_meals?: number | null; nutritional_profile?: Record<string, unknown> };
   try { input = await req.json(); } catch { return jsonResponse({ error: "Requisição inválida." }, 400); }
   if (!input.patient_id || typeof input.patient_id !== "string" || ![1, 3, 7].includes(Number(input.duration_days))) return jsonResponse({ error: "Paciente ou período inválido." }, 400);
+  if (input.nutritional_profile !== undefined && (!input.nutritional_profile || typeof input.nutritional_profile !== "object" || Array.isArray(input.nutritional_profile))) return jsonResponse({ error: "Perfil nutricional inválido." }, 400);
   if (typeof input.goal !== "string" || input.goal.trim().length < 3 || input.goal.length > 1000) return jsonResponse({ error: "Informe um objetivo com até 1.000 caracteres." }, 400);
   if (input.desired_meals !== null && input.desired_meals !== undefined && (!Number.isInteger(input.desired_meals) || input.desired_meals < 1 || input.desired_meals > 10)) return jsonResponse({ error: "Quantidade de refeições inválida." }, 400);
 
@@ -68,7 +69,7 @@ serve(async (req) => {
     age_years: patient.data_nascimento ? Math.max(0, Math.floor((Date.now() - new Date(`${patient.data_nascimento}T00:00:00`).getTime()) / 31557600000)) : null,
     biological_sex_if_recorded: patient.genero,
     relevant_patient_context: { patient_area: patient.area },
-    nutritional_profile: profileResult.data,
+    nutritional_profile: input.nutritional_profile ?? profileResult.data,
     assessments: evaluations,
     application_context_only_no_effect_inference: applicationResult.data,
     relevant_anamnesis: anamnesisResult.data,
