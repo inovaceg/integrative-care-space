@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import { useRouterState } from '@tanstack/react-router'
 
 const storagePrefix = 'app:scroll-position:'
+const useClientLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect
 
 export function ScrollPositionRestoration() {
   const routeKey = useRouterState({
@@ -10,7 +11,7 @@ export function ScrollPositionRestoration() {
   const currentKey = useRef(routeKey)
   const restoring = useRef(false)
 
-  useEffect(() => {
+  useClientLayoutEffect(() => {
     currentKey.current = routeKey
     const savedPosition = Number(window.sessionStorage.getItem(`${storagePrefix}${routeKey}`))
     if (!Number.isFinite(savedPosition) || savedPosition <= 0) {
@@ -25,7 +26,8 @@ export function ScrollPositionRestoration() {
     const restore = () => {
       if (!active) return
       attempts += 1
-      if (document.documentElement.scrollHeight >= savedPosition + window.innerHeight || attempts >= 300) {
+      const pageHeight = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight)
+      if (pageHeight >= savedPosition + window.innerHeight || attempts >= 300) {
         window.scrollTo(0, savedPosition)
         frame = window.requestAnimationFrame(() => { restoring.current = false })
         return
