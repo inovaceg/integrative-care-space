@@ -4,9 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export type EnergyPlan = {
   method: "Mifflin-St Jeor";
+  sex_parameter: "female" | "male" | null;
   bmr_kcal: number | null;
   activity_factor: number | null;
   estimated_daily_kcal: number | null;
@@ -30,9 +32,9 @@ function parseKcal(raw: string): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-export function calculateEnergyEstimate(weightKg: number | null, heightCm: number | null, patientAge: number | null, gender: string | null, activityLevel: string) {
+export function calculateEnergyEstimate(weightKg: number | null, heightCm: number | null, patientAge: number | null, gender: string | null, activityLevel: string, sexParameter: EnergyPlan["sex_parameter"] = null) {
   const sexTerm = gender?.trim().toLocaleLowerCase("pt-BR") ?? "";
-  const sexConstant = ["feminino", "mulher", "female"].includes(sexTerm) ? -161 : ["masculino", "homem", "male"].includes(sexTerm) ? 5 : null;
+  const sexConstant = sexParameter === "female" || ["feminino", "mulher", "female"].includes(sexTerm) ? -161 : sexParameter === "male" || ["masculino", "homem", "male"].includes(sexTerm) ? 5 : null;
   const activityFactor = activityFactors[activityLevel] ?? null;
   if (weightKg === null || weightKg <= 0 || heightCm === null || heightCm <= 0 || patientAge === null || patientAge < 18 || sexConstant === null || activityFactor === null) return null;
   const bmr = 10 * weightKg + 6.25 * heightCm - 5 * patientAge + sexConstant;
@@ -57,7 +59,7 @@ export function EnergySection({ value, onChange, weightKg, heightCm, patientAge,
     else if (Number.isFinite(value.adjusted_daily_kcal)) setManualInput(String(value.adjusted_daily_kcal));
   }, [value.adjusted_daily_kcal]);
 
-  const calculation = calculateEnergyEstimate(weightKg, heightCm, patientAge, gender, activityLevel);
+  const calculation = calculateEnergyEstimate(weightKg, heightCm, patientAge, gender, activityLevel, value.sex_parameter);
   const activityFactor = calculation?.activity_factor ?? null;
   const bmr = calculation?.bmr_kcal ?? null;
   const estimate = calculation?.estimated_daily_kcal ?? null;

@@ -29,7 +29,7 @@ const emptyProtein: ProteinPlan = { weight_kg: null, weight_date: null, weight_s
 const latestWeight = (evaluations: Evaluation[], applications: Application[]): WeightMeasurement | null => [...evaluations.flatMap((item) => item.weight_kg !== null && item.weight_kg > 0 ? [{ weight_kg: item.weight_kg, weight_date: item.evaluation_date, weight_source: "Avaliação corporal" }] : []), ...applications.flatMap((item) => item.current_weight_kg > 0 ? [{ weight_kg: item.current_weight_kg, weight_date: item.application_date, weight_source: `Aplicação: ${item.procedure_name}` }] : [])].sort((a, b) => b.weight_date.localeCompare(a.weight_date))[0] ?? null;
 const hydrationForPlan = (content: PlanContent | null | undefined, measurements: WeightMeasurement | null): HydrationPlan => content?.hydration ?? { ...emptyHydration, ...(measurements ?? {}) };
 const proteinForPlan = (content: PlanContent | null | undefined, measurements: WeightMeasurement | null): ProteinPlan => content?.protein ?? { ...emptyProtein, ...(measurements ?? {}) };
-const emptyEnergy: EnergyPlan = { method: "Mifflin-St Jeor", bmr_kcal: null, activity_factor: null, estimated_daily_kcal: null, adjusted_daily_kcal: null, observations: "", professional_reviewed: false };
+const emptyEnergy: EnergyPlan = { method: "Mifflin-St Jeor", sex_parameter: null, bmr_kcal: null, activity_factor: null, estimated_daily_kcal: null, adjusted_daily_kcal: null, observations: "", professional_reviewed: false };
 const energyForPlan = (content: PlanContent | null | undefined): EnergyPlan => content?.energy ?? { ...emptyEnergy };
 type PlanVersion = { id: string; version_number: number; plan_content: PlanContent; created_at: string; created_by: string };
 const emptyProfile: Profile = { height_cm: "", reference_weight_kg: "", goal: "", activity_level: "", exercise_details: "", wake_time: "", sleep_time: "", meal_schedule: "", desired_meals: "", work_routine: "", cooking_availability: "", food_budget: "", preferred_foods: "", avoided_foods: "", cultural_restrictions: "", simple_meals_preference: false, affordable_food_preference: false, allergies: "", intolerances: "", diagnosed_conditions: "", pregnancy_or_breastfeeding: "", medications: "", supplements: "", eating_disorder_history: "" };
@@ -163,11 +163,13 @@ function NutritionPlanningPage() {
         setDuration(resume && savedDraft.duration ? savedDraft.duration : String(selectedPlan.duration_days));
         setHydration(resume && savedDraft.hydration ? savedDraft.hydration : hydrationForPlan(selectedPlan.plan_content, lastWeight));
         setProtein(resume && savedDraft.protein ? savedDraft.protein : proteinForPlan(selectedPlan.plan_content, lastWeight));
+        setEnergy(resume && savedDraft.energy ? savedDraft.energy : energyForPlan(selectedPlan.plan_content));
       } else {
         setContentText(resume ? savedDraft.contentText ?? "" : "");
         setDuration(resume && savedDraft.duration ? savedDraft.duration : "1");
         setHydration(resume && savedDraft.hydration ? savedDraft.hydration : hydrationForPlan(null, lastWeight));
         setProtein(resume && savedDraft.protein ? savedDraft.protein : proteinForPlan(null, lastWeight));
+        setEnergy(resume && savedDraft.energy ? savedDraft.energy : { ...emptyEnergy });
       }
       loadedPatientId.current = patientId;
       setLoading(false);
@@ -177,8 +179,8 @@ function NutritionPlanningPage() {
 
   useEffect(() => {
     if (!user || !patientId || loading || loadedPatientId.current !== patientId) return;
-    savePlanningDraft(user.id, { patientId, profile, hydration, protein, activePlanId: activePlan?.id ?? null, contentText, duration });
-  }, [user, patientId, loading, profile, hydration, protein, activePlan, contentText, duration]);
+    savePlanningDraft(user.id, { patientId, profile, hydration, protein, energy, activePlanId: activePlan?.id ?? null, contentText, duration });
+  }, [user, patientId, loading, profile, hydration, protein, energy, activePlan, contentText, duration]);
 
   useEffect(() => {
     if (entryDraft.patientId === patientId && entryDraft.profile) return;
@@ -206,13 +208,16 @@ function NutritionPlanningPage() {
     const proteinFactorInput = Number(protein.factor_g_per_kg);
     if (!Number.isFinite(proteinFactorInput) || proteinFactorInput < 0.1 || proteinFactorInput > 10) { setError("O fator de proteína deve estar entre 0,1 e 10 g/kg/dia."); return; }
     if (protein.adjusted_target_g !== null && (!Number.isFinite(protein.adjusted_target_g) || protein.adjusted_target_g < 1 || protein.adjusted_target_g > 1000 || !protein.observations.trim())) { setError("A meta manual deve estar entre 1 e 1.000 g/dia e exige justificativa profissional."); return; }
+    if (energy.adjusted_daily_kcal !== null && (!Number.isFinite(energy.adjusted_daily_kcal) || energy.adjusted_daily_kcal < 500 || energy.adjusted_daily_kcal > 10000 || !energy.observations.trim())) { setError("A meta energética manual deve estar entre 500 e 10.000 kcal/dia e exige justificativa profissional."); return; }
+    const energyHeight = currentEvaluation?.height_cm ?? (profile.height_cm ? Number(profile.height_cm) : null);
+    const energyCalculation = calculateEnergyEstimate(latestWeight(evaluations, applications)?.weight_kg ?? null, energyHeight, ageFrom(selected.data_nascimento), selected.genero, profile.activity_level);
     const hydrationNeedsReview = hydration.pregnancy || hydration.breastfeeding || hydration.kidney_disease || hydration.cardiac_disease || hydration.fluid_restriction;
     const hydrationFactor = Number(hydration.factor_ml_per_kg);
     const hydrationEstimate = ageFrom(selected.data_nascimento) !== null && ageFrom(selected.data_nascimento)! >= 18 && !hydrationNeedsReview && hydration.weight_kg !== null && hydration.weight_kg > 0 && hydrationFactor > 0 ? Math.round(hydration.weight_kg * hydrationFactor) : null;
     const proteinBlocked = ageFrom(selected.data_nascimento) === null || ageFrom(selected.data_nascimento)! < 18 || !protein.clinical_info_sufficient || protein.kidney_disease || protein.special_clinical_condition || protein.weight_kg === null || protein.weight_kg <= 0;
     const proteinFactor = proteinFactorInput;
     const proteinEstimate = !proteinBlocked ? Math.round(protein.weight_kg! * proteinFactor * 100) / 100 : null;
-    parsed = { ...parsed, hydration: { ...hydration, estimated_total_water_ml: hydrationEstimate }, protein: { ...protein, calculated_target_g: proteinEstimate } };
+    parsed = { ...parsed, hydration: { ...hydration, estimated_total_water_ml: hydrationEstimate }, protein: { ...protein, calculated_target_g: proteinEstimate }, energy: { ...energy, bmr_kcal: energyCalculation?.bmr_kcal ?? null, activity_factor: energyCalculation?.activity_factor ?? null, estimated_daily_kcal: energyCalculation?.estimated_daily_kcal ?? null } };
     setSaving(true); setError(""); setMessage("");
     let planId = activePlan?.id;
     const planPayload = { patient_id: patientId, profissional_id: user.id, goal: profile.goal || "Objetivo a confirmar", duration_days: Number(duration), status, plan_content: parsed, model_name: modelName ?? activePlan?.model_name ?? null, updated_at: new Date().toISOString() };
@@ -231,7 +236,7 @@ function NutritionPlanningPage() {
   async function refreshPlans(selectId?: string) {
     if (!user || !patientId) return;
     const { data } = await supabase.from("nutrition_plans").select("id,goal,duration_days,status,plan_content,model_name,created_at,approved_at,approved_by,approved_version_id").eq("patient_id", patientId).eq("profissional_id", user.id).order("created_at", { ascending: false });
-    const list = (data as Plan[] | null) ?? []; setPlans(list); const match = list.find((plan) => plan.id === (selectId ?? activePlan?.id)) ?? list[0]; if (match) { setActivePlan(match); setContentText(JSON.stringify(match.plan_content, null, 2)); const measurements = latestWeight(evaluations, applications); setHydration(hydrationForPlan(match.plan_content, measurements)); setProtein(proteinForPlan(match.plan_content, measurements)); const { data: versionData } = await supabase.from("nutrition_plan_versions").select("id,version_number,plan_content,created_at,created_by").eq("plan_id", match.id).order("version_number", { ascending: false }); setVersions((versionData as PlanVersion[] | null) ?? []); }
+    const list = (data as Plan[] | null) ?? []; setPlans(list); const match = list.find((plan) => plan.id === (selectId ?? activePlan?.id)) ?? list[0]; if (match) { setActivePlan(match); setContentText(JSON.stringify(match.plan_content, null, 2)); const measurements = latestWeight(evaluations, applications); setHydration(hydrationForPlan(match.plan_content, measurements)); setProtein(proteinForPlan(match.plan_content, measurements)); setEnergy(energyForPlan(match.plan_content)); const { data: versionData } = await supabase.from("nutrition_plan_versions").select("id,version_number,plan_content,created_at,created_by").eq("plan_id", match.id).order("version_number", { ascending: false }); setVersions((versionData as PlanVersion[] | null) ?? []); }
   }
 
   async function generatePlan(testMode = false) {
@@ -288,6 +293,7 @@ function NutritionPlanningPage() {
     const measurements = latestWeight(evaluations, applications);
     setHydration(hydrationForPlan(version.plan_content, measurements));
     setProtein(proteinForPlan(version.plan_content, measurements));
+    setEnergy(energyForPlan(version.plan_content));
   }
 
   async function approvePlan() {
@@ -319,7 +325,7 @@ function NutritionPlanningPage() {
     };
     if (activePlan?.status !== "approved") line("RASCUNHO - NAO UTILIZAR COMO PRESCRICAO", 13, true);
     line("PLANEJAMENTO ALIMENTAR", 18, true); line(`Paciente: ${selected.nome}`); line(`Data: ${new Date().toLocaleDateString("pt-BR")}`); line(`Objetivo: ${plan.objective || activePlan?.goal || profile.goal || "A confirmar"}`); line(`Status: ${statusNames[activePlan?.status ?? "draft"] ?? "Rascunho"}`, 10, true); y += 8;
-    for (const meal of plan.meals ?? []) { line(meal.name, 13, true); for (const item of meal.items ?? []) { line(`- ${item.food}: ${item.portion}`); if (item.alternatives?.length) line(`Alternativas: ${item.alternatives.join(", ")}`); } if (meal.notes) line(`Observacoes: ${meal.notes}`); y += 8; }
+    for (const meal of plan.meals ?? []) { line(meal.name, 13, true); for (const item of meal.items ?? []) { line(`- ${item.food}: ${item.portion}`); if (typeof item.protein_g === "number" && item.protein_source?.trim()) line(`Proteína por porção: ${item.protein_g.toFixed(2)} g (${item.protein_source}).`); if (typeof item.calories_kcal === "number" && item.calories_source?.trim()) line(`Energia por porção: ${item.calories_kcal.toFixed(2)} kcal (${item.calories_source}).`); if (item.alternatives?.length) line(`Alternativas: ${item.alternatives.join(", ")}`); } if (meal.notes) line(`Observacoes: ${meal.notes}`); y += 8; }
     for (const observation of plan.observations ?? []) line(`Orientacao: ${observation}`);
     if (activePlan?.status === "approved" && plan.hydration?.professional_reviewed) {
       const hydrationPlan = plan.hydration;
@@ -354,6 +360,13 @@ function NutritionPlanningPage() {
         if (target !== null) line(`Diferença para a meta: ${(dailyProtein - target >= 0 ? "+" : "")}${(dailyProtein - target).toFixed(1)} g.`);
       } else line("Total de proteína das refeições não calculado: faltam valores por porção e/ou fontes nutricionais confiáveis.");
     }
+    if (activePlan?.status === "approved" && plan.energy?.professional_reviewed) {
+      const energyPlan = plan.energy;
+      line("AVALIAÇÃO ENERGÉTICA - REVISADA", 13, true);
+      if (energyPlan.bmr_kcal !== null && energyPlan.activity_factor !== null && energyPlan.estimated_daily_kcal !== null) line(`Mifflin-St Jeor: metabolismo basal estimado ${energyPlan.bmr_kcal} kcal/dia × fator de atividade ${energyPlan.activity_factor} = ${energyPlan.estimated_daily_kcal} kcal/dia.`);
+      if (energyPlan.adjusted_daily_kcal !== null) line(`Meta energética ajustada pela nutricionista: ${energyPlan.adjusted_daily_kcal} kcal/dia.`);
+      if (energyPlan.observations) line(`Justificativa/observações: ${energyPlan.observations}`);
+    }
     if (activePlan?.status === "approved" && activePlan.approved_by) {
       const { data: nutritionist } = await supabase.from("nutritionist_credentials").select("full_name,crn").eq("profissional_id", activePlan.approved_by).eq("verification_status", "verified").maybeSingle();
       if (!nutritionist) { setError("Não foi possível carregar a identificação do nutricionista verificado."); return; }
@@ -372,8 +385,9 @@ function NutritionPlanningPage() {
     </>}
     {alerts.length > 0 && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4"><h3 className="flex items-center gap-2 font-semibold text-amber-900"><AlertTriangle className="size-4" /> Conferir antes de planejar</h3><ul className="mt-2 list-inside list-disc space-y-1 text-sm text-amber-800">{alerts.map((alert) => <li key={alert}>{alert}</li>)}</ul></div>}
     <SectionCard title="5. Perfil nutricional complementar"><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{[["height_cm","Altura (cm)"],["reference_weight_kg","Peso de referência (kg)"],["desired_meals","Número de refeições desejado"]].map(([key,label]) => <div key={key}><Label>{label}</Label><Input className="mt-1" type="number" value={profile[key as keyof Profile] as string} onChange={(e) => setField(key as keyof Profile, e.target.value)} /></div>)}<div><Label>Atividade física</Label><Select value={profile.activity_level} onValueChange={(value) => setField("activity_level", value)}><SelectTrigger className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent>{["Sedentário", "Leve", "Moderado", "Intenso", "Muito intenso"].map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent></Select></div>{[["wake_time","Horário de acordar"],["sleep_time","Horário de dormir"]].map(([key,label]) => <div key={key}><Label>{label}</Label><Input className="mt-1" type="time" value={profile[key as keyof Profile] as string} onChange={(e) => setField(key as keyof Profile, e.target.value)} /></div>)}<div className="sm:col-span-2 lg:col-span-3"><Label>Objetivo alimentar</Label><Textarea className="mt-1" value={profile.goal} onChange={(e) => setField("goal", e.target.value)} placeholder="Objetivo acordado para avaliação do profissional" /></div>{textFields.map(([key,label]) => <div key={key} className="grid gap-1"><Label>{label}</Label><Textarea value={profile[key] as string} onChange={(e) => setField(key, e.target.value)} /></div>)}<div className="grid gap-1 sm:col-span-2"><Label>Horários habituais das refeições (um por linha)</Label><Textarea value={profile.meal_schedule} onChange={(e) => setField("meal_schedule", e.target.value)} /></div></div><div className="mt-4 flex flex-wrap gap-4 text-sm">{([["simple_meals_preference","Prefere refeições simples"],["affordable_food_preference","Priorizar alimentos acessíveis"]] as [keyof Profile,string][]).map(([key,label]) => <label key={key} className="flex items-center gap-2"><input type="checkbox" checked={profile[key] as boolean} onChange={(e) => setField(key,e.target.checked)} />{label}</label>)}</div><div className="mt-5 flex flex-wrap items-center gap-3"><Button type="button" variant="outline" onClick={() => void saveProfile()} disabled={saving}>{saving ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Save className="mr-2 size-4" />}Salvar perfil</Button></div></SectionCard>
+    <EnergySection value={energy} onChange={setEnergy} weightKg={latestWeight(evaluations, applications)?.weight_kg ?? null} heightCm={currentEvaluation?.height_cm ?? (profile.height_cm ? Number(profile.height_cm) : null)} patientAge={ageFrom(selected.data_nascimento)} gender={selected.genero} activityLevel={profile.activity_level} onSave={() => void savePlan("draft")} saving={saving} canSave={Boolean(contentText)} />
     <HydrationSection value={hydration} onChange={setHydration} patientAge={ageFrom(selected.data_nascimento)} onSave={() => void savePlan("draft")} saving={saving} canSave={Boolean(contentText)} />
-    <ProteinSection value={protein} onChange={setProtein} patientAge={ageFrom(selected.data_nascimento)} rawPlan={contentText} onSave={() => void savePlan("draft")} saving={saving} canSave={Boolean(contentText)} />
+    <ProteinSection value={protein} onChange={setProtein} patientAge={ageFrom(selected.data_nascimento)} rawPlan={contentText} onPlanChange={setContentText} onSave={() => void savePlan("draft")} saving={saving} canSave={Boolean(contentText)} />
     <SectionCard title="6. Configuração da proposta e geração">
       <div className="grid gap-4 md:grid-cols-2">
         <div><Label>Objetivo da proposta</Label><Input className="mt-1" value={profile.goal} onChange={(e) => setField("goal", e.target.value)} placeholder="Ex.: organizar rotina alimentar" /></div>
