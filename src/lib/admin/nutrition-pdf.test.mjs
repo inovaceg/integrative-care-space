@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { buildNutritionPdfDocument, nutritionPdfDocumentPages } from "./nutrition-pdf";
+import { buildNutritionPdfDocument, nutritionObjectiveLabel, nutritionPdfDocumentPages } from "./nutrition-pdf";
 
 const source = "TACO · fonte cadastrada";
 const food = (name, kcal, grams = 100, protein = 0, carbs = 0, fat = 0, fiber = 0, alternatives = []) => ({
@@ -20,6 +20,12 @@ const food = (name, kcal, grams = 100, protein = 0, carbs = 0, fat = 0, fiber = 
 });
 
 describe("layout do PDF nutricional", () => {
+  test("traduz objetivos internos para rótulos legíveis", () => {
+    expect(nutritionObjectiveLabel("weight_loss")).toBe("Emagrecimento");
+    expect(nutritionObjectiveLabel("maintenance")).toBe("Manutenção do peso");
+    expect(nutritionObjectiveLabel("custom goal")).toBe("custom goal");
+  });
+
   test("mantém almoço completo em uma página e preserva os totais do sistema", () => {
     const meals = [
       { name: "Café da manhã", items: [food("Café da manhã", 249.6)] },

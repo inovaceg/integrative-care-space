@@ -16,7 +16,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { NutritionPdfPreview } from "@/components/admin/nutrition-pdf-preview";
-import { buildNutritionPdfDocument, formatNutritionAmount, nutritionPdfDocumentPages, type NutritionPdfDocument, type NutritionPdfItem, type NutritionPdfMeal } from "@/lib/admin/nutrition-pdf";
+import { buildNutritionPdfDocument, formatNutritionAmount, nutritionObjectiveLabel, nutritionPdfDocumentPages, type NutritionPdfDocument, type NutritionPdfItem, type NutritionPdfMeal } from "@/lib/admin/nutrition-pdf";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -521,7 +521,6 @@ function NutritionPlanningPage() {
     setError("");
     setMessage("");
     try {
-      if (planNeedsEnergyRefresh && exportAfterBuild) throw new Error("A meta ou os parâmetros energéticos mudaram. Atualize e salve uma nova proposta antes de exportar o PDF.");
       const isApproved = activePlan?.status === "approved";
       let plan: PlanContent;
       try { plan = JSON.parse(contentText) as PlanContent; }
@@ -602,16 +601,16 @@ function NutritionPlanningPage() {
       const document = buildNutritionPdfDocument({
         patient: selected.nome,
         evaluationDate,
-        objective: plan.objective || activePlan?.goal || profile.goal || "Não informado",
+        objective: nutritionObjectiveLabel(plan.objective || plan.energy?.objective || activePlan?.goal || profile.goal),
         emissionDate: new Date().toLocaleDateString("pt-BR"),
         draft: exportAfterBuild && !isApproved,
         status: isApproved ? statusNames[activePlan?.status ?? "approved"] ?? "Aprovado" : exportAfterBuild ? statusNames[activePlan?.status ?? "draft"] ?? "Em elaboração" : "Pré-visualização",
         observations: (isApproved ? plan.observations ?? [] : cleanStaleEnergyTexts(plan, energy.professional_reviewed ? energy.adjusted_daily_kcal : null).observations ?? []).map(readableText).filter(Boolean),
                 warnings: [...(plan.warnings ?? []), ...(plan.professional_confirmations ?? []), ...(planNeedsEnergyRefresh ? ["A meta ou os parâmetros energéticos foram alterados após a elaboração desta proposta; revise e salve uma versão atualizada."] : [])].map(readableText).filter(Boolean),
                 sources: [...sources].sort((a, b) => a.localeCompare(b, "pt-BR")),
-        reviewer,
-        energy: plan.energy ?? null,
-        meals,
+                reviewer,
+                energy: isApproved ? plan.energy ?? null : energy,
+                meals,
       });
       if (exportAfterBuild) {
         await downloadDocumentPdf(nutritionPdfDocumentPages(document), `planejamento-alimentar-${selected.nome.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`, true);
@@ -625,16 +624,15 @@ function NutritionPlanningPage() {
   }
 
   async function downloadNutritionPdf() {
-    if (!pdfDocument || !selected) return;
-    try {
-      await downloadDocumentPdf(nutritionPdfDocumentPages(pdfDocument), `planejamento-alimentar-${selected.nome.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`, true);
-      setError("");
-    } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "Não foi possível gerar o PDF.");
-    }
+    if (!selected) return;
+    setPdfPreviewOpen(false);
+    await preparePdfPreview(true);
   }
 
   async function exportPdf() {
+    if (syntheticTest) { setError("O resultado do teste é fictício e não pode ser exportado."); return; }
+    if (!selected) return;
+    if (activePlan?.status === "approved") { await preparePdfPreview(true); return; }
     try {
     if (syntheticTest) { setError("O resultado do teste é fictício e não pode ser exportado."); return; }
     if (!selected) return;

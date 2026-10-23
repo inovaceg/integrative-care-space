@@ -32,6 +32,8 @@ export type NutritionPdfDocument = { pages: NutritionPdfPage[]; patient: string;
 
 const numberFormat = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1 });
 export const formatNutritionAmount = (value: number | null, unit: string) => value === null ? "—" : `${numberFormat.format(value)} ${unit}`;
+const objectiveLabels: Record<string, string> = { weight_loss: "Emagrecimento", maintenance: "Manutenção do peso", weight_gain: "Ganho de peso" };
+export const nutritionObjectiveLabel = (value: string | null | undefined) => value ? objectiveLabels[value] ?? value : "Não informado";
 const colors = { dark: "#174b45", green: "#2f756b", sage: "#6f9b90", ink: "#263b39", muted: "#60716e", line: "#d8e2df", pale: "#f0f5f3", amber: "#8b5b21", amberBg: "#fbf5e9" };
 const line = (text: string, x: number, y: number, size = 10, bold = false, color = colors.ink): DocumentPage[number] => ({ text, x, y, size, bold, color });
 const rule = (y: number, x = 52, width = 491, color = colors.line): DocumentPage[number] => ({ text: "", x, y, size: 0, color, kind: "rule", width });
