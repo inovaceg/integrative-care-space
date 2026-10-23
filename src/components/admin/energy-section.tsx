@@ -60,7 +60,18 @@ export function EnergySection({ value, onChange, weightKg, weightDate, weightSou
   const adjustmentMode = value.adjustment_mode ?? "percent";
   const target = estimate?.totalKcal != null && value.objective ? calculateEnergyTarget(estimate.totalKcal, value.objective, adjustmentMode, value.adjustment_value) : null;
   const targetValid = target !== null && target >= 500 && target <= 10000;
-  const justificationRequired = target !== null && (value.observations.trim().length < 40 || !value.reviewer_name.trim() || !value.activity_confirmed || !activityEvidenceSufficient || !value.clinical_reviewed);
+  const approvalBlockers = [
+    !estimate && "Preencha peso, altura, idade, nível de atividade e parâmetro da equação.",
+    !value.objective && "Selecione o objetivo energético.",
+    !targetValid && "A meta calculada precisa estar entre 500 e 10.000 kcal/dia.",
+    value.objective !== null && value.objective !== "maintenance" && (adjustment <= 0 || adjustment > (value.adjustment_mode === "kcal" ? 1000 : 50)) && "Defina um ajuste individual válido para o objetivo.",
+    value.observations.trim().length < 40 && "Escreva uma justificativa clínica com pelo menos 40 caracteres.",
+    !value.reviewer_name.trim() && "Informe o profissional responsável.",
+    !activityEvidenceSufficient && "Registre tipo de exercício e duração ou intensidade no Perfil nutricional complementar.",
+    !value.activity_confirmed && "Confirme o fator de atividade.",
+    !value.clinical_reviewed && "Marque a revisão clínica.",
+  ].filter((reason): reason is string => Boolean(reason));
+  const justificationRequired = approvalBlockers.length > 0;
   useEffect(() => {
     if (value.adjusted_daily_kcal !== target || (target === null && value.professional_reviewed)) onChange({ ...value, adjusted_daily_kcal: target, bmr_kcal: estimate?.bmrKcal ?? null, estimated_daily_kcal: estimate?.totalKcal ?? null, activity_factor: factor, professional_reviewed: false, reviewed_at: null });
   }, [target, value, onChange, estimate, factor]);
@@ -94,8 +105,8 @@ export function EnergySection({ value, onChange, weightKg, weightDate, weightSou
       {objectiveConflict && <p role="alert" className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-900">Existem objetivos divergentes nos registros. Escolha e confirme com a paciente qual é o objetivo vigente; a sugestão automática foi suspensa.</p>}
       {objectiveSources.length > 0 && <p className="text-xs text-slate-500">Registros que indicam o objetivo: {objectiveSources.join(" · ")}</p>}
       {clinicalReviewFlags.length > 0 && <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Revisão clínica necessária</strong><ul className="mt-1 list-inside list-disc">{clinicalReviewFlags.map((flag) => <li key={flag}>{flag}</li>)}</ul></div>}
-      {!targetValid && <p role="alert" className="text-sm text-red-700">Meta indisponível ou fora do intervalo permitido (500–10.000 kcal/dia).</p>}{justificationRequired && <p role="alert" className="text-sm text-amber-800">Registre a justificativa profissional antes da aprovação.</p>}
-      <div className="flex flex-wrap gap-3"><Button type="button" disabled={!estimate || !targetValid || !value.objective || justificationRequired || (value.objective !== "maintenance" && (adjustment <= 0 || adjustment > (value.adjustment_mode === "kcal" ? 1000 : 50)))} variant={value.professional_reviewed ? "outline" : "default"} onClick={confirm}>{value.professional_reviewed ? <><CheckCircle2 className="mr-2 size-4" />Meta revisada</> : "Revisar e aprovar meta"}</Button><Button type="button" variant="outline" onClick={() => onChange({ ...value, professional_reviewed: false, reviewed_at: null })}><RotateCcw className="mr-2 size-4" />Remover aprovação</Button><Button type="button" variant="outline" onClick={onSave} disabled={saving || !canSave || !targetValid || justificationRequired || !value.professional_reviewed}>{saving ? "Salvando..." : "Salvar no planejamento"}</Button></div>
+      {justificationRequired && <div role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><p className="font-medium">A aprovação está bloqueada até concluir:</p><ul className="mt-1 list-inside list-disc">{approvalBlockers.map((reason) => <li key={reason}>{reason}</li>)}</ul></div>}
+      <div className="flex flex-wrap gap-3"><Button type="button" disabled={justificationRequired} title={justificationRequired ? approvalBlockers.join(" ") : undefined} variant={value.professional_reviewed ? "outline" : "default"} onClick={confirm}>{value.professional_reviewed ? <><CheckCircle2 className="mr-2 size-4" />Meta revisada</> : "Revisar e aprovar meta"}</Button><Button type="button" variant="outline" onClick={() => onChange({ ...value, professional_reviewed: false, reviewed_at: null })}><RotateCcw className="mr-2 size-4" />Remover aprovação</Button><Button type="button" variant="outline" onClick={onSave} disabled={saving || !canSave || !targetValid || justificationRequired || !value.professional_reviewed}>{saving ? "Salvando..." : "Salvar no planejamento"}</Button></div>
       {!value.professional_reviewed && <p className="text-xs text-amber-800">A meta só será integrada à geração após revisão e aprovação profissional.</p>}
     </div>
   </section>;
