@@ -44,6 +44,7 @@ export const Route = createFileRoute("/admin/evolucao-corporal")({
 
 const labels: Record<(typeof measurementFields)[number], string> = {
   weight_kg: "Peso (kg)",
+  height_cm: "Altura (m)",
   bmi: "IMC (kg/m²)",
   body_fat_percentage: "Gordura corporal (%)",
   muscle_mass_kg: "Massa muscular (kg)",
@@ -622,17 +623,27 @@ function BodyProgressPage() {
       evaluation_date: date,
     };
     for (const key of measurementFields) {
-      const value = parseMeasurement(values[key]);
-      if (value !== null && !Number.isFinite(value)) {
+      if (key === "bmi") continue;
+      const inputValue = parseMeasurement(values[key]);
+      if (inputValue !== null && !Number.isFinite(inputValue)) {
         setError(`Informe um valor válido para ${labels[key]}, como 24,5.`);
         return;
       }
-      if (key === "body_water_percentage" && value !== null && value > 100) {
+      if (key === "body_water_percentage" && inputValue !== null && inputValue > 100) {
         setError("Água corporal (%) deve estar entre 0 e 100.");
         return;
       }
-      payload[key] = value;
+      if (key === "height_cm" && inputValue !== null && (inputValue < 0.5 || inputValue > 2.8)) {
+        setError("Informe a altura em metros, entre 0,5 e 2,8 m.");
+        return;
+      }
+      payload[key] = key === "height_cm" && inputValue !== null ? inputValue * 100 : inputValue;
     }
+    const weightKg = parseMeasurement(values.weight_kg);
+    const heightMeters = parseMeasurement(values.height_cm);
+    payload.bmi = weightKg !== null && Number.isFinite(weightKg) && weightKg > 0 && heightMeters !== null && Number.isFinite(heightMeters) && heightMeters > 0
+      ? Math.round(weightKg / (heightMeters ** 2) * 10) / 10
+      : null;
     setSaving(true);
 
     const result = await saveEvaluation(user.id, patientId, payload, editingId);
@@ -681,7 +692,7 @@ function BodyProgressPage() {
     const nextValues: Record<string, string> = {};
     measurementFields.forEach((key) => {
       const value = item[key];
-      if (value != null) nextValues[key] = measurementForInput(value);
+      if (value != null && key !== "bmi") nextValues[key] = measurementForInput(key === "height_cm" ? value / 100 : value);
     });
     setValues(nextValues);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -753,8 +764,15 @@ function BodyProgressPage() {
                         id={key}
                         type="text"
                         inputMode="decimal"
-                        placeholder={key === "weight_kg" ? "Ex.: 72,5" : key === "bmi" ? "Ex.: 24,5" : undefined}
-                        value={values[key] ?? ""}
+                        readOnly={key === "bmi"}
+                        placeholder={key === "weight_kg" ? "Ex.: 72,5" : key === "height_cm" ? "Ex.: 1,72" : undefined}
+                        value={key === "bmi" ? (() => {
+                          const weightKg = parseMeasurement(values.weight_kg);
+                          const heightMeters = parseMeasurement(values.height_cm);
+                          return weightKg !== null && Number.isFinite(weightKg) && weightKg > 0 && heightMeters !== null && Number.isFinite(heightMeters) && heightMeters > 0
+                            ? measurementForInput(Math.round(weightKg / (heightMeters ** 2) * 10) / 10)
+                            : "";
+                        })() : values[key] ?? ""}
                         onChange={(event) => changeMeasurement(key, event.target.value)}
                       />
                     </div>

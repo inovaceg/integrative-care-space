@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const measurementFields = [
   "weight_kg",
+  "height_cm",
   "bmi",
   "body_fat_percentage",
   "muscle_mass_kg",
