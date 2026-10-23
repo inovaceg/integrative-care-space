@@ -487,7 +487,7 @@ function NutritionPlanningPage() {
         <div><Label>Objetivo da proposta</Label><Input className="mt-1" value={profile.goal} onChange={(e) => setField("goal", e.target.value)} placeholder="Ex.: organizar rotina alimentar" /></div>
         <div><Label>Período</Label><Select value={duration} onValueChange={setDuration}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="1">1 dia</SelectItem><SelectItem value="3">3 dias</SelectItem><SelectItem value="7">7 dias</SelectItem></SelectContent></Select></div>
       </div>
-      <p className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">A composição nutricional e os totais são calculados localmente a partir dos alimentos verificados. A geração por IA permanece desativada neste fluxo até que o envio de dados clínicos a um provedor externo tenha base legal e configuração de privacidade aprovadas.</p>
+      <p className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">A IA sugere somente combinações usando nomes de alimentos verificados. Porções são convertidas em nutrientes por cálculo determinístico com a biblioteca; a proposta é salva como rascunho e exige revisão profissional. Casos com alergias não confirmadas, condições clínicas ou restrições que exigem avaliação individualizada não são enviados para geração.</p>
       {message && <p className="mt-3 text-sm text-[#26786e]" role="status">{message}</p>}
       {error && <p className="mt-3 text-sm text-red-600" role="alert">{error}</p>}
     </SectionCard>

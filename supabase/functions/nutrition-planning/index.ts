@@ -32,9 +32,17 @@ function retryDelayFromDetails(details: unknown): number | null {
 
 const wait = (milliseconds: number) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
-const hasClinicalFlag = (value: unknown) => {
+const isExplicitNegative = (value: unknown) => {
   if (typeof value !== "string" || !value.trim()) return false;
-  return !/^(nao|nenhum|nenhuma|negativo|n\/a|nao se aplica|sem\b)/i.test(normalize(value.trim()));
+  const normalized = normalize(value.trim()).replace(/[.!]+$/g, "");
+  return /^(nenhum(a)?( (alergia(s)?|intolerancia(s)?|doenca(s)?|condicao(es)?|historico))?|nao|negativo|n\/?a|nao se aplica|sem (doencas?|condicoes?|alergias?|intolerancias?|historico)|nao possui (doencas?|condicoes?|alergias?|intolerancias?))$/.test(normalized);
+};
+const hasClinicalFlag = (value: unknown) => typeof value === "string" && Boolean(value.trim()) && !isExplicitNegative(value);
+const hasConfirmedAllergyStatus = (value: unknown) => {
+  if (typeof value !== "string" || !value.trim()) return false;
+  const normalized = normalize(value.trim());
+  if (/nao informado|nao confirmad|desconhecid|confirmar|unknown/.test(normalized)) return false;
+  return isExplicitNegative(value) || normalized.length >= 2;
 };
 const splitTerms = (value: string) => normalize(value).split(/[,;\n]|\s+e\s+/i).map((term) => term.trim()).filter((term) => term && !/^(nao informado|nenhum|nenhuma|nao|n\/a)$/.test(term));
 const trustedSource = (value: string) => /\b(TBCA|TACO|rotulo|USDA)\b/i.test(value.trim());
@@ -153,7 +161,7 @@ serve(async (req) => {
     const { data: patient, error: patientError } = await supabase.from("pacientes").select("id,data_nascimento").eq("id", input.patient_id!).eq("profissional_id", userId).maybeSingle();
     if (patientError || !patient) return jsonResponse({ error: "Paciente não encontrado ou sem autorização." }, 404);
     const [profileResult, anamnesisResult] = await Promise.all([
-      supabase.from("patient_nutrition_profiles").select("allergies,intolerances,avoided_foods,preferred_foods,diagnosed_conditions,pregnancy_or_breastfeeding,eating_disorder_history").eq("patient_id", input.patient_id!).eq("profissional_id", userId).maybeSingle(),
+      supabase.from("patient_nutrition_profiles").select("allergies,intolerances,avoided_foods,preferred_foods,cultural_restrictions,diagnosed_conditions,pregnancy_or_breastfeeding,eating_disorder_history").eq("patient_id", input.patient_id!).eq("profissional_id", userId).maybeSingle(),
       supabase.from("anamneses").select("doencas_fisicas").eq("paciente_id", input.patient_id!).eq("profissional_id", userId).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
     if (profileResult.error || anamnesisResult.error) {
@@ -163,20 +171,22 @@ serve(async (req) => {
     const age = patient.data_nascimento ? Math.floor((Date.now() - new Date(`${patient.data_nascimento}T00:00:00`).getTime()) / 31557600000) : null;
     const profile = profileResult.data;
     if (age === null || !Number.isFinite(age) || age < 18) return jsonResponse({ error: "A proposta automática está disponível apenas para pacientes adultos com idade confirmada." }, 422);
-    if (hasClinicalFlag(profile?.pregnancy_or_breastfeeding) || hasClinicalFlag(profile?.diagnosed_conditions) || hasClinicalFlag(profile?.eating_disorder_history) || hasClinicalFlag(anamnesisResult.data?.doencas_fisicas)) return jsonResponse({ error: "Este caso exige avaliação individualizada do profissional; não foi enviada informação clínica ao serviço de IA." }, 422);
+    if (!hasConfirmedAllergyStatus(profile?.allergies)) return jsonResponse({ error: "Confirme e registre as alergias alimentares antes de gerar uma proposta." }, 422);
+    if (hasClinicalFlag(profile?.pregnancy_or_breastfeeding) || hasClinicalFlag(profile?.diagnosed_conditions) || hasClinicalFlag(profile?.eating_disorder_history) || hasClinicalFlag(anamnesisResult.data?.doencas_fisicas) || hasClinicalFlag(profile?.cultural_restrictions)) return jsonResponse({ error: "Este caso exige avaliação individualizada do profissional; não foi enviada informação clínica ao serviço de IA." }, 422);
 
     const { data: foodRows, error: foodError } = await supabase.from("nutrition_food_library").select("id,name,energy_kcal_100g,proteins_g_100g,carbohydrates_g_100g,fats_g_100g,allergens,allergen_info_known,gluten_status,lactose_status,source,license,source_code,validation_status").eq("validation_status", "verified").order("name").limit(1000);
     if (foodError) {
       console.error(`[${functionName}] Failed loading verified food library`);
       return jsonResponse({ error: "Não foi possível carregar a biblioteca alimentar verificada." }, 500);
     }
-    const allergyTerms = hasClinicalFlag(profile?.allergies) ? splitTerms(profile!.allergies!) : [];
+    const allergyTerms = isExplicitNegative(profile?.allergies) ? [] : splitTerms(profile?.allergies ?? "");
     const intoleranceText = normalize(profile?.intolerances ?? "");
     const avoidedTerms = splitTerms(profile?.avoided_foods ?? "");
     const preferenceTerms = splitTerms(profile?.preferred_foods ?? "");
     const safeFoods = (foodRows ?? []).filter((food) => {
-      if (!food.allergen_info_known || !trustedSource(food.source ?? "") || !food.license?.trim()) return false;
-      const allergens = (food.allergens ?? []).map((item: string) => normalize(item));
+      const coreNutrients = [food.energy_kcal_100g, food.proteins_g_100g, food.carbohydrates_g_100g];
+      if (typeof food.name !== "string" || !food.name.trim() || !Array.isArray(food.allergens) || !food.allergen_info_known || !coreNutrients.every((value) => typeof value === "number" && Number.isFinite(value) && value >= 0) || (food.fats_g_100g !== null && (typeof food.fats_g_100g !== "number" || !Number.isFinite(food.fats_g_100g) || food.fats_g_100g < 0)) || !trustedSource(food.source ?? "") || !food.license?.trim()) return false;
+      const allergens = food.allergens.map((item: string) => normalize(item));
       if (allergyTerms.some((term) => allergens.some((allergen: string) => allergen.includes(term) || term.includes(allergen)))) return false;
       if (/gluten|trigo|cevada|centeio/.test(intoleranceText) && food.gluten_status !== "free") return false;
       if (/lactose|leite/.test(intoleranceText) && food.lactose_status !== "free") return false;
@@ -274,10 +284,10 @@ serve(async (req) => {
     const text = completion.candidates?.[0]?.content?.parts?.map((part: { text?: string }) => part.text ?? "").join("");
     const plan = JSON.parse(text);
     if (typeof plan.summary !== "string" || typeof plan.objective !== "string" || !Array.isArray(plan.meals) || !Array.isArray(plan.warnings) || !Array.isArray(plan.observations) || !Array.isArray(plan.professional_confirmations)) throw new Error("Invalid response shape");
-    if (plan.meals.length < 1 || plan.meals.length > 10) throw new Error("Invalid meal count");
+    if (plan.meals.length < 1 || plan.meals.length > 10 || (!testMode && plan.meals.length !== input.desired_meals)) throw new Error("Invalid meal count");
     const byName = new Map(verifiedFoods.map((food) => [normalize(String(food.name)), food]));
     for (const meal of plan.meals) {
-      if (typeof meal.name !== "string" || !Array.isArray(meal.items) || meal.items.length < 1) throw new Error("Invalid meal shape");
+      if (typeof meal.name !== "string" || !Array.isArray(meal.items) || meal.items.length < 1 || meal.items.length > 30) throw new Error("Invalid meal shape");
       if (testMode) {
         if (meal.items.some((item: unknown) => !item || typeof item !== "object" || typeof (item as { food?: unknown }).food !== "string" || !Number.isFinite((item as { portion_grams?: unknown }).portion_grams))) throw new Error("Invalid synthetic meal shape");
         continue;
