@@ -151,10 +151,6 @@ function NutritionPlanningPage() {
       setEnergy((current) => current.objective === null ? { ...current, objective: objectiveAssessment.objective } : current);
     }
   }, [objectiveAssessment.conflicting, objectiveAssessment.objective]);
-  useEffect(() => {
-    if (activityEvidenceSufficient || activePlan?.status === "approved") return;
-    setEnergy((current) => current.activity_confirmed || current.professional_reviewed ? { ...current, activity_confirmed: false, professional_reviewed: false, reviewed_at: null } : current);
-  }, [activityEvidenceSufficient, activePlan?.status]);
   const alerts = useMemo(() => {
     const found: string[] = [];
     if (objectiveAssessment.conflicting) found.push(`Há objetivos divergentes nos registros; confirme com a paciente antes de calcular a meta: ${objectiveAssessment.matches.map((entry) => `${entry.source}: ${entry.value}`).join("; ")}.`);
