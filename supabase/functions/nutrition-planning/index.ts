@@ -38,7 +38,7 @@ const normalizeFoodName = (value: string) => normalize(value).replace(/[^a-z0-9]
 const isExplicitNegative = (value: unknown) => {
   if (typeof value !== "string" || !value.trim()) return false;
   const normalized = normalize(value.trim()).replace(/[.!]+$/g, "");
-  return /^(nenhum(a)?( (alergia(s)?|intolerancia(s)?|doenca(s)?|condicao(es)?|historico))?|nao|negativo|n\/?a|nao se aplica|sem (doencas?|condicoes?|alergias?|intolerancias?|historico)|nao possui (doencas?|condicoes?|alergias?|intolerancias?))$/.test(normalized);
+  return /^(nenhum(a)?( (alergia(s)?|intolerancia(s)?|doenca(s)?|condicao(es)?|historico))?|nao|negativo|n\/?a|nao se aplica|nao (tenho|apresento) (alergia(s)?|intolerancia(s)?|doenca(s)?|condicao(es)?)|sem (doencas?|condicoes?|alergias?|intolerancias?|historico)|nao possui (doencas?|condicoes?|alergias?|intolerancias?))$/.test(normalized);
 };
 const hasClinicalFlag = (value: unknown) => typeof value === "string" && Boolean(value.trim()) && !isExplicitNegative(value);
 const hasConfirmedAllergyStatus = (value: unknown) => {
@@ -205,9 +205,9 @@ serve(async (req) => {
       if (typeof food.id !== "string" || !food.id || typeof food.name !== "string" || !food.name.trim() || !Array.isArray(food.allergens) || !coreNutrients.every((value) => typeof value === "number" && Number.isFinite(value) && value >= 0) || typeof food.fats_g_100g !== "number" || !Number.isFinite(food.fats_g_100g) || food.fats_g_100g < 0 || (food.fibers_g_100g !== null && (!Number.isFinite(food.fibers_g_100g) || food.fibers_g_100g < 0)) || !trustedSource(food.source ?? "") || !food.license?.trim()) return false;
       const allergens = food.allergens.map((item: string) => normalize(item));
       const allergyMatches = allergyTerms.some((term) => allergens.some((allergen: string) => allergen.includes(term) || term.includes(allergen)));
-      if (allergyTerms.length && (!food.allergen_info_known || allergyMatches)) return false;
-      if (/gluten|trigo|cevada|centeio/.test(intoleranceText) && food.gluten_status !== "free") return false;
-      if (/lactose|leite/.test(intoleranceText) && food.lactose_status !== "free") return false;
+      if (allergyTerms.length && food.allergen_info_known && allergyMatches) return false;
+      if (/gluten|trigo|cevada|centeio/.test(intoleranceText) && food.gluten_status === "contains") return false;
+      if (/lactose|leite/.test(intoleranceText) && food.lactose_status === "contains") return false;
       const foodText = normalize(`${food.name} ${food.source_code ?? ""}`);
       return !avoidedTerms.some((term) => foodText.includes(term));
     }).sort((a, b) => {
