@@ -122,10 +122,11 @@ Deno.serve(async (req) => {
   let updated = 0;
   const writeErrors: Array<{ codigo_taco: number; nome: string; error: string }> = [];
 
-  for (const batch of chunk(uniqueRows, 50)) {
+  for (const batch of chunk(uniqueRows, 200)) {
     const sourceCodes = batch.map((row) => `TACO-${row.codigo_taco}`);
     const { data: existingRows, error: lookupError } = await service.from("nutrition_food_library").select("id,source_code,source").in("source_code", sourceCodes);
     if (lookupError) {
+      console.error(`[${functionName}] Batch duplicate lookup failed: ${lookupError.message}`);
       for (const row of batch) writeErrors.push({ codigo_taco: row.codigo_taco, nome: row.nome, error: "Falha ao verificar duplicidade no banco." });
       continue;
     }
@@ -161,7 +162,8 @@ Deno.serve(async (req) => {
     if (inserts.length) {
       const { error: insertError } = await service.from("nutrition_food_library").insert(inserts);
       if (insertError) {
-        for (const item of inserts) writeErrors.push({ codigo_taco: Number(String(item.source_code).slice(5)), nome: String(item.name), error: "Falha ao inserir no banco; a linha não foi contada como importada." });
+        console.error(`[${functionName}] Batch insert failed: ${insertError.message}`);
+        for (const item of inserts) writeErrors.push({ codigo_taco: Number(String(item.source_code).slice(5)), nome: String(item.name), error: `Falha ao inserir no banco: ${insertError.message}` });
       } else imported += inserts.length;
     }
     const updateResults = await Promise.all(updates.map(async ({ id, row }) => {
