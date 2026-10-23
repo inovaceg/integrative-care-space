@@ -237,7 +237,7 @@ serve(async (req) => {
     });
     if (!safeFoods.length) return jsonResponse({ error: "Nenhum alimento TACO passou pelos filtros de composição e restrições registradas. Revise os alimentos evitados e as incompatibilidades confirmadas." }, 409);
     const permittedFoods = safeFoods.slice(0, 120);
-    verifiedFoods = permittedFoods as unknown as Record<string, unknown>[];
+    verifiedFoods = safeFoods as unknown as Record<string, unknown>[];
     const goalCategory = energy.objective === "weight_loss" ? "emagrecimento" : energy.objective === "weight_gain" ? "ganho de peso ou massa muscular" : "manutenção do peso";
     requestData = {
       goal_category: goalCategory,
@@ -463,13 +463,16 @@ serve(async (req) => {
         if (!food.allergen_info_known || food.gluten_status === "unknown" || food.lactose_status === "unknown") hasUnknownSafetyData = true;
         const source = `${food.source}${food.source_code ? ` · ${food.source_code}` : ""}; ${food.license}`;
         const grams = Number(generated.portion_grams);
+        const selectedFood = food as unknown as SubstitutionFood;
         const candidates = (generated.alternatives as string[]).map((id) => byId.get(id) as unknown as SubstitutionFood);
-        const alternativesDetail = verifiedAlternatives(food as unknown as SubstitutionFood, candidates);
+        const suggestedAlternatives = verifiedAlternatives(selectedFood, candidates);
+        const catalogAlternatives = verifiedAlternatives(selectedFood, verifiedFoods as unknown as SubstitutionFood[]);
+        const alternativesDetail = [...new Map([...suggestedAlternatives, ...catalogAlternatives].filter((alternative) => alternative.food_library_id !== food.id).map((alternative) => [alternative.food_library_id, alternative])).values()].slice(0, 8);
         return {
           food: String(food.name),
           portion: `${grams} g`,
           quantity_g: grams,
-          alternatives: alternativesDetail.map((alternative) => alternative.food),
+          alternatives: alternativesDetail.map((alternative) => `${alternative.food} (${alternative.quantity_g} g)`),
           alternatives_detail: alternativesDetail,
           food_library_id: String(food.id),
           nutrition_per_100g: { calories_kcal: food.energy_kcal_100g, protein_g: food.proteins_g_100g, carbohydrate_g: food.carbohydrates_g_100g, fat_g: food.fats_g_100g, fiber_g: food.fibers_g_100g },

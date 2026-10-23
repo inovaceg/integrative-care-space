@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { findFoodNameSuggestions, validateFoodSelections, type CatalogFoodReference } from "../_shared/nutrition-plan-catalog";
-import { equivalentAlternative, type SubstitutionFood } from "../_shared/nutrition-substitutions";
+import { equivalentAlternative, verifiedAlternatives, type SubstitutionFood } from "../_shared/nutrition-substitutions";
 
 const catalog: CatalogFoodReference[] = [
   { id: "a204ffd4-af72-4495-b440-eac372c147ef", source_code: "TACO-1", name: "Arroz integral cozido" },
@@ -56,5 +56,11 @@ describe("equivalência de substituições nutricionais", () => {
   test("calcula quantidade prática para alternativa nutricionalmente próxima", () => {
     const banana: SubstitutionFood = { id: "banana-2", name: "Banana prata crua", energy_kcal_100g: 98, proteins_g_100g: 1.3, carbohydrates_g_100g: 25.9, fats_g_100g: 0.1, fibers_g_100g: 2 };
     expect(equivalentAlternative({ ...oats, name: "Banana nanica crua", energy_kcal_100g: 92, proteins_g_100g: 1.4, carbohydrates_g_100g: 23.8, fats_g_100g: 0.1, fibers_g_100g: 1.9 }, banana)).toMatchObject({ food_library_id: "banana-2", quantity_g: 95 });
+  });
+
+  test("retorna várias alternativas equivalentes encontradas no catálogo verificado", () => {
+    const base: SubstitutionFood = { id: "base", name: "Arroz cozido", energy_kcal_100g: 130, proteins_g_100g: 2.5, carbohydrates_g_100g: 28, fats_g_100g: 0.3, fibers_g_100g: 1 };
+    const alternatives = Array.from({ length: 8 }, (_, index) => ({ ...base, id: `rice-${index}`, name: `Arroz variedade ${index} cozido` }));
+    expect(verifiedAlternatives(base, alternatives)).toHaveLength(8);
   });
 });
