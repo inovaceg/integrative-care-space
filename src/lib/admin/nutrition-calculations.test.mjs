@@ -43,6 +43,7 @@ describe("cálculos nutricionais", () => {
   test("define meta de manutenção e ajustes individualizados sem extrapolar limites", () => {
     expect(calculateEnergyTarget(2317.64, "maintenance", null, null)).toBe(2317.64);
     expect(calculateEnergyTarget(2317.64, "weight_loss", "percent", 10)).toBe(2085.88);
+    expect(calculateEnergyTarget(2317.64, "weight_gain", "percent", 5)).toBe(2433.52);
     expect(calculateEnergyTarget(2317.64, "weight_gain", "kcal", 250)).toBe(2567.64);
     expect(calculateEnergyTarget(2317.64, "weight_loss", "percent", 60)).toBeNull();
     expect(calculateEnergyTarget(2317.64, "weight_loss", null, 250)).toBeNull();
