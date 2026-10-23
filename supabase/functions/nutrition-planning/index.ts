@@ -31,6 +31,13 @@ function retryDelayFromDetails(details: unknown): number | null {
 }
 
 const wait = (milliseconds: number) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
+const hasClinicalFlag = (value: unknown) => {
+  if (typeof value !== "string" || !value.trim()) return false;
+  return !/^(nao|nenhum|nenhuma|negativo|n\/a|nao se aplica|sem\b)/i.test(normalize(value.trim()));
+};
+const splitTerms = (value: string) => normalize(value).split(/[,;\n]|\s+e\s+/i).map((term) => term.trim()).filter((term) => term && !/^(nao informado|nenhum|nenhuma|nao|n\/a)$/.test(term));
+const trustedSource = (value: string) => /\b(TBCA|TACO|rotulo|USDA)\b/i.test(value.trim());
 
 const planSchema = {
   type: "OBJECT",
@@ -50,10 +57,10 @@ const planSchema = {
               type: "OBJECT",
               properties: {
                 food: { type: "STRING" },
-                portion: { type: "STRING" },
+                portion_grams: { type: "NUMBER" },
                 alternatives: { type: "ARRAY", items: { type: "STRING" } },
               },
-              required: ["food", "portion", "alternatives"],
+              required: ["food", "portion_grams", "alternatives"],
             },
           },
           notes: { type: "STRING" },
@@ -94,15 +101,13 @@ serve(async (req) => {
   const { data: professional, error: professionalError } = await supabase.from("profissionais").select("id").eq("id", userId).maybeSingle();
   if (professionalError || !professional) return jsonResponse({ error: "Perfil profissional não encontrado." }, 403);
 
-  let input: { test_mode?: boolean; patient_id?: string; goal?: string; duration_days?: number; desired_meals?: number | null; nutritional_profile?: Record<string, unknown> };
+  let input: { test_mode?: boolean; patient_id?: string; goal?: string; duration_days?: number; desired_meals?: number | null };
   try { input = await req.json(); } catch { return jsonResponse({ error: "Requisição inválida." }, 400); }
   const testMode = input.test_mode === true;
-  if (input.nutritional_profile !== undefined && (!input.nutritional_profile || typeof input.nutritional_profile !== "object" || Array.isArray(input.nutritional_profile))) return jsonResponse({ error: "Perfil nutricional inválido." }, 400);
-  if (!testMode) return jsonResponse({ error: "A geração clínica externa permanece bloqueada até aprovação da configuração de privacidade e da base legal para tratamento de dados de saúde." }, 503);
   if (!testMode) {
-    if (!input.patient_id || typeof input.patient_id !== "string" || ![1, 3, 7].includes(Number(input.duration_days))) return jsonResponse({ error: "Paciente ou período inválido." }, 400);
-    if (typeof input.goal !== "string" || input.goal.trim().length < 3 || input.goal.length > 1000) return jsonResponse({ error: "Informe um objetivo com até 1.000 caracteres." }, 400);
-    if (input.desired_meals !== null && input.desired_meals !== undefined && (!Number.isInteger(input.desired_meals) || input.desired_meals < 1 || input.desired_meals > 10)) return jsonResponse({ error: "Quantidade de refeições inválida." }, 400);
+    if (typeof input.patient_id !== "string" || ![1, 3, 7].includes(Number(input.duration_days))) return jsonResponse({ error: "Paciente ou período inválido." }, 400);
+    if (typeof input.goal !== "string" || input.goal.trim().length < 3 || input.goal.length > 1000) return jsonResponse({ error: "Informe um objetivo com pelo menos 3 caracteres." }, 400);
+    if (!Number.isInteger(input.desired_meals) || Number(input.desired_meals) < 1 || Number(input.desired_meals) > 10) return jsonResponse({ error: "Informe entre 1 e 10 refeições por dia." }, 400);
   }
   const syntheticData = {
     patient_internal_id: "PACIENTE-FICTICIO-001",
@@ -143,40 +148,60 @@ serve(async (req) => {
   };
 
   let requestData: Record<string, unknown> = syntheticData;
+  let verifiedFoods: Record<string, unknown>[] = [];
   if (!testMode) {
-    const { data: patient, error: patientError } = await supabase.from("pacientes").select("id,data_nascimento,genero,area").eq("id", input.patient_id!).eq("profissional_id", userId).maybeSingle();
+    const { data: patient, error: patientError } = await supabase.from("pacientes").select("id,data_nascimento").eq("id", input.patient_id!).eq("profissional_id", userId).maybeSingle();
     if (patientError || !patient) return jsonResponse({ error: "Paciente não encontrado ou sem autorização." }, 404);
-    const [profileResult, evalResult, applicationResult, anamnesisResult] = await Promise.all([
-      supabase.from("patient_nutrition_profiles").select("height_cm,reference_weight_kg,goal,activity_level,exercise_details,wake_time,sleep_time,meal_schedule,desired_meals,work_routine,cooking_availability,food_budget,preferred_foods,avoided_foods,cultural_restrictions,simple_meals_preference,affordable_food_preference,allergies,intolerances,diagnosed_conditions,pregnancy_or_breastfeeding,medications,supplements,eating_disorder_history").eq("patient_id", input.patient_id!).eq("profissional_id", userId).maybeSingle(),
-      supabase.from("body_evaluations").select("evaluation_date,weight_kg,height_cm,bmi,waist_cm,abdomen_cm,hip_cm,body_fat_percentage,muscle_mass_kg,visceral_fat_level,body_water_percentage,basal_metabolism_kcal").eq("patient_id", input.patient_id!).eq("profissional_id", userId).order("evaluation_date", { ascending: false }).limit(12),
-      supabase.from("patient_applications").select("procedure_name,application_date,current_weight_kg").eq("patient_id", input.patient_id!).eq("profissional_id", userId).order("application_date", { ascending: false }).limit(20),
-      supabase.from("anamneses").select("alimentacao,atividade_fisica,qualidade_sono,doencas_fisicas,medicamentos_atuais,usa_medicamentos").eq("paciente_id", input.patient_id!).eq("profissional_id", userId).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
+    const [profileResult, anamnesisResult] = await Promise.all([
+      supabase.from("patient_nutrition_profiles").select("allergies,intolerances,avoided_foods,preferred_foods,diagnosed_conditions,pregnancy_or_breastfeeding,eating_disorder_history").eq("patient_id", input.patient_id!).eq("profissional_id", userId).maybeSingle(),
+      supabase.from("anamneses").select("doencas_fisicas").eq("paciente_id", input.patient_id!).eq("profissional_id", userId).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
-    if (profileResult.error || evalResult.error || applicationResult.error || anamnesisResult.error) {
-      console.error(`[${functionName}] Failed loading authorized patient records`);
-      return jsonResponse({ error: "Não foi possível carregar os dados autorizados." }, 500);
+    if (profileResult.error || anamnesisResult.error) {
+      console.error(`[${functionName}] Failed loading authorized safety records`);
+      return jsonResponse({ error: "Não foi possível carregar os dados de segurança autorizados." }, 500);
     }
-    const evaluations = evalResult.data ?? [];
-    const missing: string[] = [];
-    if (!evaluations.length) missing.push("avaliação corporal");
-    if (!input.nutritional_profile?.height_cm && !evaluations[0]?.height_cm) missing.push("altura");
-    if (!input.nutritional_profile?.allergies && !profileResult.data?.allergies) missing.push("confirmação de alergias");
+    const age = patient.data_nascimento ? Math.floor((Date.now() - new Date(`${patient.data_nascimento}T00:00:00`).getTime()) / 31557600000) : null;
+    const profile = profileResult.data;
+    if (age === null || !Number.isFinite(age) || age < 18) return jsonResponse({ error: "A proposta automática está disponível apenas para pacientes adultos com idade confirmada." }, 422);
+    if (hasClinicalFlag(profile?.pregnancy_or_breastfeeding) || hasClinicalFlag(profile?.diagnosed_conditions) || hasClinicalFlag(profile?.eating_disorder_history) || hasClinicalFlag(anamnesisResult.data?.doencas_fisicas)) return jsonResponse({ error: "Este caso exige avaliação individualizada do profissional; não foi enviada informação clínica ao serviço de IA." }, 422);
+
+    const { data: foodRows, error: foodError } = await supabase.from("nutrition_food_library").select("id,name,energy_kcal_100g,proteins_g_100g,carbohydrates_g_100g,fats_g_100g,allergens,allergen_info_known,gluten_status,lactose_status,source,license,source_code,validation_status").eq("validation_status", "verified").order("name").limit(1000);
+    if (foodError) {
+      console.error(`[${functionName}] Failed loading verified food library`);
+      return jsonResponse({ error: "Não foi possível carregar a biblioteca alimentar verificada." }, 500);
+    }
+    const allergyTerms = hasClinicalFlag(profile?.allergies) ? splitTerms(profile!.allergies!) : [];
+    const intoleranceText = normalize(profile?.intolerances ?? "");
+    const avoidedTerms = splitTerms(profile?.avoided_foods ?? "");
+    const preferenceTerms = splitTerms(profile?.preferred_foods ?? "");
+    const safeFoods = (foodRows ?? []).filter((food) => {
+      if (!food.allergen_info_known || !trustedSource(food.source ?? "") || !food.license?.trim()) return false;
+      const allergens = (food.allergens ?? []).map((item: string) => normalize(item));
+      if (allergyTerms.some((term) => allergens.some((allergen: string) => allergen.includes(term) || term.includes(allergen)))) return false;
+      if (/gluten|trigo|cevada|centeio/.test(intoleranceText) && food.gluten_status !== "free") return false;
+      if (/lactose|leite/.test(intoleranceText) && food.lactose_status !== "free") return false;
+      const foodText = normalize(`${food.name} ${food.source_code ?? ""}`);
+      return !avoidedTerms.some((term) => foodText.includes(term));
+    }).sort((a, b) => {
+      const aPreferred = preferenceTerms.some((term) => normalize(a.name).includes(term));
+      const bPreferred = preferenceTerms.some((term) => normalize(b.name).includes(term));
+      return Number(bPreferred) - Number(aPreferred) || a.name.localeCompare(b.name, "pt-BR");
+    });
+    if (!safeFoods.length) return jsonResponse({ error: "Não há alimentos verificados e compatíveis com as restrições registradas para gerar uma proposta." }, 409);
+    verifiedFoods = safeFoods as unknown as Record<string, unknown>[];
+    const goal = normalize(input.goal!);
+    const goalCategory = /emagrec|perder peso|reducao de peso/.test(goal) ? "redução de peso" : /ganhar peso|aumento de peso|hipertrof/.test(goal) ? "aumento de peso" : /manutenc/.test(goal) ? "manutenção" : "alimentação equilibrada";
     requestData = {
-      age_years: patient.data_nascimento ? Math.max(0, Math.floor((Date.now() - new Date(`${patient.data_nascimento}T00:00:00`).getTime()) / 31557600000)) : null,
-      biological_sex_if_recorded: patient.genero,
-      relevant_patient_context: { patient_area: patient.area },
-      nutritional_profile: input.nutritional_profile ?? profileResult.data,
-      assessments: evaluations,
-      application_context_only_no_effect_inference: applicationResult.data,
-      relevant_anamnesis: anamnesisResult.data,
-      missing_data: missing,
-      requested_configuration: { goal: input.goal!.trim(), duration_days: input.duration_days, desired_meals: input.desired_meals ?? profileResult.data?.desired_meals ?? null },
+      goal_category: goalCategory,
+      duration_days: input.duration_days,
+      meals_per_day: input.desired_meals,
+      permitted_verified_foods: safeFoods.map((food) => food.name),
     };
   }
 
   const prompt = testMode
-    ? `Gere uma proposta demonstrativa FICTÍCIA para testar formato, não para uso clínico nem prescrição. Não faça diagnóstico, não calcule metas calóricas ou macronutrientes. Inclua refeições com alimentos, porções aproximadas, alternativas e observações; ressalte que todos os dados são fictícios e precisam de revisão profissional. Retorne em português brasileiro. Dados fictícios: ${JSON.stringify(requestData)}`
-    : `Prepare uma proposta alimentar preliminar para revisão do nutricionista responsável. Não prescreva, não faça diagnóstico, não invente dados, não presuma efeitos de procedimentos e não calcule metas calóricas ou macronutrientes. Considere alergias e restrições para evitar sugestões conflitantes. Indique dados ausentes e pontos que exigem confirmação profissional. Use porções aproximadas, alternativas alimentares e observações. Retorne em português brasileiro. Dados autorizados do paciente: ${JSON.stringify(requestData)}`;
+    ? `Gere uma proposta demonstrativa FICTÍCIA para testar formato, não para uso clínico nem prescrição. Use apenas alimentos fictícios, porções em gramas, sem valores nutricionais. Retorne em português brasileiro. Dados fictícios: ${JSON.stringify(requestData)}`
+    : `Crie uma proposta preliminar para revisão obrigatória do nutricionista. Use exclusivamente nomes exatos da lista permitted_verified_foods, sem novos alimentos. Para cada alimento escolha uma porção aproximada em gramas (portion_grams); alternativas também devem estar nessa lista. Não faça diagnóstico, não prescreva metas calóricas ou macros e não informe nenhum valor nutricional. Não afirme que um alimento trata condições. Gere o número solicitado de refeições e retorne em português brasileiro. Configuração minimizada: ${JSON.stringify(requestData)}`;
   let response: Response | null = null;
   let providerFailure: { error?: { message?: string; status?: string; details?: unknown } } | null = null;
 
@@ -249,7 +274,35 @@ serve(async (req) => {
     const text = completion.candidates?.[0]?.content?.parts?.map((part: { text?: string }) => part.text ?? "").join("");
     const plan = JSON.parse(text);
     if (typeof plan.summary !== "string" || typeof plan.objective !== "string" || !Array.isArray(plan.meals) || !Array.isArray(plan.warnings) || !Array.isArray(plan.observations) || !Array.isArray(plan.professional_confirmations)) throw new Error("Invalid response shape");
-    for (const meal of plan.meals) if (typeof meal.name !== "string" || !Array.isArray(meal.items) || meal.items.some((item: unknown) => !item || typeof item !== "object" || typeof (item as { food?: unknown }).food !== "string" || typeof (item as { portion?: unknown }).portion !== "string" || !Array.isArray((item as { alternatives?: unknown }).alternatives))) throw new Error("Invalid meal shape");
+    if (plan.meals.length < 1 || plan.meals.length > 10) throw new Error("Invalid meal count");
+    const byName = new Map(verifiedFoods.map((food) => [normalize(String(food.name)), food]));
+    for (const meal of plan.meals) {
+      if (typeof meal.name !== "string" || !Array.isArray(meal.items) || meal.items.length < 1) throw new Error("Invalid meal shape");
+      if (testMode) {
+        if (meal.items.some((item: unknown) => !item || typeof item !== "object" || typeof (item as { food?: unknown }).food !== "string" || !Number.isFinite((item as { portion_grams?: unknown }).portion_grams))) throw new Error("Invalid synthetic meal shape");
+        continue;
+      }
+      meal.items = meal.items.map((item: unknown) => {
+        if (!item || typeof item !== "object" || typeof (item as { food?: unknown }).food !== "string" || !Number.isFinite((item as { portion_grams?: unknown }).portion_grams) || Number((item as { portion_grams: number }).portion_grams) < 1 || Number((item as { portion_grams: number }).portion_grams) > 2000 || !Array.isArray((item as { alternatives?: unknown }).alternatives)) throw new Error("Invalid food shape");
+        const generated = item as { food: string; portion_grams: number; alternatives: string[] };
+        const food = byName.get(normalize(generated.food));
+        if (!food) throw new Error("Unverified food returned");
+        const source = `${food.source}${food.source_code ? ` · ${food.source_code}` : ""}; ${food.license}`;
+        const alternatives = generated.alternatives.map((name) => byName.get(normalize(name))?.name).filter((name): name is string => Boolean(name));
+        return {
+          food: food.name,
+          portion: `${generated.portion_grams} g`,
+          quantity_g: generated.portion_grams,
+          alternatives: [...new Set(alternatives)],
+          food_library_id: food.id,
+          nutrition_per_100g: { calories_kcal: food.energy_kcal_100g, protein_g: food.proteins_g_100g, carbohydrate_g: food.carbohydrates_g_100g, fat_g: food.fats_g_100g },
+          calories_source: source,
+          protein_source: source,
+          carbohydrate_source: source,
+          fat_source: source,
+        };
+      });
+    }
     if (testMode) plan.observations.unshift("TESTE COM DADOS FICTÍCIOS: não utilizar como prescrição nem como recomendação clínica.");
     return jsonResponse({ plan, model, provider: "gemini", test_mode: testMode });
   } catch {

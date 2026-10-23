@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { CalendarClock, HeartPulse, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,7 +39,7 @@ type Profile = {
 const display = (value: number | null | undefined, unit = "") => value === null || value === undefined ? "Não informado" : `${value}${unit}`;
 const dateLabel = (value: string) => new Date(`${value}T00:00:00`).toLocaleDateString("pt-BR");
 
-export function PersonalizedDietCard({ patient, evaluations, profile, latestWeight, anamnesis, onProfileChange, onGenerate, loading }: {
+export function PersonalizedDietCard({ patient, evaluations, profile, latestWeight, anamnesis, onProfileChange, onGenerate, loading, generating, error, message }: {
   patient: { nome: string; data_nascimento: string | null };
   evaluations: Evaluation[];
   profile: Profile;
@@ -48,8 +48,10 @@ export function PersonalizedDietCard({ patient, evaluations, profile, latestWeig
   onProfileChange: (key: keyof Profile, value: string) => void;
   onGenerate: () => void;
   loading: boolean;
+  generating: boolean;
+  error: string;
+  message: string;
 }) {
-  const [generationNotice, setGenerationNotice] = useState("");
   const latest = useMemo(() => {
     const keys: (keyof Evaluation)[] = ["height_cm", "bmi", "waist_cm", "abdomen_cm", "hip_cm", "chest_cm", "right_arm_cm", "left_arm_cm", "right_thigh_cm", "left_thigh_cm", "right_calf_cm", "left_calf_cm"];
     return Object.fromEntries(keys.map((key) => [key, evaluations.find((row) => typeof row[key] === "number" && Number.isFinite(row[key]) && (row[key] as number) > 0) ?? null])) as Record<typeof keys[number], Evaluation | null>;
@@ -89,9 +91,10 @@ export function PersonalizedDietCard({ patient, evaluations, profile, latestWeig
       <div>
         <h3 className="font-semibold text-slate-800">Configuração profissional</h3>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">{fields.map(([key, label]) => <div key={key}><Label htmlFor={`diet-${key}`}>{label}</Label>{key === "goal" || key === "desired_meals" || key === "food_budget" ? <Input id={`diet-${key}`} className="mt-1" type={key === "desired_meals" ? "number" : "text"} value={profile[key]} onChange={(event) => onProfileChange(key, event.target.value)} /> : <Textarea id={`diet-${key}`} className="mt-1 min-h-20" value={profile[key]} onChange={(event) => onProfileChange(key, event.target.value)} />}</div>)}</div>
-        <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">Metas de energia e macronutrientes são estimativas separadas e precisam de confirmação profissional. A geração por IA não enviará dados clínicos até haver configuração e aprovação de privacidade/base legal.{needsSpecialistReview ? " Há condição que exige avaliação individualizada; a geração automática está bloqueada." : ""}</p>
-        <Button type="button" className="mt-4 w-full bg-[#2f8f82] hover:bg-[#26786e]" disabled={loading || needsSpecialistReview} onClick={() => { onGenerate(); setGenerationNotice("A IA não foi executada: a rota está protegida para não enviar dados clínicos a um provedor externo sem configuração de privacidade e base legal aprovadas. Nenhum plano foi gerado."); }}><Sparkles className="mr-2 size-4" />Gerar proposta alimentar com IA</Button>
-        {generationNotice && <p role="alert" className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">{generationNotice}</p>}
+        <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">A IA recebe apenas uma categoria de objetivo, a quantidade de refeições e nomes de alimentos verificados já filtrados localmente. Nome, identificação, medidas, avaliações e anamnese não são enviados. Composição e nutrientes vêm exclusivamente da biblioteca validada e do cálculo proporcional determinístico.{needsSpecialistReview ? " Há condição que exige avaliação individualizada; a geração automática está bloqueada." : " Toda proposta será salva como rascunho para revisão profissional."}</p>
+        <Button type="button" className="mt-4 w-full bg-[#2f8f82] hover:bg-[#26786e]" disabled={loading || generating || needsSpecialistReview} onClick={onGenerate}><Sparkles className="mr-2 size-4" />{generating ? "Gerando proposta..." : "Gerar proposta alimentar com IA"}</Button>
+        {error && <p role="alert" className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</p>}
+        {message && <p role="status" className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{message}</p>}
       </div>
     </div>
   </SectionCard>;
