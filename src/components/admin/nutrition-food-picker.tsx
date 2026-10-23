@@ -72,7 +72,7 @@ export function NutritionFoodPicker({ allergies, intolerances, onAdd, disabled }
   }, []);
 
   const safeFoods = useMemo(() => {
-    const allergyTerms = allergies.split(/[,;\n]/).map(normalize).map((term) => term.trim()).filter(Boolean);
+    const allergyTerms = allergies.split(/[,;\n]|\s+e\s+/i).map(normalize).map((term) => term.trim()).filter(Boolean);
     const intoleranceText = normalize(intolerances);
     return foods.filter((food) => {
       if (!isTrustedNutritionSource(food.source) || !food.license.trim()) return false;

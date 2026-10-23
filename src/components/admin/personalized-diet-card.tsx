@@ -32,6 +32,9 @@ type Profile = {
   intolerances: string;
   cultural_restrictions: string;
   food_budget: string;
+  diagnosed_conditions: string;
+  pregnancy_or_breastfeeding: string;
+  eating_disorder_history: string;
 };
 const display = (value: number | null | undefined, unit = "") => value === null || value === undefined ? "Não informado" : `${value}${unit}`;
 const dateLabel = (value: string) => new Date(`${value}T00:00:00`).toLocaleDateString("pt-BR");
@@ -64,6 +67,7 @@ export function PersonalizedDietCard({ patient, evaluations, profile, latestWeig
   })();
   const evaluationWithCurrentWeight = currentWeight?.weight_source === "Avaliação corporal" ? evaluations.find((row) => row.evaluation_date === currentWeight.weight_date && row.weight_kg === currentWeight.weight_kg) : null;
   const calculatedBmi = evaluationWithCurrentWeight && latest.height_cm?.id === evaluationWithCurrentWeight.id && evaluationWithCurrentWeight.height_cm ? evaluationWithCurrentWeight.weight_kg! / (evaluationWithCurrentWeight.height_cm / 100) ** 2 : null;
+  const needsSpecialistReview = (age !== null && age < 18) || Boolean(profile.pregnancy_or_breastfeeding.trim()) || Boolean(profile.diagnosed_conditions.trim()) || Boolean(profile.eating_disorder_history.trim()) || Boolean(anamnesis?.doencas_fisicas?.trim());
 
   return <SectionCard title="Gerar Dieta Personalizada">
     <p className="text-sm text-slate-600">Prepare uma proposta alimentar individualizada a partir dos dados da paciente.</p>
@@ -77,14 +81,15 @@ export function PersonalizedDietCard({ patient, evaluations, profile, latestWeig
           const value = evaluation ? evaluation[key] as number : null;
           return <p key={key} className="mt-1 text-sm">{label}: {display(value, unit)}{evaluation && <span className="text-xs text-slate-500"> · {dateLabel(evaluation.evaluation_date)}</span>}</p>;
         })}
+        <p className="mt-1 text-sm">IMC calculado (peso e altura da mesma avaliação): {calculatedBmi === null ? "Não informado" : calculatedBmi.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}{evaluationWithCurrentWeight && calculatedBmi !== null && <span className="text-xs text-slate-500"> · {dateLabel(evaluationWithCurrentWeight.evaluation_date)}</span>}</p>
         <div className="mt-3 border-t border-slate-200 pt-3 text-sm"><p className="flex items-center gap-2 font-medium"><CalendarClock className="size-4 text-[#2f8f82]" />Última avaliação: {evaluations[0]?.evaluation_date ? dateLabel(evaluations[0].evaluation_date) : "Não informada"}</p><p className="mt-2">Evolução do peso: {evaluations.length > 1 ? evaluations.filter((item) => item.weight_kg !== null).map((item) => `${dateLabel(item.evaluation_date)}: ${item.weight_kg} kg`).join(" · ") : "Não informado"}</p></div>
         <div className="mt-3 border-t border-slate-200 pt-3 text-sm"><p><strong>Anamnese alimentar: </strong>{anamnesis?.alimentacao || "Não informado"}</p><p className="mt-1"><strong>Atividade física: </strong>{anamnesis?.atividade_fisica || "Não informado"}</p><p className="mt-1"><strong>Condições clínicas registradas: </strong>{anamnesis?.doencas_fisicas || "Não informado"}</p></div>
       </div>
       <div>
         <h3 className="font-semibold text-slate-800">Configuração profissional</h3>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">{fields.map(([key, label]) => <div key={key}><Label htmlFor={`diet-${key}`}>{label}</Label>{key === "goal" || key === "desired_meals" || key === "food_budget" ? <Input id={`diet-${key}`} className="mt-1" type={key === "desired_meals" ? "number" : "text"} value={profile[key]} onChange={(event) => onProfileChange(key, event.target.value)} /> : <Textarea id={`diet-${key}`} className="mt-1 min-h-20" value={profile[key]} onChange={(event) => onProfileChange(key, event.target.value)} />}</div>)}</div>
-        <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">Metas de energia e macronutrientes são estimativas separadas e precisam de confirmação profissional. A geração por IA não enviará dados clínicos até haver configuração e aprovação de privacidade/base legal.</p>
-        <Button type="button" className="mt-4 w-full bg-[#2f8f82] hover:bg-[#26786e]" disabled={loading} onClick={onGenerate}><Sparkles className="mr-2 size-4" />Gerar proposta alimentar com IA</Button>
+        <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">Metas de energia e macronutrientes são estimativas separadas e precisam de confirmação profissional. A geração por IA não enviará dados clínicos até haver configuração e aprovação de privacidade/base legal.{needsSpecialistReview ? " Há condição que exige avaliação individualizada; a geração automática está bloqueada." : ""}</p>
+        <Button type="button" className="mt-4 w-full bg-[#2f8f82] hover:bg-[#26786e]" disabled={loading || needsSpecialistReview} onClick={onGenerate}><Sparkles className="mr-2 size-4" />Gerar proposta alimentar com IA</Button>
       </div>
     </div>
   </SectionCard>;
