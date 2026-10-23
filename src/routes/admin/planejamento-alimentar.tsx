@@ -274,7 +274,8 @@ function NutritionPlanningPage() {
     if (activePlan?.status === "approved" || syntheticTest) return;
     setContentText((current) => {
       try {
-        return JSON.stringify(cleanStaleEnergyTexts(JSON.parse(current) as PlanContent, next.professional_reviewed ? next.adjusted_daily_kcal : null), null, 2);
+        const draft = cleanStaleEnergyTexts(JSON.parse(current) as PlanContent, next.professional_reviewed ? next.adjusted_daily_kcal : null);
+        return JSON.stringify({ ...draft, energy: next }, null, 2);
       } catch { return current; }
     });
   };
