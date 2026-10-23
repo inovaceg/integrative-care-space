@@ -514,7 +514,7 @@ function NutritionPlanningPage() {
     setError("");
     setMessage("");
     try {
-      if (planNeedsEnergyRefresh) throw new Error("A meta ou os parâmetros energéticos mudaram. Atualize e salve uma nova proposta antes de pré-visualizar ou exportar o PDF.");
+      if (planNeedsEnergyRefresh && exportAfterBuild) throw new Error("A meta ou os parâmetros energéticos mudaram. Atualize e salve uma nova proposta antes de exportar o PDF.");
       const isApproved = activePlan?.status === "approved";
       let plan: PlanContent;
       try { plan = JSON.parse(contentText) as PlanContent; }
@@ -600,8 +600,8 @@ function NutritionPlanningPage() {
         draft: !isApproved,
         status: statusNames[activePlan?.status ?? "draft"] ?? "Em elaboração",
         observations: (isApproved ? plan.observations ?? [] : cleanStaleEnergyTexts(plan, energy.professional_reviewed ? energy.adjusted_daily_kcal : null).observations ?? []).map(readableText).filter(Boolean),
-                warnings: [...(plan.warnings ?? []), ...(plan.professional_confirmations ?? [])].map(readableText).filter(Boolean),
-        sources: [...sources].sort((a, b) => a.localeCompare(b, "pt-BR")),
+                warnings: [...(plan.warnings ?? []), ...(plan.professional_confirmations ?? []), ...(planNeedsEnergyRefresh ? ["A meta ou os parâmetros energéticos foram alterados após a elaboração desta proposta; revise e salve uma versão atualizada."] : [])].map(readableText).filter(Boolean),
+                sources: [...sources].sort((a, b) => a.localeCompare(b, "pt-BR")),
         reviewer,
         energy: plan.energy ?? null,
         meals,
