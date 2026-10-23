@@ -459,12 +459,14 @@ serve(async (req) => {
         if (!food.allergen_info_known || food.gluten_status === "unknown" || food.lactose_status === "unknown") hasUnknownSafetyData = true;
         const source = `${food.source}${food.source_code ? ` · ${food.source_code}` : ""}; ${food.license}`;
         const grams = Number(generated.portion_grams);
-        const alternatives = (generated.alternatives as string[]).map((id) => String(byId.get(id)!.name));
+        const candidates = (generated.alternatives as string[]).map((id) => byId.get(id) as unknown as SubstitutionFood);
+        const alternativesDetail = verifiedAlternatives(food as unknown as SubstitutionFood, candidates);
         return {
           food: String(food.name),
           portion: `${grams} g`,
           quantity_g: grams,
-          alternatives: [...new Set(alternatives)],
+          alternatives: alternativesDetail.map((alternative) => alternative.food),
+          alternatives_detail: alternativesDetail,
           food_library_id: String(food.id),
           nutrition_per_100g: { calories_kcal: food.energy_kcal_100g, protein_g: food.proteins_g_100g, carbohydrate_g: food.carbohydrates_g_100g, fat_g: food.fats_g_100g, fiber_g: food.fibers_g_100g },
           calories_kcal: nutritionForPortion(Number(food.energy_kcal_100g), grams),

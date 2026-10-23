@@ -1,9 +1,11 @@
 import { calculatePlanNutrition, isTrustedNutritionSource } from "@/lib/admin/nutrition-calculations";
 import type { DocumentPage } from "@/lib/admin/document-layout";
 
+export type NutritionPdfAlternative = { food_library_id: string; food: string; quantity_g: number; calories_kcal: number; protein_g: number; carbohydrate_g: number; fat_g: number; fiber_g: number | null };
 export type NutritionPdfItem = {
   food: string;
   portion: string;
+  alternatives_detail?: NutritionPdfAlternative[];
   quantity_g?: number | undefined;
   calories_kcal?: number | undefined;
   calories_source?: string | undefined;
@@ -22,11 +24,11 @@ export type NutritionPdfItem = {
 };
 export type NutritionPdfMeal = { name: string; items: NutritionPdfItem[]; notes?: string | undefined };
 export type NutritionPdfTotals = { calories: number | null; protein: number | null; carbohydrate: number | null; fat: number | null; fiber: number | null };
-export type NutritionPdfMealPart = { name: string; items: NutritionPdfItem[]; totals: NutritionPdfTotals; notes?: string; continued: boolean; finalPart: boolean };
+export type NutritionPdfMealPart = { name: string; items: NutritionPdfItem[]; totals: NutritionPdfTotals; knownTotals: NutritionPdfTotals; notes?: string; continued: boolean; finalPart: boolean };
 export type NutritionPdfSection = { title: string; lines: string[]; kind: "general" | "review" | "source" };
 export type NutritionPdfPage = { meals: NutritionPdfMealPart[]; summary: boolean; appendix: boolean; sections: NutritionPdfSection[]; number: number; count: number };
 export type NutritionPdfEnergy = { bmr_kcal: number | null; estimated_daily_kcal: number | null; adjusted_daily_kcal: number | null; professional_reviewed: boolean; activity_factor: number | null; activity_level: string; objective: string | null };
-export type NutritionPdfDocument = { pages: NutritionPdfPage[]; patient: string; evaluationDate: string | null; objective: string; emissionDate: string; draft: boolean; status: string; observations: string[]; warnings: string[]; sources: string[]; reviewer: string | null; energy?: NutritionPdfEnergy | null; dailyTotals: NutritionPdfTotals };
+export type NutritionPdfDocument = { pages: NutritionPdfPage[]; patient: string; evaluationDate: string | null; objective: string; emissionDate: string; draft: boolean; status: string; observations: string[]; warnings: string[]; sources: string[]; reviewer: string | null; energy?: NutritionPdfEnergy | null; dailyTotals: NutritionPdfTotals; dailyKnownTotals: NutritionPdfTotals; proteinTargetG?: number | null };
 
 const numberFormat = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1 });
 export const formatNutritionAmount = (value: number | null, unit: string) => value === null ? "—" : `${numberFormat.format(value)} ${unit}`;
@@ -48,16 +50,17 @@ const fitLines = (text: string, max = 88) => {
   if (row) rows.push(row);
   return rows.length ? rows : [""];
 };
-const itemHeight = (item: NutritionPdfItem) => 32 + Math.max(0, fitLines(item.food, 45).length - 1) * 11 + (item.alternatives?.length ? fitLines(`Substituições para avaliação: ${item.alternatives.join(" · ")}`, 84).length * 11 : 0) + (item.notes ? fitLines(item.notes, 84).length * 11 : 0);
+const itemHeight = (item: NutritionPdfItem) => 32 + Math.max(0, fitLines(item.food, 45).length - 1) * 11 + (item.alternatives_detail?.length ? item.alternatives_detail.reduce((height, alternative) => height + fitLines(`Alternativa para avaliação: ${alternative.food} · ${formatNutritionAmount(alternative.quantity_g, "g")} · ${formatNutritionAmount(alternative.calories_kcal, "kcal")}`, 84).length * 11, 0) : 0) + (item.alternatives?.length ? fitLines(`Alternativas para avaliação profissional: ${item.alternatives.join(" · ")}`, 84).length * 11 : 0) + (item.notes ? fitLines(item.notes, 84).length * 11 : 0);
 const mealHeight = (meal: NutritionPdfMeal, _totals: NutritionPdfTotals, includeTotal = true) => 42 + meal.items.reduce((height, item) => height + itemHeight(item), 0) + (includeTotal ? 23 : 0) + (meal.notes ? fitLines(meal.notes, 84).length * 11 : 0);
 const totalsFrom = (totals: Record<string, number | null>): NutritionPdfTotals => ({ calories: totals.calories_kcal ?? null, protein: totals.protein_g ?? null, carbohydrate: totals.carbohydrate_g ?? null, fat: totals.fat_g ?? null, fiber: totals.fiber_g ?? null });
 const tidyInstruction = (value: string) => value.replace(/\(\s*\)/g, "").replace(/calories_kcal/g, "calorias").replace(/protein_g/g, "proteínas").replace(/carbohydrate_g/g, "carboidratos").replace(/fat_g/g, "gorduras").replace(/fiber_g/g, "fibras").replace(/\s+/g, " ").trim();
 
-export function buildNutritionPdfDocument(input: Omit<NutritionPdfDocument, "pages" | "dailyTotals"> & { meals: NutritionPdfMeal[] }): NutritionPdfDocument {
+export function buildNutritionPdfDocument(input: Omit<NutritionPdfDocument, "pages" | "dailyTotals" | "dailyKnownTotals"> & { meals: NutritionPdfMeal[] }): NutritionPdfDocument {
   const calculation = calculatePlanNutrition(input.meals as unknown as Array<{ name?: string; items?: Array<Record<string, unknown>> }>);
   const calculatedMeals = calculation.meals as unknown as NutritionPdfMeal[];
   const mealTotals = calculation.meals.map((meal) => totalsFrom(meal.totals as unknown as Record<string, number | null>));
   const dailyTotals = totalsFrom(calculation.totals as unknown as Record<string, number | null>);
+  const dailyKnownTotals = totalsFrom(calculation.knownTotals as unknown as Record<string, number | null>);
   const pages: NutritionPdfPage[] = [{ meals: [], summary: true, appendix: false, sections: [], number: 1, count: 1 }];
   const patientLines = fitLines(input.patient, 48).length;
   const objectiveLines = fitLines(input.objective || "Não informado", 42).length;
@@ -123,7 +126,7 @@ export function buildNutritionPdfDocument(input: Omit<NutritionPdfDocument, "pag
   }
   if (appendixSections.length) pages[pages.length - 1]!.appendix = true;
   pages.forEach((page, index) => { page.number = index + 1; page.count = pages.length; });
-  return { ...input, dailyTotals, warnings: review, pages };
+  return { ...input, dailyTotals, dailyKnownTotals, warnings: review, pages };
 }
 
 const nutritionSummaryLines = (document: NutritionPdfDocument, y: number): DocumentPage => {
