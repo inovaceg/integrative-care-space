@@ -181,6 +181,7 @@ serve(async (req) => {
       console.error(`[${functionName}] Failed loading verified food library`);
       return jsonResponse({ error: "Não foi possível carregar a biblioteca alimentar verificada." }, 500);
     }
+    if (!foodRows?.length) return jsonResponse({ error: "A biblioteca de alimentos ainda está vazia: não há itens cadastrados como verificados. Cadastre e valide alimentos com fonte, licença, composição por 100 g e dados de alergênicos antes de gerar uma proposta." }, 409);
     const allergyTerms = isExplicitNegative(profile?.allergies) ? [] : splitTerms(profile?.allergies ?? "");
     const intoleranceText = normalize(profile?.intolerances ?? "");
     const avoidedTerms = [...splitTerms(profile?.avoided_foods ?? ""), ...splitTerms(profile?.cultural_restrictions ?? "")];
