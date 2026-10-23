@@ -33,12 +33,25 @@ export type MacroRecommendation = {
   requiresClinicalDefinition: boolean;
 };
 
+export const MACRO_PROTOCOL_CONFIGURATION = {
+  adultMaintenanceProteinGPerKg: 0.8,
+  weightLossProteinGPerKg: 1.2,
+  activeWeightLossProteinGPerKg: 1.4,
+  strengthTrainingProteinGPerKg: 1.6,
+  olderAdultProteinGPerKg: 1.2,
+  activeAdultProteinGPerKg: 1.4,
+  trainedAthleteProteinGPerKgLeanMass: 2.3,
+  adultFatEnergyPercent: 30,
+  obesityReferenceBmi: 25,
+} as const;
+
 const references = {
   adult: "National Academies (2005). Dietary Reference Intakes for Energy, Carbohydrate, Fiber, Fat, Fatty Acids, Cholesterol, Protein, and Amino Acids. doi:10.17226/10490.",
   sport: "Jäger et al. (2017). International Society of Sports Nutrition Position Stand: protein and exercise. JISSN 14:20. doi:10.1186/s12970-017-0177-8.",
   strength: "Morton et al. (2018). A systematic review, meta-analysis and meta-regression of protein supplementation and resistance training. Br J Sports Med 52:376–384. doi:10.1136/bjsports-2017-097608.",
   older: "Deutz et al. (2014). Protein intake and exercise for optimal muscle function with aging: recommendations from the ESPEN Expert Group. Clin Nutr 33:929–936. doi:10.1016/j.clnu.2014.04.007.",
   weightLoss: "Leidy et al. (2015). The role of protein in weight loss and maintenance. Am J Clin Nutr 101:1320S–1329S. doi:10.3945/ajcn.114.084038.",
+  leanAthlete: "Helms et al. (2014). Evidence-based recommendations for natural bodybuilding contest preparation: nutrition and supplementation. JISSN 11:20. doi:10.1186/1550-2783-11-20.",
 } as const;
 
 const normalized = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
@@ -58,7 +71,7 @@ export function recommendMacronutrients(input: MacroRecommendationInput): MacroR
     ? input.weightKg / ((input.heightCm / 100) ** 2)
     : null;
   const referenceWeightKg = input.referenceWeightKg ?? (bmi !== null && bmi >= 30 && input.heightCm !== null
-    ? 25 * (input.heightCm / 100) ** 2
+    ? MACRO_PROTOCOL_CONFIGURATION.obesityReferenceBmi * (input.heightCm / 100) ** 2
     : input.weightKg);
 
   if (input.ageYears === null || input.ageYears < 18) issues.push("Idade adulta válida não disponível; não gerar sugestão automática de adulto.");
@@ -78,27 +91,27 @@ export function recommendMacronutrients(input: MacroRecommendationInput): MacroR
   let proteinReference = references.adult;
   if (!issues.some((issue) => /Idade adulta|Objetivo nutricional|Peso de referência|Altura válida|doença renal|Condição especial/.test(issue))) {
     if (input.ageYears! >= 65) {
-      proteinFactorGPerKg = 1.2;
+      proteinFactorGPerKg = MACRO_PROTOCOL_CONFIGURATION.olderAdultProteinGPerKg;
       proteinProtocol = "Pessoa idosa — sugestão inicial 1,2 g/kg/dia";
       proteinReference = references.older;
       rationale.push("Idade ≥65 anos: sugestão inicial de 1,2 g/kg/dia dentro da faixa geriátrica de 1,0–1,2 g/kg/dia; deve ser individualizada.");
     } else if (input.objective === "weight_loss") {
-      proteinFactorGPerKg = strengthTraining ? 1.6 : active ? 1.4 : 1.2;
+      proteinFactorGPerKg = strengthTraining ? MACRO_PROTOCOL_CONFIGURATION.strengthTrainingProteinGPerKg : active ? MACRO_PROTOCOL_CONFIGURATION.activeWeightLossProteinGPerKg : MACRO_PROTOCOL_CONFIGURATION.weightLossProteinGPerKg;
       proteinProtocol = strengthTraining ? "Emagrecimento com treino de força — 1,6 g/kg/dia" : "Emagrecimento — sugestão inicial 1,2–1,6 g/kg/dia";
       proteinReference = strengthTraining ? references.strength : references.weightLoss;
       rationale.push(strengthTraining ? "Emagrecimento com treino de força: 1,6 g/kg/dia, dentro de faixas estudadas para preservar/ganhar massa magra; não equivale a prescrição." : `Emagrecimento: sugestão inicial de ${proteinFactorGPerKg} g/kg/dia, dentro de intervalos estudados em intervenções de perda de peso; atividade detectada ${active ? "e considerada" : "não detalhada"}.`);
     } else if (strengthTraining) {
-      proteinFactorGPerKg = 1.6;
+      proteinFactorGPerKg = MACRO_PROTOCOL_CONFIGURATION.strengthTrainingProteinGPerKg;
       proteinProtocol = "Treino de força — 1,6 g/kg/dia";
       proteinReference = references.strength;
       rationale.push("Treino de força explicitamente identificado: 1,6 g/kg/dia, próximo ao ponto de referência de meta-análise; ajustar conforme carga, ingestão e clínica.");
     } else if (active) {
-      proteinFactorGPerKg = 1.4;
+      proteinFactorGPerKg = MACRO_PROTOCOL_CONFIGURATION.activeAdultProteinGPerKg;
       proteinProtocol = "Pessoa fisicamente ativa — 1,4 g/kg/dia";
       proteinReference = references.sport;
       rationale.push("Atividade física identificada: 1,4 g/kg/dia, limite inferior da faixa ISSN para pessoas que se exercitam; o tipo/intensidade deve ser confirmado.");
     } else {
-      proteinFactorGPerKg = 0.8;
+      proteinFactorGPerKg = MACRO_PROTOCOL_CONFIGURATION.adultMaintenanceProteinGPerKg;
       proteinProtocol = "Adulto em manutenção — referência RDA 0,8 g/kg/dia";
       rationale.push("Adulto em manutenção sem evidência de treino ou emagrecimento: referência RDA 0,8 g/kg/dia; não é meta terapêutica universal.");
     }

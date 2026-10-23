@@ -28,6 +28,8 @@ describe("recomendações automáticas de macronutrientes", () => {
     expect(result.distribution?.fatG).toBeCloseTo(2000 * 0.3 / 9);
     expect(result.distribution?.carbohydratePercent).toBeCloseTo(58.8);
     expect(result.references.some((reference) => reference.includes("10.17226/10490"))).toBe(true);
+    expect(result.requiresClinicalDefinition).toBe(true);
+    expect(result.rationale.join(" ")).toContain("não se presume normalidade");
   });
 
   test("adapta o protocolo para emagrecimento e treino de força", () => {
