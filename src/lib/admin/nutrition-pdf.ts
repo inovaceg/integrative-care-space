@@ -188,7 +188,7 @@ export function nutritionPdfDocumentPages(document: NutritionPdfDocument): Docum
     let y: number;
     if (page.number === 1) {
       y = 153;
-      lines.push(line("PLANEJAMENTO ALIMENTAR", 52, y, 17, true, colors.dark));
+      lines.push(line(document.draft ? "PROPOSTA ALIMENTAR" : "PLANEJAMENTO ALIMENTAR", 52, y, 17, true, colors.dark));
       y += 22;
       const patientLines = fitLines(document.patient, 48);
       patientLines.forEach((text, index) => lines.push(line(`Paciente: ${text}`, 52, y + index * 13, 11, true, colors.ink)));
@@ -208,7 +208,7 @@ export function nutritionPdfDocumentPages(document: NutritionPdfDocument): Docum
       y += 12;
     } else {
       y = 153;
-      lines.push(line("PLANEJAMENTO ALIMENTAR · CONTINUAÇÃO", 52, y, 13, true, colors.dark));
+      lines.push(line(`${document.draft ? "PROPOSTA ALIMENTAR" : "PLANEJAMENTO ALIMENTAR"} · CONTINUAÇÃO`, 52, y, 13, true, colors.dark));
       y += 23;
       if (document.draft) { lines.push(line(unapprovedNotice(document.status), 52, y, 8.5, false, colors.amber)); y += 14; }
       lines.push(rule(y));

@@ -51,6 +51,7 @@ describe("layout do PDF nutricional", () => {
     expect(document.pages).toHaveLength(2);
     expect(document.pages.map((page) => page.meals.length)).toEqual([3, 3]);
     const pdfText = nutritionPdfDocumentPages(document).flat().map((line) => line.text).join("\n");
+    expect(pdfText).toContain("PROPOSTA ALIMENTAR");
     expect(pdfText).toContain("SITUAÇÃO: EM ELABORAÇÃO");
     expect(pdfText).toContain("Proposta alimentar em elaboração — não utilizar como prescrição.");
     expect(pdfText).not.toContain("RASCUNHO — NÃO É PRESCRIÇÃO");

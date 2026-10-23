@@ -24,7 +24,7 @@ export function NutritionPdfPreview({ document }: { document: NutritionPdfDocume
   return <div className="max-h-[72vh] space-y-5 overflow-y-auto bg-slate-100 p-3 sm:p-6">
     {document.pages.map((page) => <article key={page.number} className="mx-auto box-border min-h-[842px] w-full max-w-[595px] bg-white px-8 py-10 text-slate-800 shadow-sm sm:px-12 sm:py-12" style={{ fontFamily: "Arial, sans-serif" }}>
       {page.number === 1 ? <header className="border-b border-[#d8e2df] pb-4">
-        <div className="flex items-center gap-3"><LogoMark /><h2 className="text-[22px] font-bold tracking-wide text-[#174b45]">PLANEJAMENTO ALIMENTAR</h2></div>
+        <div className="flex items-center gap-3"><LogoMark /><h2 className="text-[22px] font-bold tracking-wide text-[#174b45]">{document.draft ? "PROPOSTA ALIMENTAR" : "PLANEJAMENTO ALIMENTAR"}</h2></div>
         <div className="mt-4 grid gap-x-5 gap-y-1.5 text-[12px] sm:grid-cols-2">
           <p className="sm:col-span-2"><strong>Paciente:</strong> {document.patient}</p>
           <p><strong>Objetivo:</strong> {document.objective || "Não informado"}</p>
