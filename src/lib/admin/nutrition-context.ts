@@ -33,7 +33,7 @@ export function mergeAnamnesisNutritionProfile<T extends ProfileFields>(profile:
     medications: nonEmpty(anamnesis.medicamentos_atuais) || medicationDetails,
     supplements: responseText(answers, "suplementos") || medicationDetails,
     avoided_foods: responseText(answers, "restricoes_alimentares"),
-    exercise_details: nonEmpty(anamnesis.atividade_fisica) || responseText(answers, "atividade_fisica_detalhes"),
+    exercise_details: responseText(answers, "atividade_fisica_detalhes") || nonEmpty(anamnesis.atividade_fisica),
   };
   return Object.fromEntries(Object.entries(profile).map(([key, value]) => [
     key,
@@ -46,6 +46,13 @@ export function waterIntakeFromAnamnesis(anamnesis: AnamnesisContext | null): st
   const answers = anamnesis.respostas ?? {};
   const candidates = [responseText(answers, "hidratacao"), responseText(answers, "consumo_agua"), nonEmpty(anamnesis.alimentacao)];
   return candidates.find((value) => /\b(?:agua|água|litros?|ml|hidrata)/i.test(value)) || null;
+}
+
+export function hasActivityDetails(context: string): boolean {
+  const normalized = context.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
+  const hasExerciseType = /caminh|corrid|muscul|academia|natacao|cicl|bike|danca|pilates|yoga|treino|esport/.test(normalized);
+  const hasDose = /\b\d+\s*(?:min|minuto|minutos|h|hora|horas)\b|leve|moderad|intens[oa]/.test(normalized);
+  return hasExerciseType && hasDose;
 }
 
 export function relevantAnamnesisReview(anamnesis: AnamnesisContext | null, profile: ProfileFields): string[] {

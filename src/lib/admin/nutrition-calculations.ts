@@ -88,11 +88,13 @@ export function calculatePlanNutrition(meals: Array<{ name?: string; items?: Arr
       for (const field of nutrientFields) {
         const source = item[field.source];
         const baseValue = hasPer100 ? (per100 as Record<string, unknown>)[field.per100] : item[field.key];
+        const dataStatus = baseValue === null || baseValue === undefined ? "missing" : typeof baseValue !== "number" || !Number.isFinite(baseValue) || baseValue < 0 ? "invalid" : baseValue === 0 ? isTrustedNutritionSource(source) ? "confirmed_zero" : "unverified_zero" : "available";
+        item.nutrient_data_status = { ...((item.nutrient_data_status as Record<string, string> | undefined) ?? {}), [field.key]: dataStatus };
         const portionValue = hasPer100 && Number.isFinite(grams) && Number(grams) > 0 && typeof baseValue === "number" && Number.isFinite(baseValue) && baseValue >= 0
           ? scaleNutritionPer100g(baseValue, Number(grams))
           : hasPer100 ? null : typeof baseValue === "number" && Number.isFinite(baseValue) && baseValue >= 0 ? baseValue : null;
         item[field.key] = portionValue;
-        if (portionValue === null) issues.push(`${meal.name || `Refeição ${mealIndex + 1}`}: ${field.key} ausente ou inválido em ${String(item.food ?? `alimento ${itemIndex + 1}`)}.`);
+        if (dataStatus === "missing" || dataStatus === "invalid") issues.push(`${meal.name || `Refeição ${mealIndex + 1}`}: dado ${dataStatus === "missing" ? "ausente" : "inválido"} para ${field.key} em ${String(item.food ?? `alimento ${itemIndex + 1}`)}.`);
         if (!isTrustedNutritionSource(source)) issues.push(`${meal.name || `Refeição ${mealIndex + 1}`}: fonte de ${field.key} ausente ou não identificável em ${String(item.food ?? `alimento ${itemIndex + 1}`)}.`);
       }
       return item;

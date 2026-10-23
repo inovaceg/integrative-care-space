@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { SectionCard } from "@/components/admin/admin-ui";
+import { waterIntakeFromAnamnesis } from "@/lib/admin/nutrition-context";
 
 type Evaluation = {
   evaluation_date: string;
@@ -45,7 +46,7 @@ export function PersonalizedDietCard({ patient, evaluations, profile, latestWeig
   evaluations: Evaluation[];
   profile: Profile;
   latestWeight: { weight_kg: number; weight_date: string; weight_source: string } | null;
-  anamnesis: { alimentacao: string | null; atividade_fisica: string | null; doencas_fisicas: string | null } | null;
+  anamnesis: { alimentacao: string | null; atividade_fisica: string | null; qualidade_sono?: string | null; doencas_fisicas: string | null; medicamentos_atuais?: string | null; medicamentos_detalhes?: unknown; respostas?: Record<string, unknown> | null } | null;
   onProfileChange: (key: keyof Profile, value: string) => void;
   onGenerate: () => void;
   loading: boolean;
@@ -89,7 +90,7 @@ export function PersonalizedDietCard({ patient, evaluations, profile, latestWeig
         })}
         <p className="mt-1 text-sm">IMC calculado (peso e altura da mesma avaliação): {calculatedBmi === null ? "Não informado" : calculatedBmi.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}{evaluationWithCurrentWeight && calculatedBmi !== null && <span className="text-xs text-slate-500"> · {dateLabel(evaluationWithCurrentWeight.evaluation_date)}</span>}</p>
         <div className="mt-3 border-t border-slate-200 pt-3 text-sm"><p className="flex items-center gap-2 font-medium"><CalendarClock className="size-4 text-[#2f8f82]" />Última avaliação: {evaluations[0]?.evaluation_date ? dateLabel(evaluations[0].evaluation_date) : "Não informada"}</p><p className="mt-2">Evolução do peso: {evaluations.length > 1 ? evaluations.filter((item) => item.weight_kg !== null).map((item) => `${dateLabel(item.evaluation_date)}: ${item.weight_kg} kg`).join(" · ") : "Não informado"}</p></div>
-        <div className="mt-3 border-t border-slate-200 pt-3 text-sm"><p><strong>Anamnese alimentar: </strong>{anamnesis?.alimentacao || "Não informado"}</p><p className="mt-1"><strong>Atividade física: </strong>{anamnesis?.atividade_fisica || "Não informado"}</p><p className="mt-1"><strong>Condições clínicas registradas: </strong>{anamnesis?.doencas_fisicas || "Não informado"}</p></div>
+        <div className="mt-3 border-t border-slate-200 pt-3 text-sm"><p><strong>Histórico alimentar: </strong>{anamnesis?.alimentacao && waterIntakeFromAnamnesis(anamnesis) === anamnesis.alimentacao ? "Não informado separadamente na anamnese" : anamnesis?.alimentacao || "Não informado"}</p><p className="mt-1"><strong>Consumo de água: </strong>{waterIntakeFromAnamnesis(anamnesis) || "Não informado"}</p><p className="mt-1"><strong>Atividade física: </strong>{anamnesis?.atividade_fisica || "Não informado"}</p><p className="mt-1"><strong>Sono: </strong>{anamnesis?.qualidade_sono || "Não informado"}</p><p className="mt-1"><strong>Condições clínicas: </strong>{anamnesis?.doencas_fisicas || "Não informado"}</p><p className="mt-1"><strong>Medicamentos: </strong>{anamnesis?.medicamentos_atuais || "Não informado"}</p></div>
       </div>
       <div>
         <h3 className="font-semibold text-slate-800">Configuração profissional</h3>

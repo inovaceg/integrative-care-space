@@ -19,6 +19,11 @@ describe("cálculos nutricionais", () => {
     expect(calculateMifflinStJeor({ weightKg: 70, heightCm: 170, ageYears: 30, sex: "female", activityFactor: 1.2 })).toEqual({ bmrKcal: 1451.5, totalKcal: 1741.8 });
     expect(calculateMifflinStJeor({ weightKg: 80, heightCm: 165, ageYears: 35, sex: "female", activityFactor: 1.55 })).toEqual({ bmrKcal: 1495.25, totalKcal: 2317.64 });
   });
+  test("calcula TMB, GET e meta da Franciane com déficit confirmado de 34%", () => {
+    const estimate = calculateMifflinStJeor({ weightKg: 79.45, heightCm: 165, ageYears: 43, sex: "female", activityFactor: 1.55 });
+    expect(estimate).toEqual({ bmrKcal: 1449.75, totalKcal: 2247.11 });
+    expect(calculateEnergyTarget(estimate.totalKcal, "weight_loss", "percent", 34)).toBe(1483.09);
+  });
   test("calcula TMB sem presumir GET quando o fator de atividade ainda não foi confirmado", () => {
     expect(calculateMifflinStJeor({ weightKg: 70, heightCm: 170, ageYears: 30, sex: "female", activityFactor: null })).toEqual({ bmrKcal: 1451.5, totalKcal: null });
   });
@@ -47,6 +52,11 @@ describe("cálculos nutricionais", () => {
     expect(result.totals.calories_kcal).toBeCloseTo(500, 0);
     expect(result.meals[0].items[0].quantity_g).toBe(200);
     expect(() => scalePlanPortionsToEnergyTarget([{ items: [item("Prato", 250)] }], 499)).toThrow();
+  });
+  test("arredonda quantidades geradas a incrementos práticos dentro da tolerância", () => {
+    const result = scalePlanPortionsToEnergyTarget([{ name: "Refeição", items: [item("Aveia", 250, 100)] }], 500);
+    expect(result.meals[0].items[0].quantity_g).toBe(200);
+    expect(Math.abs(result.totals.calories_kcal - 500) / 500).toBeLessThanOrEqual(0.05);
   });
   test("normaliza atividade registrada e seleciona um fator único", () => {
     expect(activityFactorForLevel("moderado")).toBe(1.55);
@@ -95,6 +105,13 @@ describe("cálculos nutricionais", () => {
     expect(result.totals.fiber_g).toBeNull();
     expect(result.issues.some((issue) => issue.includes("fiber_g ausente"))).toBe(true);
     expect(validateNutritionTotals(result).length).toBeGreaterThan(0);
+  });
+  test("mantém zero de fibra confirmado e informa soma parcial quando outro alimento não tem dado", () => {
+    const result = calculatePlanNutrition([{ name: "Refeição", items: [item("Peixe", 100, 100, 20, 0, 1, null), item("Verdura", 20, 100, 2, 4, 0, 0)] }]);
+    expect(result.meals[0].totals.fiber_g).toBeNull();
+    expect(result.meals[0].knownTotals.fiber_g).toBe(0);
+    expect(result.totals.fiber_g).toBeNull();
+    expect(result.knownTotals.fiber_g).toBe(0);
   });
   test("só soma nutrientes com valor e fonte em cada item", () => {
     const verified = [{ calories_kcal: 100, calories_source: "TBCA" }, { calories_kcal: 50, calories_source: "Rótulo" }];
