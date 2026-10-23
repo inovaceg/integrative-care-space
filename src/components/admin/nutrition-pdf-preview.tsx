@@ -17,7 +17,7 @@ function LogoMark() {
 }
 
 export function NutritionPdfPreview({ document }: { document: NutritionPdfDocument }) {
-  const summary = [...summaries, ...(document.dailyTotals.fiber === null ? [] : [{ label: "Fibras", key: "fiber" as const, unit: "g" })]];
+  const summary = [...summaries, ...(document.dailyTotals.fiber === null ? [] : [{ label: "Fibras", key: "fiber" as const, unit: "g" }])];
   return <div className="max-h-[72vh] space-y-5 overflow-y-auto bg-slate-100 p-3 sm:p-6">
     {document.pages.map((page) => <article key={page.number} className="mx-auto box-border min-h-[842px] w-full max-w-[595px] bg-white px-8 py-10 text-slate-800 shadow-sm sm:px-12 sm:py-12" style={{ fontFamily: "Arial, sans-serif" }}>
       {page.number === 1 ? <header className="border-b border-[#d8e2df] pb-4">
