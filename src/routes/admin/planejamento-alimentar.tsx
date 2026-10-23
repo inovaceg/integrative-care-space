@@ -316,6 +316,10 @@ function NutritionPlanningPage() {
     let parsed: PlanContent;
     try { parsed = contentOverride ?? JSON.parse(contentText) as PlanContent; if (!parsed || !Array.isArray(parsed.meals)) throw new Error(); }
     catch { setError("O conteúdo precisa ser um JSON válido com uma lista de refeições."); return; }
+    const nutritionCalculation = calculatePlanNutrition(parsed.meals as unknown as Array<{ name?: string; items?: Array<Record<string, unknown>> }>);
+    const nutritionIssues = validateNutritionTotals(nutritionCalculation);
+    if (status === "pending_review" && nutritionIssues.length) { setError(`Não é possível enviar para aprovação: ${nutritionIssues.slice(0, 5).join(" ")}`); return; }
+    parsed.meals = nutritionCalculation.meals as unknown as PlanContent["meals"];
     const proteinFactorInput = Number(protein.factor_g_per_kg);
     if (!Number.isFinite(proteinFactorInput) || proteinFactorInput < 0.1 || proteinFactorInput > 10) { setError("O fator de proteína deve estar entre 0,1 e 10 g/kg/dia."); return; }
     if (protein.adjusted_target_g !== null && (!Number.isFinite(protein.adjusted_target_g) || protein.adjusted_target_g < 1 || protein.adjusted_target_g > 1000 || !protein.observations.trim())) { setError("A meta manual deve estar entre 1 e 1.000 g/dia e exige justificativa profissional."); return; }
@@ -438,6 +442,7 @@ function NutritionPlanningPage() {
             alternatives: [...new Set(alternatives)],
             notes: item.notes,
             source_code: catalogFood?.source_code,
+            nutrition_per_100g: item.nutrition_per_100g,
           } satisfies NutritionPdfItem;
         }),
       }));

@@ -1,4 +1,4 @@
-import { isTrustedNutritionSource, sumVerifiedMeal } from "@/lib/admin/nutrition-calculations";
+import { calculatePlanNutrition, isTrustedNutritionSource, sumVerifiedMeal } from "@/lib/admin/nutrition-calculations";
 import type { DocumentPage } from "@/lib/admin/document-layout";
 
 export type NutritionPdfItem = {
@@ -18,6 +18,7 @@ export type NutritionPdfItem = {
   alternatives?: string[] | undefined;
   notes?: string | undefined;
   source_code?: string | null | undefined;
+  nutrition_per_100g?: { calories_kcal?: number | null; protein_g?: number | null; carbohydrate_g?: number | null; fat_g?: number | null; fiber_g?: number | null } | undefined;
 };
 export type NutritionPdfMeal = { name: string; items: NutritionPdfItem[]; notes?: string | undefined };
 export type NutritionPdfPlan = { meals: NutritionPdfMeal[]; objective?: string; observations?: string[]; warnings?: string[] };
@@ -54,6 +55,7 @@ const totalsFor = (items: NutritionPdfItem[]): NutritionPdfTotals => {
 const mealHeight = (meal: NutritionPdfMeal) => mealOverhead + meal.items.reduce((sum, item) => sum + rowHeight(item), 0) + (meal.notes ? charLines(meal.notes, 78).length * 12 + 10 : 0);
 
 export function buildNutritionPdfDocument(input: Omit<NutritionPdfDocument, "pages"> & { meals: NutritionPdfMeal[] }): NutritionPdfDocument {
+  const calculatedMeals = calculatePlanNutrition(input.meals as unknown as Array<{ name?: string; items?: Array<Record<string, unknown>> }>).meals as unknown as NutritionPdfMeal[];
   const pages: NutritionPdfPage[] = [{ meals: [], appendix: false, number: 1, count: 1 }];
   const currentPage = () => pages[pages.length - 1]!;
   let available = 520;
@@ -61,7 +63,7 @@ export function buildNutritionPdfDocument(input: Omit<NutritionPdfDocument, "pag
     pages.push({ meals: [], appendix: false, number: pages.length + 1, count: 1 });
     available = 620;
   };
-  for (const meal of input.meals) {
+  for (const meal of calculatedMeals) {
     let remaining = [...meal.items];
     let continued = false;
     while (remaining.length) {

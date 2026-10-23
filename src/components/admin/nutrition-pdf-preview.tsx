@@ -1,5 +1,5 @@
 import { formatNutritionAmount, type NutritionPdfDocument, type NutritionPdfTotals } from "@/lib/admin/nutrition-pdf";
-import { sumVerifiedMeal } from "@/lib/admin/nutrition-calculations";
+import { calculatePlanNutrition } from "@/lib/admin/nutrition-calculations";
 
 const totalLine = (totals: NutritionPdfTotals) => [
   `Proteínas: ${formatNutritionAmount(totals.protein, "g")}`,
@@ -8,21 +8,14 @@ const totalLine = (totals: NutritionPdfTotals) => [
 ];
 
 export function NutritionPdfPreview({ document }: { document: NutritionPdfDocument }) {
+  const daily = calculatePlanNutrition(document.pages.flatMap((page) => page.meals.map((meal) => ({ name: meal.name, items: meal.items as unknown as Array<Record<string, unknown>> }))));
   const dailyTotals: NutritionPdfTotals = {
-    calories: null,
-    protein: null,
-    carbohydrate: null,
-    fat: null,
-    fiber: null,
+    calories: daily.totals.calories_kcal,
+    protein: daily.totals.protein_g,
+    carbohydrate: daily.totals.carbohydrate_g,
+    fat: daily.totals.fat_g,
+    fiber: daily.totals.fiber_g,
   };
-  const allItems = document.pages.flatMap((page) => page.meals.flatMap((meal) => meal.items));
-  const records = allItems as unknown as Array<Record<string, unknown>>;
-  dailyTotals.calories = sumVerifiedMeal(records, "calories_kcal", "calories_source");
-  dailyTotals.protein = sumVerifiedMeal(records, "protein_g", "protein_source");
-  dailyTotals.carbohydrate = sumVerifiedMeal(records, "carbohydrate_g", "carbohydrate_source");
-  dailyTotals.fat = sumVerifiedMeal(records, "fat_g", "fat_source");
-  dailyTotals.fiber = sumVerifiedMeal(records, "fiber_g", "fiber_source");
-
   return <div className="max-h-[72vh] space-y-5 overflow-y-auto bg-slate-100 p-3 sm:p-6">
     {document.pages.map((page) => <article key={page.number} className="mx-auto min-h-[900px] w-full max-w-[640px] bg-white px-8 py-10 shadow-md sm:px-12 sm:py-12" style={{ fontFamily: "Arial, sans-serif" }}>
       <header className="border-b border-[#d9e5e1] pb-4">
