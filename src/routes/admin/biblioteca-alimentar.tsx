@@ -37,6 +37,7 @@ type FoodRow = {
   lactose_status: "free" | "contains" | "unknown";
   source: string;
   license: string;
+  import_notes: string | null;
   validation_status: "draft" | "verified";
 };
 const numberValue = (value: string) => value.trim() === "" ? null : Number(value.replace(",", "."));
@@ -50,17 +51,19 @@ function NutritionFoodLibraryPage() {
   const [results, setResults] = useState<SearchFood[]>([]);
   const [foods, setFoods] = useState<FoodRow[]>([]);
   const [allergenDrafts, setAllergenDrafts] = useState<Record<string, string>>({});
+  const [nameDrafts, setNameDrafts] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
   async function loadFoods() {
     const { data, error: loadError } = await supabase.from("nutrition_food_library")
-      .select("id,source_code,name,category,energy_kcal_100g,proteins_g_100g,carbohydrates_g_100g,fats_g_100g,allergens,allergen_info_known,gluten_status,lactose_status,source,license,validation_status")
+      .select("id,source_code,name,category,energy_kcal_100g,proteins_g_100g,carbohydrates_g_100g,fats_g_100g,allergens,allergen_info_known,gluten_status,lactose_status,source,license,import_notes,validation_status")
       .order("validation_status").order("name").limit(500);
     if (loadError) { setError("Não foi possível carregar a biblioteca alimentar."); return; }
     const rows = (data as FoodRow[] | null) ?? [];
     setFoods(rows);
     setAllergenDrafts(Object.fromEntries(rows.map((food) => [food.id, food.allergens.join(", ")])));
+    setNameDrafts(Object.fromEntries(rows.map((food) => [food.id, food.name])));
   }
 
   useEffect(() => { void loadFoods(); }, []);
@@ -69,7 +72,9 @@ function NutritionFoodLibraryPage() {
     event.preventDefault();
     if (query.trim().length < 2) { setError("Digite pelo menos 2 caracteres para pesquisar."); return; }
     setSearching(true); setError(""); setMessage(""); setResults([]);
-    const { data, error: searchError } = await supabase.functions.invoke("nutrition-food-search", { body: { query: query.trim() } });
+    const { data: translatedQuery, error: translationError } = await supabase.functions.invoke("nutrition-food-translate", { body: { food_name: query.trim(), target_language: "en" } });
+    const searchTerm = !translationError && typeof translatedQuery?.translated_name === "string" ? translatedQuery.translated_name : query.trim();
+    const { data, error: searchError } = await supabase.functions.invoke("nutrition-food-search", { body: { query: searchTerm } });
     setSearching(false);
     if (searchError) {
       const context = "context" in searchError ? searchError.context : null;
@@ -83,7 +88,7 @@ function NutritionFoodLibraryPage() {
     }
     if (data?.error) { setError(typeof data.error === "string" ? data.error : "Falha ao pesquisar na USDA FoodData Central."); return; }
     setResults((data?.foods as SearchFood[] | undefined) ?? []);
-    if (!data?.foods?.length) setMessage("Nenhum alimento Foundation ou SR Legacy foi encontrado para essa busca.");
+    if (!data?.foods?.length) setMessage(`Nenhum alimento Foundation ou SR Legacy foi encontrado para “${searchTerm}”.${translationError ? " A tradução da busca falhou; tente novamente ou pesquise em inglês." : ""}`);
   }
 
   async function importDraft(food: SearchFood) {
@@ -96,9 +101,11 @@ function NutritionFoodLibraryPage() {
       .select("id,validation_status").eq("source_code", food.source_code).maybeSingle();
     if (lookupError) { setImporting(""); setError("Não foi possível conferir se o alimento já foi importado."); return; }
     if (existing) { setImporting(""); setMessage(`Este alimento já está cadastrado como ${existing.validation_status === "verified" ? "verificado" : "rascunho"}.`); return; }
+    const { data: translation, error: translationError } = await supabase.functions.invoke("nutrition-food-translate", { body: { food_name: food.name } });
+    const translatedName = !translationError && typeof translation?.translated_name === "string" ? translation.translated_name : food.name;
     const { error: insertError } = await supabase.from("nutrition_food_library").insert({
       source_code: food.source_code,
-      name: food.name,
+      name: translatedName,
       category: `USDA ${food.category}`,
       energy_kcal_100g: food.energy_kcal_100g,
       proteins_g_100g: food.proteins_g_100g,
@@ -111,11 +118,11 @@ function NutritionFoodLibraryPage() {
       allergen_info_known: false,
       gluten_status: "unknown",
       lactose_status: "unknown",
-      import_notes: "Importado da USDA FoodData Central. Conferir identidade do alimento e revisar alergênicos antes de validar.",
+      import_notes: `Nome oficial da fonte: ${food.name}. Importado da USDA FoodData Central. A tradução é uma sugestão automática; confira identidade, preparo e alergênicos antes de validar.`,
     });
     setImporting("");
     if (insertError) { setError("Não foi possível salvar o rascunho. Confira as permissões e tente novamente."); return; }
-    setMessage(`${food.name} foi importado como rascunho. A IA não usará o item até a validação profissional.`);
+    setMessage(translatedName !== food.name ? `${translatedName} foi importado como rascunho traduzido. Confira a tradução, os dados e os alergênicos antes de validar.` : `${food.name} foi importado como rascunho, mantendo o nome original. Confira os dados antes de validar.${translationError ? " A tradução automática não respondeu." : ""}`);
     await loadFoods();
   }
 
@@ -128,8 +135,9 @@ function NutritionFoodLibraryPage() {
     const protein = food.proteins_g_100g == null ? null : Number(food.proteins_g_100g);
     const carbs = food.carbohydrates_g_100g == null ? null : Number(food.carbohydrates_g_100g);
     const fat = food.fats_g_100g == null ? null : Number(food.fats_g_100g);
+    const name = (nameDrafts[food.id] ?? food.name).trim();
     const allergens = parseAllergens(allergenDrafts[food.id] ?? "");
-    if (!food.name.trim() || calories === null || protein === null || carbs === null || ![calories, protein, carbs].every((value) => Number.isFinite(value) && value >= 0) || (fat !== null && (!Number.isFinite(fat) || fat < 0))) {
+    if (!name || calories === null || protein === null || carbs === null || ![calories, protein, carbs].every((value) => Number.isFinite(value) && value >= 0) || (fat !== null && (!Number.isFinite(fat) || fat < 0))) {
       setError("Revise nome e valores nutricionais por 100 g. Os campos básicos precisam ser números válidos não negativos."); return;
     }
     if (validate && (!food.source_code || !food.source.trim() || !food.license.trim() || !food.allergen_info_known)) {
@@ -137,7 +145,7 @@ function NutritionFoodLibraryPage() {
     }
     setSaving(food.id); setError(""); setMessage("");
     const { error: saveError } = await supabase.from("nutrition_food_library").update({
-      name: food.name.trim(),
+      name,
       energy_kcal_100g: calories,
       proteins_g_100g: protein,
       carbohydrates_g_100g: carbs,
@@ -151,8 +159,9 @@ function NutritionFoodLibraryPage() {
     }).eq("id", food.id).eq("validation_status", "draft");
     setSaving("");
     if (saveError) { setError("Não foi possível salvar o alimento. Confira as permissões e tente novamente."); return; }
-    setFoods((current) => current.map((item) => item.id === food.id ? { ...item, energy_kcal_100g: calories, proteins_g_100g: protein, carbohydrates_g_100g: carbs, fats_g_100g: fat, allergens, validation_status: validate ? "verified" : "draft" } : item));
-    setMessage(validate ? `${food.name} foi validado e já pode ser considerado pelo planejador.` : `Rascunho de ${food.name} salvo.`);
+    setFoods((current) => current.map((item) => item.id === food.id ? { ...item, name, energy_kcal_100g: calories, proteins_g_100g: protein, carbohydrates_g_100g: carbs, fats_g_100g: fat, allergens, validation_status: validate ? "verified" : "draft" } : item));
+    setNameDrafts((current) => ({ ...current, [food.id]: name }));
+    setMessage(validate ? `${name} foi validado e já pode ser considerado pelo planejador.` : `Rascunho de ${name} salvo.`);
   }
 
   const drafts = foods.filter((food) => food.validation_status === "draft");
@@ -164,7 +173,7 @@ function NutritionFoodLibraryPage() {
       {error && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       {message && <p role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{message}</p>}
       <SectionCard title="Buscar na USDA FoodData Central">
-        <p className="text-sm text-slate-600">A busca consulta somente alimentos Foundation e SR Legacy. Os dados importados continuam como rascunho; a base não fornece a confirmação de alergênicos usada pelo planejador.</p>
+        <p className="text-sm text-slate-600">Você pode pesquisar em português: o termo é traduzido para inglês antes da consulta aos alimentos Foundation e SR Legacy. Ao importar, o nome recebe uma tradução automática para português, mantendo o nome oficial no registro de origem. Traduções são sugestões: revise-as junto com a identidade do alimento. Os dados continuam como rascunho; a USDA não fornece a confirmação de alergênicos usada pelo planejador.</p>
         <form onSubmit={(event) => void searchFoods(event)} className="mt-4 flex flex-col gap-3 sm:flex-row">
           <Input value={query} onChange={(event) => setQuery(event.target.value)} maxLength={100} placeholder="Ex.: banana, arroz integral, feijão" aria-label="Pesquisar alimento na USDA" />
           <Button type="submit" disabled={searching} className="bg-[#2f8f82] hover:bg-[#26786e]">{searching ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Search className="mr-2 size-4" />}Pesquisar</Button>
@@ -180,8 +189,9 @@ function NutritionFoodLibraryPage() {
       <SectionCard title={`Rascunhos para revisão (${drafts.length})`}>
         <p className="mb-4 text-sm text-slate-600">Confira os valores por 100 g e a identidade do alimento. Para a confirmação de alergênicos, use informação confiável específica do alimento; não deduza ausência a partir de dados incompletos.</p>
         {drafts.length === 0 ? <p className="rounded-lg bg-slate-50 p-4 text-sm text-slate-500">Nenhum rascunho importado.</p> : <div className="space-y-4">{drafts.map((food) => <article key={food.id} className="rounded-xl border border-amber-200 bg-amber-50/40 p-4">
-          <div className="flex flex-wrap items-start justify-between gap-2"><div><h3 className="font-semibold text-slate-800">{food.name}</h3><p className="text-xs text-slate-500">{food.source} · FDC {food.source_code} · {food.category}</p></div><span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">Rascunho — não usado em planos</span></div>
+          <div className="flex flex-wrap items-start justify-between gap-2"><div><h3 className="font-semibold text-slate-800">{nameDrafts[food.id] || food.name}</h3><p className="text-xs text-slate-500">{food.source} · FDC {food.source_code} · {food.category}</p><p className="mt-1 text-xs text-slate-500">{food.import_notes}</p></div><span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">Rascunho — não usado em planos</span></div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="sm:col-span-2 lg:col-span-4"><Label htmlFor={`${food.id}-name`}>Nome em português (revise a tradução)</Label><Input id={`${food.id}-name`} value={nameDrafts[food.id] ?? food.name} onChange={(event) => setNameDrafts((current) => ({ ...current, [food.id]: event.target.value }))} /></div>
             {[ ["energy_kcal_100g", "Energia (kcal/100 g)"], ["proteins_g_100g", "Proteína (g/100 g)"], ["carbohydrates_g_100g", "Carboidratos (g/100 g)"], ["fats_g_100g", "Gorduras (g/100 g)"] ].map(([key, label]) => <div key={key}><Label htmlFor={`${food.id}-${key}`}>{label}</Label><Input id={`${food.id}-${key}`} type="number" min="0" step="0.01" value={food[key as keyof FoodRow] == null ? "" : String(food[key as keyof FoodRow])} onChange={(event) => editFood(food.id, key as keyof FoodRow, event.target.value === "" && key === "fats_g_100g" ? null : numberValue(event.target.value))} /></div>)}
             <div className="sm:col-span-2"><Label htmlFor={`${food.id}-allergens`}>Alergênicos identificados (separados por vírgula)</Label><Textarea id={`${food.id}-allergens`} value={allergenDrafts[food.id] ?? ""} onChange={(event) => setAllergenDrafts((current) => ({ ...current, [food.id]: event.target.value }))} placeholder="Deixe vazio somente se confirmou que não há" /></div>
             <div><Label>Status do glúten</Label><Select value={food.gluten_status} onValueChange={(value) => editFood(food.id, "gluten_status", value as FoodRow["gluten_status"])}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="unknown">Não confirmado</SelectItem><SelectItem value="free">Livre — confirmado</SelectItem><SelectItem value="contains">Contém</SelectItem></SelectContent></Select></div>
