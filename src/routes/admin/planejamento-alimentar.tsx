@@ -346,7 +346,7 @@ function NutritionPlanningPage() {
     }
 
   async function generatePersonalizedPlan() {
-    if (!patientId || !selected || generating || activePlan?.status === "approved") return;
+    if (!patientId || !selected || generating) return;
     const selectedObjective = energy.objective ?? objectiveAssessment.objective;
     if (!selectedObjective || !energy.objective_confirmed || (objectiveAssessment.conflicting && !energy.objective_confirmed)) { setError("Confirme o objetivo nutricional vigente nos registros e na seção de necessidades energéticas antes de gerar."); setMessage(""); return; }
     const generationGoal = profile.goal.trim() || (selectedObjective === "weight_loss" ? "Emagrecimento" : selectedObjective === "weight_gain" ? "Ganho de peso ou massa muscular" : "Manutenção do peso");
