@@ -11,7 +11,7 @@ const show = (value: number | null | undefined) => value == null ? "—" : value
 const parse = (raw: string) => { const value = Number(raw.trim().replace(",", ".")); return raw.trim() && Number.isFinite(value) ? value : null; };
 
 export function MacroDistributionSection({ value, target, energyApproved, fallbackWeight, clinicalReviewFlags, recommendationInput, onChange }: { value: EnergyPlan; target: number | null; energyApproved: boolean; fallbackWeight: number | null; clinicalReviewFlags: string[]; recommendationInput: MacroRecommendationInput; onChange: (next: EnergyPlan) => void }) {
-  const effectiveInput = { ...recommendationInput, energyKcal: energyApproved ? target : null, referenceWeightKg: value.macro_reference_weight_kg ?? recommendationInput.referenceWeightKg ?? fallbackWeight };
+  const effectiveInput = { ...recommendationInput, energyKcal: energyApproved ? target : null, referenceWeightKg: value.macro_auto_generated ? recommendationInput.referenceWeightKg : value.macro_reference_weight_kg ?? recommendationInput.referenceWeightKg };
   const inputKey = macroRecommendationKey(effectiveInput);
   const recommendation = useMemo(() => recommendMacronutrients(effectiveInput), [inputKey]);
   const stale = isMacroDistributionStale(value.macro_calculated_for_kcal, target) || Boolean(value.macro_reviewed && value.macro_context_key !== inputKey);
@@ -45,11 +45,11 @@ export function MacroDistributionSection({ value, target, energyApproved, fallba
 
   useEffect(() => {
     if (!energyApproved || !recommendation.distribution) return;
-    if (value.macro_reviewed && value.macro_context_key && value.macro_context_key !== inputKey) {
-      onChange({ ...value, macro_reviewed: false });
+    if ((value.macro_reviewed || value.macro_renal_reviewed) && value.macro_context_key !== inputKey) {
+      onChange({ ...value, macro_reviewed: false, macro_renal_reviewed: false });
       return;
     }
-    const noExistingParameters = value.macro_reference_weight_kg === null && value.macro_protein_factor_g_per_kg === null && value.macro_fat_percent === null && value.carbohydrate_percent === null && value.protein_percent === null && value.fat_percent === null;
+    const noExistingParameters = value.macro_protein_factor_g_per_kg === null && value.macro_fat_percent === null && value.carbohydrate_percent === null && value.protein_percent === null && value.fat_percent === null;
     if ((value.macro_auto_generated && value.macro_context_key !== inputKey) || (!value.macro_reviewed && noExistingParameters)) applyRecommendation();
   }, [energyApproved, inputKey, recommendation, value, onChange]);
 
@@ -90,7 +90,7 @@ export function MacroDistributionSection({ value, target, energyApproved, fallba
     {suggestionIssues.length > 0 && <ul className="mt-2 list-inside list-disc text-sm text-amber-800">{suggestionIssues.map((issue) => <li key={issue}>{issue}</li>)}</ul>}
     {recommendation.rationale.length > 0 && <div className="mt-3 rounded-lg bg-slate-50 p-3 text-sm"><strong>Protocolo e justificativa</strong><p className="mt-1 font-medium">{recommendation.protocol}</p><ul className="mt-1 list-inside list-disc text-slate-700">{recommendation.rationale.map((item) => <li key={item}>{item}</li>)}</ul><strong className="mt-2 block">Referências</strong><ul className="mt-1 list-inside list-disc text-xs text-slate-600">{recommendation.references.map((item) => <li key={item}>{item}</li>)}</ul></div>}
     {recommendation.distribution && <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[480px] text-left text-sm"><thead><tr className="border-b text-slate-500"><th className="py-2">Macronutriente</th><th className="py-2">Percentual</th><th className="py-2">Meta diária</th></tr></thead><tbody>{[["Carboidratos", recommendation.distribution.carbohydratePercent, recommendation.distribution.carbohydrateG], ["Proteínas", recommendation.distribution.proteinPercent, recommendation.distribution.proteinG], ["Gorduras", recommendation.distribution.fatPercent, recommendation.distribution.fatG]].map(([name, percent, grams]) => <tr key={String(name)} className="border-b last:border-0"><td className="py-2">{name}</td><td className="py-2">{show(percent as number)}%</td><td className="py-2">{show(grams as number)} g/dia</td></tr>)}</tbody></table></div>}
-    {recommendation.requiresClinicalDefinition && <p role="alert" className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">Sugestão incompleta: existe condição clínica especial ou dados insuficientes. Não presumimos função renal normal; o profissional deve definir os parâmetros.</p>}
+    {recommendation.requiresClinicalDefinition && <p role="alert" className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">{recommendation.distribution ? "Valores calculados apenas como sugestão preliminar. A função renal não está documentada como preservada; valide os dados clínicos antes de confirmar." : "Sugestão indisponível: existe condição clínica especial ou faltam dados essenciais. O profissional deve definir os parâmetros."}</p>}
     {(!recommendation.requiresClinicalDefinition || value.macro_renal_reviewed) && !value.macro_reviewed && <Button type="button" className="mt-3" disabled={!calc || blockers.length > 0 || !energyApproved} onClick={confirm}>Confirmar distribuição profissional</Button>}
     {confirmed && <p role="status" className="mt-3 text-sm text-emerald-800">Distribuição profissional revisada e confirmada para {show(target)} kcal/dia.</p>}
     {blockers.length > 0 && <ul className="mt-2 list-inside list-disc text-xs text-amber-800">{blockers.map((blocker) => <li key={blocker}>{blocker}</li>)}</ul>}

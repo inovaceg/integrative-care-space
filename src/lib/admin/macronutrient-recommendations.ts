@@ -50,7 +50,7 @@ export function recommendMacronutrients(input: MacroRecommendationInput): MacroR
   const activity = normalized(`${input.activityLevel} ${input.activityDetails}`);
   const medicationOnWeightLoss = /tirzepatida|semaglutida|liraglutida|zepbound|mounjaro|wegovy|ozempic|saxenda/.test(text);
   const renalConcern = /doenca renal|insuficiencia renal|nefropatia|dialise|hemodialise|doenca renal cronica/.test(text);
-  const renalStatusDocumented = /funcao renal preservada|sem (?:alteracao|doenca) renal|tfg (?:normal|preservada)|egrf (?:normal|preservada)/.test(text);
+  const renalStatusDocumented = /funcao renal (?:preservada|normal|sem alteracao)|sem (?:alteracao|doenca) renal|tfg (?:normal|preservada)|egrf (?:normal|preservada)/.test(text);
   const specialClinicalConcern = /gestante|gravidez|lactante|amamenta|transtorno alimentar|anorexia|bulimia|cancer|oncolog|hepatopatia|cirrose|pos operatorio|pos-operatorio/.test(text);
   const strengthTraining = /musculacao|treino de forca|resistance training|levantamento de peso/.test(activity);
   const active = /ativo|intenso|moderado|treina|exercicio|atividade fisica/.test(activity);
@@ -62,6 +62,7 @@ export function recommendMacronutrients(input: MacroRecommendationInput): MacroR
     : input.weightKg);
 
   if (input.ageYears === null || input.ageYears < 18) issues.push("Idade adulta válida não disponível; não gerar sugestão automática de adulto.");
+  if (input.objective === null) issues.push("Objetivo nutricional não confirmado; não selecionar protocolo automaticamente.");
   if (input.energyKcal === null || !Number.isFinite(input.energyKcal) || input.energyKcal < 500 || input.energyKcal > 10000) issues.push("Meta calórica aprovada válida não disponível.");
   if (referenceWeightKg === null || !Number.isFinite(referenceWeightKg) || referenceWeightKg < 20 || referenceWeightKg > 350) issues.push("Peso de referência adequado precisa ser definido.");
   if (input.heightCm === null || !Number.isFinite(input.heightCm) || input.heightCm < 100 || input.heightCm > 250) issues.push("Altura válida não disponível para contextualizar o peso.");
@@ -75,7 +76,7 @@ export function recommendMacronutrients(input: MacroRecommendationInput): MacroR
   let proteinFactorGPerKg: number | null = null;
   let proteinProtocol = "Definição profissional necessária";
   let proteinReference = references.adult;
-  if (!issues.some((issue) => /Idade adulta|Peso de referência|doença renal|Condição especial/.test(issue))) {
+  if (!issues.some((issue) => /Idade adulta|Objetivo nutricional|Peso de referência|Altura válida|doença renal|Condição especial/.test(issue))) {
     if (input.ageYears! >= 65) {
       proteinFactorGPerKg = 1.2;
       proteinProtocol = "Pessoa idosa — sugestão inicial 1,2 g/kg/dia";
@@ -125,6 +126,6 @@ export function recommendMacronutrients(input: MacroRecommendationInput): MacroR
     rationale,
     references: [...new Set([proteinReference, references.adult])],
     issues: [...new Set(issues)],
-    requiresClinicalDefinition: renalConcern || specialClinicalConcern || !renalStatusDocumented || input.ageYears === null || (input.ageYears ?? 0) < 18,
+    requiresClinicalDefinition: renalConcern || specialClinicalConcern || !renalStatusDocumented || input.ageYears === null || (input.ageYears ?? 0) < 18 || input.objective === null || input.heightCm === null,
   };
 }
