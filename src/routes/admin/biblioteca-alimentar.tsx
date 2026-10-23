@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { TacoXlsxImporter } from "@/components/admin/taco-xlsx-importer";
 
 export const Route = createFileRoute("/admin/biblioteca-alimentar")({ component: NutritionFoodLibraryPage });
 
@@ -58,7 +59,7 @@ function NutritionFoodLibraryPage() {
   async function loadFoods() {
     const { data, error: loadError } = await supabase.from("nutrition_food_library")
       .select("id,source_code,name,category,energy_kcal_100g,proteins_g_100g,carbohydrates_g_100g,fats_g_100g,allergens,allergen_info_known,gluten_status,lactose_status,source,license,import_notes,validation_status")
-      .order("validation_status").order("name").limit(500);
+      .order("validation_status").order("name").limit(1000);
     if (loadError) { setError("Não foi possível carregar a biblioteca alimentar."); return; }
     const rows = (data as FoodRow[] | null) ?? [];
     setFoods(rows);
@@ -172,6 +173,7 @@ function NutritionFoodLibraryPage() {
     <div className="space-y-6">
       {error && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       {message && <p role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{message}</p>}
+      <TacoXlsxImporter />
       <SectionCard title="Buscar na USDA FoodData Central">
         <p className="text-sm text-slate-600">Você pode pesquisar em português: o termo é traduzido para inglês antes da consulta aos alimentos Foundation e SR Legacy. Ao importar, o nome recebe uma tradução automática para português, mantendo o nome oficial no registro de origem. Traduções são sugestões: revise-as junto com a identidade do alimento. Os dados continuam como rascunho; a USDA não fornece a confirmação de alergênicos usada pelo planejador.</p>
         <form onSubmit={(event) => void searchFoods(event)} className="mt-4 flex flex-col gap-3 sm:flex-row">

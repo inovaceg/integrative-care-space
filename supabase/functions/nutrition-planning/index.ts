@@ -188,9 +188,9 @@ serve(async (req) => {
     const preferenceTerms = splitTerms(profile?.preferred_foods ?? "");
     const safeFoods = (foodRows ?? []).filter((food) => {
       const coreNutrients = [food.energy_kcal_100g, food.proteins_g_100g, food.carbohydrates_g_100g];
-      if (typeof food.name !== "string" || !food.name.trim() || !Array.isArray(food.allergens) || !food.allergen_info_known || !coreNutrients.every((value) => typeof value === "number" && Number.isFinite(value) && value >= 0) || (food.fats_g_100g !== null && (typeof food.fats_g_100g !== "number" || !Number.isFinite(food.fats_g_100g) || food.fats_g_100g < 0)) || !trustedSource(food.source ?? "") || !food.license?.trim()) return false;
+      if (typeof food.name !== "string" || !food.name.trim() || !Array.isArray(food.allergens) || !coreNutrients.every((value) => typeof value === "number" && Number.isFinite(value) && value >= 0) || (food.fats_g_100g !== null && (typeof food.fats_g_100g !== "number" || !Number.isFinite(food.fats_g_100g) || food.fats_g_100g < 0)) || !trustedSource(food.source ?? "") || !food.license?.trim()) return false;
       const allergens = food.allergens.map((item: string) => normalize(item));
-      if (allergyTerms.some((term) => allergens.some((allergen: string) => allergen.includes(term) || term.includes(allergen)))) return false;
+      if (allergyTerms.length && (!food.allergen_info_known || allergyTerms.some((term) => allergens.some((allergen: string) => allergen.includes(term) || term.includes(allergen))))) return false;
       if (/gluten|trigo|cevada|centeio/.test(intoleranceText) && food.gluten_status !== "free") return false;
       if (/lactose|leite/.test(intoleranceText) && food.lactose_status !== "free") return false;
       const foodText = normalize(`${food.name} ${food.source_code ?? ""}`);
