@@ -58,6 +58,10 @@ describe("cálculos nutricionais", () => {
     expect(result.meals[0].items[0].quantity_g).toBe(200);
     expect(Math.abs(result.totals.calories_kcal - 500) / 500).toBeLessThanOrEqual(0.05);
   });
+  test("corrige discrepância entre cardápio gerado e meta aprovada da paciente", () => {
+    const result = scalePlanPortionsToEnergyTarget([{ name: "Cardápio", items: [item("Composição verificada", 147.77, 1000)] }], 1797.7);
+    expect(Math.abs(result.totals.calories_kcal - 1797.7) / 1797.7).toBeLessThanOrEqual(0.05);
+  });
   test("normaliza atividade registrada e seleciona um fator único", () => {
     expect(activityFactorForLevel("moderado")).toBe(1.55);
     expect(activityFactorForLevel("Muito intenso")).toBe(1.9);

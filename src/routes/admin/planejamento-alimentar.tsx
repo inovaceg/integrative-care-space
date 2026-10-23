@@ -419,6 +419,13 @@ function NutritionPlanningPage() {
           item.fat_source = item.fat_source ?? item.calories_source;
         }
       }
+      const beforeEnergyAdjustment = calculatePlanNutrition(plan.meals as unknown as Array<{ name?: string; items?: Array<Record<string, unknown>> }>);
+      const approvedKcal = energy.adjusted_daily_kcal;
+      if (approvedKcal !== null && beforeEnergyAdjustment.totals.calories_kcal !== null && Math.abs(beforeEnergyAdjustment.totals.calories_kcal - approvedKcal) / approvedKcal > 0.01) {
+        const adjusted = scalePlanPortionsToEnergyTarget(plan.meals as unknown as Array<{ name?: string; items?: Array<Record<string, unknown>> }>, approvedKcal);
+        plan.meals = adjusted.meals as unknown as Meal[];
+        plan.warnings = [...(plan.warnings ?? []), `As porções foram ajustadas proporcionalmente para aproximar o cardápio da meta aprovada de ${approvedKcal.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kcal. Revise novamente as metas de macronutrientes e as porções.`];
+      }
       setSyntheticTest(false);
       setContentText(JSON.stringify(plan, null, 2));
       await savePlan("draft", plan, data.model ?? "gemini");
