@@ -38,6 +38,7 @@ export function MacroDistributionSection({ value, target, energyApproved, fallba
     value.macro_protein_factor_g_per_kg === null && "Informe o fator proteico individual (g/kg/dia).",
     value.macro_fat_percent === null && "Informe o percentual de gorduras sugerido e confirmado pelo profissional.",
     value.macro_observations.trim().length < 20 && "Registre a justificativa dos parâmetros (mínimo 20 caracteres).",
+    stale && "Recalcule a distribuição para a meta energética atual antes de confirmar.",
   ].filter(Boolean) as string[];
   const suggestionIssues = suggestion().issues;
   return <section className="rounded-xl border border-slate-200 p-4">

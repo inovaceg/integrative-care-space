@@ -382,7 +382,6 @@ function NutritionPlanningPage() {
           item.fat_source = item.fat_source ?? item.calories_source;
         }
       }
-      plan.meals = scalePlanPortionsToEnergyTarget(plan.meals as unknown as Array<{ name?: string; items?: Array<Record<string, unknown>> }>, energy.adjusted_daily_kcal!).meals as unknown as PlanContent["meals"];
       setSyntheticTest(false);
       setContentText(JSON.stringify(plan, null, 2));
       await savePlan("draft", plan, data.model ?? "gemini");

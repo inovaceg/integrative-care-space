@@ -11,7 +11,7 @@ type Item = {
 type Meal = { name: string; items: Item[]; notes?: string };
 type PlanContent = {
   summary?: string; objective?: string; warnings?: string[]; meals?: Meal[]; observations?: string[]; professional_confirmations?: string[];
-  energy?: { adjusted_daily_kcal?: number | null; professional_reviewed?: boolean; carbohydrate_percent?: number | null; protein_percent?: number | null; fat_percent?: number | null };
+  energy?: { adjusted_daily_kcal?: number | null; professional_reviewed?: boolean; carbohydrate_percent?: number | null; protein_percent?: number | null; fat_percent?: number | null; macro_reviewed?: boolean; macro_calculated_for_kcal?: number | null };
   protein?: { adjusted_target_g?: number | null; calculated_target_g?: number | null; professional_reviewed?: boolean };
 };
 
@@ -29,7 +29,7 @@ export function NutritionPlanPreview({ raw, onQuantityChange, readOnly = false, 
   const difference = calculated.totals.calories_kcal !== null && target ? calculated.totals.calories_kcal - target : null;
   const outsideTolerance = difference === null || Math.abs(difference / (target ?? 1)) > 0.05;
   const macroPercents = [plan.energy?.carbohydrate_percent, plan.energy?.protein_percent, plan.energy?.fat_percent];
-  const validMacroDistribution = target !== null && macroPercents.every((value) => typeof value === "number" && value >= 0 && value <= 100) && Math.abs((macroPercents[0]! + macroPercents[1]! + macroPercents[2]!) - 100) < 0.01;
+  const validMacroDistribution = target !== null && plan.energy?.macro_reviewed === true && plan.energy.macro_calculated_for_kcal !== null && plan.energy.macro_calculated_for_kcal !== undefined && Math.abs(plan.energy.macro_calculated_for_kcal - target) <= 0.02 && macroPercents.every((value) => typeof value === "number" && value >= 0 && value <= 100) && Math.abs((macroPercents[0]! + macroPercents[1]! + macroPercents[2]!) - 100) < 0.01;
   const carbohydrateTarget = validMacroDistribution ? target! * macroPercents[0]! / 100 / 4 : null;
   const energyProteinTarget = validMacroDistribution ? target! * macroPercents[1]! / 100 / 4 : null;
   const fatTarget = validMacroDistribution ? target! * macroPercents[2]! / 100 / 9 : null;

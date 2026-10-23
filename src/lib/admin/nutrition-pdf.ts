@@ -27,7 +27,7 @@ export type NutritionPdfTotals = { calories: number | null; protein: number | nu
 export type NutritionPdfMealPart = { name: string; items: NutritionPdfItem[]; totals: NutritionPdfTotals; knownTotals: NutritionPdfTotals; notes?: string; continued: boolean; finalPart: boolean };
 export type NutritionPdfSection = { title: string; lines: string[]; kind: "general" | "review" | "source" };
 export type NutritionPdfPage = { meals: NutritionPdfMealPart[]; summary: boolean; appendix: boolean; sections: NutritionPdfSection[]; number: number; count: number };
-export type NutritionPdfEnergy = { bmr_kcal: number | null; estimated_daily_kcal: number | null; adjusted_daily_kcal: number | null; professional_reviewed: boolean; activity_factor: number | null; activity_level: string; objective: string | null };
+export type NutritionPdfEnergy = { bmr_kcal: number | null; estimated_daily_kcal: number | null; adjusted_daily_kcal: number | null; professional_reviewed: boolean; activity_factor: number | null; activity_level: string; objective: string | null; carbohydrate_percent?: number | null; protein_percent?: number | null; fat_percent?: number | null; macro_reviewed?: boolean; macro_calculated_for_kcal?: number | null; macro_observations?: string };
 export type NutritionPdfDocument = { pages: NutritionPdfPage[]; patient: string; evaluationDate: string | null; objective: string; emissionDate: string; draft: boolean; status: string; observations: string[]; warnings: string[]; sources: string[]; reviewer: string | null; energy?: NutritionPdfEnergy | null; dailyTotals: NutritionPdfTotals; dailyKnownTotals: NutritionPdfTotals; proteinTargetG?: number | null };
 
 const numberFormat = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1 });
@@ -64,7 +64,10 @@ export function buildNutritionPdfDocument(input: Omit<NutritionPdfDocument, "pag
   const pages: NutritionPdfPage[] = [{ meals: [], summary: true, appendix: false, sections: [], number: 1, count: 1 }];
   const patientLines = fitLines(input.patient, 48).length;
   const objectiveLines = fitLines(input.objective || "Não informado", 42).length;
-  const firstContentY = 153 + 22 + patientLines * 13 + objectiveLines * 14 + (input.reviewer ? 14 : 0) + (input.draft ? 27 : 14) + 55 + 12 + 56;
+  const macroPercentages = [input.energy?.carbohydrate_percent, input.energy?.protein_percent, input.energy?.fat_percent];
+  const macroTargetKcal = input.energy?.professional_reviewed ? input.energy.adjusted_daily_kcal : null;
+  const hasConfirmedMacros = input.energy?.macro_reviewed === true && macroTargetKcal !== null && input.energy.macro_calculated_for_kcal !== null && input.energy.macro_calculated_for_kcal !== undefined && Math.abs(input.energy.macro_calculated_for_kcal - macroTargetKcal) <= 0.02 && macroPercentages.every((percent) => typeof percent === "number" && percent >= 0 && percent <= 100) && Math.abs(macroPercentages.reduce<number>((sum, percent) => sum + (percent ?? 0), 0) - 100) <= 0.01;
+  const firstContentY = 153 + 22 + patientLines * 13 + objectiveLines * 14 + (input.reviewer ? 14 : 0) + (input.draft ? 27 : 14) + 55 + 12 + 56 + (hasConfirmedMacros ? 62 : 0);
   const pageCapacity = (page: NutritionPdfPage) => page.number === 1 ? 700 - firstContentY : 508 - (input.draft ? 14 : 0);
   const pageUsed = (page: NutritionPdfPage) => page.meals.reduce((sum, meal) => sum + mealHeight({ name: meal.name, items: meal.items, notes: meal.notes }, meal.totals, meal.finalPart), 0) + page.sections.reduce((sum, section) => sum + 26 + section.lines.length * 12, 0);
   const newPage = () => pages.push({ meals: [], summary: false, appendix: false, sections: [], number: pages.length + 1, count: 1 });
@@ -186,6 +189,11 @@ function mealDocumentLines(meal: NutritionPdfMealPart, startY: number): Document
 }
 
 export function nutritionPdfDocumentPages(document: NutritionPdfDocument): DocumentPage[] {
+  const energy = document.energy;
+  const percentages = [energy?.carbohydrate_percent, energy?.protein_percent, energy?.fat_percent];
+  const calorieTarget = energy?.professional_reviewed ? energy.adjusted_daily_kcal : null;
+  const macrosConfirmed = energy?.macro_reviewed === true && calorieTarget !== null && energy.macro_calculated_for_kcal !== null && energy.macro_calculated_for_kcal !== undefined && Math.abs(energy.macro_calculated_for_kcal - calorieTarget) <= 0.02 && percentages.every((percent) => typeof percent === "number" && percent >= 0 && percent <= 100) && Math.abs(percentages.reduce<number>((sum, percent) => sum + (percent ?? 0), 0) - 100) <= 0.01;
+  const macroTargetsG = macrosConfirmed ? [calorieTarget! * percentages[0]! / 100 / 4, calorieTarget! * percentages[1]! / 100 / 4, calorieTarget! * percentages[2]! / 100 / 9] : null;
   return document.pages.map((page) => {
     const lines: DocumentPage = [];
     let y: number;
@@ -228,6 +236,24 @@ export function nutritionPdfDocumentPages(document: NutritionPdfDocument): Docum
       const energyDifference = energy.professional_reviewed && energy.adjusted_daily_kcal && document.dailyTotals.calories !== null ? document.dailyTotals.calories - energy.adjusted_daily_kcal : null;
       lines.push(line(`Diferença entre cardápio e meta: ${energyDifference === null ? "não calculada" : `${cap(energyDifference, "kcal")} (${numberFormat.format(energyDifference / energy.adjusted_daily_kcal! * 100)}%)`}`, 52, y, 8.5, false, colors.muted));
       y += 18;
+      if (macrosConfirmed && macroTargetsG && macroTargetKcal !== null) {
+        lines.push(line("MACRONUTRIENTES · META PROFISSIONAL E CARDÁPIO", 52, y, 9.5, true, colors.dark)); y += 13;
+        lines.push(line("Macronutriente", 52, y, 7.5, true, colors.sage));
+        lines.push(line("Meta (%)", 180, y, 7.5, true, colors.sage));
+        lines.push(line("Meta (g)", 255, y, 7.5, true, colors.sage));
+        lines.push(line("Cardápio (g)", 335, y, 7.5, true, colors.sage));
+        lines.push(line("Diferença", 445, y, 7.5, true, colors.sage)); y += 10;
+        lines.push(rule(y)); y += 10;
+        const rows = [["Carboidratos", macroTargetsPercent?.[0] ?? null, macroTargetsG[0]!, document.dailyTotals.carbohydrate], ["Proteínas", macroTargetsPercent?.[1] ?? null, macroTargetsG[1]!, document.dailyTotals.protein], ["Gorduras", macroTargetsPercent?.[2] ?? null, macroTargetsG[2]!, document.dailyTotals.fat]] as const;
+        for (const [label, percent, goal, actual] of rows) {
+          lines.push(line(label, 52, y, 8, false, colors.ink));
+          lines.push(line(percent === null ? "—" : `${numberFormat.format(percent)}%`, 180, y, 8, false, colors.ink));
+          lines.push(line(numberFormat.format(goal), 255, y, 8, false, colors.ink));
+          lines.push(line(actual === null ? "—" : numberFormat.format(actual), 335, y, 8, false, colors.ink));
+          lines.push(line(actual === null ? "—" : numberFormat.format(actual - goal), 445, y, 8, false, colors.ink)); y += 11;
+        }
+        y += 8;
+      }
     }
     for (const meal of page.meals) {
       lines.push(...mealDocumentLines(meal, y));
