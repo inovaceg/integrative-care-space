@@ -25,6 +25,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAgendaRouteImport } from './routes/admin/agenda'
 import { Route as AdminAnamnesesRouteImport } from './routes/admin/anamneses'
 import { Route as AdminAplicacoesRouteImport } from './routes/admin/aplicacoes'
+import { Route as AdminBibliotecaAlimentarRouteImport } from './routes/admin/biblioteca-alimentar'
 import { Route as AdminBibliotecaNutricionalDemoRouteImport } from './routes/admin/biblioteca-nutricional-demo'
 import { Route as AdminBlogRouteImport } from './routes/admin/blog'
 import { Route as AdminConfiguracoesRouteImport } from './routes/admin/configuracoes'
@@ -126,6 +127,12 @@ const AdminAplicacoesRoute = AdminAplicacoesRouteImport.update({
   path: '/aplicacoes',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminBibliotecaAlimentarRoute =
+  AdminBibliotecaAlimentarRouteImport.update({
+    id: '/biblioteca-alimentar',
+    path: '/biblioteca-alimentar',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminBibliotecaNutricionalDemoRoute =
   AdminBibliotecaNutricionalDemoRouteImport.update({
     id: '/biblioteca-nutricional-demo',
@@ -246,6 +253,7 @@ export interface FileRoutesByFullPath {
   '/admin/agenda': typeof AdminAgendaRoute
   '/admin/anamneses': typeof AdminAnamnesesRouteWithChildren
   '/admin/aplicacoes': typeof AdminAplicacoesRoute
+  '/admin/biblioteca-alimentar': typeof AdminBibliotecaAlimentarRoute
   '/admin/biblioteca-nutricional-demo': typeof AdminBibliotecaNutricionalDemoRoute
   '/admin/blog': typeof AdminBlogRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
@@ -283,6 +291,7 @@ export interface FileRoutesByTo {
   '/admin/agenda': typeof AdminAgendaRoute
   '/admin/anamneses': typeof AdminAnamnesesRouteWithChildren
   '/admin/aplicacoes': typeof AdminAplicacoesRoute
+  '/admin/biblioteca-alimentar': typeof AdminBibliotecaAlimentarRoute
   '/admin/biblioteca-nutricional-demo': typeof AdminBibliotecaNutricionalDemoRoute
   '/admin/blog': typeof AdminBlogRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
@@ -322,6 +331,7 @@ export interface FileRoutesById {
   '/admin/agenda': typeof AdminAgendaRoute
   '/admin/anamneses': typeof AdminAnamnesesRouteWithChildren
   '/admin/aplicacoes': typeof AdminAplicacoesRoute
+  '/admin/biblioteca-alimentar': typeof AdminBibliotecaAlimentarRoute
   '/admin/biblioteca-nutricional-demo': typeof AdminBibliotecaNutricionalDemoRoute
   '/admin/blog': typeof AdminBlogRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
@@ -362,6 +372,7 @@ export interface FileRouteTypes {
     | '/admin/agenda'
     | '/admin/anamneses'
     | '/admin/aplicacoes'
+    | '/admin/biblioteca-alimentar'
     | '/admin/biblioteca-nutricional-demo'
     | '/admin/blog'
     | '/admin/configuracoes'
@@ -399,6 +410,7 @@ export interface FileRouteTypes {
     | '/admin/agenda'
     | '/admin/anamneses'
     | '/admin/aplicacoes'
+    | '/admin/biblioteca-alimentar'
     | '/admin/biblioteca-nutricional-demo'
     | '/admin/blog'
     | '/admin/configuracoes'
@@ -437,6 +449,7 @@ export interface FileRouteTypes {
     | '/admin/agenda'
     | '/admin/anamneses'
     | '/admin/aplicacoes'
+    | '/admin/biblioteca-alimentar'
     | '/admin/biblioteca-nutricional-demo'
     | '/admin/blog'
     | '/admin/configuracoes'
@@ -589,6 +602,13 @@ declare module '@tanstack/react-router' {
       path: '/aplicacoes'
       fullPath: '/admin/aplicacoes'
       preLoaderRoute: typeof AdminAplicacoesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/biblioteca-alimentar': {
+      id: '/admin/biblioteca-alimentar'
+      path: '/biblioteca-alimentar'
+      fullPath: '/admin/biblioteca-alimentar'
+      preLoaderRoute: typeof AdminBibliotecaAlimentarRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/biblioteca-nutricional-demo': {
@@ -773,6 +793,7 @@ interface AdminRouteChildren {
   AdminAgendaRoute: typeof AdminAgendaRoute
   AdminAnamnesesRoute: typeof AdminAnamnesesRouteWithChildren
   AdminAplicacoesRoute: typeof AdminAplicacoesRoute
+  AdminBibliotecaAlimentarRoute: typeof AdminBibliotecaAlimentarRoute
   AdminBibliotecaNutricionalDemoRoute: typeof AdminBibliotecaNutricionalDemoRoute
   AdminBlogRoute: typeof AdminBlogRoute
   AdminConfiguracoesRoute: typeof AdminConfiguracoesRoute
@@ -794,6 +815,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAgendaRoute: AdminAgendaRoute,
   AdminAnamnesesRoute: AdminAnamnesesRouteWithChildren,
   AdminAplicacoesRoute: AdminAplicacoesRoute,
+  AdminBibliotecaAlimentarRoute: AdminBibliotecaAlimentarRoute,
   AdminBibliotecaNutricionalDemoRoute: AdminBibliotecaNutricionalDemoRoute,
   AdminBlogRoute: AdminBlogRoute,
   AdminConfiguracoesRoute: AdminConfiguracoesRoute,
