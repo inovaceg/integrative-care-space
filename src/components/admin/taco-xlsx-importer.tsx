@@ -52,28 +52,90 @@ export function TacoXlsxImporter({ onImported }: { onImported?: () => void }) {
 
   async function confirmImport() {
     if (!(["admin", "doctor"].includes(role ?? "")) || !rows.length || importing) return;
-    const importRows = rows.filter((row) => row.errors.length === 0);
+    const importRows = rows.filter((row) => row.errors.length === 0 && !row.duplicate_in_file);
     if (!importRows.length || referenceErrors.some((check) => !check.ok)) return;
     setImporting(true);
     setError("");
     setReport(null);
     try {
-      const { data, error: invokeError } = await supabase.functions.invoke("nutrition-taco-import", { body: { rows: importRows.map(({ codigo_taco, nome, energia_kcal, proteinas_g, carboidratos_g, gorduras_g, fibras_g, sodio_mg }) => ({ codigo_taco, nome, energia_kcal, proteinas_g, carboidratos_g, gorduras_g, fibras_g, sodio_mg })) } });
-      if (invokeError) {
-        const context = "context" in invokeError ? invokeError.context : null;
-        let detail = invokeError.message;
-        if (context instanceof Response) {
-          const body = await context.clone().json().catch(() => null) as { error?: unknown; reference_errors?: string[] } | null;
-          if (typeof body?.error === "string") detail = `${body.error}${body.reference_errors?.length ? ` ${body.reference_errors.join(" ")}` : ""}`;
+      const rejectedRows: NonNullable<ImportReport["rejected_rows"]> = rows
+        .filter((row) => row.errors.length > 0)
+        .map((row) => ({ codigo_taco: row.codigo_taco || null, nome: row.nome, error: row.errors.join(" ") }));
+      const existingByCode = new Map<string, { id: string; source_code: string; source: string }>();
+      let ignored = rows.filter((row) => row.duplicate_in_file).length;
+      let imported = 0;
+      let updated = 0;
+
+      for (let index = 0; index < importRows.length; index += 200) {
+        const batch = importRows.slice(index, index + 200);
+        const codes = batch.map((row) => sourceCode(row.codigo_taco));
+        const { data: existing, error: lookupError } = await supabase.from("nutrition_food_library").select("id,source_code,source").in("source_code", codes);
+        if (lookupError) {
+          for (const row of batch) rejectedRows.push({ codigo_taco: row.codigo_taco, nome: row.nome, error: `Falha ao consultar duplicidade: ${lookupError.message}` });
+          continue;
         }
-        setError(detail || "Não foi possível importar a planilha.");
-        return;
+        for (const item of existing ?? []) {
+          if (item.source_code && item.id) existingByCode.set(item.source_code, { id: item.id, source_code: item.source_code, source: item.source ?? "" });
+        }
+
+        const inserts: Record<string, unknown>[] = [];
+        const updates: Array<{ id: string; row: TacoImportRow }> = [];
+        for (const row of batch) {
+          const code = sourceCode(row.codigo_taco);
+          const existingRow = existingByCode.get(code);
+          if (existingRow && existingRow.source !== "TACO") { ignored += 1; continue; }
+          if (existingRow) { updates.push({ id: existingRow.id, row }); continue; }
+          inserts.push({
+            source_code: code,
+            name: row.nome,
+            category: "TACO — Alimentos principais",
+            energy_kcal_100g: row.energia_kcal,
+            proteins_g_100g: row.proteinas_g,
+            carbohydrates_g_100g: row.carboidratos_g,
+            fats_g_100g: row.gorduras_g,
+            fibers_g_100g: row.fibras_g,
+            sodium_mg_100g: row.sodio_mg,
+            source: "TACO",
+            license: "Planilha TACO fornecida pelo administrador; conferir termos da fonte antes de redistribuição.",
+            validation_status: "verified",
+            allergens: [],
+            allergen_info_known: false,
+            gluten_status: "unknown",
+            lactose_status: "unknown",
+            nutrition_missing: ["allergens", "gluten_status", "lactose_status"],
+            import_notes: "Aba Alimentos - principais; nutrientes por 100 g sem conversão. A planilha não fornece dados de alergênicos, glúten ou lactose.",
+          });
+        }
+
+        if (inserts.length) {
+          const { error: insertError } = await supabase.from("nutrition_food_library").insert(inserts);
+          if (insertError) {
+            for (const item of inserts) rejectedRows.push({ codigo_taco: Number(String(item.source_code).slice(5)), nome: String(item.name), error: `Falha ao gravar no banco: ${insertError.message}` });
+          } else imported += inserts.length;
+        }
+
+        const updateResults = await Promise.all(updates.map(async ({ id, row }) => {
+          const { error: updateError } = await supabase.from("nutrition_food_library").update({
+            name: row.nome,
+            category: "TACO — Alimentos principais",
+            energy_kcal_100g: row.energia_kcal,
+            proteins_g_100g: row.proteinas_g,
+            carbohydrates_g_100g: row.carboidratos_g,
+            fats_g_100g: row.gorduras_g,
+            fibers_g_100g: row.fibras_g,
+            sodium_mg_100g: row.sodio_mg,
+            updated_at: new Date().toISOString(),
+          }).eq("id", id);
+          return { row, error: updateError };
+        }));
+        for (const result of updateResults) {
+          if (result.error) rejectedRows.push({ codigo_taco: result.row.codigo_taco, nome: result.row.nome, error: `Falha ao atualizar no banco: ${result.error.message}` });
+          else updated += 1;
+        }
       }
-      if (data?.error) {
-        setError(typeof data.error === "string" ? data.error : "Não foi possível importar a planilha.");
-        return;
-      }
-      setReport(data as ImportReport);
+
+      const result: ImportReport = { imported, updated, ignored, rejected: rejectedRows.length, rejected_rows: rejectedRows };
+      setReport(result);
       setDatabaseDuplicates(new Set(importRows.map((row) => sourceCode(row.codigo_taco))));
       onImported?.();
     } catch (importError) {
