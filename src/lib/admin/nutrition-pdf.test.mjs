@@ -53,7 +53,7 @@ describe("layout do PDF nutricional", () => {
     const pdfText = nutritionPdfDocumentPages(document).flat().map((line) => line.text).join("\n");
     expect(pdfText).toContain("PROPOSTA ALIMENTAR");
     expect(pdfText).toContain("SITUAÇÃO: EM ELABORAÇÃO");
-    expect(pdfText).toContain("Proposta alimentar em elaboração — não utilizar como prescrição.");
+    expect(pdfText).toContain("Material para fins de estudo — não validado para uso profissional.");
     expect(pdfText).not.toContain("RASCUNHO — NÃO É PRESCRIÇÃO");
     expect(pdfText).toContain("Total da refeição: 300 kcal");
     expect(pdfText).toContain("Proteínas 37,4 g");
@@ -76,9 +76,9 @@ describe("layout do PDF nutricional", () => {
     };
     const reviewText = nutritionPdfDocumentPages(buildNutritionPdfDocument({ ...common, draft: true, status: "Aguardando revisão" })).flat().map((line) => line.text).join("\n");
     expect(reviewText).toContain("SITUAÇÃO: AGUARDANDO REVISÃO");
-    expect(reviewText).toContain("Proposta alimentar para revisão profissional — não constitui prescrição dietética.");
+    expect(reviewText).toContain("Material para fins de estudo — não validado para uso profissional.");
     const approvedText = nutritionPdfDocumentPages(buildNutritionPdfDocument({ ...common, draft: false, status: "Aprovado", reviewer: "Aprovado por Nutricionista · CRN 00000" })).flat().map((line) => line.text).join("\n");
     expect(approvedText).toContain("SITUAÇÃO: APROVADO");
-    expect(approvedText).not.toContain("não constitui prescrição dietética");
+    expect(approvedText).not.toContain("Material para fins de estudo");
   });
 });

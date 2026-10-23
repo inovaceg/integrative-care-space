@@ -34,9 +34,7 @@ const colors = { dark: "#174b45", green: "#2f756b", sage: "#6f9b90", ink: "#263b
 const line = (text: string, x: number, y: number, size = 10, bold = false, color = colors.ink): DocumentPage[number] => ({ text, x, y, size, bold, color });
 const rule = (y: number, x = 52, width = 491, color = colors.line): DocumentPage[number] => ({ text: "", x, y, size: 0, color, kind: "rule", width });
 const cap = (value: number | null, unit: string) => formatNutritionAmount(value, unit);
-const unapprovedNotice = (status: string) => status === "Em elaboração"
-  ? "Proposta alimentar em elaboração — não utilizar como prescrição."
-  : "Proposta alimentar para revisão profissional — não constitui prescrição dietética.";
+const unapprovedNotice = (_status: string) => "Material para fins de estudo — não validado para uso profissional.";
 const fitLines = (text: string, max = 88) => {
   const words = text.split(/\s+/).filter(Boolean);
   const rows: string[] = [];

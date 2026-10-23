@@ -8,9 +8,7 @@ const summaries: { label: string; key: keyof NutritionPdfTotals; unit: string }[
   { label: "Gorduras", key: "fat", unit: "g" },
 ];
 const amount = (value: number | null | undefined, unit: string) => formatNutritionAmount(value ?? null, unit);
-const unapprovedNotice = (status: string) => status === "Em elaboração"
-  ? "Proposta alimentar em elaboração — não utilizar como prescrição."
-  : "Proposta alimentar para revisão profissional — não constitui prescrição dietética.";
+const unapprovedNotice = (_status: string) => "Material para fins de estudo — não validado para uso profissional.";
 
 function LogoMark() {
   return <svg aria-hidden="true" viewBox="0 0 64 64" className="size-8 shrink-0">
