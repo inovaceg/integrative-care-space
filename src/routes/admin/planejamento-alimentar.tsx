@@ -41,7 +41,18 @@ const latestWeight = (evaluations: Evaluation[], applications: Application[]): W
 const hydrationForPlan = (content: PlanContent | null | undefined, measurements: WeightMeasurement | null): HydrationPlan => content?.hydration ?? { ...emptyHydration, ...(measurements ?? {}) };
 const proteinForPlan = (content: PlanContent | null | undefined, measurements: WeightMeasurement | null): ProteinPlan => content?.protein ?? { ...emptyProtein, ...(measurements ?? {}) };
 const emptyEnergy: EnergyPlan = { method: "Mifflin-St Jeor", sex_parameter: null, weight_kg: null, height_cm: null, age_years: null, age_source: null, weight_source: null, weight_date: null, calculated_at: null, height_source: null, activity_level: "", activity_factor: null, activity_context: "", objective: null, adjustment_mode: null, adjustment_value: null, carbohydrate_percent: null, protein_percent: null, fat_percent: null, macro_reference_weight_kg: null, macro_protein_factor_g_per_kg: null, macro_fat_percent: null, macro_calculated_for_kcal: null, macro_reviewed: false, macro_observations: "", activity_confirmed: false, clinical_reviewed: false, reviewer_name: "", bmr_kcal: null, estimated_daily_kcal: null, adjusted_daily_kcal: null, observations: "", professional_reviewed: false, reviewed_at: null };
-const energyForPlan = (content: PlanContent | null | undefined): EnergyPlan => ({ ...emptyEnergy, ...(content?.energy ?? {}) });
+const normalizeEnergy = (value: Partial<EnergyPlan> | null | undefined): EnergyPlan => {
+  const energy = { ...emptyEnergy, ...(value ?? {}) };
+  return {
+    ...energy,
+    macro_observations: energy.macro_observations ?? "",
+    observations: energy.observations ?? "",
+    reviewer_name: energy.reviewer_name ?? "",
+    activity_level: energy.activity_level ?? "",
+    activity_context: energy.activity_context ?? "",
+  };
+};
+const energyForPlan = (content: PlanContent | null | undefined): EnergyPlan => normalizeEnergy(content?.energy);
 type PlanVersion = { id: string; version_number: number; plan_content: PlanContent; created_at: string; created_by: string };
 const emptyProfile: Profile = { height_cm: "", reference_weight_kg: "", goal: "", activity_level: "", exercise_details: "", wake_time: "", sleep_time: "", meal_schedule: "", desired_meals: "", work_routine: "", cooking_availability: "", food_budget: "", preferred_foods: "", avoided_foods: "", cultural_restrictions: "", simple_meals_preference: false, affordable_food_preference: false, allergies: "", intolerances: "", diagnosed_conditions: "", pregnancy_or_breastfeeding: "", medications: "", supplements: "", eating_disorder_history: "" };
 const asProfile = (row: Record<string, unknown> | null): Profile => row ? Object.fromEntries(Object.keys(emptyProfile).map((key) => [key, key === "meal_schedule" ? Array.isArray(row[key]) ? (row[key] as string[]).join("\n") : "" : key.endsWith("preference") ? Boolean(row[key]) : row[key] == null ? "" : String(row[key])])) as Profile : { ...emptyProfile };
@@ -122,7 +133,7 @@ function NutritionPlanningPage() {
     if (draft.profile) setProfile({ ...emptyProfile, ...draft.profile });
     if (draft.hydration) setHydration({ ...emptyHydration, ...draft.hydration });
     if (draft.protein) setProtein({ ...emptyProtein, ...draft.protein });
-    if (draft.energy) setEnergy({ ...emptyEnergy, ...draft.energy });
+    if (draft.energy) setEnergy(normalizeEnergy(draft.energy));
     setContentText(draft.contentText ?? "");
     setDuration(draft.duration ?? "1");
   }, [user]);
@@ -232,7 +243,7 @@ function NutritionPlanningPage() {
         setDuration(resume && savedDraft.duration ? savedDraft.duration : String(selectedPlan.duration_days));
         setHydration(resume && savedDraft.hydration ? savedDraft.hydration : hydrationForPlan(selectedPlan.plan_content, lastWeight));
         setProtein(resume && savedDraft.protein ? savedDraft.protein : proteinForPlan(selectedPlan.plan_content, lastWeight));
-        setEnergy(resume && savedDraft.energy ? savedDraft.energy : energyForPlan(selectedPlan.plan_content));
+        setEnergy(resume && savedDraft.energy ? normalizeEnergy(savedDraft.energy) : energyForPlan(selectedPlan.plan_content));
       } else {
         setContentText(resume ? savedDraft.contentText ?? "" : "");
         setDuration(resume && savedDraft.duration ? savedDraft.duration : "1");
@@ -244,7 +255,7 @@ function NutritionPlanningPage() {
         const measure = Number.isFinite(profileWeight) && profileWeight >= 20 && profileWeight <= 350
           ? { weight_kg: profileWeight, weight_date: "", weight_source: "Peso de referência escolhido no perfil nutricional" }
           : lastWeight;
-        setEnergy(resume && savedDraft.energy ? savedDraft.energy : { ...emptyEnergy, weight_kg: measure?.weight_kg ?? null, weight_date: measure?.weight_date ?? null, weight_source: measure?.weight_source ?? null, height_cm: latestHeight, height_source: latestHeight === null ? null : latestHeightRow ? "Avaliação corporal" : "Perfil nutricional", age_years: ageFrom(patients.find((p) => p.id === patientId)?.data_nascimento ?? null), age_source: "Data de nascimento do cadastro", activity_level: resolvedProfile.activity_level, activity_context: [anamnesisRow?.atividade_fisica, resolvedProfile.work_routine, resolvedProfile.exercise_details].filter(Boolean).join(" · ") });
+        setEnergy(resume && savedDraft.energy ? normalizeEnergy(savedDraft.energy) : { ...emptyEnergy, weight_kg: measure?.weight_kg ?? null, weight_date: measure?.weight_date ?? null, weight_source: measure?.weight_source ?? null, height_cm: latestHeight, height_source: latestHeight === null ? null : latestHeightRow ? "Avaliação corporal" : "Perfil nutricional", age_years: ageFrom(patients.find((p) => p.id === patientId)?.data_nascimento ?? null), age_source: "Data de nascimento do cadastro", activity_level: resolvedProfile.activity_level, activity_context: [anamnesisRow?.atividade_fisica, resolvedProfile.work_routine, resolvedProfile.exercise_details].filter(Boolean).join(" · ") });
       }
       loadedPatientId.current = patientId;
       setLoading(false);
