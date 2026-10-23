@@ -36,7 +36,7 @@ type PlanContent = { summary: string; objective: string; warnings: string[]; mea
 type Plan = { id: string; goal: string; duration_days: number; status: string; plan_content: PlanContent; model_name: string | null; created_at: string; approved_at: string | null; approved_by: string | null; approved_version_id: string | null };
 type WeightMeasurement = { weight_kg: number; weight_date: string; weight_source: string };
 const emptyHydration: HydrationPlan = { weight_kg: null, weight_date: null, weight_source: null, factor_ml_per_kg: 33, estimated_total_water_ml: null, adjusted_pure_water_ml: null, activity: "", climate: "", pregnancy: false, breastfeeding: false, kidney_disease: false, cardiac_disease: false, fluid_restriction: false, observations: "", professional_reviewed: false };
-const emptyProtein: ProteinPlan = { weight_kg: null, weight_date: null, weight_source: null, factor_g_per_kg: 1.2, calculated_target_g: null, adjusted_target_g: null, kidney_disease: false, special_clinical_condition: false, clinical_info_sufficient: false, observations: "", professional_reviewed: false };
+const emptyProtein: ProteinPlan = { weight_kg: null, weight_date: null, weight_source: null, factor_g_per_kg: null, calculated_target_g: null, adjusted_target_g: null, kidney_disease: false, special_clinical_condition: false, clinical_info_sufficient: false, observations: "", professional_reviewed: false };
 const latestWeight = (evaluations: Evaluation[], applications: Application[]): WeightMeasurement | null => [...evaluations.flatMap((item) => item.weight_kg !== null && item.weight_kg >= 20 && item.weight_kg <= 350 && item.evaluation_date ? [{ weight_kg: item.weight_kg, weight_date: item.evaluation_date, weight_source: "Avaliação corporal" }] : []), ...applications.flatMap((item) => item.current_weight_kg >= 20 && item.current_weight_kg <= 350 && item.application_date ? [{ weight_kg: item.current_weight_kg, weight_date: item.application_date, weight_source: `Aplicação: ${item.procedure_name}` }] : [])].sort((a, b) => b.weight_date.localeCompare(a.weight_date))[0] ?? null;
 const hydrationForPlan = (content: PlanContent | null | undefined, measurements: WeightMeasurement | null): HydrationPlan => content?.hydration ?? { ...emptyHydration, ...(measurements ?? {}) };
 const proteinForPlan = (content: PlanContent | null | undefined, measurements: WeightMeasurement | null): ProteinPlan => content?.protein ?? { ...emptyProtein, ...(measurements ?? {}) };
@@ -172,7 +172,8 @@ function NutritionPlanningPage() {
         const activeTarget = energy.professional_reviewed ? energy.adjusted_daily_kcal : null;
         const staleText = [...(savedPlan.observations ?? []), ...(savedPlan.warnings ?? []), ...(savedPlan.professional_confirmations ?? [])].some((text) => isOldEnergyText(text, activeTarget));
         const energyChanged = savedPlan.energy && (!energyTargetMatches(savedPlan.energy.adjusted_daily_kcal, energy.adjusted_daily_kcal) || (savedPlan.energy.professional_reviewed && !energy.professional_reviewed));
-        if (staleText || energyChanged) found.push("A meta energética ou os textos automáticos desta proposta estão desatualizados. Revise/aprove novamente a meta e gere uma nova proposta antes de exportar o PDF.");
+        const macrosChanged = savedPlan.energy?.macro_reviewed && (!energy.macro_reviewed || !energyTargetMatches(savedPlan.energy.macro_calculated_for_kcal, energy.adjusted_daily_kcal));
+        if (staleText || energyChanged || macrosChanged) found.push("A meta energética ou a distribuição de macronutrientes desta proposta está desatualizada. Recalcule e confirme os macros para a meta vigente e gere uma nova proposta antes de exportar o PDF.");
       } catch { }
     }
     const currentWeight = latestWeight(evaluations, applications);
@@ -187,7 +188,7 @@ function NutritionPlanningPage() {
       if (!saved) return Boolean(energy.professional_reviewed && energy.adjusted_daily_kcal !== null);
       const factor = activityFactorForLevel(energy.activity_level || profile.activity_level);
       const estimate = calculateMifflinStJeor({ weightKg: energy.weight_kg ?? latestWeight(evaluations, applications)?.weight_kg ?? null, heightCm: energy.height_cm ?? currentHeightEvaluation?.height_cm ?? (profile.height_cm ? Number(profile.height_cm) : null), ageYears: energy.age_years ?? ageFrom(selected?.data_nascimento ?? null), sex: energy.sex_parameter, activityFactor: factor });
-      return !energyTargetMatches(saved.adjusted_daily_kcal, energy.adjusted_daily_kcal) || !energyTargetMatches(saved.bmr_kcal, estimate?.bmrKcal ?? null) || !energyTargetMatches(saved.estimated_daily_kcal, estimate?.totalKcal ?? null) || saved.objective !== energy.objective || !energyTargetMatches(saved.activity_factor, factor) || (saved.activity_confirmed === true && !activityEvidenceSufficient) || (saved.professional_reviewed === true && !energy.professional_reviewed);
+      return !energyTargetMatches(saved.adjusted_daily_kcal, energy.adjusted_daily_kcal) || !energyTargetMatches(saved.bmr_kcal, estimate?.bmrKcal ?? null) || !energyTargetMatches(saved.estimated_daily_kcal, estimate?.totalKcal ?? null) || saved.objective !== energy.objective || !energyTargetMatches(saved.activity_factor, factor) || (saved.activity_confirmed === true && !activityEvidenceSufficient) || (saved.professional_reviewed === true && !energy.professional_reviewed) || (saved.macro_reviewed === true && (!energy.macro_reviewed || !energyTargetMatches(saved.macro_calculated_for_kcal, energy.adjusted_daily_kcal)));
     } catch { return false; }
   }, [contentText, activePlan?.status, energy, profile.activity_level, profile.height_cm, evaluations, applications, currentEvaluation, currentHeightEvaluation, selected, activityEvidenceSufficient]);
 
@@ -404,8 +405,8 @@ function NutritionPlanningPage() {
     const nutritionIssues = validateNutritionTotals(nutritionCalculation);
     if (status === "pending_review" && nutritionIssues.length) { setError(`Não é possível enviar para aprovação: ${nutritionIssues.slice(0, 5).join(" ")}`); return; }
     parsed.meals = nutritionCalculation.meals as unknown as PlanContent["meals"];
-    const proteinFactorInput = Number(protein.factor_g_per_kg);
-    if (!Number.isFinite(proteinFactorInput) || proteinFactorInput < 0.1 || proteinFactorInput > 10) { setError("O fator de proteína deve estar entre 0,1 e 10 g/kg/dia."); return; }
+    const proteinFactorInput = protein.factor_g_per_kg === null ? null : Number(protein.factor_g_per_kg);
+    if (proteinFactorInput !== null && (!Number.isFinite(proteinFactorInput) || proteinFactorInput < 0.1 || proteinFactorInput > 10)) { setError("O fator de proteína deve estar entre 0,1 e 10 g/kg/dia."); return; }
     if (protein.adjusted_target_g !== null && (!Number.isFinite(protein.adjusted_target_g) || protein.adjusted_target_g < 1 || protein.adjusted_target_g > 1000 || !protein.observations.trim())) { setError("A meta manual deve estar entre 1 e 1.000 g/dia e exige justificativa profissional."); return; }
     if (energy.adjusted_daily_kcal !== null && (!Number.isFinite(energy.adjusted_daily_kcal) || energy.adjusted_daily_kcal < 500 || energy.adjusted_daily_kcal > 10000 || !energy.observations.trim())) { setError("A meta energética definida deve estar entre 500 e 10.000 kcal/dia e exige justificativa profissional."); return; }
     if (energy.professional_reviewed && !validateEnergyApproval(energy.adjusted_daily_kcal, energy.observations, true)) { setError("A meta energética só pode ser aprovada após definição explícita e justificativa profissional."); return; }
@@ -420,8 +421,7 @@ function NutritionPlanningPage() {
     const hydrationFactor = Number(hydration.factor_ml_per_kg);
     const hydrationEstimate = ageFrom(selected.data_nascimento) !== null && ageFrom(selected.data_nascimento)! >= 18 && !hydrationNeedsReview && hydration.weight_kg !== null && hydration.weight_kg > 0 && hydrationFactor > 0 ? Math.round(hydration.weight_kg * hydrationFactor) : null;
     const proteinBlocked = ageFrom(selected.data_nascimento) === null || ageFrom(selected.data_nascimento)! < 18 || !protein.clinical_info_sufficient || protein.kidney_disease || protein.special_clinical_condition || protein.weight_kg === null || protein.weight_kg <= 0;
-    const proteinFactor = proteinFactorInput;
-    const proteinEstimate = !proteinBlocked ? Math.round(protein.weight_kg! * proteinFactor * 100) / 100 : null;
+    const proteinEstimate = !proteinBlocked && proteinFactorInput !== null ? Math.round(protein.weight_kg! * proteinFactorInput * 100) / 100 : null;
     parsed = { ...parsed, hydration: { ...hydration, estimated_total_water_ml: hydrationEstimate }, protein: { ...protein, calculated_target_g: proteinEstimate }, energy: { ...energyParams, method: "Mifflin-St Jeor", activity_factor: energyFactor, bmr_kcal: energyCalculation?.bmrKcal ?? null, estimated_daily_kcal: energyCalculation?.totalKcal ?? null, calculated_at: new Date().toISOString(), professional_reviewed: Boolean(energy.professional_reviewed && energy.adjusted_daily_kcal !== null), reviewed_at: energy.professional_reviewed && energy.adjusted_daily_kcal !== null ? energy.reviewed_at ?? new Date().toISOString() : null } };
     const versionContent = clonePlanSnapshot(parsed);
     setSaving(true); setError(""); setMessage("");

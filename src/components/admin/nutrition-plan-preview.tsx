@@ -18,7 +18,7 @@ type PlanContent = {
 const nutrients = [["Energia", "calories_kcal", "kcal"], ["Proteínas", "protein_g", "g"], ["Carboidratos", "carbohydrate_g", "g"], ["Gorduras", "fat_g", "g"], ["Fibras", "fiber_g", "g"]] as const;
 const formatAmount = (value: number | null, unit: string) => value === null ? "Não calculado" : `${value.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} ${unit}`;
 const formatTotal = (value: number | null, partial: number | null, unit: string) => value !== null ? formatAmount(value, unit) : partial !== null ? `${formatAmount(partial, unit)} (parcial conhecido)` : "Não calculado";
-const targetDifference = (actual: number | null, target: number | null) => actual === null || target === null || target === 0 ? "Diferença não calculada" : `${Math.abs(actual - target).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} g (${((actual - target) / target * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%)`;
+const targetDifference = (actual: number | null, target: number | null) => actual === null || target === null || target === 0 ? "Diferença não calculada" : `${(actual - target).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} g (${((actual - target) / target * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%)`;
 
 export function NutritionPlanPreview({ raw, onQuantityChange, readOnly = false, onRecalculate }: { raw: string; onQuantityChange?: (mealIndex: number, itemIndex: number, grams: number) => void; readOnly?: boolean; onRecalculate?: () => void }) {
   let plan: PlanContent;

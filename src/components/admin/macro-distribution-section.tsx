@@ -10,7 +10,7 @@ const show = (value: number | null) => value === null ? "—" : value.toLocaleSt
 const parse = (raw: string) => { const value = Number(raw.trim().replace(",", ".")); return raw.trim() && Number.isFinite(value) ? value : null; };
 
 export function MacroDistributionSection({ value, target, energyApproved, fallbackWeight, clinicalReviewFlags, onChange }: { value: EnergyPlan; target: number | null; energyApproved: boolean; fallbackWeight: number | null; clinicalReviewFlags: string[]; onChange: (next: EnergyPlan) => void }) {
-  const stale = value.macro_calculated_for_kcal !== null && target !== null && Math.abs(value.macro_calculated_for_kcal - target) > 0.02;
+  const stale = value.macro_calculated_for_kcal !== null && (target === null || Math.abs(value.macro_calculated_for_kcal - target) > 0.02);
   const calc = useMemo(() => {
     const percents = [value.carbohydrate_percent, value.protein_percent, value.fat_percent];
     if (target === null || percents.some((percent) => percent === null || !Number.isFinite(percent) || percent! < 0 || percent! > 100) || Math.abs(percents.reduce<number>((sum, percent) => sum + (percent ?? 0), 0) - 100) > 0.01) return null;
@@ -26,7 +26,7 @@ export function MacroDistributionSection({ value, target, energyApproved, fallba
     const result = suggestion();
     if (!result.distribution) return;
     const distribution = result.distribution;
-    onChange({ ...value, carbohydrate_percent: distribution.carbohydratePercent, protein_percent: distribution.proteinPercent, fat_percent: distribution.fatPercent, macro_calculated_for_kcal: target, macro_reviewed: false });
+    onChange({ ...value, macro_reference_weight_kg: value.macro_reference_weight_kg ?? fallbackWeight, carbohydrate_percent: distribution.carbohydratePercent, protein_percent: distribution.proteinPercent, fat_percent: distribution.fatPercent, macro_calculated_for_kcal: target, macro_reviewed: false });
   };
   const confirm = () => {
     if (!calc || target === null || !energyApproved || !value.macro_observations.trim()) return;

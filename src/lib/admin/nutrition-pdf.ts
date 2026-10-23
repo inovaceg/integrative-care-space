@@ -67,7 +67,7 @@ export function buildNutritionPdfDocument(input: Omit<NutritionPdfDocument, "pag
   const macroPercentages = [input.energy?.carbohydrate_percent, input.energy?.protein_percent, input.energy?.fat_percent];
   const macroTargetKcal = input.energy?.professional_reviewed ? input.energy.adjusted_daily_kcal : null;
   const hasConfirmedMacros = input.energy?.macro_reviewed === true && macroTargetKcal !== null && input.energy.macro_calculated_for_kcal !== null && input.energy.macro_calculated_for_kcal !== undefined && Math.abs(input.energy.macro_calculated_for_kcal - macroTargetKcal) <= 0.02 && macroPercentages.every((percent) => typeof percent === "number" && percent >= 0 && percent <= 100) && Math.abs(macroPercentages.reduce<number>((sum, percent) => sum + (percent ?? 0), 0) - 100) <= 0.01;
-  const firstContentY = 153 + 22 + patientLines * 13 + objectiveLines * 14 + (input.reviewer ? 14 : 0) + (input.draft ? 27 : 14) + 55 + 12 + 56 + (hasConfirmedMacros ? 62 : 0);
+  const firstContentY = 153 + 22 + patientLines * 13 + objectiveLines * 14 + (input.reviewer ? 14 : 0) + (input.draft ? 27 : 14) + 55 + 12 + 56 + (hasConfirmedMacros ? 74 : 0);
   const pageCapacity = (page: NutritionPdfPage) => page.number === 1 ? 700 - firstContentY : 508 - (input.draft ? 14 : 0);
   const pageUsed = (page: NutritionPdfPage) => page.meals.reduce((sum, meal) => sum + mealHeight({ name: meal.name, items: meal.items, notes: meal.notes }, meal.totals, meal.finalPart), 0) + page.sections.reduce((sum, section) => sum + 26 + section.lines.length * 12, 0);
   const newPage = () => pages.push({ meals: [], summary: false, appendix: false, sections: [], number: pages.length + 1, count: 1 });
@@ -194,6 +194,7 @@ export function nutritionPdfDocumentPages(document: NutritionPdfDocument): Docum
   const calorieTarget = energy?.professional_reviewed ? energy.adjusted_daily_kcal : null;
   const macrosConfirmed = energy?.macro_reviewed === true && calorieTarget !== null && energy.macro_calculated_for_kcal !== null && energy.macro_calculated_for_kcal !== undefined && Math.abs(energy.macro_calculated_for_kcal - calorieTarget) <= 0.02 && percentages.every((percent) => typeof percent === "number" && percent >= 0 && percent <= 100) && Math.abs(percentages.reduce<number>((sum, percent) => sum + (percent ?? 0), 0) - 100) <= 0.01;
   const macroTargetsG = macrosConfirmed ? [calorieTarget! * percentages[0]! / 100 / 4, calorieTarget! * percentages[1]! / 100 / 4, calorieTarget! * percentages[2]! / 100 / 9] : null;
+  const macroTargetsPercent = macrosConfirmed ? percentages as number[] : null;
   return document.pages.map((page) => {
     const lines: DocumentPage = [];
     let y: number;
@@ -236,7 +237,7 @@ export function nutritionPdfDocumentPages(document: NutritionPdfDocument): Docum
       const energyDifference = energy.professional_reviewed && energy.adjusted_daily_kcal && document.dailyTotals.calories !== null ? document.dailyTotals.calories - energy.adjusted_daily_kcal : null;
       lines.push(line(`Diferença entre cardápio e meta: ${energyDifference === null ? "não calculada" : `${cap(energyDifference, "kcal")} (${numberFormat.format(energyDifference / energy.adjusted_daily_kcal! * 100)}%)`}`, 52, y, 8.5, false, colors.muted));
       y += 18;
-      if (macrosConfirmed && macroTargetsG && macroTargetKcal !== null) {
+      if (macrosConfirmed && macroTargetsG && calorieTarget !== null) {
         lines.push(line("MACRONUTRIENTES · META PROFISSIONAL E CARDÁPIO", 52, y, 9.5, true, colors.dark)); y += 13;
         lines.push(line("Macronutriente", 52, y, 7.5, true, colors.sage));
         lines.push(line("Meta (%)", 180, y, 7.5, true, colors.sage));

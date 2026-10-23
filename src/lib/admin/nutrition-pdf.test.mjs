@@ -61,6 +61,20 @@ describe("layout do PDF nutricional", () => {
     expect(pdfText).toContain("TACO-276");
   });
 
+  test("inclui a tabela de metas e consumo de macronutrientes confirmados no PDF", () => {
+    const document = buildNutritionPdfDocument({
+      patient: "Paciente de teste", evaluationDate: null, objective: "Manutenção", emissionDate: "01/01/2026", draft: true, status: "Em elaboração", observations: [], warnings: [], sources: [], reviewer: null,
+      energy: { bmr_kcal: 1400, estimated_daily_kcal: 2000, adjusted_daily_kcal: 1800, professional_reviewed: true, activity_factor: 1.4, activity_level: "Leve", objective: "maintenance", carbohydrate_percent: 50, protein_percent: 20, fat_percent: 30, macro_reviewed: true, macro_calculated_for_kcal: 1800 },
+      meals: [{ name: "Almoço", items: [food("Refeição", 1800, 100, 80, 200, 50)] }],
+    });
+    const text = nutritionPdfDocumentPages(document).flat().map((line) => line.text).join("\n");
+    expect(text).toContain("MACRONUTRIENTES · META PROFISSIONAL E CARDÁPIO");
+    expect(text).toContain("225");
+    expect(text).toContain("90");
+    expect(text).toContain("60");
+    expect(text).toContain("Cardápio (g)");
+  });
+
   test("mantém aguardando revisão como documento não aprovado e não marca PDF aprovado como proposta", () => {
     const common = {
       patient: "Paciente de teste",
