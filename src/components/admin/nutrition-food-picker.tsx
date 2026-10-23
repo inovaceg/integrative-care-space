@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { scaleNutritionPer100g } from "@/lib/admin/nutrition-calculations";
+import { isTrustedNutritionSource, scaleNutritionPer100g } from "@/lib/admin/nutrition-calculations";
 
 type Food = {
   id: string;
@@ -36,6 +36,9 @@ export type PlannedFood = {
   fat_g?: number;
   fat_source?: string;
   alternatives: string[];
+  food_library_id: string;
+  quantity_g: number;
+  nutrition_per_100g: { calories_kcal: number; protein_g: number; carbohydrate_g: number; fat_g: number | null };
 };
 
 const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
@@ -72,7 +75,9 @@ export function NutritionFoodPicker({ allergies, intolerances, onAdd, disabled }
     const allergyTerms = allergies.split(/[,;\n]/).map(normalize).map((term) => term.trim()).filter(Boolean);
     const intoleranceText = normalize(intolerances);
     return foods.filter((food) => {
-      if (allergyTerms.length && (!food.allergen_info_known || allergyTerms.some((term) => food.allergens.some((allergen) => normalize(allergen).includes(term) || term.includes(normalize(allergen)))))) return false;
+      if (!isTrustedNutritionSource(food.source) || !food.license.trim()) return false;
+      const foodAllergens = food.allergens.map(normalize).filter(Boolean);
+      if (allergyTerms.length && (!food.allergen_info_known || allergyTerms.some((term) => foodAllergens.some((allergen) => allergen.includes(term) || term.includes(allergen))))) return false;
       if (/gl[uú]ten|trigo|cevada|centeio/.test(intoleranceText) && food.gluten_status !== "free") return false;
       if (/lactose|leite/.test(intoleranceText) && food.lactose_status !== "free") return false;
       return true;
@@ -101,6 +106,9 @@ export function NutritionFoodPicker({ allergies, intolerances, onAdd, disabled }
       carbohydrate_source: source,
       ...(fat === null ? {} : { fat_g: fat, fat_source: source }),
       alternatives: [],
+      food_library_id: selected.id,
+      quantity_g: quantity,
+      nutrition_per_100g: { calories_kcal: selected.energy_kcal_100g, protein_g: selected.proteins_g_100g, carbohydrate_g: selected.carbohydrates_g_100g, fat_g: selected.fats_g_100g },
     });
   };
 

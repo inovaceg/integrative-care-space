@@ -22,6 +22,13 @@ describe("cálculos nutricionais", () => {
     expect(kgFromGrams(1250)).toBe(1.25);
     expect(cmFromMeters(1.7)).toBe(170);
   });
+  test("escala nutrientes da base por 100 g para a porção informada", () => {
+    expect(scaleNutritionPer100g(250, 40)).toBe(100);
+    expect(scaleNutritionPer100g(3.33, 150)).toBe(5);
+    expect(scaleNutritionPer100g(null, 100)).toBeNull();
+    expect(scaleNutritionPer100g(10, 0)).toBeNull();
+    expect(scaleNutritionPer100g(-1, 100)).toBeNull();
+  });
   test("só soma nutrientes com valor e fonte em cada item", () => {
     const verified = [{ calories_kcal: 100, calories_source: "TBCA" }, { calories_kcal: 50, calories_source: "Rótulo" }];
     expect(sumVerifiedMeal(verified, "calories_kcal", "calories_source")).toBe(150);
