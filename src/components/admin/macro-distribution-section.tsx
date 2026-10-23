@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,7 @@ const show = (value: number | null | undefined) => value == null ? "—" : value
 const parse = (raw: string) => { const value = Number(raw.trim().replace(",", ".")); return raw.trim() && Number.isFinite(value) ? value : null; };
 
 export function MacroDistributionSection({ value, target, energyApproved, fallbackWeight, clinicalReviewFlags, recommendationInput, onChange }: { value: EnergyPlan; target: number | null; energyApproved: boolean; fallbackWeight: number | null; clinicalReviewFlags: string[]; recommendationInput: MacroRecommendationInput; onChange: (next: EnergyPlan) => void }) {
+  const [suggestionMessage, setSuggestionMessage] = useState("");
   const effectiveInput = { ...recommendationInput, energyKcal: energyApproved ? target : null, referenceWeightKg: value.macro_auto_generated ? recommendationInput.referenceWeightKg : value.macro_reference_weight_kg ?? recommendationInput.referenceWeightKg };
   const inputKey = macroRecommendationKey(effectiveInput);
   const recommendation = useMemo(() => recommendMacronutrients(effectiveInput), [inputKey]);
@@ -55,8 +56,18 @@ export function MacroDistributionSection({ value, target, energyApproved, fallba
 
   const update = <K extends keyof EnergyPlan>(key: K, field: EnergyPlan[K]) => onChange({ ...value, [key]: field, macro_reviewed: false, macro_auto_generated: false });
   const manualSuggestion = () => {
+    setSuggestionMessage("");
+    if (!energyApproved || target === null) {
+      setSuggestionMessage("Aprove primeiro uma meta calórica válida para calcular a sugestão automática.");
+      return;
+    }
+    if (!recommendation.distribution && recommendation.fatPercent === null) {
+      setSuggestionMessage(`Não foi possível sugerir os parâmetros automaticamente. ${recommendation.issues.join(" ")}`);
+      return;
+    }
     if (value.macro_reviewed && !window.confirm("Substituir a distribuição de macronutrientes já confirmada por uma nova sugestão?")) return;
     applyRecommendation();
+    setSuggestionMessage("Sugestão recalculada com os dados clínicos e a meta atuais. Revise e confirme os parâmetros antes de gerar a proposta.");
   };
   const confirm = () => {
     if (!calc || target === null || !energyApproved || !value.macro_observations.trim() || (recommendation.requiresClinicalDefinition && !value.macro_renal_reviewed)) return;
@@ -87,7 +98,8 @@ export function MacroDistributionSection({ value, target, energyApproved, fallba
     <div className="mt-3"><Label htmlFor="macro-observations">Justificativa e revisão profissional</Label><Textarea id="macro-observations" className="mt-1" value={value.macro_observations} onChange={(event) => update("macro_observations", event.target.value)} placeholder="Revise e complemente a justificativa da sugestão automática." /><p className="text-xs text-slate-500">{value.macro_observations.trim().length}/20 caracteres</p></div>
     {recommendation.requiresClinicalDefinition && <label className="mt-3 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950"><input type="checkbox" className="mt-1" checked={Boolean(value.macro_renal_reviewed)} onChange={(event) => onChange({ ...value, macro_renal_reviewed: event.target.checked, macro_reviewed: false })} /><span>Revisei a função renal e o contexto clínico; confirmei que os parâmetros proteicos propostos ou definidos manualmente são apropriados. Dados ausentes não foram presumidos normais.</span></label>}
     {clinicalReviewFlags.length > 0 && <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><strong>Contexto clínico para revisão:</strong><ul className="mt-1 list-inside list-disc">{clinicalReviewFlags.map((flag) => <li key={flag}>{flag}</li>)}</ul></div>}
-    <Button type="button" className="mt-3" variant="outline" onClick={manualSuggestion} disabled={!recommendation.distribution && recommendation.fatPercent === null}>Calcular/atualizar sugestão automática</Button>
+    <Button type="button" className="mt-3" variant="outline" onClick={manualSuggestion}>Calcular/atualizar sugestão automática</Button>
+    {suggestionMessage && <p role="status" className="mt-2 text-sm text-slate-700">{suggestionMessage}</p>}
     {suggestionIssues.length > 0 && <ul className="mt-2 list-inside list-disc text-sm text-amber-800">{suggestionIssues.map((issue) => <li key={issue}>{issue}</li>)}</ul>}
     {recommendation.rationale.length > 0 && <div className="mt-3 rounded-lg bg-slate-50 p-3 text-sm"><strong>Protocolo e justificativa</strong><p className="mt-1 font-medium">{recommendation.protocol}</p><ul className="mt-1 list-inside list-disc text-slate-700">{recommendation.rationale.map((item) => <li key={item}>{item}</li>)}</ul><strong className="mt-2 block">Referências</strong><ul className="mt-1 list-inside list-disc text-xs text-slate-600">{recommendation.references.map((item) => <li key={item}>{item}</li>)}</ul></div>}
     {displayedDistribution && <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[480px] text-left text-sm"><thead><tr className="border-b text-slate-500"><th className="py-2">Macronutriente</th><th className="py-2">Percentual</th><th className="py-2">Meta diária</th></tr></thead><tbody>{[["Carboidratos", displayedDistribution.carbohydratePercent, displayedDistribution.carbohydrateG], ["Proteínas", displayedDistribution.proteinPercent, displayedDistribution.proteinG], ["Gorduras", displayedDistribution.fatPercent, displayedDistribution.fatG]].map(([name, percent, grams]) => <tr key={String(name)} className="border-b last:border-0"><td className="py-2">{name}</td><td className="py-2">{show(percent as number)}%</td><td className="py-2">{show(grams as number)} g/dia</td></tr>)}</tbody></table></div>}
