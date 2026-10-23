@@ -33,7 +33,7 @@ function retryDelayFromDetails(details: unknown): number | null {
 
 const wait = (milliseconds: number) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
-const nutritionForPortion = (value: number | null, grams: number) => value === null ? null : Math.round(value * grams / 100 * 10) / 10;
+const nutritionForPortion = (value: number | null, grams: number) => value === null ? null : value * grams / 100;
 const normalizeFoodName = (value: string) => normalize(value).replace(/[^a-z0-9]+/g, " ").trim();
 const isExplicitNegative = (value: unknown) => {
   if (typeof value !== "string" || !value.trim()) return false;

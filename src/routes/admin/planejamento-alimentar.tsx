@@ -8,7 +8,7 @@ import { PersonalizedDietCard } from "@/components/admin/personalized-diet-card"
 import { HydrationSection, type HydrationPlan } from "@/components/admin/hydration-section";
 import { ProteinSection, type ProteinPlan } from "@/components/admin/protein-section";
 import { EnergySection, type EnergyPlan } from "@/components/admin/energy-section";
-import { activityFactorForLevel, calculateMifflinStJeor, clonePlanSnapshot, isTrustedNutritionSource, scaleNutritionPer100g, sumVerifiedMeal, validateEnergyApproval } from "@/lib/admin/nutrition-calculations";
+import { activityFactorForLevel, calculateMifflinStJeor, calculatePlanNutrition, clonePlanSnapshot, isTrustedNutritionSource, scaleNutritionPer100g, sumVerifiedMeal, validateEnergyApproval, validateNutritionTotals } from "@/lib/admin/nutrition-calculations";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -243,17 +243,10 @@ function NutritionPlanningPage() {
       const item = draft.meals[mealIndex]?.items[itemIndex];
       if (!item?.nutrition_per_100g) return;
       const values = item.nutrition_per_100g;
-      const calories = scaleNutritionPer100g(values.calories_kcal, quantity);
-      const protein = scaleNutritionPer100g(values.protein_g, quantity);
-      const carbohydrate = scaleNutritionPer100g(values.carbohydrate_g, quantity);
-      const fat = scaleNutritionPer100g(values.fat_g, quantity);
-      if (calories === null || protein === null || carbohydrate === null) return;
       item.quantity_g = quantity;
       item.portion = `${quantity} g`;
-      item.calories_kcal = calories;
-      item.protein_g = protein;
-      item.carbohydrate_g = carbohydrate;
-      if (fat === null) { delete item.fat_g; delete item.fat_source; } else item.fat_g = fat;
+      const recalculated = calculatePlanNutrition(draft.meals.map((meal) => ({ ...meal, items: meal.items as unknown as Array<Record<string, unknown>> })));
+      draft.meals = recalculated.meals as unknown as PlanContent["meals"];
       setContentText(JSON.stringify(draft, null, 2));
     } catch {
       setError("Não foi possível recalcular a porção. Revise o conteúdo do plano.");
@@ -305,6 +298,7 @@ function NutritionPlanningPage() {
           item.fat_source = item.fat_source ?? item.calories_source;
         }
       }
+      plan.meals = calculatePlanNutrition(plan.meals as unknown as Array<{ name?: string; items?: Array<Record<string, unknown>> }>).meals as unknown as PlanContent["meals"];
       setSyntheticTest(false);
       setContentText(JSON.stringify(plan, null, 2));
       await savePlan("draft", plan, data.model ?? "gemini");

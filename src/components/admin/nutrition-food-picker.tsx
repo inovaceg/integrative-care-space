@@ -14,6 +14,7 @@ type Food = {
   proteins_g_100g: number;
   carbohydrates_g_100g: number;
   fats_g_100g: number | null;
+  fibers_g_100g: number | null;
   household_measure: string;
   allergens: string[];
   allergen_info_known: boolean;
@@ -35,11 +36,13 @@ export type PlannedFood = {
   carbohydrate_source: string;
   fat_g?: number;
   fat_source?: string;
+  fiber_g?: number;
+  fiber_source?: string;
   alternatives: string[];
   food_library_id: string;
   quantity_g: number;
   safety_review_required: boolean;
-  nutrition_per_100g: { calories_kcal: number; protein_g: number; carbohydrate_g: number; fat_g: number | null };
+  nutrition_per_100g: { calories_kcal: number; protein_g: number; carbohydrate_g: number; fat_g: number | null; fiber_g: number | null };
 };
 
 const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
@@ -61,7 +64,7 @@ export function NutritionFoodPicker({ allergies, intolerances, onAdd, disabled }
   useEffect(() => {
     let active = true;
     void supabase.from("nutrition_food_library")
-      .select("id,name,energy_kcal_100g,proteins_g_100g,carbohydrates_g_100g,fats_g_100g,household_measure,allergens,allergen_info_known,gluten_status,lactose_status,source,license,source_code")
+      .select("id,name,energy_kcal_100g,proteins_g_100g,carbohydrates_g_100g,fats_g_100g,fibers_g_100g,household_measure,allergens,allergen_info_known,gluten_status,lactose_status,source,license,source_code")
       .eq("source", "TACO")
       .eq("validation_status", "verified")
       .order("name")
@@ -74,6 +77,7 @@ export function NutritionFoodPicker({ allergies, intolerances, onAdd, disabled }
           proteins_g_100g: Number(food.proteins_g_100g),
           carbohydrates_g_100g: Number(food.carbohydrates_g_100g),
           fats_g_100g: food.fats_g_100g === null ? null : Number(food.fats_g_100g),
+          fibers_g_100g: food.fibers_g_100g === null ? null : Number(food.fibers_g_100g),
         })));
         setLoading(false);
       });
@@ -111,6 +115,7 @@ export function NutritionFoodPicker({ allergies, intolerances, onAdd, disabled }
     const carbohydrate = scaleNutritionPer100g(selected.carbohydrates_g_100g, quantity);
     if (calories === null || protein === null || carbohydrate === null) return;
     const fat = scaleNutritionPer100g(selected.fats_g_100g, quantity);
+    const fiber = scaleNutritionPer100g(selected.fibers_g_100g, quantity);
     const source = `${selected.source}${selected.source_code ? ` · ${selected.source_code}` : ""}; ${selected.license}`;
     onAdd(mealName.trim(), {
       food: selected.name,
@@ -122,11 +127,12 @@ export function NutritionFoodPicker({ allergies, intolerances, onAdd, disabled }
       carbohydrate_g: carbohydrate,
       carbohydrate_source: source,
       ...(fat === null ? {} : { fat_g: fat, fat_source: source }),
+      ...(fiber === null ? {} : { fiber_g: fiber, fiber_source: source }),
       alternatives: [],
       food_library_id: selected.id,
       quantity_g: quantity,
       safety_review_required: !selected.allergen_info_known || selected.gluten_status === "unknown" || selected.lactose_status === "unknown",
-      nutrition_per_100g: { calories_kcal: selected.energy_kcal_100g, protein_g: selected.proteins_g_100g, carbohydrate_g: selected.carbohydrates_g_100g, fat_g: selected.fats_g_100g },
+      nutrition_per_100g: { calories_kcal: selected.energy_kcal_100g, protein_g: selected.proteins_g_100g, carbohydrate_g: selected.carbohydrates_g_100g, fat_g: selected.fats_g_100g, fiber_g: selected.fibers_g_100g },
     });
   };
 
