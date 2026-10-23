@@ -41,6 +41,7 @@ export function NutritionPdfPreview({ document }: { document: NutritionPdfDocume
             </div>)}
           </div>
         </section>}
+        {page.number === 1 && document.energy && <section className="rounded-lg border border-[#d8e2df] bg-[#f7faf9] p-3 text-xs"><h3 className="font-bold uppercase tracking-wide text-[#174b45]">Necessidades energéticas do paciente</h3><p className="mt-1">TMB estimada: {amount(document.energy.bmr_kcal, "kcal/dia")} · GET estimado: {amount(document.energy.estimated_daily_kcal, "kcal/dia")}</p><p className="mt-1 font-semibold">Meta {document.energy.professional_reviewed ? "validada" : "não aprovada"}: {amount(document.energy.professional_reviewed ? document.energy.adjusted_daily_kcal : null, "kcal/dia")} · Total energético do cardápio: {amount(document.dailyTotals.calories, "kcal/dia")}</p><p className="mt-1 text-slate-500">Fator {document.energy.activity_factor ?? "não confirmado"} · {document.energy.activity_level || "atividade não confirmada"}</p></section>}
         {page.meals.map((meal, index) => <section key={`${meal.name}-${index}`} className="break-inside-avoid">
           <h3 className="mb-2 border-l-[3px] border-[#6f9b90] pl-2.5 text-[17px] font-bold uppercase tracking-wide text-[#174b45]">{meal.name}{meal.continued ? " · continuação" : ""}</h3>
           <table className="w-full border-collapse text-xs">

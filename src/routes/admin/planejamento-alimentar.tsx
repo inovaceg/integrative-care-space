@@ -237,6 +237,7 @@ function NutritionPlanningPage() {
     setMessage(`${item.food} foi adicionado a ${mealName}.`);
   };
   const updatePlanQuantity = (mealIndex: number, itemIndex: number, quantity: number) => {
+    if (mealIndex === -1 && itemIndex === -1) { recalculatePlanPortions(); return; }
     if (!Number.isFinite(quantity) || quantity < 1 || quantity > 2000) return;
     try {
       const draft = JSON.parse(contentText) as PlanContent;
@@ -508,6 +509,7 @@ function NutritionPlanningPage() {
         warnings: [...(plan.warnings ?? []), ...(plan.professional_confirmations ?? [])].map(readableText).filter(Boolean),
         sources: [...sources].sort((a, b) => a.localeCompare(b, "pt-BR")),
         reviewer,
+        energy: plan.energy ?? null,
         meals,
       });
       setPdfDocument(document);

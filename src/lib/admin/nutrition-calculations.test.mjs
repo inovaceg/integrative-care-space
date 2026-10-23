@@ -16,7 +16,8 @@ const item = (food, calories_kcal, grams = 100, protein_g = 0, carbohydrate_g = 
 
 describe("cálculos nutricionais", () => {
   test("calcula Mifflin–St Jeor e o total com um só fator de atividade", () => {
-    expect(calculateMifflinStJeor({ weightKg: 70, heightCm: 170, ageYears: 30, sex: "female", activityFactor: 1.2 })).toEqual({ bmrKcal: 1452, totalKcal: 1742 });
+    expect(calculateMifflinStJeor({ weightKg: 70, heightCm: 170, ageYears: 30, sex: "female", activityFactor: 1.2 })).toEqual({ bmrKcal: 1451.5, totalKcal: 1741.8 });
+    expect(calculateMifflinStJeor({ weightKg: 80, heightCm: 165, ageYears: 35, sex: "female", activityFactor: 1.55 })).toEqual({ bmrKcal: 1495.25, totalKcal: 2317.64 });
   });
   test("não presume sexo nem aceita parâmetros impossíveis", () => {
     expect(calculateMifflinStJeor({ weightKg: 70, heightCm: 170, ageYears: 30, sex: null, activityFactor: 1.2 })).toBeNull();

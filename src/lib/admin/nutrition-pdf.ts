@@ -25,7 +25,8 @@ export type NutritionPdfTotals = { calories: number | null; protein: number | nu
 export type NutritionPdfMealPart = { name: string; items: NutritionPdfItem[]; totals: NutritionPdfTotals; notes?: string; continued: boolean; finalPart: boolean };
 export type NutritionPdfSection = { title: string; lines: string[]; kind: "general" | "review" | "source" };
 export type NutritionPdfPage = { meals: NutritionPdfMealPart[]; summary: boolean; appendix: boolean; sections: NutritionPdfSection[]; number: number; count: number };
-export type NutritionPdfDocument = { pages: NutritionPdfPage[]; patient: string; evaluationDate: string | null; objective: string; emissionDate: string; draft: boolean; status: string; observations: string[]; warnings: string[]; sources: string[]; reviewer: string | null; dailyTotals: NutritionPdfTotals };
+export type NutritionPdfEnergy = { bmr_kcal: number | null; estimated_daily_kcal: number | null; adjusted_daily_kcal: number | null; professional_reviewed: boolean; activity_factor: number | null; activity_level: string; objective: string | null };
+export type NutritionPdfDocument = { pages: NutritionPdfPage[]; patient: string; evaluationDate: string | null; objective: string; emissionDate: string; draft: boolean; status: string; observations: string[]; warnings: string[]; sources: string[]; reviewer: string | null; energy?: NutritionPdfEnergy | null; dailyTotals: NutritionPdfTotals };
 
 const numberFormat = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1 });
 export const formatNutritionAmount = (value: number | null, unit: string) => value === null ? "—" : `${numberFormat.format(value)} ${unit}`;
@@ -57,7 +58,7 @@ export function buildNutritionPdfDocument(input: Omit<NutritionPdfDocument, "pag
   const pages: NutritionPdfPage[] = [{ meals: [], summary: true, appendix: false, sections: [], number: 1, count: 1 }];
   const patientLines = fitLines(input.patient, 48).length;
   const objectiveLines = fitLines(input.objective || "Não informado", 42).length;
-  const firstContentY = 153 + 22 + patientLines * 13 + objectiveLines * 14 + (input.reviewer ? 14 : 0) + 19 + 55 + 12;
+  const firstContentY = 153 + 22 + patientLines * 13 + objectiveLines * 14 + (input.reviewer ? 14 : 0) + 19 + 55 + 12 + 44;
   const pageCapacity = (page: NutritionPdfPage) => page.number === 1 ? 700 - firstContentY : 508 - (input.draft ? 14 : 0);
   const pageUsed = (page: NutritionPdfPage) => page.meals.reduce((sum, meal) => sum + mealHeight({ name: meal.name, items: meal.items, notes: meal.notes }, meal.totals, meal.finalPart), 0) + page.sections.reduce((sum, section) => sum + 26 + section.lines.length * 12, 0);
   const newPage = () => pages.push({ meals: [], summary: false, appendix: false, sections: [], number: pages.length + 1, count: 1 });
@@ -209,6 +210,15 @@ export function nutritionPdfDocumentPages(document: NutritionPdfDocument): Docum
       if (document.draft) { lines.push(line("RASCUNHO — NÃO É PRESCRIÇÃO", 52, y, 9, true, colors.amber)); y += 14; }
       lines.push(rule(y));
       y += 16;
+    }
+    if (page.number === 1 && document.energy) {
+      const energy = document.energy;
+      lines.push(line("NECESSIDADES ENERGÉTICAS", 52, y, 10, true, colors.dark));
+      y += 14;
+      lines.push(line(`TMB estimada: ${cap(energy.bmr_kcal, "kcal/dia")} · GET estimado: ${cap(energy.estimated_daily_kcal, "kcal/dia")}`, 52, y, 9, false, colors.ink));
+      y += 12;
+      lines.push(line(`Meta diária ${energy.professional_reviewed ? "validada" : "estimada, não aprovada"}: ${cap(energy.professional_reviewed ? energy.adjusted_daily_kcal : null, "kcal/dia")} · Cardápio: ${cap(document.dailyTotals.calories, "kcal/dia")}`, 52, y, 9, true, energy.professional_reviewed ? colors.green : colors.amber));
+      y += 18;
     }
     for (const meal of page.meals) {
       lines.push(...mealDocumentLines(meal, y));
