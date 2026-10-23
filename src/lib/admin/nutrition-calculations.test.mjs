@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { activityFactorForLevel, ageInYears, calculateEnergyTarget, calculateMifflinStJeor, calculatePlanNutrition, clonePlanSnapshot, cmFromMeters, identifyEnergyObjective, isTrustedNutritionSource, kgFromGrams, scaleNutritionPer100g, sumVerifiedMeal, validateEnergyApproval, validateNutritionTotals } from "./nutrition-calculations";
+import { activityFactorForLevel, ageInYears, calculateEnergyTarget, calculateMifflinStJeor, calculatePlanNutrition, clonePlanSnapshot, cmFromMeters, identifyEnergyObjective, isTrustedNutritionSource, kgFromGrams, scaleNutritionPer100g, scalePlanPortionsToEnergyTarget, sumVerifiedMeal, validateEnergyApproval, validateNutritionTotals } from "./nutrition-calculations";
 
 const source = "TACO · fonte verificada";
 const item = (food, calories_kcal, grams = 100, protein_g = 0, carbohydrate_g = 0, fat_g = 0, fiber_g = 0) => ({
@@ -41,6 +41,12 @@ describe("cálculos nutricionais", () => {
     expect(calculateEnergyTarget(2317.64, "weight_gain", "kcal", 250)).toBe(2567.64);
     expect(calculateEnergyTarget(2317.64, "weight_loss", "percent", 60)).toBeNull();
     expect(calculateEnergyTarget(2317.64, "weight_loss", null, 250)).toBeNull();
+  });
+  test("ajusta deterministicamente as porções à meta energética aprovada", () => {
+    const result = scalePlanPortionsToEnergyTarget([{ name: "Almoço", items: [item("Prato", 250)] }], 500);
+    expect(result.totals.calories_kcal).toBeCloseTo(500, 0);
+    expect(result.meals[0].items[0].quantity_g).toBe(200);
+    expect(() => scalePlanPortionsToEnergyTarget([{ items: [item("Prato", 250)] }], 499)).toThrow();
   });
   test("normaliza atividade registrada e seleciona um fator único", () => {
     expect(activityFactorForLevel("moderado")).toBe(1.55);

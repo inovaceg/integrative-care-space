@@ -8,7 +8,7 @@ import { PersonalizedDietCard } from "@/components/admin/personalized-diet-card"
 import { HydrationSection, type HydrationPlan } from "@/components/admin/hydration-section";
 import { ProteinSection, type ProteinPlan } from "@/components/admin/protein-section";
 import { EnergySection, type EnergyPlan } from "@/components/admin/energy-section";
-import { activityFactorForLevel, ageInYears, calculateMifflinStJeor, calculatePlanNutrition, clonePlanSnapshot, identifyEnergyObjective, isTrustedNutritionSource, scaleNutritionPer100g, sumVerifiedMeal, validateEnergyApproval, validateNutritionTotals } from "@/lib/admin/nutrition-calculations";
+import { activityFactorForLevel, ageInYears, calculateMifflinStJeor, calculatePlanNutrition, clonePlanSnapshot, identifyEnergyObjective, isTrustedNutritionSource, scaleNutritionPer100g, scalePlanPortionsToEnergyTarget, sumVerifiedMeal, validateEnergyApproval, validateNutritionTotals } from "@/lib/admin/nutrition-calculations";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -282,17 +282,8 @@ function NutritionPlanningPage() {
     if (!energy.professional_reviewed || energy.adjusted_daily_kcal === null) return;
     try {
       const draft = JSON.parse(contentText) as PlanContent;
-      const calculation = calculatePlanNutrition(draft.meals as unknown as Array<{ name?: string; items?: Array<Record<string, unknown>> }>);
-      const total = calculation.totals.calories_kcal;
-      if (total === null || total <= 0) { setError("Não é possível recalcular: calorias incompletas ou sem fonte confiável."); return; }
-      const scale = energy.adjusted_daily_kcal / total;
-      const updated = draft.meals.map((meal) => ({ ...meal, items: meal.items.map((item) => {
-        if (!item.nutrition_per_100g || typeof item.quantity_g !== "number") throw new Error("Há alimentos sem composição/quantidade de catálogo para recalcular.");
-        const quantity = Math.round(item.quantity_g * scale * 10) / 10;
-        if (quantity < 1 || quantity > 2000) throw new Error("O ajuste proporcional excederia os limites de porção (1–2.000 g).");
-        return { ...item, quantity_g: quantity, portion: `${quantity} g` };
-      }) }));
-      const next = { ...draft, meals: calculatePlanNutrition(updated as unknown as Array<{ name?: string; items?: Array<Record<string, unknown>> }>).meals as unknown as PlanContent["meals"] };
+      const adjusted = scalePlanPortionsToEnergyTarget(draft.meals as unknown as Array<{ name?: string; items?: Array<Record<string, unknown>> }>, energy.adjusted_daily_kcal);
+      const next = { ...draft, meals: adjusted.meals as unknown as PlanContent["meals"] };
       setContentText(JSON.stringify(next, null, 2));
       setMessage("Porções recalculadas proporcionalmente; revise novamente todos os nutrientes antes de salvar ou encaminhar.");
       setError("");
@@ -352,7 +343,7 @@ function NutritionPlanningPage() {
           item.fat_source = item.fat_source ?? item.calories_source;
         }
       }
-      plan.meals = calculatePlanNutrition(plan.meals as unknown as Array<{ name?: string; items?: Array<Record<string, unknown>> }>).meals as unknown as PlanContent["meals"];
+      plan.meals = scalePlanPortionsToEnergyTarget(plan.meals as unknown as Array<{ name?: string; items?: Array<Record<string, unknown>> }>, energy.adjusted_daily_kcal!).meals as unknown as PlanContent["meals"];
       setSyntheticTest(false);
       setContentText(JSON.stringify(plan, null, 2));
       await savePlan("draft", plan, data.model ?? "gemini");

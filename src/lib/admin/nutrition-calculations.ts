@@ -110,6 +110,27 @@ export function calculatePlanNutrition(meals: Array<{ name?: string; items?: Arr
   return { meals: calculatedMeals, totals, issues: [...new Set(issues)] };
 }
 
+export function scalePlanPortionsToEnergyTarget(meals: Array<{ name?: string; items?: Array<Record<string, unknown>> }>, targetKcal: number): PlanNutritionResult {
+  if (!Number.isFinite(targetKcal) || targetKcal < 500 || targetKcal > 10000) throw new Error("A meta calórica aprovada é inválida.");
+  const initial = calculatePlanNutrition(meals);
+  const currentCalories = initial.totals.calories_kcal;
+  if (currentCalories === null || currentCalories <= 0) throw new Error("Não é possível ajustar porções: calorias incompletas ou sem fonte confiável.");
+  const scale = targetKcal / currentCalories;
+  const adjustedMeals = initial.meals.map((meal) => ({
+    name: meal.name,
+    items: meal.items.map((item) => {
+      if (!item.nutrition_per_100g || typeof item.quantity_g !== "number") throw new Error("Há alimentos sem composição/quantidade de catálogo para ajustar à meta.");
+      const quantity = Math.round(item.quantity_g * scale * 10) / 10;
+      if (quantity < 1 || quantity > 2000) throw new Error("O ajuste à meta excede os limites de porção (1–2.000 g); revise a composição do cardápio.");
+      return { ...item, quantity_g: quantity, portion: `${quantity} g` };
+    }),
+  }));
+  const adjusted = calculatePlanNutrition(adjustedMeals);
+  const finalCalories = adjusted.totals.calories_kcal;
+  if (finalCalories === null || Math.abs(finalCalories - targetKcal) / targetKcal > 0.05) throw new Error("As porções calculadas não atingiram a tolerância de 5% da meta calórica. Revise a composição do cardápio.");
+  return adjusted;
+}
+
 export function clonePlanSnapshot<T>(content: T): T {
   return JSON.parse(JSON.stringify(content)) as T;
 }
