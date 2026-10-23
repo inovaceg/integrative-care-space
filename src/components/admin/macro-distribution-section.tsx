@@ -16,11 +16,10 @@ export function MacroDistributionSection({ value, target, energyApproved, fallba
   const inputKey = macroRecommendationKey(effectiveInput);
   const recommendation = useMemo(() => recommendMacronutrients(effectiveInput), [inputKey]);
   const stale = isMacroDistributionStale(value.macro_calculated_for_kcal, target) || Boolean(value.macro_context_key !== inputKey && (value.macro_reviewed || value.macro_auto_generated || value.macro_context_key != null));
-  const percentValues = [value.carbohydrate_percent, value.protein_percent, value.fat_percent];
   const calc = useMemo(() => {
-    if (stale || target === null || percentValues.some((percent) => percent === null || !Number.isFinite(percent) || percent! < 0 || percent! > 100) || Math.abs(percentValues.reduce<number>((sum, percent) => sum + (percent ?? 0), 0) - 100) > 0.01) return null;
-    return calculateMacroDistribution({ energyKcal: target, referenceWeightKg: value.macro_reference_weight_kg ?? recommendation.referenceWeightKg, proteinFactorGPerKg: value.macro_protein_factor_g_per_kg, fatPercent: value.macro_fat_percent }).distribution;
-  }, [inputKey, stale, target, value.macro_reference_weight_kg, value.macro_protein_factor_g_per_kg, value.macro_fat_percent, value.carbohydrate_percent, value.protein_percent, value.fat_percent, recommendation.referenceWeightKg]);
+    if (target === null) return null;
+    return calculateMacroDistribution({ energyKcal: target, referenceWeightKg: value.macro_reference_weight_kg ?? recommendation.referenceWeightKg ?? fallbackWeight, proteinFactorGPerKg: value.macro_protein_factor_g_per_kg ?? recommendation.proteinFactorGPerKg, fatPercent: value.macro_fat_percent ?? recommendation.fatPercent }).distribution;
+  }, [target, value.macro_reference_weight_kg, value.macro_protein_factor_g_per_kg, value.macro_fat_percent, recommendation.referenceWeightKg, recommendation.proteinFactorGPerKg, recommendation.fatPercent, fallbackWeight]);
 
   const applyRecommendation = () => {
     if (!recommendation.distribution && recommendation.fatPercent === null) return;
