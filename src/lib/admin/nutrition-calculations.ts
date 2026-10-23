@@ -30,7 +30,7 @@ export function calculateMifflinStJeor(inputs: EnergyInputs): EnergyEstimate | n
   if (weightKg === null || heightCm === null || ageYears === null || (sex !== "female" && sex !== "male") || activityFactor === null) return null;
   if (![weightKg, heightCm, ageYears, activityFactor].every(Number.isFinite) || weightKg < 20 || weightKg > 350 || heightCm < 100 || heightCm > 250 || !Number.isInteger(ageYears) || ageYears < 18 || ageYears > 120 || activityFactor < 1 || activityFactor > 2.5) return null;
   const bmr = 10 * weightKg + 6.25 * heightCm - 5 * ageYears + (sex === "male" ? 5 : -161);
-  return { bmrKcal: Math.round(bmr), totalKcal: Math.round(bmr * activityFactor) };
+  return { bmrKcal: Math.round(bmr * 100) / 100, totalKcal: Math.round(bmr * activityFactor * 100) / 100 };
 }
 
 export function scaleNutritionPer100g(value: number | null, grams: number): number | null {

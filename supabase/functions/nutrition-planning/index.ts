@@ -115,7 +115,7 @@ serve(async (req) => {
   const { data: professional, error: professionalError } = await supabase.from("profissionais").select("id").eq("id", userId).maybeSingle();
   if (professionalError || !professional) return jsonResponse({ error: "Perfil profissional não encontrado." }, 403);
 
-  let input: { test_mode?: boolean; patient_id?: string; goal?: string; duration_days?: number; desired_meals?: number | null };
+  let input: { test_mode?: boolean; patient_id?: string; goal?: string; duration_days?: number; desired_meals?: number | null; energy?: { sex_parameter?: string; weight_kg?: number; height_cm?: number; age_years?: number; activity_factor?: number; bmr_kcal?: number; estimated_daily_kcal?: number; adjusted_daily_kcal?: number; objective?: string; professional_reviewed?: boolean; observations?: string } };
   try { input = await req.json(); } catch { return jsonResponse({ error: "Requisição inválida." }, 400); }
   const testMode = input.test_mode === true;
   if (!testMode) {
@@ -166,17 +166,27 @@ serve(async (req) => {
   if (!testMode) {
     const { data: patient, error: patientError } = await supabase.from("pacientes").select("id,data_nascimento").eq("id", input.patient_id!).eq("profissional_id", userId).maybeSingle();
     if (patientError || !patient) return jsonResponse({ error: "Paciente não encontrado ou sem autorização." }, 404);
-    const [profileResult, anamnesisResult] = await Promise.all([
+    const [profileResult, anamnesisResult, evaluationResult] = await Promise.all([
       supabase.from("patient_nutrition_profiles").select("allergies,intolerances,avoided_foods,preferred_foods,cultural_restrictions,diagnosed_conditions,pregnancy_or_breastfeeding,eating_disorder_history").eq("patient_id", input.patient_id!).eq("profissional_id", userId).maybeSingle(),
       supabase.from("anamneses").select("doencas_fisicas").eq("paciente_id", input.patient_id!).eq("profissional_id", userId).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("body_evaluations").select("weight_kg,height_cm,evaluation_date").eq("patient_id", input.patient_id!).eq("profissional_id", userId).order("evaluation_date", { ascending: false }).limit(1).maybeSingle(),
     ]);
-    if (profileResult.error || anamnesisResult.error) {
-      console.error(`[${functionName}] Failed loading authorized safety records`);
-      return jsonResponse({ error: "Não foi possível carregar os dados de segurança autorizados." }, 500);
+    if (profileResult.error || anamnesisResult.error || evaluationResult.error) {
+      console.error(`[${functionName}] Failed loading authorized patient safety or assessment records`);
+      return jsonResponse({ error: "Não foi possível carregar os dados de segurança e avaliação autorizados." }, 500);
     }
     const age = patient.data_nascimento ? Math.floor((Date.now() - new Date(`${patient.data_nascimento}T00:00:00`).getTime()) / 31557600000) : null;
     const profile = profileResult.data;
+    const energy = input.energy;
     if (age === null || !Number.isFinite(age) || age < 18) return jsonResponse({ error: "A proposta automática está disponível apenas para pacientes adultos com idade confirmada." }, 422);
+    if (!energy || energy.professional_reviewed !== true || !energy.observations?.trim() || !["female", "male"].includes(energy.sex_parameter ?? "") || ![1.2, 1.375, 1.55, 1.725, 1.9].includes(Number(energy.activity_factor)) || !["maintenance", "weight_loss", "weight_gain"].includes(energy.objective ?? "")) return jsonResponse({ error: "Necessidades energéticas não confirmadas por profissional." }, 422);
+    const latestEvaluation = evaluationResult.data;
+    const weight = Number(energy.weight_kg ?? latestEvaluation?.weight_kg);
+    const height = Number(energy.height_cm ?? latestEvaluation?.height_cm);
+    if (!Number.isFinite(weight) || weight < 20 || weight > 350 || !Number.isFinite(height) || height < 100 || height > 250 || energy.age_years !== age) return jsonResponse({ error: "Dados antropométricos ou idade ausentes, inválidos ou desatualizados." }, 422);
+    const basal = 10 * weight + 6.25 * height - 5 * age + (energy.sex_parameter === "male" ? 5 : -161);
+    const get = basal * Number(energy.activity_factor);
+    if (Math.abs(Number(energy.bmr_kcal) - basal) > 0.02 || Math.abs(Number(energy.estimated_daily_kcal) - get) > 0.02 || !Number.isFinite(Number(energy.adjusted_daily_kcal)) || Number(energy.adjusted_daily_kcal) < 500 || Number(energy.adjusted_daily_kcal) > 10000) return jsonResponse({ error: "Cálculo energético não corresponde aos dados atuais do paciente." }, 422);
     if (!hasConfirmedAllergyStatus(profile?.allergies)) return jsonResponse({ error: "Confirme e registre as alergias alimentares antes de gerar uma proposta." }, 422);
     if (hasClinicalFlag(profile?.pregnancy_or_breastfeeding) || hasClinicalFlag(profile?.diagnosed_conditions) || hasClinicalFlag(profile?.eating_disorder_history) || hasClinicalFlag(anamnesisResult.data?.doencas_fisicas)) return jsonResponse({ error: "Este caso exige avaliação individualizada do profissional; não foi enviada informação clínica ao serviço de IA." }, 422);
     const culturalRestrictions = normalize(profile?.cultural_restrictions ?? "");
@@ -224,6 +234,7 @@ serve(async (req) => {
       goal_category: goalCategory,
       duration_days: input.duration_days,
       meals_per_day: input.desired_meals,
+      validated_energy_target: { bmr_kcal: Number(energy.bmr_kcal), get_kcal: Number(energy.estimated_daily_kcal), approved_target_kcal: Number(energy.adjusted_daily_kcal), activity_factor: Number(energy.activity_factor), objective: energy.objective, professionally_reviewed: true },
       permitted_verified_foods: permittedFoods.map((food) => ({
         id: food.id,
         codigo_taco: food.source_code,

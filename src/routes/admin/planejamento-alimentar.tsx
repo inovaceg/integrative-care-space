@@ -36,7 +36,7 @@ const emptyProtein: ProteinPlan = { weight_kg: null, weight_date: null, weight_s
 const latestWeight = (evaluations: Evaluation[], applications: Application[]): WeightMeasurement | null => [...evaluations.flatMap((item) => item.weight_kg !== null && item.weight_kg >= 20 && item.weight_kg <= 350 && item.evaluation_date ? [{ weight_kg: item.weight_kg, weight_date: item.evaluation_date, weight_source: "Avaliação corporal" }] : []), ...applications.flatMap((item) => item.current_weight_kg >= 20 && item.current_weight_kg <= 350 && item.application_date ? [{ weight_kg: item.current_weight_kg, weight_date: item.application_date, weight_source: `Aplicação: ${item.procedure_name}` }] : [])].sort((a, b) => b.weight_date.localeCompare(a.weight_date))[0] ?? null;
 const hydrationForPlan = (content: PlanContent | null | undefined, measurements: WeightMeasurement | null): HydrationPlan => content?.hydration ?? { ...emptyHydration, ...(measurements ?? {}) };
 const proteinForPlan = (content: PlanContent | null | undefined, measurements: WeightMeasurement | null): ProteinPlan => content?.protein ?? { ...emptyProtein, ...(measurements ?? {}) };
-const emptyEnergy: EnergyPlan = { method: "Mifflin-St Jeor", sex_parameter: null, weight_kg: null, height_cm: null, age_years: null, age_source: null, weight_source: null, weight_date: null, calculated_at: null, height_source: null, activity_level: "", activity_factor: null, activity_context: "", objective: null, bmr_kcal: null, estimated_daily_kcal: null, adjusted_daily_kcal: null, observations: "", professional_reviewed: false, reviewed_at: null };
+const emptyEnergy: EnergyPlan = { method: "Mifflin-St Jeor", sex_parameter: null, weight_kg: null, height_cm: null, age_years: null, age_source: null, weight_source: null, weight_date: null, calculated_at: null, height_source: null, activity_level: "", activity_factor: null, activity_context: "", objective: null, adjustment_mode: null, adjustment_value: null, bmr_kcal: null, estimated_daily_kcal: null, adjusted_daily_kcal: null, observations: "", professional_reviewed: false, reviewed_at: null };
 const energyForPlan = (content: PlanContent | null | undefined): EnergyPlan => ({ ...emptyEnergy, ...(content?.energy ?? {}) });
 type PlanVersion = { id: string; version_number: number; plan_content: PlanContent; created_at: string; created_by: string };
 const emptyProfile: Profile = { height_cm: "", reference_weight_kg: "", goal: "", activity_level: "", exercise_details: "", wake_time: "", sleep_time: "", meal_schedule: "", desired_meals: "", work_routine: "", cooking_availability: "", food_budget: "", preferred_foods: "", avoided_foods: "", cultural_restrictions: "", simple_meals_preference: false, affordable_food_preference: false, allergies: "", intolerances: "", diagnosed_conditions: "", pregnancy_or_breastfeeding: "", medications: "", supplements: "", eating_disorder_history: "" };
@@ -253,16 +253,42 @@ function NutritionPlanningPage() {
     }
   };
 
+  function recalculatePlanPortions() {
+    if (!energy.professional_reviewed || energy.adjusted_daily_kcal === null) return;
+    try {
+      const draft = JSON.parse(contentText) as PlanContent;
+      const calculation = calculatePlanNutrition(draft.meals as unknown as Array<{ name?: string; items?: Array<Record<string, unknown>> }>);
+      const total = calculation.totals.calories_kcal;
+      if (total === null || total <= 0) { setError("Não é possível recalcular: calorias incompletas ou sem fonte confiável."); return; }
+      const scale = energy.adjusted_daily_kcal / total;
+      const updated = draft.meals.map((meal) => ({ ...meal, items: meal.items.map((item) => {
+        if (!item.nutrition_per_100g || typeof item.quantity_g !== "number") throw new Error("Há alimentos sem composição/quantidade de catálogo para recalcular.");
+        const quantity = Math.round(item.quantity_g * scale * 10) / 10;
+        if (quantity < 1 || quantity > 2000) throw new Error("O ajuste proporcional excederia os limites de porção (1–2.000 g).");
+        return { ...item, quantity_g: quantity, portion: `${quantity} g` };
+      }) }));
+      const next = { ...draft, meals: calculatePlanNutrition(updated as unknown as Array<{ name?: string; items?: Array<Record<string, unknown>> }>).meals as unknown as PlanContent["meals"] };
+      setContentText(JSON.stringify(next, null, 2));
+      setMessage("Porções recalculadas proporcionalmente; revise novamente todos os nutrientes antes de salvar ou encaminhar.");
+      setError("");
+    } catch (failure) { setError(failure instanceof Error ? failure.message : "Não foi possível recalcular as porções."); }
+  }
+
   async function generatePersonalizedPlan() {
     if (!patientId || !selected || generating || activePlan?.status === "approved") return;
     if (!profile.goal.trim()) { setError("Informe o objetivo do planejamento antes de gerar a proposta."); setMessage(""); return; }
     const mealCount = Number(profile.desired_meals);
     if (!Number.isInteger(mealCount) || mealCount < 1 || mealCount > 10) { setError("Informe de 1 a 10 refeições por dia no perfil nutricional."); setMessage(""); return; }
+    const registeredWeight = latestWeight(evaluations, applications);
+    const energyFactor = activityFactorForLevel(energy.activity_level || profile.activity_level);
+    const energyEstimate = calculateMifflinStJeor({ weightKg: energy.weight_kg ?? registeredWeight?.weight_kg ?? null, heightCm: energy.height_cm ?? currentEvaluation?.height_cm ?? (profile.height_cm ? Number(profile.height_cm) : null), ageYears: energy.age_years ?? ageFrom(selected.data_nascimento), sex: energy.sex_parameter, activityFactor: energyFactor });
+    if (!energyEstimate || !energy.professional_reviewed || !energy.objective || !energy.observations.trim() || !energy.adjusted_daily_kcal) { setError("Revise e aprove as necessidades energéticas antes de solicitar a geração do cardápio."); setMessage(""); return; }
+    if (profile.pregnancy_or_breastfeeding.trim() && !/^(nao|não|nenhum|nenhuma|n\\/?a|nao se aplica)$/i.test(profile.pregnancy_or_breastfeeding.trim())) { setError("Gestação/amamentação exige avaliação clínica individualizada; geração automática bloqueada."); setMessage(""); return; }
     setGenerating(true); setError(""); setMessage("");
     try {
       if (!(await saveProfile())) return;
       const { data, error: invokeError } = await supabase.functions.invoke("nutrition-planning", {
-        body: { patient_id: patientId, goal: profile.goal, duration_days: Number(duration), desired_meals: mealCount },
+        body: { patient_id: patientId, goal: profile.goal, duration_days: Number(duration), desired_meals: mealCount, energy: { ...energy, weight_kg: energy.weight_kg ?? registeredWeight?.weight_kg ?? null, activity_factor: energyFactor, bmr_kcal: energyEstimate.bmrKcal, estimated_daily_kcal: energyEstimate.totalKcal, adjusted_daily_kcal: energy.adjusted_daily_kcal } },
       });
       if (invokeError) {
         let detail = invokeError.message;
@@ -276,6 +302,7 @@ function NutritionPlanningPage() {
       if (data?.error) throw new Error(typeof data.error === "string" ? data.error : "A função retornou um erro ao gerar a proposta.");
       if (!data?.plan || !Array.isArray(data.plan.meals)) throw new Error("A função de geração respondeu sem uma proposta válida.");
       const plan = data.plan as PlanContent;
+      plan.energy = { ...energy, bmr_kcal: energyEstimate.bmrKcal, estimated_daily_kcal: energyEstimate.totalKcal, activity_factor: energyFactor, calculated_at: new Date().toISOString() };
       for (const meal of plan.meals) {
         for (const item of meal.items) {
           const grams = item.quantity_g;
