@@ -61,7 +61,7 @@ export function buildNutritionPdfDocument(input: Omit<NutritionPdfDocument, "pag
   const pages: NutritionPdfPage[] = [{ meals: [], summary: true, appendix: false, sections: [], number: 1, count: 1 }];
   const patientLines = fitLines(input.patient, 48).length;
   const objectiveLines = fitLines(input.objective || "Não informado", 42).length;
-  const firstContentY = 153 + 22 + patientLines * 13 + objectiveLines * 14 + (input.reviewer ? 14 : 0) + 19 + (input.draft ? 13 : 0) + 55 + 12 + 56;
+  const firstContentY = 153 + 22 + patientLines * 13 + objectiveLines * 14 + (input.reviewer ? 14 : 0) + (input.draft ? 27 : 14) + 55 + 12 + 56;
   const pageCapacity = (page: NutritionPdfPage) => page.number === 1 ? 700 - firstContentY : 508 - (input.draft ? 14 : 0);
   const pageUsed = (page: NutritionPdfPage) => page.meals.reduce((sum, meal) => sum + mealHeight({ name: meal.name, items: meal.items, notes: meal.notes }, meal.totals, meal.finalPart), 0) + page.sections.reduce((sum, section) => sum + 26 + section.lines.length * 12, 0);
   const newPage = () => pages.push({ meals: [], summary: false, appendix: false, sections: [], number: pages.length + 1, count: 1 });

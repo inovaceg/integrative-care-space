@@ -35,7 +35,7 @@ describe("layout do PDF nutricional", () => {
       objective: "Planejamento alimentar",
       emissionDate: "01/01/2026",
       draft: true,
-      status: "Rascunho",
+      status: "Em elaboração",
       observations: [],
       warnings: [],
       sources: ["TACO-1", "TACO-276", "TACO-100"],
@@ -51,10 +51,33 @@ describe("layout do PDF nutricional", () => {
     expect(document.pages).toHaveLength(2);
     expect(document.pages.map((page) => page.meals.length)).toEqual([3, 3]);
     const pdfText = nutritionPdfDocumentPages(document).flat().map((line) => line.text).join("\n");
-    expect(pdfText).toContain("RASCUNHO — NÃO É PRESCRIÇÃO");
+    expect(pdfText).toContain("SITUAÇÃO: EM ELABORAÇÃO");
+    expect(pdfText).toContain("Proposta alimentar em elaboração — não utilizar como prescrição.");
+    expect(pdfText).not.toContain("RASCUNHO — NÃO É PRESCRIÇÃO");
     expect(pdfText).toContain("Total da refeição: 300 kcal");
     expect(pdfText).toContain("Proteínas 37,4 g");
     expect(pdfText).toContain("1.247,3 kcal");
     expect(pdfText).toContain("TACO-276");
+  });
+
+  test("mantém aguardando revisão como documento não aprovado e não marca PDF aprovado como proposta", () => {
+    const common = {
+      patient: "Paciente de teste",
+      evaluationDate: null,
+      objective: "Manutenção",
+      emissionDate: "01/01/2026",
+      observations: [],
+      warnings: [],
+      sources: [],
+      reviewer: null,
+      energy: null,
+      meals: [{ name: "Almoço", items: [food("Arroz", 150)] }],
+    };
+    const reviewText = nutritionPdfDocumentPages(buildNutritionPdfDocument({ ...common, draft: true, status: "Aguardando revisão" })).flat().map((line) => line.text).join("\n");
+    expect(reviewText).toContain("SITUAÇÃO: AGUARDANDO REVISÃO");
+    expect(reviewText).toContain("Proposta alimentar para revisão profissional — não constitui prescrição dietética.");
+    const approvedText = nutritionPdfDocumentPages(buildNutritionPdfDocument({ ...common, draft: false, status: "Aprovado", reviewer: "Aprovado por Nutricionista · CRN 00000" })).flat().map((line) => line.text).join("\n");
+    expect(approvedText).toContain("SITUAÇÃO: APROVADO");
+    expect(approvedText).not.toContain("não constitui prescrição dietética");
   });
 });
