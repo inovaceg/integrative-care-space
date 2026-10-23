@@ -13,8 +13,10 @@ type Item = {
   carbohydrate_source?: string;
   fat_g?: number;
   fat_source?: string;
+  fiber_g?: number;
+  fiber_source?: string;
   quantity_g?: number;
-  nutrition_per_100g?: { calories_kcal: number; protein_g: number; carbohydrate_g: number; fat_g: number | null };
+  nutrition_per_100g?: { calories_kcal: number; protein_g: number; carbohydrate_g: number; fat_g: number | null; fiber_g?: number | null };
 };
 type Meal = { name: string; items: Item[]; notes?: string };
 type PlanContent = { summary?: string; objective?: string; warnings?: string[]; meals?: Meal[]; observations?: string[]; professional_confirmations?: string[] };
@@ -24,6 +26,7 @@ const nutritionFields = [
   ["Proteínas", "protein_g", "protein_source", "g"],
   ["Carboidratos", "carbohydrate_g", "carbohydrate_source", "g"],
   ["Gorduras", "fat_g", "fat_source", "g"],
+  ["Fibras", "fiber_g", "fiber_source", "g"],
 ] as const;
 const formatAmount = (value: number, unit: string) => `${value.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} ${unit}`;
 

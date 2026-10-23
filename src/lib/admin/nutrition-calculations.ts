@@ -29,7 +29,7 @@ export function isTrustedNutritionSource(value: unknown): boolean {
   return typeof value === "string" && /\b(TBCA|TACO|r[oó]tulo|USDA)\b/i.test(value.trim());
 }
 
-export function sumVerifiedMeal(items: Array<Record<string, unknown>>, nutrient: "calories_kcal" | "protein_g" | "carbohydrate_g" | "fat_g", source: "calories_source" | "protein_source" | "carbohydrate_source" | "fat_source"): number | null {
+export function sumVerifiedMeal(items: Array<Record<string, unknown>>, nutrient: "calories_kcal" | "protein_g" | "carbohydrate_g" | "fat_g" | "fiber_g", source: "calories_source" | "protein_source" | "carbohydrate_source" | "fat_source" | "fiber_source"): number | null {
   if (!items.length || !items.every((item) => typeof item[nutrient] === "number" && Number.isFinite(item[nutrient]) && (item[nutrient] as number) >= 0 && isTrustedNutritionSource(item[source]))) return null;
   return items.reduce((total, item) => total + (item[nutrient] as number), 0);
 }
