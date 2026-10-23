@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, Activity, ClipboardList, HeartPulse, Loader2, RefreshCw, Save } from "lucide-react";
+import { AlertTriangle, Activity, ClipboardList, Download, Eye, HeartPulse, Loader2, RefreshCw, Save } from "lucide-react";
 import { AdminLayout, AdminNotice, PageIntro, SectionCard } from "@/components/admin/admin-ui";
 import { NutritionPlanPreview } from "@/components/admin/nutrition-plan-preview";
 import { NutritionFoodPicker, type PlannedFood } from "@/components/admin/nutrition-food-picker";
@@ -11,6 +11,9 @@ import { EnergySection, type EnergyPlan } from "@/components/admin/energy-sectio
 import { activityFactorForLevel, calculateMifflinStJeor, clonePlanSnapshot, isTrustedNutritionSource, scaleNutritionPer100g, sumVerifiedMeal, validateEnergyApproval } from "@/lib/admin/nutrition-calculations";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { NutritionPdfPreview } from "@/components/admin/nutrition-pdf-preview";
+import { buildNutritionPdfDocument, formatNutritionAmount, nutritionPdfDocumentPages, type NutritionPdfDocument, type NutritionPdfItem, type NutritionPdfMeal } from "@/lib/admin/nutrition-pdf";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -24,7 +27,7 @@ type Evaluation = { id: string; evaluation_date: string; weight_kg: number | nul
 type Application = { id: string; procedure_name: string; current_weight_kg: number; application_date: string; notes: string | null };
 type Anamnesis = { alimentacao: string | null; atividade_fisica: string | null; qualidade_sono: string | null; doencas_fisicas: string | null; medicamentos_atuais: string | null; usa_medicamentos: boolean | null; sintomas_atuais: unknown };
 type Profile = { height_cm: string; reference_weight_kg: string; goal: string; activity_level: string; exercise_details: string; wake_time: string; sleep_time: string; meal_schedule: string; desired_meals: string; work_routine: string; cooking_availability: string; food_budget: string; preferred_foods: string; avoided_foods: string; cultural_restrictions: string; simple_meals_preference: boolean; affordable_food_preference: boolean; allergies: string; intolerances: string; diagnosed_conditions: string; pregnancy_or_breastfeeding: string; medications: string; supplements: string; eating_disorder_history: string };
-type Meal = { name: string; items: { food: string; portion: string; alternatives?: string[]; protein_g?: number; protein_source?: string; calories_kcal?: number; calories_source?: string; carbohydrate_g?: number; carbohydrate_source?: string; fat_g?: number; fat_source?: string; food_library_id?: string; quantity_g?: number; nutrition_per_100g?: { calories_kcal: number; protein_g: number; carbohydrate_g: number; fat_g: number | null } }[]; notes?: string };
+type Meal = { name: string; items: { food: string; portion: string; alternatives?: string[]; protein_g?: number; protein_source?: string; calories_kcal?: number; calories_source?: string; carbohydrate_g?: number; carbohydrate_source?: string; fat_g?: number; fat_source?: string; fiber_g?: number; fiber_source?: string; food_library_id?: string; quantity_g?: number; nutrition_per_100g?: { calories_kcal: number; protein_g: number; carbohydrate_g: number; fat_g: number | null; fiber_g?: number | null }; notes?: string }[]; notes?: string };
 type PlanContent = { summary: string; objective: string; warnings: string[]; meals: Meal[]; observations: string[]; professional_confirmations: string[]; hydration?: HydrationPlan; protein?: ProteinPlan; energy?: EnergyPlan };
 type Plan = { id: string; goal: string; duration_days: number; status: string; plan_content: PlanContent; model_name: string | null; created_at: string; approved_at: string | null; approved_by: string | null; approved_version_id: string | null };
 type WeightMeasurement = { weight_kg: number; weight_date: string; weight_source: string };
@@ -86,6 +89,9 @@ function NutritionPlanningPage() {
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [syntheticTest, setSyntheticTest] = useState(false);
+  const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
+  const [pdfPreparing, setPdfPreparing] = useState(false);
+  const [pdfDocument, setPdfDocument] = useState<NutritionPdfDocument | null>(null);
   const [loading, setLoading] = useState(false);
   const [refreshingPatient, setRefreshingPatient] = useState(false);
   const [patientRefreshKey, setPatientRefreshKey] = useState(0);
@@ -379,6 +385,107 @@ function NutritionPlanningPage() {
     if (approvalError || !data?.approved) setError(data?.error ?? "A aprovação exige credencial CRN verificada e uma versão válida enviada para revisão."); else { setMessage("Planejamento aprovado."); await refreshPlans(activePlan.id); }
   }
 
+  async function preparePdfPreview() {
+    if (!selected || syntheticTest || pdfPreparing) return;
+    setPdfPreparing(true);
+    setError("");
+    try {
+      const isApproved = activePlan?.status === "approved";
+      let plan: PlanContent;
+      try { plan = JSON.parse(contentText) as PlanContent; }
+      catch { throw new Error("Revise o conteúdo: não foi possível interpretar o planejamento para a prévia."); }
+      if (!plan || !Array.isArray(plan.meals)) throw new Error("O planejamento não contém refeições válidas para a prévia.");
+      if (isApproved) {
+        if (!activePlan?.approved_version_id) throw new Error("Não foi possível localizar a versão aprovada deste planejamento.");
+        const { data, error: versionError } = await supabase.from("nutrition_plan_versions").select("plan_content").eq("id", activePlan.approved_version_id).eq("plan_id", activePlan.id).maybeSingle();
+        if (versionError || !data) throw new Error("Não foi possível carregar a versão aprovada imutável.");
+        plan = data.plan_content as PlanContent;
+      }
+      const isUuid = (value: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+      const foodIds = [...new Set((plan.meals ?? []).flatMap((meal) => (meal.items ?? []).flatMap((item) => [item.food_library_id, ...(item.alternatives ?? [])]).filter((value): value is string => typeof value === "string" && isUuid(value))))];
+      let foodRows: Array<{ id: string; name: string; source_code: string | null }> = [];
+      if (foodIds.length) {
+        const { data, error: foodError } = await supabase.from("nutrition_food_library").select("id,name,source_code").in("id", foodIds);
+        if (foodError) throw new Error("Não foi possível resolver os nomes oficiais dos alimentos no catálogo.");
+        foodRows = (data as Array<{ id: string; name: string; source_code: string | null }> | null) ?? [];
+      }
+      const foodsById = new Map(foodRows.map((food) => [food.id, food]));
+      const sources = new Set<string>();
+      const meals: NutritionPdfMeal[] = (plan.meals ?? []).map((meal) => ({
+        name: meal.name,
+        notes: meal.notes,
+        items: (meal.items ?? []).map((item) => {
+          const id = item.food_library_id ?? (isUuid(item.food) ? item.food : undefined);
+          const catalogFood = id ? foodsById.get(id) : undefined;
+          if (id && !catalogFood) throw new Error("Um alimento desta versão não foi encontrado no catálogo. Revise o plano antes de gerar o PDF.");
+          const foodName = catalogFood?.name ?? item.food;
+          if (!foodName || isUuid(foodName)) throw new Error("Não foi possível resolver um nome legível para um alimento do plano.");
+          if (catalogFood?.source_code) sources.add(catalogFood.source_code);
+          else {
+            const source = [item.calories_source, item.protein_source, item.carbohydrate_source, item.fat_source].find((value) => typeof value === "string" && /TACO|TBCA/i.test(value));
+            const code = source?.match(/(?:TACO|TBCA)[\s·-]*[A-Z0-9-]+/i)?.[0];
+            if (code) sources.add(code);
+          }
+          const alternatives = (item.alternatives ?? []).map((alternative) => isUuid(alternative) ? foodsById.get(alternative)?.name : alternative).filter((value): value is string => Boolean(value) && !isUuid(value));
+          return {
+            food: foodName,
+            portion: typeof item.quantity_g === "number" ? `${formatNutritionAmount(item.quantity_g, "g")}` : item.portion,
+            quantity_g: item.quantity_g,
+            calories_kcal: item.calories_kcal,
+            calories_source: item.calories_source,
+            protein_g: item.protein_g,
+            protein_source: item.protein_source,
+            carbohydrate_g: item.carbohydrate_g,
+            carbohydrate_source: item.carbohydrate_source,
+            fat_g: item.fat_g,
+            fat_source: item.fat_source,
+            fiber_g: item.fiber_g,
+            fiber_source: item.fiber_source,
+            alternatives: [...new Set(alternatives)],
+            notes: item.notes,
+            source_code: catalogFood?.source_code,
+          } satisfies NutritionPdfItem;
+        }),
+      }));
+      let reviewer: string | null = null;
+      if (isApproved && activePlan?.approved_by) {
+        const { data } = await supabase.from("nutritionist_credentials").select("full_name,crn").eq("profissional_id", activePlan.approved_by).maybeSingle();
+        if (data) reviewer = `Aprovado por ${data.full_name}${data.crn ? ` · CRN ${data.crn}` : ""}`;
+      }
+      const evaluationDate = evaluations[0]?.evaluation_date ? new Date(`${evaluations[0].evaluation_date}T00:00:00`).toLocaleDateString("pt-BR") : null;
+      const readableText = (value: string) => value.replace(/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/gi, "").trim();
+      const document = buildNutritionPdfDocument({
+        patient: selected.nome,
+        evaluationDate,
+        objective: plan.objective || activePlan?.goal || profile.goal || "Não informado",
+        emissionDate: new Date().toLocaleDateString("pt-BR"),
+        draft: !isApproved,
+        status: statusNames[activePlan?.status ?? "draft"] ?? "Rascunho",
+        observations: (plan.observations ?? []).map(readableText).filter(Boolean),
+        warnings: [...(plan.warnings ?? []), ...(plan.professional_confirmations ?? [])].map(readableText).filter(Boolean),
+        sources: [...sources].sort((a, b) => a.localeCompare(b, "pt-BR")),
+        reviewer,
+        meals,
+      });
+      setPdfDocument(document);
+      setPdfPreviewOpen(true);
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "Não foi possível preparar a prévia do PDF.");
+    } finally {
+      setPdfPreparing(false);
+    }
+  }
+
+  async function downloadNutritionPdf() {
+    if (!pdfDocument || !selected) return;
+    try {
+      await downloadDocumentPdf(nutritionPdfDocumentPages(pdfDocument), `planejamento-alimentar-${selected.nome.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`, true);
+      setError("");
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "Não foi possível gerar o PDF.");
+    }
+  }
+
   async function exportPdf() {
     try {
     if (syntheticTest) { setError("O resultado do teste é fictício e não pode ser exportado."); return; }
@@ -513,7 +620,7 @@ function NutritionPlanningPage() {
       {message && <p className="mt-3 text-sm text-[#26786e]" role="status">{message}</p>}
       {error && <p className="mt-3 text-sm text-red-600" role="alert">{error}</p>}
     </SectionCard>
-    {(activePlan || contentText) && <SectionCard title={syntheticTest ? "Teste Gemini — somente dados fictícios" : "Proposta de Plano Alimentar"}><p className="mb-3 text-sm text-slate-500">Este plano é um rascunho até a aprovação profissional. Os itens adicionados da biblioteca validada permitem editar a quantidade e recalculam os totais com as fontes cadastradas.</p><Textarea className="min-h-[16rem] font-mono text-xs" value={contentText} onChange={(event) => setContentText(event.target.value)} disabled={syntheticTest || activePlan?.status === "approved"} /><NutritionPlanPreview raw={contentText} onQuantityChange={updatePlanQuantity} readOnly={syntheticTest || activePlan?.status === "approved"} /><div className="mt-4 flex flex-wrap gap-2"><Button type="button" onClick={() => void savePlan("draft")} disabled={saving || syntheticTest || activePlan?.status === "approved"}>{saving ? "Salvando..." : "Salvar rascunho"}</Button><Button type="button" variant="outline" onClick={() => void savePlan("pending_review")} disabled={saving || syntheticTest || activePlan?.status === "approved"}>Encaminhar para revisão</Button><Button type="button" variant="outline" onClick={() => void exportPdf()} disabled={syntheticTest}>{activePlan?.status === "approved" ? "Gerar PDF aprovado" : "Gerar PDF de rascunho"}</Button>{!syntheticTest && activePlan?.status === "pending_review" && <Button type="button" onClick={() => void approvePlan()} disabled={saving}>Aprovar como nutricionista</Button>}</div>{syntheticTest && <p className="mt-3 text-sm font-medium text-amber-800">Conteúdo fictício de teste. Não salve, aprove ou use como recomendação clínica.</p>}{!syntheticTest && activePlan?.status === "approved" && <p className="mt-3 text-sm text-amber-800">Versão aprovada protegida contra edição. Gere outro plano para criar uma proposta nova.</p>}</SectionCard>}
+    {(activePlan || contentText) && <SectionCard title={syntheticTest ? "Teste Gemini — somente dados fictícios" : "Proposta de Plano Alimentar"}><p className="mb-3 text-sm text-slate-500">Este plano é um rascunho até a aprovação profissional. Os itens adicionados da biblioteca validada permitem editar a quantidade e recalculam os totais com as fontes cadastradas.</p><Textarea className="min-h-[16rem] font-mono text-xs" value={contentText} onChange={(event) => setContentText(event.target.value)} disabled={syntheticTest || activePlan?.status === "approved"} /><NutritionPlanPreview raw={contentText} onQuantityChange={updatePlanQuantity} readOnly={syntheticTest || activePlan?.status === "approved"} /><div className="mt-4 flex flex-wrap gap-2"><Button type="button" onClick={() => void savePlan("draft")} disabled={saving || syntheticTest || activePlan?.status === "approved"}>{saving ? "Salvando..." : "Salvar rascunho"}</Button><Button type="button" variant="outline" onClick={() => void savePlan("pending_review")} disabled={saving || syntheticTest || activePlan?.status === "approved"}>Encaminhar para revisão</Button><Button type="button" variant="outline" onClick={() => void preparePdfPreview()} disabled={syntheticTest || pdfPreparing}>{pdfPreparing ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Eye className="mr-2 size-4" />}{pdfPreparing ? "Preparando prévia..." : "Pré-visualizar PDF"}</Button>{!syntheticTest && activePlan?.status === "pending_review" && <Button type="button" onClick={() => void approvePlan()} disabled={saving}>Aprovar como nutricionista</Button>}</div>{syntheticTest && <p className="mt-3 text-sm font-medium text-amber-800">Conteúdo fictício de teste. Não salve, aprove ou use como recomendação clínica.</p>}{!syntheticTest && activePlan?.status === "approved" && <p className="mt-3 text-sm text-amber-800">Versão aprovada protegida contra edição. Gere outro plano para criar uma proposta nova.</p>}<Dialog open={pdfPreviewOpen} onOpenChange={setPdfPreviewOpen}><DialogContent className="max-h-[95vh] w-[calc(100vw-2rem)] max-w-5xl overflow-hidden"><DialogHeader><DialogTitle>Prévia do PDF · Planejamento alimentar</DialogTitle><DialogDescription>{pdfDocument?.draft ? "Rascunho — não é prescrição. O arquivo manterá esse aviso em todas as páginas." : "Prévia da versão aprovada e imutável."}</DialogDescription></DialogHeader>{pdfDocument && <NutritionPdfPreview document={pdfDocument} />}<DialogFooter><Button type="button" variant="outline" onClick={() => setPdfPreviewOpen(false)}>Fechar</Button><Button type="button" onClick={() => void downloadNutritionPdf()} disabled={!pdfDocument}><Download className="mr-2 size-4" />Baixar PDF</Button></DialogFooter></DialogContent></Dialog></SectionCard>}
     <SectionCard title="8. Histórico de planejamentos"><div className="space-y-3">{plans.length ? plans.map((plan) => <button key={plan.id} type="button" onClick={() => void loadVersions(plan)} className={`flex w-full flex-wrap items-center justify-between gap-3 rounded-xl border p-4 text-left ${activePlan?.id === plan.id ? "border-[#2f8f82] bg-[#f2f9f7]" : "border-slate-200 bg-white"}`}><span><strong>{plan.goal}</strong><span className="ml-2 rounded-full bg-slate-100 px-2 py-1 text-xs">{statusNames[plan.status] ?? plan.status}</span><span className="mt-1 block text-xs text-slate-500">{new Date(plan.created_at).toLocaleString("pt-BR")} · {plan.duration_days} dia(s) · {versions.length} versão(ões)</span></span><span className="text-sm text-[#26786e]">Ver versões</span></button>) : <div className="flex items-center gap-3 text-sm text-slate-500"><ClipboardList className="size-5" />Nenhum planejamento salvo para este paciente.</div>}{versions.length > 0 && <div className="border-t pt-4"><h3 className="font-semibold">Versões do plano selecionado</h3><div className="mt-2 flex flex-wrap gap-2">{versions.map((version) => <Button key={version.id} type="button" size="sm" variant="outline" onClick={() => selectVersion(version)}>v{version.version_number} · {new Date(version.created_at).toLocaleDateString("pt-BR")}</Button>)}</div></div>}</div></SectionCard>
     </>}
   </div></AdminLayout>;

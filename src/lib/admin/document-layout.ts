@@ -1,7 +1,7 @@
 import { areaSpecialties, displayDate, professionalAreas, professionalDocumentFooter, professionalName, type DocumentContent, type DocumentType, type ProfessionalArea } from './documents';
 import { documentBrandPdf } from './document-brand';
 
-export type DocumentLine = { text: string; x: number; y: number; size: number; bold?: boolean; color?: string; align?: 'left' | 'center' | 'right'; kind?: 'signature-line' };
+export type DocumentLine = { text: string; x: number; y: number; size: number; bold?: boolean; color?: string; align?: 'left' | 'center' | 'right'; kind?: 'signature-line' | 'rule'; width?: number };
 export type DocumentPage = DocumentLine[];
 export const signatureAsset = '/assets/professional-signature.png';
 const pageWidth = 595;
@@ -273,15 +273,20 @@ ${showBrand ? '42 112 m 553 112 l S' : '42 75 m 553 75 l S'}
 Q
 `;
 
-    const textStream = lines.filter(line => line.kind !== 'signature-line').map(line => {
+    const textStream = lines.filter(line => line.kind !== 'signature-line' && line.kind !== 'rule').map(line => {
       const hex = (line.color ?? '#17232d').slice(1);
       const color = [0, 2, 4].map(i => (parseInt(hex.slice(i, i + 2), 16) / 255).toFixed(3)).join(' ');
       return `BT /${line.bold ? 'F2' : 'F1'} ${line.size} Tf ${color} rg 1 0 0 1 ${line.x} ${842 - line.y} Tm ${pdfText(line.text)} Tj ET`;
     }).join('\n');
+    const ruleCommands = lines.filter(line => line.kind === 'rule').map(line => {
+      const hex = (line.color ?? '#72958a').slice(1);
+      const color = [0, 2, 4].map(i => (parseInt(hex.slice(i, i + 2), 16) / 255).toFixed(3)).join(' ');
+      return `q ${color} RG 0.5 w ${line.x} ${842 - line.y} m ${line.x + (line.width ?? 491)} ${842 - line.y} l S Q`;
+    }).join('\n');
 
     const signatureLine = lines.find(line => line.kind === 'signature-line');
     const signatureCommand = signatureLine ? `q\n180 0 0 90 207.5 ${842 - signatureLine.y - 10} cm /Im1 Do\nQ\n` : '';
-    const fullStream = drawCommands + '\n' + signatureCommand + textStream;
+    const fullStream = drawCommands + '\n' + ruleCommands + '\n' + signatureCommand + textStream;
 
     objects.push(
       `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> ${hasSignature ? `/XObject << /Im1 ${imageId} 0 R >>` : ''} >> /Contents ${streamId} 0 R >>`,
