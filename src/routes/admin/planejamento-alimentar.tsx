@@ -448,9 +448,11 @@ function NutritionPlanningPage() {
         }),
       }));
       let reviewer: string | null = null;
-      if (isApproved && activePlan?.approved_by) {
-        const { data } = await supabase.from("nutritionist_credentials").select("full_name,crn").eq("profissional_id", activePlan.approved_by).maybeSingle();
-        if (data) reviewer = `Aprovado por ${data.full_name}${data.crn ? ` · CRN ${data.crn}` : ""}`;
+      if (isApproved) {
+        if (!activePlan?.approved_by) throw new Error("Não foi possível localizar o profissional responsável pela aprovação.");
+        const { data, error: reviewerError } = await supabase.from("nutritionist_credentials").select("full_name,crn").eq("profissional_id", activePlan.approved_by).maybeSingle();
+        if (reviewerError || !data) throw new Error("Não foi possível carregar a identificação profissional vinculada à aprovação.");
+        reviewer = `Aprovado por ${data.full_name}${data.crn ? ` · CRN ${data.crn}` : ""}`;
       }
       const evaluationDate = evaluations[0]?.evaluation_date ? new Date(`${evaluations[0].evaluation_date}T00:00:00`).toLocaleDateString("pt-BR") : null;
       const readableText = (value: string) => value.replace(/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/gi, "").trim();

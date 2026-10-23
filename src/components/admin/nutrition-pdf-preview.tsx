@@ -15,7 +15,7 @@ export function NutritionPdfPreview({ document }: { document: NutritionPdfDocume
     fat: null,
     fiber: null,
   };
-  const allItems = document.pages.flatMap((page) => page.meals.filter((meal) => meal.finalPart).flatMap((meal) => meal.items));
+  const allItems = document.pages.flatMap((page) => page.meals.flatMap((meal) => meal.items));
   const records = allItems as unknown as Array<Record<string, unknown>>;
   dailyTotals.calories = sumVerifiedMeal(records, "calories_kcal", "calories_source");
   dailyTotals.protein = sumVerifiedMeal(records, "protein_g", "protein_source");
@@ -62,7 +62,7 @@ export function NutritionPdfPreview({ document }: { document: NutritionPdfDocume
           </section>
           {document.observations.length > 0 && <section className="break-inside-avoid"><h3 className="text-xs font-bold uppercase tracking-wide text-[#1f514b]">Orientações</h3><div className="mt-2 space-y-1.5 text-xs leading-5 text-slate-700">{document.observations.map((item, itemIndex) => <p key={itemIndex}>{item}</p>)}</div></section>}
           {document.warnings.length > 0 && <section className="break-inside-avoid rounded-md border border-amber-200 bg-amber-50 p-3 text-[10px] leading-4 text-amber-900"><strong>Atenção</strong>{document.warnings.map((warning, itemIndex) => <p key={itemIndex} className="mt-1">{warning}</p>)}</section>}
-          {document.sources.length > 0 && <section className="break-inside-avoid border-t border-[#d9e5e1] pt-3"><h3 className="text-[10px] font-bold uppercase tracking-wide text-[#1f514b]">Fontes dos dados nutricionais</h3><p className="mt-1 text-[10px] leading-4 text-slate-500">Composição consultada na TACO. Códigos utilizados: {document.sources.join(" · ")}.</p></section>}
+          {document.sources.length > 0 && <section className="break-inside-avoid border-t border-[#d9e5e1] pt-3"><h3 className="text-[10px] font-bold uppercase tracking-wide text-[#1f514b]">Fontes dos dados nutricionais</h3><p className="mt-1 text-[10px] leading-4 text-slate-500">Referências de composição informadas no catálogo: {document.sources.join(" · ")}.</p></section>}
         </>}
       </div>
       <footer className="mt-8 border-t border-[#d9e5e1] pt-3 text-center text-[10px] text-slate-400">Página {page.number} de {page.count}</footer>

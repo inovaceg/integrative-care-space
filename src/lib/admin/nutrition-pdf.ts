@@ -67,7 +67,7 @@ export function buildNutritionPdfDocument(input: Omit<NutritionPdfDocument, "pag
     while (remaining.length) {
       const totalHeight = mealHeight({ ...meal, items: remaining });
       if (totalHeight <= available) {
-        currentPage().meals.push({ name: meal.name, items: remaining, totals: totalsFor(remaining), notes: meal.notes, continued, finalPart: true });
+        currentPage().meals.push({ name: meal.name, items: remaining, totals: totalsFor(meal.items), notes: meal.notes, continued, finalPart: true });
         available -= totalHeight;
         remaining = [];
         continue;
@@ -75,7 +75,7 @@ export function buildNutritionPdfDocument(input: Omit<NutritionPdfDocument, "pag
       if (available < mealOverhead + rowHeight(remaining[0]) + 28) nextPage();
       const chunk: NutritionPdfItem[] = [];
       let chunkHeight = mealOverhead;
-      while (remaining.length && chunkHeight + rowHeight(remaining[0]) + 28 <= available) {
+      while (remaining.length && (chunk.length === 0 || chunkHeight + rowHeight(remaining[0]) + 28 <= available)) {
         const item = remaining.shift()!;
         chunk.push(item);
         chunkHeight += rowHeight(item);
@@ -84,7 +84,7 @@ export function buildNutritionPdfDocument(input: Omit<NutritionPdfDocument, "pag
         nextPage();
         continue;
       }
-      currentPage().meals.push({ name: meal.name, items: chunk, totals: totalsFor(chunk), continued, finalPart: remaining.length === 0 });
+      currentPage().meals.push({ name: meal.name, items: chunk, totals: totalsFor(meal.items), continued, finalPart: remaining.length === 0 });
       available -= chunkHeight + 28;
       continued = true;
       if (remaining.length) nextPage();
@@ -156,7 +156,7 @@ export function nutritionPdfDocumentPages(document: NutritionPdfDocument): Docum
     if (page.appendix) {
       y += 2;
       lines.push(rule(y, 52, 491)); y += 15;
-      const daily = totalsFor(document.pages.flatMap((item) => item.meals.filter((meal) => meal.finalPart).flatMap((meal) => meal.items)));
+      const daily = totalsFor(document.pages.flatMap((item) => item.meals.flatMap((meal) => meal.items)));
       lines.push(docLine("RESUMO NUTRICIONAL DIÁRIO", 52, y, 11, true, color.dark)); y += 17;
       lines.push(docLine(`Calorias: ${cap(daily.calories, "kcal")}  |  Proteínas: ${cap(daily.protein, "g")}`, 52, y, 9, true)); y += 14;
       lines.push(docLine(`Carboidratos: ${cap(daily.carbohydrate, "g")}  |  Gorduras: ${cap(daily.fat, "g")}${daily.fiber === null ? "" : `  |  Fibras: ${cap(daily.fiber, "g")}`}`, 52, y, 9, true)); y += 19;
