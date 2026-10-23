@@ -172,7 +172,9 @@ serve(async (req) => {
     const profile = profileResult.data;
     if (age === null || !Number.isFinite(age) || age < 18) return jsonResponse({ error: "A proposta automática está disponível apenas para pacientes adultos com idade confirmada." }, 422);
     if (!hasConfirmedAllergyStatus(profile?.allergies)) return jsonResponse({ error: "Confirme e registre as alergias alimentares antes de gerar uma proposta." }, 422);
-    if (hasClinicalFlag(profile?.pregnancy_or_breastfeeding) || hasClinicalFlag(profile?.diagnosed_conditions) || hasClinicalFlag(profile?.eating_disorder_history) || hasClinicalFlag(anamnesisResult.data?.doencas_fisicas) || hasClinicalFlag(profile?.cultural_restrictions)) return jsonResponse({ error: "Este caso exige avaliação individualizada do profissional; não foi enviada informação clínica ao serviço de IA." }, 422);
+    if (hasClinicalFlag(profile?.pregnancy_or_breastfeeding) || hasClinicalFlag(profile?.diagnosed_conditions) || hasClinicalFlag(profile?.eating_disorder_history) || hasClinicalFlag(anamnesisResult.data?.doencas_fisicas)) return jsonResponse({ error: "Este caso exige avaliação individualizada do profissional; não foi enviada informação clínica ao serviço de IA." }, 422);
+    const culturalRestrictions = normalize(profile?.cultural_restrictions ?? "");
+    if (/vegetar|vegan|halal|kosher|religios|jejum|sem carne/.test(culturalRestrictions)) return jsonResponse({ error: "Esta restrição cultural exige filtragem individualizada pelo profissional antes de usar a geração automática." }, 422);
 
     const { data: foodRows, error: foodError } = await supabase.from("nutrition_food_library").select("id,name,energy_kcal_100g,proteins_g_100g,carbohydrates_g_100g,fats_g_100g,allergens,allergen_info_known,gluten_status,lactose_status,source,license,source_code,validation_status").eq("validation_status", "verified").order("name").limit(1000);
     if (foodError) {
@@ -181,7 +183,7 @@ serve(async (req) => {
     }
     const allergyTerms = isExplicitNegative(profile?.allergies) ? [] : splitTerms(profile?.allergies ?? "");
     const intoleranceText = normalize(profile?.intolerances ?? "");
-    const avoidedTerms = splitTerms(profile?.avoided_foods ?? "");
+    const avoidedTerms = [...splitTerms(profile?.avoided_foods ?? ""), ...splitTerms(profile?.cultural_restrictions ?? "")];
     const preferenceTerms = splitTerms(profile?.preferred_foods ?? "");
     const safeFoods = (foodRows ?? []).filter((food) => {
       const coreNutrients = [food.energy_kcal_100g, food.proteins_g_100g, food.carbohydrates_g_100g];

@@ -260,7 +260,17 @@ function NutritionPlanningPage() {
       const { data, error: invokeError } = await supabase.functions.invoke("nutrition-planning", {
         body: { patient_id: patientId, goal: profile.goal, duration_days: Number(duration), desired_meals: mealCount },
       });
-      if (invokeError || data?.error || !data?.plan || !Array.isArray(data.plan.meals)) throw new Error(data?.error ?? "Não foi possível gerar a proposta.");
+      if (invokeError) {
+        let detail = invokeError.message;
+        const context = "context" in invokeError ? invokeError.context : null;
+        if (context instanceof Response) {
+          const responseBody = await context.clone().json().catch(() => null) as { error?: unknown } | null;
+          if (typeof responseBody?.error === "string") detail = responseBody.error;
+        }
+        throw new Error(detail || "Não foi possível gerar a proposta.");
+      }
+      if (data?.error) throw new Error(typeof data.error === "string" ? data.error : "A função retornou um erro ao gerar a proposta.");
+      if (!data?.plan || !Array.isArray(data.plan.meals)) throw new Error("A função de geração respondeu sem uma proposta válida.");
       const plan = data.plan as PlanContent;
       for (const meal of plan.meals) {
         for (const item of meal.items) {
