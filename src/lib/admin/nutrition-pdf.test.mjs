@@ -48,7 +48,8 @@ describe("layout do PDF nutricional", () => {
     expect(lunchParts[0].items.map((item) => item.food)).toEqual(["Arroz integral cozido", "Abadejo filé congelado grelhado", "Brócolis cozido"]);
     expect(lunchParts[0].totals.calories).toBe(300);
     expect(document.dailyTotals.calories).toBe(1247.3);
-    expect(document.pages.length).toBeLessThanOrEqual(2);
+    expect(document.pages).toHaveLength(2);
+    expect(document.pages.map((page) => page.meals.length)).toEqual([3, 3]);
     const pdfText = nutritionPdfDocumentPages(document).flat().map((line) => line.text).join("\n");
     expect(pdfText).toContain("RASCUNHO — NÃO É PRESCRIÇÃO");
     expect(pdfText).toContain("Total da refeição: 300 kcal");

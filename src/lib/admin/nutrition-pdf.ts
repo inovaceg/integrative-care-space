@@ -44,8 +44,8 @@ const fitLines = (text: string, max = 88) => {
   if (row) rows.push(row);
   return rows.length ? rows : [""];
 };
-const itemHeight = (item: NutritionPdfItem) => 22 + Math.max(0, fitLines(item.food, 45).length - 1) * 11 + (item.alternatives?.length ? fitLines(`Substituições para avaliação: ${item.alternatives.join(" · ")}`, 84).length * 11 : 0);
-const mealHeight = (meal: NutritionPdfMeal, _totals: NutritionPdfTotals, includeTotal = true) => 74 + meal.items.reduce((height, item) => height + itemHeight(item), 0) + (includeTotal ? 29 : 0) + (meal.notes ? fitLines(meal.notes, 84).length * 11 + 5 : 0);
+const itemHeight = (item: NutritionPdfItem) => 32 + Math.max(0, fitLines(item.food, 45).length - 1) * 11 + (item.alternatives?.length ? fitLines(`Substituições para avaliação: ${item.alternatives.join(" · ")}`, 84).length * 11 : 0) + (item.notes ? fitLines(item.notes, 84).length * 11 : 0);
+const mealHeight = (meal: NutritionPdfMeal, _totals: NutritionPdfTotals, includeTotal = true) => 42 + meal.items.reduce((height, item) => height + itemHeight(item), 0) + (includeTotal ? 23 : 0) + (meal.notes ? fitLines(meal.notes, 84).length * 11 : 0);
 const totalsFrom = (totals: Record<string, number | null>): NutritionPdfTotals => ({ calories: totals.calories_kcal ?? null, protein: totals.protein_g ?? null, carbohydrate: totals.carbohydrate_g ?? null, fat: totals.fat_g ?? null, fiber: totals.fiber_g ?? null });
 const tidyInstruction = (value: string) => value.replace(/\(\s*\)/g, "").replace(/calories_kcal/g, "calorias").replace(/protein_g/g, "proteínas").replace(/carbohydrate_g/g, "carboidratos").replace(/fat_g/g, "gorduras").replace(/fiber_g/g, "fibras").replace(/\s+/g, " ").trim();
 
@@ -57,9 +57,9 @@ export function buildNutritionPdfDocument(input: Omit<NutritionPdfDocument, "pag
   const pages: NutritionPdfPage[] = [{ meals: [], summary: true, appendix: false, sections: [], number: 1, count: 1 }];
   const patientLines = fitLines(input.patient, 48).length;
   const objectiveLines = fitLines(input.objective || "Não informado", 42).length;
-  const firstContentY = 153 + 22 + patientLines * 13 + objectiveLines * 14 + (input.reviewer ? 14 : 0) + 19 + 42 + 12;
+  const firstContentY = 153 + 22 + patientLines * 13 + objectiveLines * 14 + (input.reviewer ? 14 : 0) + 19 + 55 + 12;
   const pageCapacity = (page: NutritionPdfPage) => page.number === 1 ? 700 - firstContentY : 508 - (input.draft ? 14 : 0);
-  const pageUsed = (page: NutritionPdfPage) => page.meals.reduce((sum, meal) => sum + mealHeight({ name: meal.name, items: meal.items, notes: meal.notes }, meal.totals, meal.finalPart), 0) + page.sections.reduce((sum, section) => sum + 22 + section.lines.length * 12, 0);
+  const pageUsed = (page: NutritionPdfPage) => page.meals.reduce((sum, meal) => sum + mealHeight({ name: meal.name, items: meal.items, notes: meal.notes }, meal.totals, meal.finalPart), 0) + page.sections.reduce((sum, section) => sum + 26 + section.lines.length * 12, 0);
   const newPage = () => pages.push({ meals: [], summary: false, appendix: false, sections: [], number: pages.length + 1, count: 1 });
 
   calculatedMeals.forEach((meal, mealIndex) => {
@@ -94,8 +94,8 @@ export function buildNutritionPdfDocument(input: Omit<NutritionPdfDocument, "pag
     }
   });
 
-  const general = input.observations.map(tidyInstruction).filter((value) => value.length >= 5 && !/\(\s*\)|\b(?:undefined|null)\b/i.test(value));
-  const review = [...new Set([...input.warnings, ...calculation.issues].map(tidyInstruction).filter((value) => value.length >= 5))];
+  const general = input.observations.map(tidyInstruction).filter((value) => value.length >= 5 && !/\(\s*\)|\b(?:undefined|null)\b/i.test(value)).flatMap((value) => fitLines(value, 87));
+  const review = [...new Set([...input.warnings, ...calculation.issues].map(tidyInstruction).filter((value) => value.length >= 5))].flatMap((value) => fitLines(value, 87));
   const sourceLines = input.sources.length ? fitLines([...new Set(input.sources)].join(" · "), 92) : [];
   const appendixSections: NutritionPdfSection[] = [
     ...(general.length ? [{ title: "ORIENTAÇÕES GERAIS", lines: general, kind: "general" as const }] : []),
@@ -106,12 +106,12 @@ export function buildNutritionPdfDocument(input: Omit<NutritionPdfDocument, "pag
     let page = pages[pages.length - 1]!;
     let used = pageUsed(page);
     const capacity = pageCapacity(page);
-    if (used + 20 + section.lines.length * 11 > capacity) {
+    if (used + 26 + section.lines.length * 12 > capacity) {
       newPage();
       page = pages[pages.length - 1]!;
       used = 0;
     }
-    const maxLines = Math.max(1, Math.floor((pageCapacity(page) - used - 20) / 11));
+    const maxLines = Math.max(1, Math.floor((pageCapacity(page) - used - 26) / 12));
     for (let start = 0; start < section.lines.length; start += maxLines) {
       if (start > 0) { newPage(); page = pages[pages.length - 1]!; }
       page.sections.push({ ...section, title: start === 0 ? section.title : `${section.title} · CONTINUAÇÃO`, lines: section.lines.slice(start, start + maxLines) });
@@ -186,18 +186,20 @@ export function nutritionPdfDocumentPages(document: NutritionPdfDocument): Docum
       y = 153;
       lines.push(line("PLANEJAMENTO ALIMENTAR", 52, y, 17, true, colors.dark));
       y += 22;
-      lines.push(line(`Paciente: ${document.patient}`, 52, y, 11, true, colors.ink));
+      const patientLines = fitLines(document.patient, 48);
+      patientLines.forEach((text, index) => lines.push(line(`Paciente: ${text}`, 52, y + index * 13, 11, true, colors.ink)));
       if (document.evaluationDate) lines.push(line(`Avaliação: ${document.evaluationDate}`, 410, y, 9, false, colors.muted));
-      y += 15;
-      lines.push(line(`Objetivo: ${document.objective || "Não informado"}`, 52, y, 10, false, colors.ink));
+      y += patientLines.length * 13;
+      const objectiveLines = fitLines(document.objective || "Não informado", 42);
+      objectiveLines.forEach((text, index) => lines.push(line(index === 0 ? `Objetivo: ${text}` : text, 52, y + index * 14, 10, false, colors.ink)));
       lines.push(line(`Elaboração: ${document.emissionDate}`, 410, y, 9.5, false, colors.ink));
-      y += 15;
+      y += objectiveLines.length * 14;
       if (document.reviewer) { lines.push(line(document.reviewer, 52, y, 9, false, colors.muted)); y += 14; }
       const status = document.draft ? "RASCUNHO — NÃO É PRESCRIÇÃO" : document.status.toLocaleUpperCase("pt-BR");
       lines.push(line(`SITUAÇÃO: ${status}`, 52, y, 9.5, true, document.draft ? colors.amber : colors.green));
       y += 19;
       lines.push(...nutritionSummaryLines(document, y));
-      y += 42;
+      y += 55;
       lines.push(rule(y));
       y += 12;
     } else {
