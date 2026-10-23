@@ -176,7 +176,7 @@ serve(async (req) => {
     const culturalRestrictions = normalize(profile?.cultural_restrictions ?? "");
     if (/vegetar|vegan|halal|kosher|religios|jejum|sem carne/.test(culturalRestrictions)) return jsonResponse({ error: "Esta restrição cultural exige filtragem individualizada pelo profissional antes de usar a geração automática." }, 422);
 
-    const { data: foodRows, error: foodError } = await supabase.from("nutrition_food_library").select("id,name,energy_kcal_100g,proteins_g_100g,carbohydrates_g_100g,fats_g_100g,allergens,allergen_info_known,gluten_status,lactose_status,source,license,source_code,validation_status").eq("validation_status", "verified").order("name").limit(1000);
+    const { data: foodRows, error: foodError } = await supabase.from("nutrition_food_library").select("id,name,energy_kcal_100g,proteins_g_100g,carbohydrates_g_100g,fats_g_100g,allergens,allergen_info_known,gluten_status,lactose_status,source,license,source_code,validation_status").eq("source", "TACO").eq("validation_status", "verified").order("name").limit(1000);
     if (foodError) {
       console.error(`[${functionName}] Failed loading verified food library`);
       return jsonResponse({ error: "Não foi possível carregar a biblioteca alimentar verificada." }, 500);
@@ -301,7 +301,12 @@ serve(async (req) => {
         const food = byName.get(normalize(generated.food));
         if (!food) throw new Error("Unverified food returned");
         const source = `${food.source}${food.source_code ? ` · ${food.source_code}` : ""}; ${food.license}`;
-        const alternatives = generated.alternatives.map((name) => byName.get(normalize(name))?.name).filter((name): name is string => Boolean(name));
+        const alternatives = generated.alternatives.map((name) => {
+          if (typeof name !== "string") throw new Error("Unverified food returned");
+          const alternative = byName.get(normalize(name));
+          if (!alternative) throw new Error("Unverified food returned");
+          return String(alternative.name);
+        });
         return {
           food: food.name,
           portion: `${generated.portion_grams} g`,
@@ -318,8 +323,9 @@ serve(async (req) => {
     }
     if (testMode) plan.observations.unshift("TESTE COM DADOS FICTÍCIOS: não utilizar como prescrição nem como recomendação clínica.");
     return jsonResponse({ plan, model, provider: "gemini", test_mode: testMode });
-  } catch {
-    console.error(`[${functionName}] Gemini returned invalid structured output`);
-    return jsonResponse({ error: "A resposta do serviço veio em formato inesperado. O conteúdo atual foi preservado; tente novamente." }, 502);
+  } catch (error) {
+    const suggestedUnknownFood = error instanceof Error && error.message === "Unverified food returned";
+    console.error(`[${functionName}] Gemini returned ${suggestedUnknownFood ? "an unlisted food" : "invalid structured output"}`);
+    return jsonResponse({ error: suggestedUnknownFood ? "A IA sugeriu um alimento fora do banco TACO. Nenhum plano foi salvo; tente novamente ou substitua manualmente por um alimento cadastrado." : "A resposta do serviço veio em formato inesperado. O conteúdo atual foi preservado; tente novamente." }, 502);
   }
 });

@@ -36,28 +36,37 @@ export function parseTacoWorkbook(buffer: ArrayBuffer): TacoImportRow[] {
   if (!sheetName) throw new Error("A planilha não contém a aba ‘Alimentos - principais’.");
   const sheet = workbook.Sheets[sheetName];
   const matrix = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, defval: null, raw: true });
-  const requiredHeaders = ["codigotaco", "alimento", "energiakcal", "proteinasg", "carboidratosg", "gordurasg", "fibrasg", "sodiomg"];
+  const headerAliases = {
+    codigo: ["codigotaco", "codigo"],
+    alimento: ["alimento", "nome", "nomedoalimento"],
+    energia: ["energiakcal", "energiakcal100g"],
+    proteinas: ["proteinasg", "proteinag", "proteinasg100g", "proteinag100g"],
+    carboidratos: ["carboidratosg", "carboidratog", "carboidratosg100g", "carboidratog100g"],
+    gorduras: ["gordurasg", "lipideosg", "lipidiog", "gordurasg100g", "lipideosg100g"],
+    fibras: ["fibrasg", "fibraalimentarg", "fibrasg100g"],
+    sodio: ["sodiomg", "sodiomg100g"],
+  };
   const headerRowIndex = matrix.slice(0, 20).findIndex((row) => {
     const keys = row.map(headerKey);
-    return requiredHeaders.every((header) => keys.includes(header));
+    return Object.values(headerAliases).every((aliases) => aliases.some((alias) => keys.includes(alias)));
   });
-  if (headerRowIndex < 0) throw new Error("Não encontrei os oito cabeçalhos esperados na aba ‘Alimentos - principais’. Confira os nomes das colunas.");
+  if (headerRowIndex < 0) throw new Error("Não encontrei os cabeçalhos de código, alimento, energia, proteínas, carboidratos, gorduras, fibras e sódio na aba ‘Alimentos - principais’.");
   const headerCells = matrix[headerRowIndex].map(headerKey);
-  const indexes = Object.fromEntries(requiredHeaders.map((header) => [header, headerCells.indexOf(header)])) as Record<typeof requiredHeaders[number], number>;
+  const indexes = Object.fromEntries(Object.entries(headerAliases).map(([field, aliases]) => [field, headerCells.findIndex((header) => aliases.includes(header))])) as Record<keyof typeof headerAliases, number>;
   const seenCodes = new Set<number>();
   const rows: TacoImportRow[] = [];
 
   matrix.slice(headerRowIndex + 1).forEach((cells, index) => {
     if (!cells.some((cell) => cell !== null && cell !== undefined && String(cell).trim() !== "")) return;
-    const code = parseNumber(cells[indexes.codigotaco]);
+    const code = parseNumber(cells[indexes.codigo]);
     const nameValue = cells[indexes.alimento];
     const name = typeof nameValue === "string" ? nameValue.trim() : String(nameValue ?? "").trim();
-    const energy = parseNumber(cells[indexes.energiakcal]);
-    const protein = parseNumber(cells[indexes.proteinasg]);
-    const carbs = parseNumber(cells[indexes.carboidratosg]);
-    const fat = parseNumber(cells[indexes.gordurasg]);
-    const fiber = parseNumber(cells[indexes.fibrasg]);
-    const sodium = parseNumber(cells[indexes.sodiomg]);
+    const energy = parseNumber(cells[indexes.energia]);
+    const protein = parseNumber(cells[indexes.proteinas]);
+    const carbs = parseNumber(cells[indexes.carboidratos]);
+    const fat = parseNumber(cells[indexes.gorduras]);
+    const fiber = parseNumber(cells[indexes.fibras]);
+    const sodium = parseNumber(cells[indexes.sodio]);
     const errors: string[] = [];
     if (code === null || !Number.isInteger(code) || code <= 0) errors.push("Código TACO inválido.");
     if (!name) errors.push("Nome do alimento ausente.");
@@ -78,7 +87,7 @@ export function checkTacoReferenceFoods(rows: TacoImportRow[]) {
   const controls = [
     { label: "Arroz integral cozido", test: (name: string) => name.includes("arrozintegral") && name.includes("cozido"), min: 118, max: 130, expected: 124 },
     { label: "Arroz branco tipo 1 cozido", test: (name: string) => name.includes("arroz") && name.includes("tipo1") && name.includes("cozido") && !name.includes("integral"), min: 120, max: 136, expected: 128 },
-    { label: "Aveia em flocos crua", test: (name: string) => name.includes("aveiaemflocos") && name.includes("crua"), min: 380, max: 410, expected: 394 },
+    { label: "Aveia em flocos crua", test: (name: string) => name.includes("aveia") && name.includes("flocos") && name.includes("crua"), min: 380, max: 410, expected: 394 },
   ];
   return controls.map((control) => {
     const matches = rows.filter((row) => control.test(normalizeFoodName(row.nome)));

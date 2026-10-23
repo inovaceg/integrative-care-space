@@ -61,6 +61,7 @@ export function NutritionFoodPicker({ allergies, intolerances, onAdd, disabled }
     let active = true;
     void supabase.from("nutrition_food_library")
       .select("id,name,energy_kcal_100g,proteins_g_100g,carbohydrates_g_100g,fats_g_100g,household_measure,allergens,allergen_info_known,gluten_status,lactose_status,source,license,source_code")
+      .eq("source", "TACO")
       .eq("validation_status", "verified")
       .order("name")
       .then(({ data, error: queryError }) => {

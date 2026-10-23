@@ -55,7 +55,7 @@ function checkReferenceRows(rows: CleanRow[]) {
   const references = [
     { label: "Arroz integral cozido", find: (name: string) => name.includes("arrozintegral") && name.includes("cozido"), min: 118, max: 130 },
     { label: "Arroz branco tipo 1 cozido", find: (name: string) => name.includes("arroz") && name.includes("tipo1") && name.includes("cozido") && !name.includes("integral"), min: 120, max: 136 },
-    { label: "Aveia em flocos crua", find: (name: string) => name.includes("aveiaemflocos") && name.includes("crua"), min: 380, max: 410 },
+    { label: "Aveia em flocos crua", find: (name: string) => name.includes("aveia") && name.includes("flocos") && name.includes("crua"), min: 380, max: 410 },
   ];
   return references.flatMap((reference) => {
     const row = rows.find((item) => reference.find(normalize(item.nome)));
