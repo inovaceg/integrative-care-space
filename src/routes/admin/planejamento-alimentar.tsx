@@ -347,6 +347,8 @@ function NutritionPlanningPage() {
 
   async function generatePersonalizedPlan() {
     if (!patientId || !selected || generating) return;
+    const hasClinicalConcern = (value: string | null | undefined) => Boolean(value?.trim() && !/^(sem|n[aã]o|nenhum[aa]?|n\/?a|não se aplica)$/i.test(value.trim()));
+    if ((ageFrom(selected.data_nascimento) !== null && ageFrom(selected.data_nascimento)! < 18) || hasClinicalConcern(profile.pregnancy_or_breastfeeding) || hasClinicalConcern(profile.diagnosed_conditions) || hasClinicalConcern(profile.eating_disorder_history) || hasClinicalConcern(anamnesis?.doencas_fisicas)) { setError("Há informação clínica que exige avaliação individualizada; a geração automática está bloqueada."); setMessage(""); return; }
     const selectedObjective = energy.objective ?? objectiveAssessment.objective;
     if (!selectedObjective || !energy.objective_confirmed || (objectiveAssessment.conflicting && !energy.objective_confirmed)) { setError("Confirme o objetivo nutricional vigente nos registros e na seção de necessidades energéticas antes de gerar."); setMessage(""); return; }
     const generationGoal = profile.goal.trim() || (selectedObjective === "weight_loss" ? "Emagrecimento" : selectedObjective === "weight_gain" ? "Ganho de peso ou massa muscular" : "Manutenção do peso");

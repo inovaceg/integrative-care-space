@@ -39,6 +39,7 @@ type Profile = {
 };
 const display = (value: number | null | undefined, unit = "") => value === null || value === undefined ? "Não informado" : `${value}${unit}`;
 const dateLabel = (value: string) => new Date(`${value}T00:00:00`).toLocaleDateString("pt-BR");
+const hasClinicalConcern = (value: string | null | undefined) => Boolean(value?.trim() && !/^(sem|n[aã]o|nenhum[aa]?|n\/?a|não se aplica)$/i.test(value.trim()));
 
 export function PersonalizedDietCard({ patient, evaluations, profile, latestWeight, anamnesis, energyTarget, macroDistributionReady, onProfileChange, onGenerate, loading, generating, error, message }: {
   patient: { nome: string; data_nascimento: string | null };
@@ -73,7 +74,7 @@ export function PersonalizedDietCard({ patient, evaluations, profile, latestWeig
   })();
   const evaluationWithCurrentWeight = currentWeight?.weight_source === "Avaliação corporal" ? evaluations.find((row) => row.evaluation_date === currentWeight.weight_date && row.weight_kg === currentWeight.weight_kg) : null;
   const calculatedBmi = evaluationWithCurrentWeight && latest.height_cm?.id === evaluationWithCurrentWeight.id && evaluationWithCurrentWeight.height_cm ? evaluationWithCurrentWeight.weight_kg! / (evaluationWithCurrentWeight.height_cm / 100) ** 2 : null;
-  const needsSpecialistReview = (age !== null && age < 18) || Boolean(profile.pregnancy_or_breastfeeding.trim()) || Boolean(profile.diagnosed_conditions.trim()) || Boolean(profile.eating_disorder_history.trim()) || Boolean(anamnesis?.doencas_fisicas?.trim());
+  const needsSpecialistReview = (age !== null && age < 18) || hasClinicalConcern(profile.pregnancy_or_breastfeeding) || hasClinicalConcern(profile.diagnosed_conditions) || hasClinicalConcern(profile.eating_disorder_history) || hasClinicalConcern(anamnesis?.doencas_fisicas);
 
   return <SectionCard title="Gerar Dieta Personalizada">
     <p className="text-sm text-slate-600">Prepare uma proposta alimentar individualizada a partir dos dados da paciente.</p>
@@ -99,7 +100,7 @@ export function PersonalizedDietCard({ patient, evaluations, profile, latestWeig
         <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">A geração usa a meta energética aprovada, a distribuição individualizada de macronutrientes confirmada, a categoria de objetivo, a quantidade de refeições e alimentos verificados. Nome, identificação, medidas, avaliações e anamnese não são enviados.{needsSpecialistReview ? " Há condição que exige avaliação individualizada; a geração automática está bloqueada." : " Toda proposta será salva como rascunho para revisão profissional."}</p>
         <div className={`mt-3 rounded-lg border p-3 text-sm ${energyTarget === null ? "border-amber-200 bg-amber-50 text-amber-900" : "border-emerald-200 bg-emerald-50 text-emerald-900"}`} aria-live="polite"><strong>Meta calórica diária aprovada para esta proposta: </strong>{energyTarget === null ? "pendente. Calcule e aprove a meta em Necessidades Nutricionais → Calorias." : `${energyTarget.toLocaleString("pt-BR", { maximumFractionDigits: 0 })} kcal/dia.`}</div>
         {energyTarget !== null && !macroDistributionReady && <p className="mt-2 text-sm text-amber-800">A distribuição de macronutrientes precisa ser calculada e confirmada para esta mesma meta. Você pode tentar gerar; os requisitos pendentes serão exibidos após a validação.</p>}
-        <Button type="button" className="mt-4 w-full bg-[#2f8f82] hover:bg-[#26786e]" disabled={loading || generating || needsSpecialistReview || energyTarget === null} onClick={onGenerate}><Sparkles className="mr-2 size-4" />{generating ? "Gerando proposta..." : "Gerar proposta a partir da meta calórica"}</Button>
+        <Button type="button" className="mt-4 w-full bg-[#2f8f82] hover:bg-[#26786e]" disabled={loading || generating} onClick={onGenerate}><Sparkles className="mr-2 size-4" />{generating ? "Gerando proposta..." : "Gerar proposta a partir da meta calórica"}</Button>
         {error && <p role="alert" className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</p>}
         {message && <p role="status" className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{message}</p>}
       </div>
