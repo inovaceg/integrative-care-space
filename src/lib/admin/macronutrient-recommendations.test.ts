@@ -26,14 +26,14 @@ describe("recomendações automáticas de macronutrientes", () => {
     expect(first).not.toBe(changed);
   });
 
-  test("usa RDA adulta em manutenção e ponto médio da faixa AMDR para gorduras", () => {
+  test("usa RDA adulta em manutenção e percentual inicial de gordura configurado", () => {
     const result = recommendMacronutrients(base);
     expect(result.proteinFactorGPerKg).toBe(0.8);
     expect(result.referenceWeightKg).toBe(70);
-    expect(result.fatPercent).toBe(30);
+    expect(result.fatPercent).toBe(25);
     expect(result.distribution?.proteinG).toBe(56);
-    expect(result.distribution?.fatG).toBeCloseTo(2000 * 0.3 / 9);
-    expect(result.distribution?.carbohydratePercent).toBeCloseTo(58.8);
+    expect(result.distribution?.fatG).toBeCloseTo(2000 * 0.25 / 9);
+    expect(result.distribution?.carbohydratePercent).toBeCloseTo(63.8);
     expect(result.references.some((reference) => reference.includes("10.17226/10490"))).toBe(true);
     expect(result.requiresClinicalDefinition).toBe(true);
     expect(result.rationale.join(" ")).toContain("não se presume normalidade");
@@ -87,6 +87,15 @@ describe("recomendações automáticas de macronutrientes", () => {
     const incompatible = recommendMacronutrients({ ...base, referenceWeightKg: 200, energyKcal: 500, activityDetails: "musculação" });
     expect(incompatible.distribution).toBeNull();
     expect(incompatible.issues.join(" ")).toContain("excedem a energia disponível");
+  });
+
+  test("calcula o exemplo matemático configurado sem arredondar a distribuição", () => {
+    const result = recommendMacronutrients({ ...base, referenceWeightKg: 80.5, energyKcal: 1483.09, objective: "weight_loss" });
+    expect(result.fatPercent).toBe(25);
+    expect(result.distribution?.proteinG).toBeCloseTo(96.6);
+    expect(result.distribution?.fatG).toBeCloseTo(41.197);
+    expect(result.distribution?.carbohydrateG).toBeCloseTo(181.5, 0);
+    expect((result.distribution?.carbohydratePercent ?? 0) + (result.distribution?.proteinPercent ?? 0) + (result.distribution?.fatPercent ?? 0)).toBeCloseTo(100);
   });
 });
 

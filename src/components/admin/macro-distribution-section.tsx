@@ -17,9 +17,9 @@ export function MacroDistributionSection({ value, target, energyApproved, fallba
   const recommendation = useMemo(() => recommendMacronutrients(effectiveInput), [inputKey]);
   const stale = isMacroDistributionStale(value.macro_calculated_for_kcal, target) || Boolean(value.macro_context_key !== inputKey && (value.macro_reviewed || value.macro_auto_generated || value.macro_context_key != null));
   const calc = useMemo(() => {
-    if (target === null) return null;
+    if (!energyApproved || target === null) return null;
     return calculateMacroDistribution({ energyKcal: target, referenceWeightKg: value.macro_reference_weight_kg ?? recommendation.referenceWeightKg ?? fallbackWeight, proteinFactorGPerKg: value.macro_protein_factor_g_per_kg ?? recommendation.proteinFactorGPerKg, fatPercent: value.macro_fat_percent ?? recommendation.fatPercent }).distribution;
-  }, [target, value.macro_reference_weight_kg, value.macro_protein_factor_g_per_kg, value.macro_fat_percent, recommendation.referenceWeightKg, recommendation.proteinFactorGPerKg, recommendation.fatPercent, fallbackWeight]);
+  }, [energyApproved, target, value.macro_reference_weight_kg, value.macro_protein_factor_g_per_kg, value.macro_fat_percent, recommendation.referenceWeightKg, recommendation.proteinFactorGPerKg, recommendation.fatPercent, fallbackWeight]);
 
   const applyRecommendation = () => {
     if (!recommendation.distribution && recommendation.fatPercent === null) return;
@@ -44,13 +44,13 @@ export function MacroDistributionSection({ value, target, energyApproved, fallba
   };
 
   useEffect(() => {
-    if (!energyApproved || (!recommendation.distribution && recommendation.fatPercent === null)) return;
-    if ((value.macro_reviewed || value.macro_renal_reviewed) && value.macro_context_key !== inputKey) {
+    if (!energyApproved || value.macro_reviewed || (!recommendation.distribution && recommendation.fatPercent === null)) return;
+    if (value.macro_renal_reviewed && value.macro_context_key !== inputKey) {
       onChange({ ...value, macro_reviewed: false, macro_renal_reviewed: false, macro_context_key: value.macro_context_key ?? "legacy-stale" });
       return;
     }
     const noExistingParameters = value.macro_protein_factor_g_per_kg === null && value.macro_fat_percent === null && value.carbohydrate_percent === null && value.protein_percent === null && value.fat_percent === null;
-    if ((value.macro_auto_generated && value.macro_context_key !== inputKey) || (!value.macro_reviewed && noExistingParameters)) applyRecommendation();
+    if (!value.macro_reviewed && (value.macro_context_key !== inputKey || noExistingParameters)) applyRecommendation();
   }, [energyApproved, inputKey, recommendation, value, onChange]);
 
   const update = <K extends keyof EnergyPlan>(key: K, field: EnergyPlan[K]) => onChange({ ...value, [key]: field, macro_reviewed: false, macro_auto_generated: false });
@@ -70,13 +70,13 @@ export function MacroDistributionSection({ value, target, energyApproved, fallba
   };
   const confirm = () => {
     if (!calc || target === null || !energyApproved || !value.macro_observations.trim() || (recommendation.requiresClinicalDefinition && !value.macro_renal_reviewed)) return;
-    onChange({ ...value, macro_calculated_for_kcal: target, macro_reviewed: true, macro_auto_generated: false, macro_context_key: inputKey });
+    onChange({ ...value, carbohydrate_percent: calc.carbohydratePercent, protein_percent: calc.proteinPercent, fat_percent: calc.fatPercent, macro_calculated_for_kcal: target, macro_reviewed: true, macro_auto_generated: false, macro_context_key: inputKey });
   };
   const blockers = [
     !energyApproved && "Aprove primeiro a meta energética.",
     (value.macro_reference_weight_kg ?? recommendation.referenceWeightKg ?? fallbackWeight) === null && "Informe um peso de referência.",
-    value.macro_protein_factor_g_per_kg === null && "Fator proteico não pode ser sugerido com os dados clínicos disponíveis.",
-    value.macro_fat_percent === null && "Percentual de gorduras não pode ser sugerido com os dados disponíveis.",
+    (value.macro_protein_factor_g_per_kg ?? recommendation.proteinFactorGPerKg) === null && "Fator proteico não pode ser sugerido com os dados clínicos disponíveis.",
+    (value.macro_fat_percent ?? recommendation.fatPercent) === null && "Percentual de gorduras não pode ser sugerido com os dados disponíveis.",
     value.macro_observations.trim().length < 20 && "Registre a justificativa dos parâmetros (mínimo 20 caracteres).",
     recommendation.requiresClinicalDefinition && !value.macro_renal_reviewed && "Confirme a revisão da função renal antes de validar qualquer sugestão proteica.",
     stale && "Os dados clínicos ou a meta mudaram; revise e recalcule antes de confirmar.",
@@ -91,8 +91,8 @@ export function MacroDistributionSection({ value, target, energyApproved, fallba
     {value.macro_auto_generated && !confirmed && <p role="status" className="mt-3 rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm text-sky-900">Sugestão automática — pendente de validação profissional · {value.macro_protocol || recommendation.protocol}</p>}
     <div className="mt-3 grid gap-3 sm:grid-cols-3">
       <div><Label htmlFor="macro-reference-weight">{recommendation.protocol.includes("massa livre de gordura") ? "Massa livre de gordura para cálculo (kg)" : "Peso de referência (kg)"}</Label><Input id="macro-reference-weight" className="mt-1" type="number" min="20" max="350" step="0.1" value={value.macro_reference_weight_kg ?? recommendation.referenceWeightKg ?? fallbackWeight ?? ""} onChange={(event) => update("macro_reference_weight_kg", parse(event.target.value))} /><p className="mt-1 text-xs text-slate-500">{recommendation.referenceWeightKg !== null && recommendation.referenceWeightKg !== fallbackWeight ? "Referência ajustada automaticamente pela composição disponível; confirme ou altere." : "Peso atual/recente ou referência escolhida; pode ser ajustado profissionalmente."}</p></div>
-      <div><Label htmlFor="macro-protein-factor">Fator proteico sugerido (g/kg/dia)</Label><Input id="macro-protein-factor" className="mt-1" type="number" min="0.1" max="10" step="0.1" value={value.macro_protein_factor_g_per_kg ?? ""} onChange={(event) => update("macro_protein_factor_g_per_kg", parse(event.target.value))} placeholder="Aguardando dados/revisão" /></div>
-      <div><Label htmlFor="macro-fat-percent">Gorduras sugeridas (% kcal)</Label><Input id="macro-fat-percent" className="mt-1" type="number" min="0.1" max="99.9" step="0.1" value={value.macro_fat_percent ?? ""} onChange={(event) => update("macro_fat_percent", parse(event.target.value))} placeholder="Aguardando dados/revisão" /></div>
+      <div><Label htmlFor="macro-protein-factor">Fator proteico sugerido (g/kg/dia)</Label><Input id="macro-protein-factor" className="mt-1" type="number" min="0.1" max="10" step="0.1" value={value.macro_protein_factor_g_per_kg ?? recommendation.proteinFactorGPerKg ?? ""} onChange={(event) => update("macro_protein_factor_g_per_kg", parse(event.target.value))} placeholder="Definição profissional necessária" /></div>
+      <div><Label htmlFor="macro-fat-percent">Gorduras sugeridas (% kcal)</Label><Input id="macro-fat-percent" className="mt-1" type="number" min="0.1" max="99.9" step="0.1" value={value.macro_fat_percent ?? recommendation.fatPercent ?? ""} onChange={(event) => update("macro_fat_percent", parse(event.target.value))} placeholder="Definição profissional necessária" /><p className="mt-1 text-xs text-slate-500">Sugestão inicial configurada: {recommendation.fatPercent ?? "não disponível"}% da energia; revise conforme contexto clínico.</p></div>
     </div>
     <div className="mt-3"><Label htmlFor="macro-observations">Justificativa e revisão profissional</Label><Textarea id="macro-observations" className="mt-1" value={value.macro_observations} onChange={(event) => update("macro_observations", event.target.value)} placeholder="Revise e complemente a justificativa da sugestão automática." /><p className="text-xs text-slate-500">{value.macro_observations.trim().length}/20 caracteres</p></div>
     {recommendation.requiresClinicalDefinition && <label className="mt-3 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950"><input type="checkbox" className="mt-1" checked={Boolean(value.macro_renal_reviewed)} onChange={(event) => onChange({ ...value, macro_renal_reviewed: event.target.checked, macro_reviewed: false })} /><span>Revisei a função renal e o contexto clínico; confirmei que os parâmetros proteicos propostos ou definidos manualmente são apropriados. Dados ausentes não foram presumidos normais.</span></label>}

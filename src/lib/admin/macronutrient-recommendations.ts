@@ -49,12 +49,18 @@ export const MACRO_PROTOCOL_CONFIGURATION = {
   olderAdultProteinGPerKg: 1.2,
   activeAdultProteinGPerKg: 1.4,
   trainedAthleteProteinGPerKgLeanMass: 2.3,
-  adultFatEnergyPercent: 30,
+  adultFatEnergyPercent: 25,
   obesityReferenceBmi: 25,
 } as const;
 
+export const MACRO_PROTOCOLS = [
+  { id: "adult-maintenance", rangeGPerKg: [0.8, 0.8], appliesWhen: "Adulto em manutenção sem treino identificado", excludes: "Doença renal, gestação, condição clínica especial ou idade menor de 18 anos", selection: "Referência RDA para adultos; não é meta terapêutica universal", referenceKey: "adult", requiresReview: true },
+  { id: "weight-loss", rangeGPerKg: [1.2, 1.6], appliesWhen: "Adulto em emagrecimento, considerando atividade e composição corporal", excludes: "Doença renal ou condição clínica especial; usar peso de referência apropriado", selection: "1,2 g/kg inicialmente; 1,4 em atividade e 1,6 com treino de força", referenceKey: "weightLoss", requiresReview: true },
+  { id: "strength-training", rangeGPerKg: [1.4, 1.6], appliesWhen: "Adulto com treino de força identificado", excludes: "Doença renal, condição clínica especial ou peso de cálculo inadequado", selection: "1,6 g/kg como referência documentada para treino resistido", referenceKey: "strength", requiresReview: true },
+] as const;
+
 const references = {
-  adult: "National Academies (2005). Dietary Reference Intakes for Energy, Carbohydrate, Fiber, Fat, Fatty Acids, Cholesterol, Protein, and Amino Acids. doi:10.17226/10490.",
+  adult: "National Academies (2005). Dietary Reference Intakes for Energy, Carbohydrate, Fiber, Fat, Fatty Acids, Cholesterol, Protein, and Amino Acids. doi:10.17226/10490."
   sport: "Jäger et al. (2017). International Society of Sports Nutrition Position Stand: protein and exercise. JISSN 14:20. doi:10.1186/s12970-017-0177-8.",
   strength: "Morton et al. (2018). A systematic review, meta-analysis and meta-regression of protein supplementation and resistance training. Br J Sports Med 52:376–384. doi:10.1136/bjsports-2017-097608.",
   older: "Deutz et al. (2014). Protein intake and exercise for optimal muscle function with aging: recommendations from the ESPEN Expert Group. Clin Nutr 33:929–936. doi:10.1016/j.clnu.2014.04.007.",
@@ -151,7 +157,7 @@ export function recommendMacronutrients(input: MacroRecommendationInput): MacroR
   const fatPercent = input.energyKcal !== null && input.energyKcal >= 500 && input.energyKcal <= 10000 && input.ageYears !== null && input.ageYears >= 18 && !renalConcern && !specialClinicalConcern
     ? MACRO_PROTOCOL_CONFIGURATION.adultFatEnergyPercent
     : null;
-  if (fatPercent !== null) rationale.push("Gorduras sugeridas em 30% da energia: ponto médio aritmético da faixa AMDR de 20–35% para adultos; regra determinística configurada, não escolha aleatória nem recomendação universal. Reavaliar contexto clínico e tolerância alimentar.");
+  if (fatPercent !== null) rationale.push(`Gorduras sugeridas inicialmente em ${fatPercent}% da energia, dentro da faixa AMDR adulta de 20–35%; valor configurável do protocolo, não necessidade individual comprovada. Reavaliar contexto clínico e tolerância alimentar.`);
   const distributionResult = calculateMacroDistribution({ energyKcal: input.energyKcal, referenceWeightKg, proteinFactorGPerKg, fatPercent });
   issues.push(...distributionResult.issues);
   if (distributionResult.distribution && (distributionResult.distribution.fatPercent < 20 || distributionResult.distribution.fatPercent > 35)) issues.push("Percentual de gorduras fora da faixa AMDR adulta de 20–35%; revisão profissional necessária.");
