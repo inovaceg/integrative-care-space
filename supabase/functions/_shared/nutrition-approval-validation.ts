@@ -27,7 +27,7 @@ export function validateNutritionPlanForApproval(plan: unknown, catalog: Catalog
   const meals = planData.meals;
   if (!meals.length) return ["O plano não contém refeições."];
   const energy = planData.energy;
-  if (!energy || energy.professional_reviewed !== true || !energy.observations || typeof energy.observations !== "string" || !energy.observations.trim()) issues.push("A meta energética deve estar revisada e justificada por profissional antes da aprovação.");
+  if (!energy || energy.professional_reviewed !== true || energy.objective_confirmed !== true || energy.activity_confirmed !== true || energy.clinical_reviewed !== true || typeof energy.reviewer_name !== "string" || !energy.reviewer_name.trim() || typeof energy.observations !== "string" || energy.observations.trim().length < 40) issues.push("A meta energética precisa de objetivo, atividade, revisão clínica, responsável e justificativa profissional confirmados antes da aprovação.");
   else {
     const weight = Number(energy.weight_kg), height = Number(energy.height_cm), age = Number(energy.age_years), factor = Number(energy.activity_factor);
     if (![weight, height, age, factor].every(Number.isFinite) || weight < 20 || weight > 350 || height < 100 || height > 250 || !Number.isInteger(age) || age < 18 || age > 120 || ![1.2, 1.375, 1.55, 1.725, 1.9].includes(factor) || !["female", "male"].includes(String(energy.sex_parameter))) issues.push("Os parâmetros usados para validar a meta energética estão incompletos ou fora do intervalo.");

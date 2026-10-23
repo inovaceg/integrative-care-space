@@ -115,7 +115,7 @@ serve(async (req) => {
   const { data: professional, error: professionalError } = await supabase.from("profissionais").select("id").eq("id", userId).maybeSingle();
   if (professionalError || !professional) return jsonResponse({ error: "Perfil profissional não encontrado." }, 403);
 
-  let input: { test_mode?: boolean; patient_id?: string; goal?: string; duration_days?: number; desired_meals?: number | null; energy?: { sex_parameter?: string; weight_kg?: number; height_cm?: number; age_years?: number; activity_factor?: number; bmr_kcal?: number; estimated_daily_kcal?: number; adjusted_daily_kcal?: number; objective?: string; adjustment_mode?: "percent" | "kcal" | null; adjustment_value?: number | null; professional_reviewed?: boolean; observations?: string } };
+  let input: { test_mode?: boolean; patient_id?: string; goal?: string; duration_days?: number; desired_meals?: number | null; energy?: { sex_parameter?: string; weight_kg?: number; height_cm?: number; age_years?: number; activity_factor?: number; bmr_kcal?: number; estimated_daily_kcal?: number; adjusted_daily_kcal?: number; objective?: string; adjustment_mode?: "percent" | "kcal" | null; adjustment_value?: number | null; objective_confirmed?: boolean; activity_confirmed?: boolean; clinical_reviewed?: boolean; reviewer_name?: string; professional_reviewed?: boolean; observations?: string } };
   try { input = await req.json(); } catch { return jsonResponse({ error: "Requisição inválida." }, 400); }
   const testMode = input.test_mode === true;
   if (!testMode) {
@@ -181,7 +181,7 @@ serve(async (req) => {
     const profile = profileResult.data;
     const energy = input.energy;
     if (age === null || !Number.isFinite(age) || age < 18) return jsonResponse({ error: "A proposta automática está disponível apenas para pacientes adultos com idade confirmada." }, 422);
-    if (!energy || energy.professional_reviewed !== true || !energy.observations?.trim() || !["female", "male"].includes(energy.sex_parameter ?? "") || ![1.2, 1.375, 1.55, 1.725, 1.9].includes(Number(energy.activity_factor)) || !["maintenance", "weight_loss", "weight_gain"].includes(energy.objective ?? "")) return jsonResponse({ error: "Necessidades energéticas não confirmadas por profissional." }, 422);
+    if (!energy || energy.professional_reviewed !== true || energy.objective_confirmed !== true || energy.activity_confirmed !== true || energy.clinical_reviewed !== true || !energy.reviewer_name?.trim() || energy.observations?.trim().length < 40 || !["female", "male"].includes(energy.sex_parameter ?? "") || ![1.2, 1.375, 1.55, 1.725, 1.9].includes(Number(energy.activity_factor)) || !["maintenance", "weight_loss", "weight_gain"].includes(energy.objective ?? "")) return jsonResponse({ error: "Necessidades energéticas, atividade e revisão clínica não foram confirmadas pelo profissional." }, 422);
     const latestEvaluation = evaluationResult.data;
     const weight = Number(energy.weight_kg ?? latestEvaluation?.weight_kg);
     const height = Number(energy.height_cm ?? latestEvaluation?.height_cm);
@@ -234,8 +234,7 @@ serve(async (req) => {
     if (!safeFoods.length) return jsonResponse({ error: "Nenhum alimento TACO passou pelos filtros de composição e restrições registradas. Revise os alimentos evitados e as incompatibilidades confirmadas." }, 409);
     const permittedFoods = safeFoods.slice(0, 120);
     verifiedFoods = permittedFoods as unknown as Record<string, unknown>[];
-    const goal = normalize(input.goal!);
-    const goalCategory = /emagrec|perder peso|reducao de peso/.test(goal) ? "redução de peso" : /ganhar peso|aumento de peso|hipertrof/.test(goal) ? "aumento de peso" : /manutenc/.test(goal) ? "manutenção" : "alimentação equilibrada";
+    const goalCategory = energy.objective === "weight_loss" ? "emagrecimento" : energy.objective === "weight_gain" ? "ganho de peso ou massa muscular" : "manutenção do peso";
     requestData = {
       goal_category: goalCategory,
       duration_days: input.duration_days,

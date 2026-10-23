@@ -138,12 +138,17 @@ function NutritionPlanningPage() {
     typeof responseData.exames === "string" && /apresentar durante|pendente|aguardando/i.test(responseData.exames) ? "Exames foram informados como pendentes de apresentação; considerar na revisão clínica." : "",
   ].filter(Boolean);
   useEffect(() => {
-    if (energy.objective === null && objectiveAssessment.objective) setEnergy((current) => current.objective ? current : { ...current, objective: objectiveAssessment.objective });
-  }, [energy.objective, objectiveAssessment.objective]);
+    if (objectiveAssessment.conflicting) {
+      setEnergy((current) => current.objective_confirmed ? current : { ...current, objective: null, objective_confirmed: false, professional_reviewed: false });
+    } else if (objectiveAssessment.objective) {
+      setEnergy((current) => current.objective === null ? { ...current, objective: objectiveAssessment.objective } : current);
+    }
+  }, [objectiveAssessment.conflicting, objectiveAssessment.objective]);
   const alerts = useMemo(() => {
     const found: string[] = [];
     if (objectiveAssessment.conflicting) found.push(`Há objetivos divergentes nos registros; confirme com a paciente antes de calcular a meta: ${objectiveAssessment.matches.map((entry) => `${entry.source}: ${entry.value}`).join("; ")}.`);
     else if (!objectiveAssessment.objective) found.push("Objetivo energético não identificado nos registros; confirme-o com o profissional antes da meta.");
+    else found.push(`Objetivo identificado como ${objectiveAssessment.objective === "weight_loss" ? "emagrecimento" : objectiveAssessment.objective === "weight_gain" ? "ganho de peso/massa muscular" : "manutenção"} em: ${objectiveAssessment.matches.map((entry) => `${entry.source} (“${entry.value}”)`).join("; ")}.`);
     found.push(...clinicalReviewFlags);
     if (!currentEvaluation) found.push("Não há avaliação corporal registrada.");
     else {
@@ -154,7 +159,7 @@ function NutritionPlanningPage() {
     if (!selected?.data_nascimento) found.push("Data de nascimento não informada.");
     if (!currentEvaluation?.height_cm && !profile.height_cm) found.push("Altura não disponível.");
     return found;
-  }, [currentEvaluation, profile.height_cm, selected]);
+  }, [currentEvaluation, profile.height_cm, profile.goal, selected, objectiveAssessment, clinicalReviewFlags]);
 
   function selectPlan(plan: Plan) { setSyntheticTest(false); setActivePlan(plan); setContentText(JSON.stringify(plan.plan_content, null, 2)); setDuration(String(plan.duration_days)); const measurements = latestWeight(evaluations, applications); setHydration(hydrationForPlan(plan.plan_content, measurements)); setProtein(proteinForPlan(plan.plan_content, measurements)); setEnergy(energyForPlan(plan.plan_content)); }
 
@@ -296,19 +301,21 @@ function NutritionPlanningPage() {
 
   async function generatePersonalizedPlan() {
     if (!patientId || !selected || generating || activePlan?.status === "approved") return;
-    if (!profile.goal.trim()) { setError("Informe o objetivo do planejamento antes de gerar a proposta."); setMessage(""); return; }
+    const selectedObjective = energy.objective ?? objectiveAssessment.objective;
+    if (!selectedObjective || !energy.objective_confirmed || (objectiveAssessment.conflicting && !energy.objective_confirmed)) { setError("Confirme o objetivo nutricional vigente nos registros e na seção de necessidades energéticas antes de gerar."); setMessage(""); return; }
+    const generationGoal = profile.goal.trim() || (selectedObjective === "weight_loss" ? "Emagrecimento" : selectedObjective === "weight_gain" ? "Ganho de peso ou massa muscular" : "Manutenção do peso");
     const mealCount = Number(profile.desired_meals);
     if (!Number.isInteger(mealCount) || mealCount < 1 || mealCount > 10) { setError("Informe de 1 a 10 refeições por dia no perfil nutricional."); setMessage(""); return; }
     const registeredWeight = latestWeight(evaluations, applications);
     const energyFactor = activityFactorForLevel(energy.activity_level || profile.activity_level);
     const energyEstimate = calculateMifflinStJeor({ weightKg: energy.weight_kg ?? registeredWeight?.weight_kg ?? null, heightCm: energy.height_cm ?? currentEvaluation?.height_cm ?? (profile.height_cm ? Number(profile.height_cm) : null), ageYears: energy.age_years ?? ageFrom(selected.data_nascimento), sex: energy.sex_parameter, activityFactor: energyFactor });
-    if (!energyEstimate || !energy.professional_reviewed || !energy.objective || !energy.observations.trim() || !energy.adjusted_daily_kcal) { setError("Revise e aprove as necessidades energéticas antes de solicitar a geração do cardápio."); setMessage(""); return; }
+    if (!energyEstimate || !energy.professional_reviewed || !energy.objective_confirmed || !energy.activity_confirmed || !energy.clinical_reviewed || !energy.reviewer_name.trim() || energy.observations.trim().length < 40 || !energy.objective || !energy.adjusted_daily_kcal) { setError("Revise os dados, objetivo, fator de atividade e alertas clínicos; registre justificativa completa e responsável e aprove a meta antes da geração."); setMessage(""); return; }
     if (profile.pregnancy_or_breastfeeding.trim() && !/^(nao|não|nenhum|nenhuma|n\/?a|nao se aplica)$/i.test(profile.pregnancy_or_breastfeeding.trim())) { setError("Gestação/amamentação exige avaliação clínica individualizada; geração automática bloqueada."); setMessage(""); return; }
     setGenerating(true); setError(""); setMessage("");
     try {
       if (!(await saveProfile())) return;
       const { data, error: invokeError } = await supabase.functions.invoke("nutrition-planning", {
-        body: { patient_id: patientId, goal: profile.goal, duration_days: Number(duration), desired_meals: mealCount, energy: { ...energy, weight_kg: energy.weight_kg ?? registeredWeight?.weight_kg ?? null, activity_factor: energyFactor, bmr_kcal: energyEstimate.bmrKcal, estimated_daily_kcal: energyEstimate.totalKcal, adjusted_daily_kcal: energy.adjusted_daily_kcal } },
+        body: { patient_id: patientId, goal: generationGoal, duration_days: Number(duration), desired_meals: mealCount, energy: { ...energy, objective: selectedObjective, adjustment_mode: energy.adjustment_mode ?? "percent", weight_kg: energy.weight_kg ?? registeredWeight?.weight_kg ?? null, activity_factor: energyFactor, bmr_kcal: energyEstimate.bmrKcal, estimated_daily_kcal: energyEstimate.totalKcal, adjusted_daily_kcal: energy.adjusted_daily_kcal } },
       });
       if (invokeError) {
         let detail = invokeError.message;
