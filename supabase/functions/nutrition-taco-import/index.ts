@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
   const { data: authData, error: authError } = await authClient.auth.getUser(token);
   if (authError || !authData.user) return jsonResponse({ error: "Sessão inválida." }, 401);
   const { data: role, error: roleError } = await authClient.from("user_roles").select("role").eq("user_id", authData.user.id).maybeSingle();
-  if (roleError || role?.role !== "admin") return jsonResponse({ error: "Somente administradores autorizados podem importar a biblioteca." }, 403);
+  if (roleError || !["admin", "doctor"].includes(role?.role ?? "")) return jsonResponse({ error: "Somente profissionais administradores autorizados podem importar a biblioteca." }, 403);
 
   let body: { rows?: unknown };
   try { body = await req.json(); } catch { return jsonResponse({ error: "Requisição inválida." }, 400); }

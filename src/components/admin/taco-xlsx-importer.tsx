@@ -49,7 +49,7 @@ export function TacoXlsxImporter({ onImported }: { onImported?: () => void }) {
   }
 
   async function confirmImport() {
-    if (role !== "admin" || !rows.length || importing) return;
+    if (!(["admin", "doctor"].includes(role ?? "")) || !rows.length || importing) return;
     const importRows = rows.filter((row) => row.errors.length === 0);
     if (!importRows.length || referenceErrors.some((check) => !check.ok)) return;
     setImporting(true); setError(""); setReport(null);
@@ -79,7 +79,7 @@ export function TacoXlsxImporter({ onImported }: { onImported?: () => void }) {
   const criticalEnergyError = rows.some((row) => row.errors.some((item) => item.includes("energia fora do intervalo")));
   const existingCount = validTacoRows(rows).filter((row) => databaseDuplicates.has(sourceCode(row.codigo_taco))).length;
 
-  if (role !== "admin") return <SectionCard title="Importar Banco Nutricional"><p className="text-sm text-slate-600">A importação da planilha TACO está disponível apenas para administradores autorizados.</p></SectionCard>;
+  if (!(["admin", "doctor"].includes(role ?? ""))) return <SectionCard title="Importar Banco Nutricional"><p className="text-sm text-slate-600">A importação da planilha TACO está disponível apenas para profissionais administradores autorizados.</p></SectionCard>;
 
   return <SectionCard title="Importar Banco Nutricional">
     <div className="space-y-4">
