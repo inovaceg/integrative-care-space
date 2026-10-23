@@ -34,6 +34,9 @@ const colors = { dark: "#174b45", green: "#2f756b", sage: "#6f9b90", ink: "#263b
 const line = (text: string, x: number, y: number, size = 10, bold = false, color = colors.ink): DocumentPage[number] => ({ text, x, y, size, bold, color });
 const rule = (y: number, x = 52, width = 491, color = colors.line): DocumentPage[number] => ({ text: "", x, y, size: 0, color, kind: "rule", width });
 const cap = (value: number | null, unit: string) => formatNutritionAmount(value, unit);
+const unapprovedNotice = (status: string) => status === "Em elaboração"
+  ? "Proposta alimentar em elaboração — não utilizar como prescrição."
+  : "Proposta alimentar para revisão profissional — não constitui prescrição dietética.";
 const fitLines = (text: string, max = 88) => {
   const words = text.split(/\s+/).filter(Boolean);
   const rows: string[] = [];
@@ -58,7 +61,7 @@ export function buildNutritionPdfDocument(input: Omit<NutritionPdfDocument, "pag
   const pages: NutritionPdfPage[] = [{ meals: [], summary: true, appendix: false, sections: [], number: 1, count: 1 }];
   const patientLines = fitLines(input.patient, 48).length;
   const objectiveLines = fitLines(input.objective || "Não informado", 42).length;
-  const firstContentY = 153 + 22 + patientLines * 13 + objectiveLines * 14 + (input.reviewer ? 14 : 0) + 19 + 55 + 12 + 56;
+  const firstContentY = 153 + 22 + patientLines * 13 + objectiveLines * 14 + (input.reviewer ? 14 : 0) + 19 + (input.draft ? 13 : 0) + 55 + 12 + 56;
   const pageCapacity = (page: NutritionPdfPage) => page.number === 1 ? 700 - firstContentY : 508 - (input.draft ? 14 : 0);
   const pageUsed = (page: NutritionPdfPage) => page.meals.reduce((sum, meal) => sum + mealHeight({ name: meal.name, items: meal.items, notes: meal.notes }, meal.totals, meal.finalPart), 0) + page.sections.reduce((sum, section) => sum + 26 + section.lines.length * 12, 0);
   const newPage = () => pages.push({ meals: [], summary: false, appendix: false, sections: [], number: pages.length + 1, count: 1 });
@@ -196,9 +199,9 @@ export function nutritionPdfDocumentPages(document: NutritionPdfDocument): Docum
       lines.push(line(`Elaboração: ${document.emissionDate}`, 410, y, 9.5, false, colors.ink));
       y += objectiveLines.length * 14;
       if (document.reviewer) { lines.push(line(document.reviewer, 52, y, 9, false, colors.muted)); y += 14; }
-      const status = document.draft ? "RASCUNHO — NÃO É PRESCRIÇÃO" : document.status.toLocaleUpperCase("pt-BR");
-      lines.push(line(`SITUAÇÃO: ${status}`, 52, y, 9.5, true, document.draft ? colors.amber : colors.green));
-      y += 19;
+      lines.push(line(`SITUAÇÃO: ${document.status.toLocaleUpperCase("pt-BR")}`, 52, y, 9.5, true, document.draft ? colors.amber : colors.green));
+      y += 14;
+      if (document.draft) { lines.push(line(unapprovedNotice(document.status), 52, y, 8.5, false, colors.amber)); y += 13; }
       lines.push(...nutritionSummaryLines(document, y));
       y += 55;
       lines.push(rule(y));
@@ -207,7 +210,7 @@ export function nutritionPdfDocumentPages(document: NutritionPdfDocument): Docum
       y = 153;
       lines.push(line("PLANEJAMENTO ALIMENTAR · CONTINUAÇÃO", 52, y, 13, true, colors.dark));
       y += 23;
-      if (document.draft) { lines.push(line("RASCUNHO — NÃO É PRESCRIÇÃO", 52, y, 9, true, colors.amber)); y += 14; }
+      if (document.draft) { lines.push(line(unapprovedNotice(document.status), 52, y, 8.5, false, colors.amber)); y += 14; }
       lines.push(rule(y));
       y += 16;
     }

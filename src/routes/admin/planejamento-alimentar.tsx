@@ -43,7 +43,7 @@ const emptyProfile: Profile = { height_cm: "", reference_weight_kg: "", goal: ""
 const asProfile = (row: Record<string, unknown> | null): Profile => row ? Object.fromEntries(Object.keys(emptyProfile).map((key) => [key, key === "meal_schedule" ? Array.isArray(row[key]) ? (row[key] as string[]).join("\n") : "" : key.endsWith("preference") ? Boolean(row[key]) : row[key] == null ? "" : String(row[key])])) as Profile : { ...emptyProfile };
 const ageFrom = (date: string | null) => ageInYears(date);
 const display = (value: string | number | null | undefined, unit = "") => value === null || value === undefined || value === "" ? "Não informado" : `${value}${unit}`;
-const statusNames: Record<string, string> = { draft: "Rascunho", pending_review: "Aguardando revisão", approved: "Aprovado por nutricionista", archived: "Arquivado" };
+const statusNames: Record<string, string> = { draft: "Em elaboração", pending_review: "Aguardando revisão", approved: "Aprovado", archived: "Arquivado" };
 type PlanningDraft = { patientId?: string; profile?: Profile; hydration?: HydrationPlan; protein?: ProteinPlan; energy?: EnergyPlan; activePlanId?: string | null; contentText?: string; duration?: string };
 const planningDraftKey = (userId: string) => `admin:planning-alimentar:draft:${userId}`;
 const readPlanningDraft = (userId: string): PlanningDraft => {
@@ -433,7 +433,7 @@ function NutritionPlanningPage() {
     else { setMessage("Planejamento aprovado."); await refreshPlans(activePlan.id); }
   }
 
-  async function preparePdfPreview() {
+  async function preparePdfPreview(exportAfterBuild = false) {
     if (!selected || syntheticTest || pdfPreparing) return;
     setPdfPreparing(true);
     setError("");
@@ -521,7 +521,7 @@ function NutritionPlanningPage() {
         objective: plan.objective || activePlan?.goal || profile.goal || "Não informado",
         emissionDate: new Date().toLocaleDateString("pt-BR"),
         draft: !isApproved,
-        status: statusNames[activePlan?.status ?? "draft"] ?? "Rascunho",
+        status: statusNames[activePlan?.status ?? "draft"] ?? "Em elaboração",
         observations: (plan.observations ?? []).map(readableText).filter(Boolean),
         warnings: [...(plan.warnings ?? []), ...(plan.professional_confirmations ?? [])].map(readableText).filter(Boolean),
         sources: [...sources].sort((a, b) => a.localeCompare(b, "pt-BR")),
@@ -529,8 +529,8 @@ function NutritionPlanningPage() {
         energy: plan.energy ?? null,
         meals,
       });
-      setPdfDocument(document);
-      setPdfPreviewOpen(true);
+      if (exportAfterBuild) await downloadDocumentPdf(nutritionPdfDocumentPages(document), `planejamento-alimentar-${selected.nome.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`, true);
+      else { setPdfDocument(document); setPdfPreviewOpen(true); }
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Não foi possível preparar a prévia do PDF.");
     } finally {
@@ -552,7 +552,8 @@ function NutritionPlanningPage() {
     try {
     if (syntheticTest) { setError("O resultado do teste é fictício e não pode ser exportado."); return; }
     if (!selected) return;
-    const isApproved = activePlan?.status === "approved";
+    if (activePlan?.status !== "approved") { setError("A emissão como prescrição exige aprovação profissional. Use Exportar PDF para revisão para documentos não aprovados."); return; }
+    const isApproved = true;
     if (isApproved && !activePlan?.approved_version_id) { setError("Não foi possível localizar a versão aprovada deste planejamento."); return; }
     let plan: PlanContent;
     try { plan = JSON.parse(contentText) as PlanContent; } catch { setError("Revise o conteúdo: não foi possível interpretar o planejamento para o PDF."); return; }
@@ -573,7 +574,6 @@ function NutritionPlanningPage() {
       if (chunk) rows.push(chunk);
       for (const row of rows) { if (y > 770) { page = []; pages.push(page); y = 55; } page.push({ text: row, x: 42, y, size, bold, color: bold ? "#123c3d" : "#334155" }); y += size + 7; }
     };
-    if (!isApproved) line("RASCUNHO — NÃO É PRESCRIÇÃO", 13, true);
     line("PLANEJAMENTO ALIMENTAR", 18, true); line(`Paciente: ${selected.nome}`); line(`Data da avaliação: ${evaluations[0]?.evaluation_date ? new Date(`${evaluations[0].evaluation_date}T00:00:00`).toLocaleDateString("pt-BR") : "Não informada"}`); line(`Data de emissão: ${new Date().toLocaleDateString("pt-BR")}`); line(`Objetivo: ${plan.objective || activePlan?.goal || profile.goal || "A confirmar"}`); const planStatus = activePlan?.status ?? "draft"; line(`Status: ${statusNames[planStatus] ?? planStatus}`, 10, true); y += 8;
     for (const meal of plan.meals ?? []) {
       line(meal.name, 13, true);
@@ -674,6 +674,7 @@ function NutritionPlanningPage() {
     <SectionCard title="Necessidades Nutricionais"><Tabs defaultValue="energy"><TabsList className="grid h-auto w-full grid-cols-3"><TabsTrigger value="energy">Calorias</TabsTrigger><TabsTrigger value="protein">Proteínas</TabsTrigger><TabsTrigger value="hydration">Hidratação</TabsTrigger></TabsList><TabsContent value="energy"><EnergySection value={energy} onChange={setEnergy} weightKg={latestWeight(evaluations, applications)?.weight_kg ?? null} weightDate={latestWeight(evaluations, applications)?.weight_date ?? null} weightSource={latestWeight(evaluations, applications)?.weight_source ?? null} heightCm={currentEvaluation?.height_cm ?? (profile.height_cm ? Number(profile.height_cm) : null)} heightSource={currentEvaluation?.height_cm ? "Avaliação corporal" : profile.height_cm ? "Perfil nutricional" : "Não informado"} patientAge={ageFrom(selected.data_nascimento)} activityLevel={profile.activity_level} activityContext={[anamnesis?.atividade_fisica, profile.work_routine, profile.exercise_details].filter(Boolean).join(" · ")} onSave={() => void savePlan("draft")} saving={saving} canSave={Boolean(contentText)} /></TabsContent><TabsContent value="protein"><ProteinSection value={protein} onChange={setProtein} patientAge={ageFrom(selected.data_nascimento)} rawPlan={contentText} onPlanChange={setContentText} onSave={() => void savePlan("draft")} saving={saving} canSave={Boolean(contentText)} /></TabsContent><TabsContent value="hydration"><HydrationSection value={hydration} onChange={setHydration} patientAge={ageFrom(selected.data_nascimento)} onSave={() => void savePlan("draft")} saving={saving} canSave={Boolean(contentText)} /></TabsContent></Tabs></SectionCard>
     <SectionCard title="6. Configuração da proposta e geração">
       <NutritionFoodPicker allergies={profile.allergies} intolerances={profile.intolerances} disabled={syntheticTest || activePlan?.status === "approved"} onAdd={addFoodToPlan} />
+      {activePlan?.status !== "approved" && <Button type="button" variant="outline" className="mt-4" onClick={() => void preparePdfPreview(true)} disabled={syntheticTest || pdfPreparing || !contentText}><Download className="mr-2 size-4" />{pdfPreparing ? "Preparando PDF..." : "Exportar PDF para revisão"}</Button>}
       <div className="grid gap-4 md:grid-cols-2">
         <div><Label>Objetivo da proposta</Label><Input className="mt-1" value={profile.goal} onChange={(e) => setField("goal", e.target.value)} placeholder="Ex.: organizar rotina alimentar" /></div>
         <div><Label>Período</Label><Select value={duration} onValueChange={setDuration}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="1">1 dia</SelectItem><SelectItem value="3">3 dias</SelectItem><SelectItem value="7">7 dias</SelectItem></SelectContent></Select></div>
@@ -684,7 +685,7 @@ function NutritionPlanningPage() {
     </SectionCard>
     {(activePlan || contentText) && <SectionCard title={syntheticTest ? "Teste Gemini — somente dados fictícios" : "Proposta de Plano Alimentar"}><p className="mb-3 text-sm text-slate-500">Este plano é um rascunho até a aprovação profissional. Os itens adicionados da biblioteca validada permitem editar a quantidade e recalculam os totais com as fontes cadastradas.</p><Textarea className="min-h-[16rem] font-mono text-xs" value={contentText} onChange={(event) => setContentText(event.target.value)} disabled={syntheticTest || activePlan?.status === "approved"} /><NutritionPlanPreview raw={contentText} onQuantityChange={updatePlanQuantity} readOnly={syntheticTest || activePlan?.status === "approved"} /><div className="mt-4 flex flex-wrap gap-2"><Button type="button" onClick={() => void savePlan("draft")} disabled={saving || syntheticTest || activePlan?.status === "approved"}>{saving ? "Salvando..." : "Salvar rascunho"}</Button><Button type="button" variant="outline" onClick={() => void savePlan("pending_review")} disabled={saving || syntheticTest || activePlan?.status === "approved"}>Encaminhar para revisão</Button><Button type="button" variant="outline" onClick={() => void preparePdfPreview()} disabled={syntheticTest || pdfPreparing}>{pdfPreparing ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Eye className="mr-2 size-4" />}{pdfPreparing ? "Preparando prévia..." : "Pré-visualizar PDF"}</Button>{!syntheticTest && activePlan?.status === "pending_review" && <Button type="button" onClick={() => void approvePlan()} disabled={saving}>Aprovar como nutricionista</Button>}</div>{syntheticTest && <p className="mt-3 text-sm font-medium text-amber-800">Conteúdo fictício de teste. Não salve, aprove ou use como recomendação clínica.</p>}{!syntheticTest && activePlan?.status === "approved" && <p className="mt-3 text-sm text-amber-800">Versão aprovada protegida contra edição. Gere outro plano para criar uma proposta nova.</p>}<Dialog open={pdfPreviewOpen} onOpenChange={setPdfPreviewOpen}><DialogContent className="max-h-[95vh] w-[calc(100vw-2rem)] max-w-5xl overflow-hidden"><DialogHeader><DialogTitle>Prévia do PDF · Planejamento alimentar</DialogTitle><DialogDescription>{pdfDocument?.draft ? "Rascunho — não é prescrição. O arquivo manterá esse aviso em todas as páginas." : "Prévia da versão aprovada e imutável."}</DialogDescription></DialogHeader>{pdfDocument && <NutritionPdfPreview document={pdfDocument} />}<DialogFooter><Button type="button" variant="outline" onClick={() => setPdfPreviewOpen(false)}>Fechar</Button><Button type="button" onClick={() => void downloadNutritionPdf()} disabled={!pdfDocument}><Download className="mr-2 size-4" />Baixar PDF</Button></DialogFooter></DialogContent></Dialog></SectionCard>}
     <SectionCard title="8. Histórico de planejamentos"><div className="space-y-3">{plans.length ? plans.map((plan) => <button key={plan.id} type="button" onClick={() => void loadVersions(plan)} className={`flex w-full flex-wrap items-center justify-between gap-3 rounded-xl border p-4 text-left ${activePlan?.id === plan.id ? "border-[#2f8f82] bg-[#f2f9f7]" : "border-slate-200 bg-white"}`}><span><strong>{plan.goal}</strong><span className="ml-2 rounded-full bg-slate-100 px-2 py-1 text-xs">{statusNames[plan.status] ?? plan.status}</span><span className="mt-1 block text-xs text-slate-500">{new Date(plan.created_at).toLocaleString("pt-BR")} · {plan.duration_days} dia(s) · {versions.length} versão(ões)</span></span><span className="text-sm text-[#26786e]">Ver versões</span></button>) : <div className="flex items-center gap-3 text-sm text-slate-500"><ClipboardList className="size-5" />Nenhum planejamento salvo para este paciente.</div>}{versions.length > 0 && <div className="border-t pt-4"><h3 className="font-semibold">Versões do plano selecionado</h3><div className="mt-2 flex flex-wrap gap-2">{versions.map((version) => <Button key={version.id} type="button" size="sm" variant="outline" onClick={() => selectVersion(version)}>v{version.version_number} · {new Date(version.created_at).toLocaleDateString("pt-BR")}</Button>)}</div></div>}</div></SectionCard>
-      <SectionCard title="PDF final"><p className="text-sm text-slate-600">O PDF sem aviso de rascunho só pode ser gerado depois que a proposta for aprovada por um nutricionista.</p><Button type="button" className="mt-3" onClick={() => void exportPdf()} disabled={syntheticTest || activePlan?.status !== "approved"}><Download className="mr-2 size-4" />Gerar PDF final sem rascunho</Button></SectionCard>
+      <SectionCard title="Emissão da prescrição aprovada"><p className="text-sm text-slate-600">Esta ação emite a versão imutável aprovada por nutricionista, com identificação profissional. Exportar uma proposta para revisão não autoriza prescrição.</p><Button type="button" className="mt-3" onClick={() => void exportPdf()} disabled={syntheticTest || activePlan?.status !== "approved"}><Download className="mr-2 size-4" />Emitir prescrição aprovada</Button></SectionCard>
     </>}
   </div></AdminLayout>;
 }

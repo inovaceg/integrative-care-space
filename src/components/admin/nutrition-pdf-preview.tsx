@@ -8,6 +8,9 @@ const summaries: { label: string; key: keyof NutritionPdfTotals; unit: string }[
   { label: "Gorduras", key: "fat", unit: "g" },
 ];
 const amount = (value: number | null | undefined, unit: string) => formatNutritionAmount(value ?? null, unit);
+const unapprovedNotice = (status: string) => status === "Em elaboração"
+  ? "Proposta alimentar em elaboração — não utilizar como prescrição."
+  : "Proposta alimentar para revisão profissional — não constitui prescrição dietética.";
 
 function LogoMark() {
   return <svg aria-hidden="true" viewBox="0 0 64 64" className="size-8 shrink-0">
@@ -28,9 +31,10 @@ export function NutritionPdfPreview({ document }: { document: NutritionPdfDocume
           <p><strong>Elaboração:</strong> {document.emissionDate}</p>
           {document.evaluationDate && <p><strong>Data da avaliação:</strong> {document.evaluationDate}</p>}
           {document.reviewer && <p className="sm:col-span-2">{document.reviewer}</p>}
-          <p className={`mt-1 font-bold tracking-wide ${document.draft ? "text-amber-800" : "text-[#21655f]"}`}>{document.draft ? "RASCUNHO — NÃO É PRESCRIÇÃO" : document.status.toLocaleUpperCase("pt-BR")}</p>
+          <p className={`mt-1 font-bold tracking-wide ${document.draft ? "text-amber-800" : "text-[#21655f]"}`}>STATUS: {document.status.toLocaleUpperCase("pt-BR")}</p>
+          {document.draft && <p className="sm:col-span-2 text-[11px] font-medium text-amber-800">{unapprovedNotice(document.status)}</p>}
         </div>
-      </header> : <header className="flex items-center gap-3 border-b border-[#d8e2df] pb-3"><LogoMark /><div><h2 className="text-[18px] font-bold tracking-wide text-[#174b45]">PLANEJAMENTO ALIMENTAR · CONTINUAÇÃO</h2>{document.draft && <p className="mt-1 text-[12px] font-bold text-amber-800">RASCUNHO — NÃO É PRESCRIÇÃO</p>}</div></header>}
+      </header> : <header className="flex items-center gap-3 border-b border-[#d8e2df] pb-3"><LogoMark /><div><h2 className="text-[18px] font-bold tracking-wide text-[#174b45]">PLANEJAMENTO ALIMENTAR · CONTINUAÇÃO</h2>{document.draft && <p className="mt-1 text-[11px] font-medium text-amber-800">{unapprovedNotice(document.status)}</p>}</div></header>}
       <div className="mt-4 space-y-4">
         {page.summary && <section className="border-b border-[#d8e2df] pb-4">
           <h3 className="text-[13px] font-bold uppercase tracking-wider text-[#174b45]">Resumo nutricional diário</h3>
