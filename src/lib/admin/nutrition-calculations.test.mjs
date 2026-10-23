@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { activityFactorForLevel, ageInYears, calculateEnergyTarget, calculateMifflinStJeor, calculatePlanNutrition, clonePlanSnapshot, cmFromMeters, isTrustedNutritionSource, kgFromGrams, scaleNutritionPer100g, sumVerifiedMeal, validateEnergyApproval, validateNutritionTotals } from "./nutrition-calculations";
+import { activityFactorForLevel, ageInYears, calculateEnergyTarget, calculateMifflinStJeor, calculatePlanNutrition, clonePlanSnapshot, cmFromMeters, identifyEnergyObjective, isTrustedNutritionSource, kgFromGrams, scaleNutritionPer100g, sumVerifiedMeal, validateEnergyApproval, validateNutritionTotals } from "./nutrition-calculations";
 
 const source = "TACO · fonte verificada";
 const item = (food, calories_kcal, grams = 100, protein_g = 0, carbohydrate_g = 0, fat_g = 0, fiber_g = 0) => ({
@@ -26,6 +26,11 @@ describe("cálculos nutricionais", () => {
     expect(calculateMifflinStJeor({ weightKg: 19, heightCm: 170, ageYears: 30, sex: "female", activityFactor: 1.2 })).toBeNull();
     expect(calculateMifflinStJeor({ weightKg: 70, heightCm: 170, ageYears: 30.5, sex: "female", activityFactor: 1.2 })).toBeNull();
     expect(calculateMifflinStJeor({ weightKg: 70, heightCm: 170, ageYears: 30, sex: "unknown", activityFactor: 1.2 })).toBeNull();
+  });
+  test("identifica objetivo na anamnese e aponta divergências entre registros", () => {
+    expect(identifyEnergyObjective([{ source: "Queixa principal", value: "Emagrecimento" }, { source: "Objetivo", value: "Emagrecer e recuperar autoestima" }])).toMatchObject({ objective: "weight_loss", conflicting: false });
+    expect(identifyEnergyObjective([{ source: "Anamnese", value: "Emagrecimento" }, { source: "Perfil", value: "Ganho de massa muscular" }])).toMatchObject({ objective: null, conflicting: true });
+    expect(identifyEnergyObjective([{ source: "Anamnese", value: "Organizar rotina saudável" }])).toMatchObject({ objective: null, conflicting: false });
   });
   test("define meta de manutenção e ajustes individualizados sem extrapolar limites", () => {
     expect(calculateEnergyTarget(2317.64, "maintenance", null, null)).toBe(2317.64);

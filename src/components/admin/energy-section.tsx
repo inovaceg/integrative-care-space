@@ -24,6 +24,9 @@ export type EnergyPlan = {
   objective: "maintenance" | "weight_loss" | "weight_gain" | null;
   adjustment_mode: "percent" | "kcal" | null;
   adjustment_value: number | null;
+  activity_confirmed: boolean;
+  clinical_reviewed: boolean;
+  reviewer_name: string;
   bmr_kcal: number | null;
   estimated_daily_kcal: number | null;
   adjusted_daily_kcal: number | null;
@@ -36,8 +39,8 @@ const activityFactors: Record<string, number> = { "Sedentário": 1.2, "Leve": 1.
 const parseNumber = (raw: string): number | null => { const n = Number(raw.trim().replace(/\s/g, "").replace(",", ".")); return raw.trim() && Number.isFinite(n) ? n : null; };
 const fmt = (value: number | null) => value === null ? "Não informado" : value.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
 
-export function EnergySection({ value, onChange, weightKg, weightDate, weightSource, heightCm, patientAge, activityLevel, activityContext, heightSource, onSave, saving, canSave }: {
-  value: EnergyPlan; onChange: (next: EnergyPlan) => void; weightKg: number | null; weightDate: string | null; weightSource: string | null; heightCm: number | null; patientAge: number | null; activityLevel: string; activityContext: string; heightSource: string; onSave: () => void; saving: boolean; canSave: boolean;
+export function EnergySection({ value, onChange, weightKg, weightDate, weightSource, heightCm, patientAge, activityLevel, activityContext, heightSource, objectiveSources = [], objectiveConflict = false, clinicalReviewFlags = [], onSave, saving, canSave }: {
+  value: EnergyPlan; onChange: (next: EnergyPlan) => void; weightKg: number | null; weightDate: string | null; weightSource: string | null; heightCm: number | null; patientAge: number | null; activityLevel: string; activityContext: string; heightSource: string; objectiveSources?: string[]; objectiveConflict?: boolean; clinicalReviewFlags?: string[]; onSave: () => void; saving: boolean; canSave: boolean;
 }) {
   const [weightInput, setWeightInput] = useState("");
   const [heightInput, setHeightInput] = useState("");
@@ -56,11 +59,11 @@ export function EnergySection({ value, onChange, weightKg, weightDate, weightSou
   const adjustmentMode = value.adjustment_mode ?? "percent";
   const target = estimate && value.objective ? calculateEnergyTarget(estimate.totalKcal, value.objective, adjustmentMode, value.adjustment_value) : null;
   const targetValid = target !== null && target >= 500 && target <= 10000;
-  const justificationRequired = target !== null && !value.observations.trim();
+  const justificationRequired = target !== null && (value.observations.trim().length < 40 || !value.reviewer_name.trim() || !value.activity_confirmed || (clinicalReviewFlags.length > 0 && !value.clinical_reviewed));
   useEffect(() => {
     if (value.adjusted_daily_kcal !== target || (target === null && value.professional_reviewed)) onChange({ ...value, adjusted_daily_kcal: target, bmr_kcal: estimate?.bmrKcal ?? null, estimated_daily_kcal: estimate?.totalKcal ?? null, activity_factor: factor, professional_reviewed: false, reviewed_at: null });
   }, [target, value, onChange, estimate, factor]);
-  const set = <K extends keyof EnergyPlan>(key: K, field: EnergyPlan[K]) => onChange({ ...value, [key]: field, ...(key === "objective" && field !== "maintenance" && !value.adjustment_mode ? { adjustment_mode: "percent" as const } : {}), professional_reviewed: false, reviewed_at: null });
+  const set = <K extends keyof EnergyPlan>(key: K, field: EnergyPlan[K]) => onChange({ ...value, [key]: field, ...(key === "objective" && field !== "maintenance" && !value.adjustment_mode ? { adjustment_mode: "percent" as const } : {}), ...(key === "activity_level" ? { activity_confirmed: false } : {}), professional_reviewed: false, reviewed_at: null });
   const updateParam = (key: "weight_kg" | "height_cm" | "age_years", raw: string, setter: (s: string) => void) => {
     setter(raw);
     const parsed = raw.trim() ? parseNumber(raw) : null;
@@ -73,11 +76,11 @@ export function EnergySection({ value, onChange, weightKg, weightDate, weightSou
   const adjustmentLabel = value.objective === "weight_loss" ? "Déficit" : "Superávit";
 
   return <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-    <header className="flex items-center gap-2 border-b border-slate-100 px-5 py-4"><Flame className="size-5 text-[#2f8f82]" /><h2 className="font-display text-base font-semibold text-slate-800">NECESSIDADES ENERGÉTICAS DO PACIENTE</h2></header>
+    <header className="flex items-center gap-2 border-b border-slate-100 px-5 py-4"><Flame className="size-5 text-[#2f8f82]" /><h2 className="font-display text-base font-semibold text-slate-800">NECESSIDADES ENERGÉTICAS</h2></header>
     <div className="space-y-5 p-5">
       <p className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-950">Estimativas de referência, não prescrição. A equação não deve ser aplicada automaticamente a menores, gestantes ou situações clínicas especiais. Déficit/superávit e meta exigem avaliação individual e confirmação profissional.</p>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div><Label>Objetivo</Label><Select value={value.objective ?? "none"} onValueChange={(v) => set("objective", v === "none" ? null : v as EnergyPlan["objective"])}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">Selecione</SelectItem><SelectItem value="maintenance">Manutenção do peso</SelectItem><SelectItem value="weight_loss">Emagrecimento</SelectItem><SelectItem value="weight_gain">Ganho de peso/massa muscular</SelectItem></SelectContent></Select></div>
+        <div><Label>Objetivo</Label><Select value={value.objective ?? "none"} onValueChange={(v) => set("objective", v === "none" ? null : v as EnergyPlan["objective"])}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">Selecione/ confirme</SelectItem><SelectItem value="maintenance">Manutenção do peso</SelectItem><SelectItem value="weight_loss">Emagrecimento</SelectItem><SelectItem value="weight_gain">Ganho de peso/massa muscular</SelectItem></SelectContent></Select><p className="mt-1 text-xs text-slate-500">Identificação automática pela anamnese e perfil; confirme o objetivo antes de aprovar.</p></div>
         <div><Label>Parâmetro da equação — confirmação profissional</Label><Select value={value.sex_parameter ?? "none"} onValueChange={(v) => set("sex_parameter", v === "none" ? null : v as SexParameter)}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">Não confirmado</SelectItem><SelectItem value="female">Feminino</SelectItem><SelectItem value="male">Masculino</SelectItem></SelectContent></Select><p className="mt-1 text-xs text-slate-500">Não inferido do gênero cadastrado.</p></div>
         <div><Label>Nível de atividade</Label><Select value={activityOption} onValueChange={(v) => set("activity_level", v === "none" ? "Não informado" : v)}><SelectTrigger className="mt-1"><SelectValue placeholder="Selecione/ confirme" /></SelectTrigger><SelectContent><SelectItem value="none">Não informado</SelectItem>{Object.keys(activityFactors).map((label) => <SelectItem key={label} value={label}>{label} · {activityFactors[label]}</SelectItem>)}</SelectContent></Select><p className="mt-1 text-xs text-slate-500">Considere duração/intensidade, trabalho e movimentação diária; frequência isolada não define o fator.</p></div>
         {[["weight_kg", "Peso (kg)", weightInput, setWeightInput, weight, value.weight_source ?? weightSource ?? "Entrada manual", value.weight_date ?? weightDate], ["height_cm", "Altura (cm)", heightInput, setHeightInput, height, value.height_source ?? heightSource, null], ["age_years", "Idade (anos)", ageInput, setAgeInput, age, value.age_source ?? "Data de nascimento", null]].map(([key, label, input, setter, current, source, date]) => <div key={key as string}><Label>{label as string}</Label><Input className="mt-1" inputMode="decimal" value={input as string} onChange={(e) => updateParam(key as "weight_kg" | "height_cm" | "age_years", e.target.value, setter as (s: string) => void)} /><p className="mt-1 text-xs text-slate-500">{input === "" ? `Atual: ${fmt(current as number | null)} · ${source}${date ? ` · ${date}` : ""}` : "Ajuste temporário; não altera o registro original."}</p></div>)}

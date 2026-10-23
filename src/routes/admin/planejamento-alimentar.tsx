@@ -8,7 +8,7 @@ import { PersonalizedDietCard } from "@/components/admin/personalized-diet-card"
 import { HydrationSection, type HydrationPlan } from "@/components/admin/hydration-section";
 import { ProteinSection, type ProteinPlan } from "@/components/admin/protein-section";
 import { EnergySection, type EnergyPlan } from "@/components/admin/energy-section";
-import { activityFactorForLevel, ageInYears, calculateMifflinStJeor, calculatePlanNutrition, clonePlanSnapshot, isTrustedNutritionSource, scaleNutritionPer100g, sumVerifiedMeal, validateEnergyApproval, validateNutritionTotals } from "@/lib/admin/nutrition-calculations";
+import { activityFactorForLevel, ageInYears, calculateMifflinStJeor, calculatePlanNutrition, clonePlanSnapshot, identifyEnergyObjective, isTrustedNutritionSource, scaleNutritionPer100g, sumVerifiedMeal, validateEnergyApproval, validateNutritionTotals } from "@/lib/admin/nutrition-calculations";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -25,7 +25,7 @@ import { downloadDocumentPdf, type DocumentPage } from "@/lib/admin/document-lay
 type Patient = { id: string; nome: string; data_nascimento: string | null; genero: string | null; area: string | null; queixa_principal: string | null; observacoes_iniciais: string | null };
 type Evaluation = { id: string; evaluation_date: string; weight_kg: number | null; height_cm: number | null; bmi: number | null; waist_cm: number | null; abdomen_cm: number | null; hip_cm: number | null; chest_cm: number | null; right_arm_cm: number | null; left_arm_cm: number | null; right_thigh_cm: number | null; left_thigh_cm: number | null; right_calf_cm: number | null; left_calf_cm: number | null; body_fat_percentage: number | null; muscle_mass_kg: number | null; visceral_fat_level: number | null; body_water_percentage: number | null; basal_metabolism_kcal: number | null; clinical_notes: string | null };
 type Application = { id: string; procedure_name: string; current_weight_kg: number; application_date: string; notes: string | null };
-type Anamnesis = { alimentacao: string | null; atividade_fisica: string | null; qualidade_sono: string | null; doencas_fisicas: string | null; medicamentos_atuais: string | null; usa_medicamentos: boolean | null; sintomas_atuais: unknown };
+type Anamnesis = { alimentacao: string | null; atividade_fisica: string | null; qualidade_sono: string | null; doencas_fisicas: string | null; medicamentos_atuais: string | null; usa_medicamentos: boolean | null; sintomas_atuais: unknown; expectativas_tratamento?: string | null; queixa_principal?: string | null; objetivos_terapia?: string | null; respostas?: Record<string, unknown> | null };
 type Profile = { height_cm: string; reference_weight_kg: string; goal: string; activity_level: string; exercise_details: string; wake_time: string; sleep_time: string; meal_schedule: string; desired_meals: string; work_routine: string; cooking_availability: string; food_budget: string; preferred_foods: string; avoided_foods: string; cultural_restrictions: string; simple_meals_preference: boolean; affordable_food_preference: boolean; allergies: string; intolerances: string; diagnosed_conditions: string; pregnancy_or_breastfeeding: string; medications: string; supplements: string; eating_disorder_history: string };
 type Meal = { name: string; items: { food: string; portion: string; alternatives?: string[]; protein_g?: number; protein_source?: string; calories_kcal?: number; calories_source?: string; carbohydrate_g?: number; carbohydrate_source?: string; fat_g?: number; fat_source?: string; fiber_g?: number; fiber_source?: string; food_library_id?: string; quantity_g?: number; nutrition_per_100g?: { calories_kcal: number; protein_g: number; carbohydrate_g: number; fat_g: number | null; fiber_g?: number | null }; notes?: string }[]; notes?: string };
 type PlanContent = { summary: string; objective: string; warnings: string[]; meals: Meal[]; observations: string[]; professional_confirmations: string[]; hydration?: HydrationPlan; protein?: ProteinPlan; energy?: EnergyPlan };
@@ -36,7 +36,7 @@ const emptyProtein: ProteinPlan = { weight_kg: null, weight_date: null, weight_s
 const latestWeight = (evaluations: Evaluation[], applications: Application[]): WeightMeasurement | null => [...evaluations.flatMap((item) => item.weight_kg !== null && item.weight_kg >= 20 && item.weight_kg <= 350 && item.evaluation_date ? [{ weight_kg: item.weight_kg, weight_date: item.evaluation_date, weight_source: "Avaliação corporal" }] : []), ...applications.flatMap((item) => item.current_weight_kg >= 20 && item.current_weight_kg <= 350 && item.application_date ? [{ weight_kg: item.current_weight_kg, weight_date: item.application_date, weight_source: `Aplicação: ${item.procedure_name}` }] : [])].sort((a, b) => b.weight_date.localeCompare(a.weight_date))[0] ?? null;
 const hydrationForPlan = (content: PlanContent | null | undefined, measurements: WeightMeasurement | null): HydrationPlan => content?.hydration ?? { ...emptyHydration, ...(measurements ?? {}) };
 const proteinForPlan = (content: PlanContent | null | undefined, measurements: WeightMeasurement | null): ProteinPlan => content?.protein ?? { ...emptyProtein, ...(measurements ?? {}) };
-const emptyEnergy: EnergyPlan = { method: "Mifflin-St Jeor", sex_parameter: null, weight_kg: null, height_cm: null, age_years: null, age_source: null, weight_source: null, weight_date: null, calculated_at: null, height_source: null, activity_level: "", activity_factor: null, activity_context: "", objective: null, adjustment_mode: null, adjustment_value: null, bmr_kcal: null, estimated_daily_kcal: null, adjusted_daily_kcal: null, observations: "", professional_reviewed: false, reviewed_at: null };
+const emptyEnergy: EnergyPlan = { method: "Mifflin-St Jeor", sex_parameter: null, weight_kg: null, height_cm: null, age_years: null, age_source: null, weight_source: null, weight_date: null, calculated_at: null, height_source: null, activity_level: "", activity_factor: null, activity_context: "", objective: null, adjustment_mode: null, adjustment_value: null, activity_confirmed: false, clinical_reviewed: false, reviewer_name: "", bmr_kcal: null, estimated_daily_kcal: null, adjusted_daily_kcal: null, observations: "", professional_reviewed: false, reviewed_at: null };
 const energyForPlan = (content: PlanContent | null | undefined): EnergyPlan => ({ ...emptyEnergy, ...(content?.energy ?? {}) });
 type PlanVersion = { id: string; version_number: number; plan_content: PlanContent; created_at: string; created_by: string };
 const emptyProfile: Profile = { height_cm: "", reference_weight_kg: "", goal: "", activity_level: "", exercise_details: "", wake_time: "", sleep_time: "", meal_schedule: "", desired_meals: "", work_routine: "", cooking_availability: "", food_budget: "", preferred_foods: "", avoided_foods: "", cultural_restrictions: "", simple_meals_preference: false, affordable_food_preference: false, allergies: "", intolerances: "", diagnosed_conditions: "", pregnancy_or_breastfeeding: "", medications: "", supplements: "", eating_disorder_history: "" };
@@ -99,6 +99,14 @@ function NutritionPlanningPage() {
   const [message, setMessage] = useState("");
   const selected = patients.find((patient) => patient.id === patientId) ?? null;
   const currentEvaluation = evaluations[0] ?? null;
+  const responseData = anamnesis?.respostas && typeof anamnesis.respostas === "object" ? anamnesis.respostas : {};
+  const objectiveAssessment = identifyEnergyObjective([
+    { source: "Perfil nutricional", value: profile.goal },
+    { source: "Queixa da anamnese", value: anamnesis?.queixa_principal },
+    { source: "Expectativa da anamnese", value: anamnesis?.expectativas_tratamento },
+    { source: "Objetivos informados", value: anamnesis?.objetivos_terapia },
+    ...["motivo_atendimento", "expectativa_tratamento", "objetivo_biomedicina"].map((key) => ({ source: `Anamnese · ${key}`, value: typeof responseData[key] === "string" ? responseData[key] as string : null })),
+  ]);
   useEffect(() => {
     if (!user) return;
     const draft = readPlanningDraft(user.id);
@@ -124,8 +132,19 @@ function NutritionPlanningPage() {
     if (Number.isFinite(position) && position > 0) requestAnimationFrame(() => window.scrollTo(0, position));
     scrollRestored.current = true;
   }, [patientId, loading]);
+  const clinicalReviewFlags = [
+    (/tirzepatida|mounjaro|monjaro/i.test(`${profile.medications} ${anamnesis?.medicamentos_atuais ?? ""}`) || String(responseData.tirzepatida ?? "").toLocaleLowerCase("pt-BR") === "sim") ? "Uso de tirzepatida registrado: revisar tolerância alimentar, ingestão proteica e preservação de massa muscular." : "",
+    (Array.isArray(responseData.sintomas) && responseData.sintomas.some((symptom) => /compuls[aã]o/i.test(String(symptom)))) || /compuls[aã]o/i.test(`${anamnesis?.alimentacao ?? ""} ${anamnesis?.queixa_principal ?? ""}`) ? "Relato de compulsão alimentar: avaliar segurança e adequação do plano com o profissional responsável." : "",
+    typeof responseData.exames === "string" && /apresentar durante|pendente|aguardando/i.test(responseData.exames) ? "Exames foram informados como pendentes de apresentação; considerar na revisão clínica." : "",
+  ].filter(Boolean);
+  useEffect(() => {
+    if (energy.objective === null && objectiveAssessment.objective) setEnergy((current) => current.objective ? current : { ...current, objective: objectiveAssessment.objective });
+  }, [energy.objective, objectiveAssessment.objective]);
   const alerts = useMemo(() => {
     const found: string[] = [];
+    if (objectiveAssessment.conflicting) found.push(`Há objetivos divergentes nos registros; confirme com a paciente antes de calcular a meta: ${objectiveAssessment.matches.map((entry) => `${entry.source}: ${entry.value}`).join("; ")}.`);
+    else if (!objectiveAssessment.objective) found.push("Objetivo energético não identificado nos registros; confirme-o com o profissional antes da meta.");
+    found.push(...clinicalReviewFlags);
     if (!currentEvaluation) found.push("Não há avaliação corporal registrada.");
     else {
       if (currentEvaluation.weight_kg !== null && (currentEvaluation.weight_kg < 20 || currentEvaluation.weight_kg > 350)) found.push("Peso fora da faixa usual; confira o registro.");
@@ -154,7 +173,7 @@ function NutritionPlanningPage() {
     void Promise.all([
       supabase.from("body_evaluations").select("id,evaluation_date,weight_kg,height_cm,bmi,waist_cm,abdomen_cm,hip_cm,chest_cm,right_arm_cm,left_arm_cm,right_thigh_cm,left_thigh_cm,right_calf_cm,left_calf_cm,body_fat_percentage,muscle_mass_kg,visceral_fat_level,body_water_percentage,basal_metabolism_kcal,clinical_notes").eq("patient_id", patientId).eq("profissional_id", user.id).order("evaluation_date", { ascending: false }),
             supabase.from("patient_applications").select("id,procedure_name,current_weight_kg,application_date,notes").eq("patient_id", patientId).eq("profissional_id", user.id).order("application_date", { ascending: false }).limit(1),
-      supabase.from("anamneses").select("alimentacao,atividade_fisica,qualidade_sono,doencas_fisicas,medicamentos_atuais,usa_medicamentos,sintomas_atuais").eq("paciente_id", patientId).eq("profissional_id", user.id).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("anamneses").select("alimentacao,atividade_fisica,qualidade_sono,doencas_fisicas,medicamentos_atuais,usa_medicamentos,sintomas_atuais,expectativas_tratamento,queixa_principal,objetivos_terapia,respostas").eq("paciente_id", patientId).eq("profissional_id", user.id).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("patient_nutrition_profiles").select("*").eq("patient_id", patientId).eq("profissional_id", user.id).maybeSingle(),
       supabase.from("nutrition_plans").select("id,goal,duration_days,status,plan_content,model_name,created_at,approved_at,approved_by,approved_version_id").eq("patient_id", patientId).eq("profissional_id", user.id).order("created_at", { ascending: false }),
     ]).then(([evaluationResult, applicationResult, anamnesisResult, profileResult, planResult]) => {

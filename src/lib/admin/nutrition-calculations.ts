@@ -22,6 +22,19 @@ export function activityFactorForLevel(level: string | null | undefined): number
   return activityFactors[level.trim().toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g, "")] ?? null;
 }
 
+export type EnergyObjective = "maintenance" | "weight_loss" | "weight_gain";
+export function identifyEnergyObjective(entries: Array<{ source: string; value: string | null | undefined }>) {
+  const matches = entries.flatMap((entry) => {
+    const value = entry.value?.trim() ?? "";
+    if (!value) return [];
+    const normalized = value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
+    const objective: EnergyObjective | null = /emagrec|perder peso|perda de peso|reducao de peso/.test(normalized) ? "weight_loss" : /manutenc(?:ao|ao)? (?:do )?peso|manter (?:o )?peso/.test(normalized) ? "maintenance" : /ganho de peso|ganhar peso|massa muscular|hipertrof/.test(normalized) ? "weight_gain" : null;
+    return objective ? [{ ...entry, value, objective }] : [];
+  });
+  const objectives = [...new Set(matches.map((entry) => entry.objective))];
+  return { objective: objectives.length === 1 ? objectives[0]! : null, matches, conflicting: objectives.length > 1 };
+}
+
 export function ageInYears(birthDate: string | null, at = new Date()): number | null {
   if (!birthDate || !/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) return null;
   const birth = new Date(`${birthDate}T00:00:00Z`);
