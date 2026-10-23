@@ -197,9 +197,9 @@ serve(async (req) => {
       const coreNutrients = [food.energy_kcal_100g, food.proteins_g_100g, food.carbohydrates_g_100g];
       if (typeof food.name !== "string" || !food.name.trim() || !Array.isArray(food.allergens) || !coreNutrients.every((value) => typeof value === "number" && Number.isFinite(value) && value >= 0) || (food.fats_g_100g !== null && (typeof food.fats_g_100g !== "number" || !Number.isFinite(food.fats_g_100g) || food.fats_g_100g < 0)) || !trustedSource(food.source ?? "") || !food.license?.trim()) return false;
       const allergens = food.allergens.map((item: string) => normalize(item));
-      if (allergyTerms.length && (!food.allergen_info_known || allergyTerms.some((term) => allergens.some((allergen: string) => allergen.includes(term) || term.includes(allergen))))) return false;
-      if (/gluten|trigo|cevada|centeio/.test(intoleranceText) && food.gluten_status !== "free") return false;
-      if (/lactose|leite/.test(intoleranceText) && food.lactose_status !== "free") return false;
+      if (allergyTerms.length && food.allergen_info_known && allergyTerms.some((term) => allergens.some((allergen: string) => allergen.includes(term) || term.includes(allergen)))) return false;
+      if (/gluten|trigo|cevada|centeio/.test(intoleranceText) && food.gluten_status === "contains") return false;
+      if (/lactose|leite/.test(intoleranceText) && food.lactose_status === "contains") return false;
       const foodText = normalize(`${food.name} ${food.source_code ?? ""}`);
       return !avoidedTerms.some((term) => foodText.includes(term));
     }).sort((a, b) => {
@@ -207,11 +207,7 @@ serve(async (req) => {
       const bPreferred = preferenceTerms.some((term) => normalize(b.name).includes(term));
       return Number(bPreferred) - Number(aPreferred) || a.name.localeCompare(b.name, "pt-BR");
     });
-    if (!safeFoods.length) {
-      const hasUnverifiedDietaryRestriction = allergyTerms.length > 0 || /gluten|trigo|cevada|centeio|lactose|leite/.test(intoleranceText);
-      if (hasUnverifiedDietaryRestriction) return jsonResponse({ error: "A planilha TACO importada não informa alergênicos, glúten ou lactose. Como há uma restrição registrada, não é possível confirmar que esses alimentos sejam compatíveis; revise os dados de segurança antes de gerar a proposta." }, 409);
-      return jsonResponse({ error: "Não há alimentos verificados e compatíveis com as restrições registradas para gerar uma proposta." }, 409);
-    }
+    if (!safeFoods.length) return jsonResponse({ error: "Nenhum alimento TACO passou pelos filtros de composição e restrições registradas. Revise os alimentos evitados e as incompatibilidades confirmadas." }, 409);
     verifiedFoods = safeFoods as unknown as Record<string, unknown>[];
     const goal = normalize(input.goal!);
     const goalCategory = /emagrec|perder peso|reducao de peso/.test(goal) ? "redução de peso" : /ganhar peso|aumento de peso|hipertrof/.test(goal) ? "aumento de peso" : /manutenc/.test(goal) ? "manutenção" : "alimentação equilibrada";
@@ -300,6 +296,7 @@ serve(async (req) => {
     if (typeof plan.summary !== "string" || typeof plan.objective !== "string" || !Array.isArray(plan.meals) || !Array.isArray(plan.warnings) || !Array.isArray(plan.observations) || !Array.isArray(plan.professional_confirmations)) throw new Error("Invalid response shape");
     if (plan.meals.length < 1 || plan.meals.length > 10 || (!testMode && plan.meals.length !== input.desired_meals)) throw new Error("Invalid meal count");
     const byName = new Map(verifiedFoods.map((food) => [normalize(String(food.name)), food]));
+    let hasUnknownSafetyData = false;
     for (const meal of plan.meals) {
       if (typeof meal.name !== "string" || !Array.isArray(meal.items) || meal.items.length < 1 || meal.items.length > 30) throw new Error("Invalid meal shape");
       if (testMode) {
@@ -311,6 +308,7 @@ serve(async (req) => {
         const generated = item as { food: string; portion_grams: number; alternatives: string[] };
         const food = byName.get(normalize(generated.food));
         if (!food) throw new Error("Unverified food returned");
+        if (!food.allergen_info_known || food.gluten_status === "unknown" || food.lactose_status === "unknown") hasUnknownSafetyData = true;
         const source = `${food.source}${food.source_code ? ` · ${food.source_code}` : ""}; ${food.license}`;
         const alternatives = generated.alternatives.map((name) => {
           if (typeof name !== "string") throw new Error("Unverified food returned");
@@ -331,6 +329,11 @@ serve(async (req) => {
           fat_source: source,
         };
       });
+    }
+    if (!testMode && hasUnknownSafetyData) {
+      const safetyWarning = "ATENÇÃO: a TACO não informa alergênicos, glúten ou lactose para este alimento. Confira a compatibilidade com o paciente antes de usar ou aprovar esta proposta.";
+      plan.warnings.unshift(safetyWarning);
+      plan.professional_confirmations.unshift("Revisar alergênicos, glúten e lactose dos alimentos selecionados antes de qualquer uso clínico.");
     }
     if (testMode) plan.observations.unshift("TESTE COM DADOS FICTÍCIOS: não utilizar como prescrição nem como recomendação clínica.");
     return jsonResponse({ plan, model, provider: "gemini", test_mode: testMode });

@@ -38,6 +38,7 @@ export type PlannedFood = {
   alternatives: string[];
   food_library_id: string;
   quantity_g: number;
+  safety_review_required: boolean;
   nutrition_per_100g: { calories_kcal: number; protein_g: number; carbohydrate_g: number; fat_g: number | null };
 };
 
@@ -89,9 +90,9 @@ export function NutritionFoodPicker({ allergies, intolerances, onAdd, disabled }
       const coreValues = [food.energy_kcal_100g, food.proteins_g_100g, food.carbohydrates_g_100g];
       if (!coreValues.every((value) => Number.isFinite(value) && value >= 0) || (food.fats_g_100g !== null && (!Number.isFinite(food.fats_g_100g) || food.fats_g_100g < 0))) return false;
       const foodAllergens = food.allergens.map(normalize).filter(Boolean);
-      if (allergyTerms.length && (!food.allergen_info_known || allergyTerms.some((term) => foodAllergens.some((allergen) => allergen.includes(term) || term.includes(allergen))))) return false;
-      if (/gluten|trigo|cevada|centeio/.test(intoleranceText) && food.gluten_status !== "free") return false;
-      if (/lactose|leite/.test(intoleranceText) && food.lactose_status !== "free") return false;
+      if (allergyTerms.length && food.allergen_info_known && allergyTerms.some((term) => foodAllergens.some((allergen) => allergen.includes(term) || term.includes(allergen)))) return false;
+      if (/gluten|trigo|cevada|centeio/.test(intoleranceText) && food.gluten_status === "contains") return false;
+      if (/lactose|leite/.test(intoleranceText) && food.lactose_status === "contains") return false;
       return true;
     });
   }, [foods, allergies, intolerances]);
@@ -124,6 +125,7 @@ export function NutritionFoodPicker({ allergies, intolerances, onAdd, disabled }
       alternatives: [],
       food_library_id: selected.id,
       quantity_g: quantity,
+      safety_review_required: !selected.allergen_info_known || selected.gluten_status === "unknown" || selected.lactose_status === "unknown",
       nutrition_per_100g: { calories_kcal: selected.energy_kcal_100g, protein_g: selected.proteins_g_100g, carbohydrate_g: selected.carbohydrates_g_100g, fat_g: selected.fats_g_100g },
     });
   };
@@ -131,6 +133,7 @@ export function NutritionFoodPicker({ allergies, intolerances, onAdd, disabled }
   return <section className="rounded-xl border border-slate-200 bg-slate-50 p-4">
     <h3 className="font-semibold text-slate-800">Adicionar alimento da biblioteca validada</h3>
     <p className="mt-1 text-xs text-slate-500">Composição calculada proporcionalmente aos valores por 100 g. A medida caseira cadastrada é apenas informativa; não há conversão automática para gramas.</p>
+    <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">A planilha TACO não informa alergênicos, glúten ou lactose. Esses alimentos continuam disponíveis como rascunho, mas a compatibilidade precisa ser revisada pelo profissional antes do uso ou aprovação.</p>
     <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
       <div><Label>Refeição</Label><Select value={mealName} onValueChange={setMealName}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent>{["Café da manhã", "Lanche da manhã", "Almoço", "Lanche da tarde", "Jantar", "Ceia"].map((name) => <SelectItem key={name} value={name}>{name}</SelectItem>)}</SelectContent></Select></div>
       <div><Label htmlFor="food-search">Pesquisar alimento</Label><Input id="food-search" className="mt-1" value={foodSearch} onChange={(event) => setFoodSearch(event.target.value)} placeholder="Ex.: arroz" /></div>

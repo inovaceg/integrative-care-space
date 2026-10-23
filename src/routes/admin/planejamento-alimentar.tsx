@@ -221,6 +221,11 @@ function NutritionPlanningPage() {
     const existingMeal = draft.meals.find((meal) => meal.name === mealName);
     if (existingMeal) existingMeal.items.push(item);
     else draft.meals.push({ name: mealName, items: [item] });
+    if (item.safety_review_required) {
+      const warning = "ATENÇÃO: a TACO não informa alergênicos, glúten ou lactose para este alimento. Confira a compatibilidade com o paciente antes de usar ou aprovar esta proposta.";
+      draft.warnings = [...new Set([...(draft.warnings ?? []), warning])];
+      draft.professional_confirmations = [...new Set([...(draft.professional_confirmations ?? []), "Revisar alergênicos, glúten e lactose dos alimentos selecionados antes de qualquer uso clínico."])];
+    }
     setContentText(JSON.stringify(draft, null, 2));
     setError("");
     setMessage(`${item.food} foi adicionado a ${mealName}.`);
