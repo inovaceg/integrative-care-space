@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { activityFactorForLevel, calculateMifflinStJeor, type SexParameter } from "@/lib/admin/nutrition-calculations";
+import { activityFactorForLevel, calculateEnergyTarget, calculateMifflinStJeor, type SexParameter } from "@/lib/admin/nutrition-calculations";
 
 export type EnergyPlan = {
   method: "Mifflin-St Jeor";
@@ -53,7 +53,7 @@ export function EnergySection({ value, onChange, weightKg, weightDate, weightSou
   const activityOption = Object.keys(activityFactors).find((label) => activityFactors[label] === factor) ?? "none";
   const estimate = useMemo(() => calculateMifflinStJeor({ weightKg: weight, heightCm: height, ageYears: age, sex: value.sex_parameter, activityFactor: factor }), [weight, height, age, value.sex_parameter, factor]);
   const adjustment = value.adjustment_value ?? 0;
-  const target = estimate ? Math.round((estimate.totalKcal + (value.objective === "weight_loss" ? -1 : value.objective === "weight_gain" ? 1 : 0) * (value.adjustment_mode === "percent" ? estimate.totalKcal * adjustment / 100 : adjustment)) * 100) / 100 : null;
+  const target = estimate && value.objective ? calculateEnergyTarget(estimate.totalKcal, value.objective, value.adjustment_mode, value.adjustment_value) : null;
   const targetValid = target !== null && target >= 500 && target <= 10000;
   const justificationRequired = target !== null && !value.observations.trim();
   useEffect(() => {

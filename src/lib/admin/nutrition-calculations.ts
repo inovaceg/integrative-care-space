@@ -22,6 +22,13 @@ export function activityFactorForLevel(level: string | null | undefined): number
   return activityFactors[level.trim().toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g, "")] ?? null;
 }
 
+export function ageInYears(birthDate: string | null, at = new Date()): number | null {
+  if (!birthDate || !/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) return null;
+  const birth = new Date(`${birthDate}T00:00:00Z`);
+  if (!Number.isFinite(birth.getTime()) || birth.toISOString().slice(0, 10) !== birthDate) return null;
+  return at.getUTCFullYear() - birth.getUTCFullYear() - (at.getUTCMonth() < birth.getUTCMonth() || (at.getUTCMonth() === birth.getUTCMonth() && at.getUTCDate() < birth.getUTCDate()) ? 1 : 0);
+}
+
 export function kgFromGrams(value: number): number { return value / 1000; }
 export function cmFromMeters(value: number): number { return value * 100; }
 
@@ -31,6 +38,14 @@ export function calculateMifflinStJeor(inputs: EnergyInputs): EnergyEstimate | n
   if (![weightKg, heightCm, ageYears, activityFactor].every(Number.isFinite) || weightKg < 20 || weightKg > 350 || heightCm < 100 || heightCm > 250 || !Number.isInteger(ageYears) || ageYears < 18 || ageYears > 120 || activityFactor < 1 || activityFactor > 2.5) return null;
   const bmr = 10 * weightKg + 6.25 * heightCm - 5 * ageYears + (sex === "male" ? 5 : -161);
   return { bmrKcal: Math.round(bmr * 100) / 100, totalKcal: Math.round(bmr * activityFactor * 100) / 100 };
+}
+
+export function calculateEnergyTarget(getKcal: number, objective: "maintenance" | "weight_loss" | "weight_gain", mode: "percent" | "kcal" | null, adjustment: number | null): number | null {
+  if (!Number.isFinite(getKcal) || getKcal <= 0) return null;
+  if (objective === "maintenance") return Math.round(getKcal * 100) / 100;
+  if (adjustment === null || !Number.isFinite(adjustment) || adjustment <= 0 || !mode || (mode === "percent" && adjustment > 50) || (mode === "kcal" && adjustment > 1000)) return null;
+  const amount = mode === "percent" ? getKcal * adjustment / 100 : adjustment;
+  return Math.round((getKcal + (objective === "weight_loss" ? -amount : amount)) * 100) / 100;
 }
 
 export function scaleNutritionPer100g(value: number | null, grams: number): number | null {

@@ -23,8 +23,25 @@ const close = (left: number, right: number) => Number.isFinite(left) && Number.i
 export function validateNutritionPlanForApproval(plan: unknown, catalog: CatalogFood[]) {
   const issues: string[] = [];
   if (!plan || typeof plan !== "object" || !Array.isArray((plan as { meals?: unknown }).meals)) return ["O plano não contém uma lista válida de refeições."];
-  const meals = (plan as { meals: Array<{ name?: unknown; items?: unknown }> }).meals;
+  const planData = plan as { meals: Array<{ name?: unknown; items?: unknown }>; energy?: Record<string, unknown> };
+  const meals = planData.meals;
   if (!meals.length) return ["O plano não contém refeições."];
+  const energy = planData.energy;
+  if (!energy || energy.professional_reviewed !== true || !energy.observations || typeof energy.observations !== "string" || !energy.observations.trim()) issues.push("A meta energética deve estar revisada e justificada por profissional antes da aprovação.");
+  else {
+    const weight = Number(energy.weight_kg), height = Number(energy.height_cm), age = Number(energy.age_years), factor = Number(energy.activity_factor);
+    if (![weight, height, age, factor].every(Number.isFinite) || weight < 20 || weight > 350 || height < 100 || height > 250 || !Number.isInteger(age) || age < 18 || age > 120 || ![1.2, 1.375, 1.55, 1.725, 1.9].includes(factor) || !["female", "male"].includes(String(energy.sex_parameter))) issues.push("Os parâmetros usados para validar a meta energética estão incompletos ou fora do intervalo.");
+    else {
+      const basal = 10 * weight + 6.25 * height - 5 * age + (energy.sex_parameter === "male" ? 5 : -161);
+      const get = basal * factor;
+      const adjustment = Number(energy.adjustment_value);
+      const objective = energy.objective;
+      const mode = energy.adjustment_mode;
+      const validAdjustment = objective === "maintenance" || (Number.isFinite(adjustment) && adjustment > 0 && (mode === "percent" ? adjustment <= 50 : mode === "kcal" && adjustment <= 1000));
+      const target = objective === "maintenance" ? get : get + (objective === "weight_loss" ? -1 : 1) * (mode === "percent" ? get * adjustment / 100 : adjustment);
+      if (!validAdjustment || ![energy.bmr_kcal, energy.estimated_daily_kcal, energy.adjusted_daily_kcal].every((value) => typeof value === "number" && Number.isFinite(value)) || Math.abs(Number(energy.bmr_kcal) - basal) > 0.02 || Math.abs(Number(energy.estimated_daily_kcal) - get) > 0.02 || Math.abs(Number(energy.adjusted_daily_kcal) - target) > 0.02 || Number(energy.adjusted_daily_kcal) < 500 || Number(energy.adjusted_daily_kcal) > 10000) issues.push("A meta energética não corresponde à TMB, ao GET e ao ajuste documentados.");
+    }
+  }
   const byId = new Map(catalog.map((food) => [food.id, food]));
   for (const [mealIndex, meal] of meals.entries()) {
     if (!Array.isArray(meal.items) || !meal.items.length) {

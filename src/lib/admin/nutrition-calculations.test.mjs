@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { activityFactorForLevel, calculateMifflinStJeor, calculatePlanNutrition, clonePlanSnapshot, cmFromMeters, isTrustedNutritionSource, kgFromGrams, scaleNutritionPer100g, sumVerifiedMeal, validateEnergyApproval, validateNutritionTotals } from "./nutrition-calculations";
+import { activityFactorForLevel, ageInYears, calculateEnergyTarget, calculateMifflinStJeor, calculatePlanNutrition, clonePlanSnapshot, cmFromMeters, isTrustedNutritionSource, kgFromGrams, scaleNutritionPer100g, sumVerifiedMeal, validateEnergyApproval, validateNutritionTotals } from "./nutrition-calculations";
 
 const source = "TACO · fonte verificada";
 const item = (food, calories_kcal, grams = 100, protein_g = 0, carbohydrate_g = 0, fat_g = 0, fiber_g = 0) => ({
@@ -27,10 +27,23 @@ describe("cálculos nutricionais", () => {
     expect(calculateMifflinStJeor({ weightKg: 70, heightCm: 170, ageYears: 30.5, sex: "female", activityFactor: 1.2 })).toBeNull();
     expect(calculateMifflinStJeor({ weightKg: 70, heightCm: 170, ageYears: 30, sex: "unknown", activityFactor: 1.2 })).toBeNull();
   });
+  test("define meta de manutenção e ajustes individualizados sem extrapolar limites", () => {
+    expect(calculateEnergyTarget(2317.64, "maintenance", null, null)).toBe(2317.64);
+    expect(calculateEnergyTarget(2317.64, "weight_loss", "percent", 10)).toBe(2085.88);
+    expect(calculateEnergyTarget(2317.64, "weight_gain", "kcal", 250)).toBe(2567.64);
+    expect(calculateEnergyTarget(2317.64, "weight_loss", "percent", 60)).toBeNull();
+    expect(calculateEnergyTarget(2317.64, "weight_loss", null, 250)).toBeNull();
+  });
   test("normaliza atividade registrada e seleciona um fator único", () => {
     expect(activityFactorForLevel("moderado")).toBe(1.55);
     expect(activityFactorForLevel("Muito intenso")).toBe(1.9);
     expect(activityFactorForLevel("exercícios intensos")).toBeNull();
+  });
+  test("calcula idade na data correta e rejeita datas ausentes ou impossíveis", () => {
+    expect(ageInYears("1990-02-28", new Date("2025-03-01T00:00:00Z"))).toBe(35);
+    expect(ageInYears("1990-03-02", new Date("2025-03-01T00:00:00Z"))).toBe(34);
+    expect(ageInYears("1990-02-30", new Date("2025-03-01T00:00:00Z"))).toBeNull();
+    expect(ageInYears(null, new Date("2025-03-01T00:00:00Z"))).toBeNull();
   });
   test("converte unidades sem inferência", () => {
     expect(kgFromGrams(1250)).toBe(1.25);
