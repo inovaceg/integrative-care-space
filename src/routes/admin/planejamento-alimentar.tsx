@@ -226,7 +226,7 @@ function NutritionPlanningPage() {
       const selectedPlan = resume && savedDraft.activePlanId === null ? null : list.find((plan) => plan.id === savedDraft.activePlanId) ?? list[0] ?? null;
       const anamnesisRow = (anamnesisResult.data as Anamnesis | null) ?? null;
       const resolvedProfile = mergeAnamnesisNutritionProfile(resume && savedDraft.profile ? savedDraft.profile : asProfile(profileResult.data as Record<string, unknown> | null), anamnesisRow);
-      setEvaluations(evaluationRows); setApplications(applicationRows); setAnamnesis(anamnesisRow); setProfile(resolvedProfile);
+      setEvaluations(evaluationRows); setApplications(applicationRows.slice(0, 1)); setAnamnesis(anamnesisRow); setProfile(resolvedProfile);
       setPlans(list); setActivePlan(selectedPlan);
       const lastWeight = latestWeight(evaluationRows, applicationRows);
       if (selectedPlan) {
