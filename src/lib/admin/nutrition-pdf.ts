@@ -40,7 +40,7 @@ const charLines = (text: string, max = 43) => {
   if (line) lines.push(line);
   return lines.length ? lines : [""];
 };
-const rowHeight = (item: NutritionPdfItem) => 17 + (charLines(item.food).length - 1) * 11 + (item.alternatives?.length ? charLines(`Alternativas para avaliação: ${item.alternatives.join(" · ")}`, 78).length * 12 : 0);
+const rowHeight = (item: NutritionPdfItem) => 28 + (charLines(item.food).length - 1) * 11 + (item.alternatives?.length ? charLines(`Alternativas para avaliação: ${item.alternatives.join(" · ")}`, 78).length * 12 : 0);
 const mealOverhead = 97;
 const totalsFor = (items: NutritionPdfItem[]): NutritionPdfTotals => {
   const records = items as unknown as Array<Record<string, unknown>>;
@@ -55,7 +55,8 @@ const totalsFor = (items: NutritionPdfItem[]): NutritionPdfTotals => {
 const mealHeight = (meal: NutritionPdfMeal) => mealOverhead + meal.items.reduce((sum, item) => sum + rowHeight(item), 0) + (meal.notes ? charLines(meal.notes, 78).length * 12 + 10 : 0);
 
 export function buildNutritionPdfDocument(input: Omit<NutritionPdfDocument, "pages"> & { meals: NutritionPdfMeal[] }): NutritionPdfDocument {
-  const calculatedMeals = calculatePlanNutrition(input.meals as unknown as Array<{ name?: string; items?: Array<Record<string, unknown>> }>).meals as unknown as NutritionPdfMeal[];
+  const calculation = calculatePlanNutrition(input.meals as unknown as Array<{ name?: string; items?: Array<Record<string, unknown>> }>);
+  const calculatedMeals = calculation.meals as unknown as NutritionPdfMeal[];
   const pages: NutritionPdfPage[] = [{ meals: [], appendix: false, number: 1, count: 1 }];
   const currentPage = () => pages[pages.length - 1]!;
   let available = 520;
@@ -102,7 +103,7 @@ export function buildNutritionPdfDocument(input: Omit<NutritionPdfDocument, "pag
   if (pages.some((page) => page.meals.length > 0) || available < 180) nextPage();
   pages[pages.length - 1].appendix = true;
   pages.forEach((page, index) => { page.number = index + 1; page.count = pages.length; });
-  return { ...input, pages };
+  return { ...input, warnings: [...new Set([...input.warnings, ...calculation.issues])], pages };
 }
 
 const color = { dark: "#1f514b", sage: "#72958a", ink: "#334155", muted: "#64748b", pale: "#e6f0ed" };
@@ -110,6 +111,7 @@ const docLine = (text: string, x: number, y: number, size = 9, bold = false, tex
 const rule = (y: number, x = 52, width = 491): DocumentPage[number] => ({ text: "", x, y, size: 0, color: color.sage, kind: "rule", width });
 const cap = (value: number | null, unit: string) => formatNutritionAmount(value, unit);
 const macroText = (totals: NutritionPdfTotals) => `Proteínas: ${cap(totals.protein, "g")}  |  Carboidratos: ${cap(totals.carbohydrate, "g")}  |  Gorduras: ${cap(totals.fat, "g")}`;
+const itemMacroText = (item: NutritionPdfItem) => `P ${cap(item.protein_g ?? null, "g")} · C ${cap(item.carbohydrate_g ?? null, "g")} · G ${cap(item.fat_g ?? null, "g")} · Fibra ${cap(item.fiber_g ?? null, "g")}`;
 
 export function nutritionPdfDocumentPages(document: NutritionPdfDocument): DocumentPage[] {
   return document.pages.map((page) => {
@@ -141,6 +143,8 @@ export function nutritionPdfDocumentPages(document: NutritionPdfDocument): Docum
         lines.push(docLine(item.portion || (item.quantity_g !== undefined ? `${numberFormat.format(item.quantity_g)} g` : "—"), 365, y, 9));
         lines.push(docLine(cap(item.calories_kcal ?? null, "kcal"), 478, y, 9));
         y += nameLines.length * 11 + 6;
+        lines.push(docLine(itemMacroText(item), 62, y, 7.5, false, color.muted));
+        y += 11;
         if (item.alternatives?.length) {
           lines.push(docLine(`Alternativas para avaliação: ${item.alternatives.join(" · ")}`, 62, y, 8, false, color.muted));
           y += 12;

@@ -380,7 +380,12 @@ function NutritionPlanningPage() {
   async function approvePlan() {
     if (!activePlan?.id || !versions[0]) return;
     setSaving(true); const { data, error: approvalError } = await supabase.functions.invoke("nutrition-approve", { body: { plan_id: activePlan.id, version_id: versions[0].id } }); setSaving(false);
-    if (approvalError || !data?.approved) setError(data?.error ?? "A aprovação exige credencial CRN verificada e uma versão válida enviada para revisão."); else { setMessage("Planejamento aprovado."); await refreshPlans(activePlan.id); }
+    if (approvalError) {
+      const context = "context" in approvalError ? approvalError.context : null;
+      const response = context instanceof Response ? await context.clone().json().catch(() => null) as { error?: unknown } | null : null;
+      setError(typeof response?.error === "string" ? response.error : "A aprovação exige credencial CRN verificada e valores nutricionais completos e consistentes com a biblioteca.");
+    } else if (!data?.approved) setError(data?.error ?? "Não foi possível aprovar o planejamento.");
+    else { setMessage("Planejamento aprovado."); await refreshPlans(activePlan.id); }
   }
 
   async function preparePdfPreview() {
@@ -401,11 +406,12 @@ function NutritionPlanningPage() {
       }
       const isUuid = (value: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
       const foodIds = [...new Set((plan.meals ?? []).flatMap((meal) => (meal.items ?? []).flatMap((item) => [item.food_library_id, ...(item.alternatives ?? [])]).filter((value): value is string => typeof value === "string" && isUuid(value))))];
-      let foodRows: Array<{ id: string; name: string; source_code: string | null }> = [];
+      type CatalogPdfFood = { id: string; name: string; source_code: string | null; source: string; license: string; validation_status: string; energy_kcal_100g: number | string; proteins_g_100g: number | string; carbohydrates_g_100g: number | string; fats_g_100g: number | string | null; fibers_g_100g: number | string | null };
+      let foodRows: CatalogPdfFood[] = [];
       if (foodIds.length) {
-        const { data, error: foodError } = await supabase.from("nutrition_food_library").select("id,name,source_code").in("id", foodIds);
-        if (foodError) throw new Error("Não foi possível resolver os nomes oficiais dos alimentos no catálogo.");
-        foodRows = (data as Array<{ id: string; name: string; source_code: string | null }> | null) ?? [];
+        const { data, error: foodError } = await supabase.from("nutrition_food_library").select("id,name,source_code,source,license,validation_status,energy_kcal_100g,proteins_g_100g,carbohydrates_g_100g,fats_g_100g,fibers_g_100g").in("id", foodIds);
+        if (foodError) throw new Error("Não foi possível carregar os nutrientes oficiais dos alimentos do catálogo.");
+        foodRows = (data as CatalogPdfFood[] | null) ?? [];
       }
       const foodsById = new Map(foodRows.map((food) => [food.id, food]));
       const sources = new Set<string>();
@@ -416,6 +422,7 @@ function NutritionPlanningPage() {
           const id = item.food_library_id ?? (isUuid(item.food) ? item.food : undefined);
           const catalogFood = id ? foodsById.get(id) : undefined;
           if (id && !catalogFood) throw new Error("Um alimento desta versão não foi encontrado no catálogo. Revise o plano antes de gerar o PDF.");
+          if (catalogFood && (catalogFood.validation_status !== "verified" || !isTrustedNutritionSource(catalogFood.source) || !catalogFood.license.trim())) throw new Error("Um alimento desta versão não está mais validado na biblioteca; não é possível gerar um PDF com composição desatualizada.");
           const foodName = catalogFood?.name ?? item.food;
           if (!foodName || isUuid(foodName)) throw new Error("Não foi possível resolver um nome legível para um alimento do plano.");
           if (catalogFood?.source_code) sources.add(catalogFood.source_code);
@@ -425,24 +432,32 @@ function NutritionPlanningPage() {
             if (code) sources.add(code);
           }
           const alternatives = (item.alternatives ?? []).map((alternative) => isUuid(alternative) ? foodsById.get(alternative)?.name : alternative).filter((value): value is string => Boolean(value) && !isUuid(value));
+          const nutritionSource = catalogFood ? `${catalogFood.source}${catalogFood.source_code ? ` · ${catalogFood.source_code}` : ""}; ${catalogFood.license}` : undefined;
+          const nutritionPer100g = catalogFood ? {
+            calories_kcal: Number(catalogFood.energy_kcal_100g),
+            protein_g: Number(catalogFood.proteins_g_100g),
+            carbohydrate_g: Number(catalogFood.carbohydrates_g_100g),
+            fat_g: catalogFood.fats_g_100g === null ? null : Number(catalogFood.fats_g_100g),
+            fiber_g: catalogFood.fibers_g_100g === null ? null : Number(catalogFood.fibers_g_100g),
+          } : item.nutrition_per_100g;
           return {
             food: foodName,
             portion: typeof item.quantity_g === "number" ? `${formatNutritionAmount(item.quantity_g, "g")}` : item.portion,
             quantity_g: item.quantity_g,
             calories_kcal: item.calories_kcal,
-            calories_source: item.calories_source,
+            calories_source: nutritionSource ?? item.calories_source,
             protein_g: item.protein_g,
-            protein_source: item.protein_source,
+            protein_source: nutritionSource ?? item.protein_source,
             carbohydrate_g: item.carbohydrate_g,
-            carbohydrate_source: item.carbohydrate_source,
+            carbohydrate_source: nutritionSource ?? item.carbohydrate_source,
             fat_g: item.fat_g,
-            fat_source: item.fat_source,
+            fat_source: nutritionSource ?? item.fat_source,
             fiber_g: item.fiber_g,
-            fiber_source: item.fiber_source,
+            fiber_source: nutritionSource ?? item.fiber_source,
             alternatives: [...new Set(alternatives)],
             notes: item.notes,
             source_code: catalogFood?.source_code,
-            nutrition_per_100g: item.nutrition_per_100g,
+            nutrition_per_100g: nutritionPer100g,
           } satisfies NutritionPdfItem;
         }),
       }));

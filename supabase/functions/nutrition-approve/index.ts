@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { validateNutritionPlanForApproval, type CatalogFood } from "../_shared/nutrition-approval-validation.ts";
 
 const functionName = "nutrition-approve";
 const corsHeaders = {
@@ -34,6 +35,19 @@ serve(async (req) => {
   try { input = await req.json(); } catch { return jsonResponse({ error: "Requisição inválida." }, 400); }
   if (typeof input.plan_id !== "string" || typeof input.version_id !== "string") return jsonResponse({ error: "Plano ou versão inválidos." }, 400);
   const serviceClient = createClient(url, serviceKey, { auth: { persistSession: false } });
+  const { data: version, error: versionError } = await serviceClient.from("nutrition_plan_versions").select("plan_content").eq("id", input.version_id).eq("plan_id", input.plan_id).maybeSingle();
+  if (versionError || !version) return jsonResponse({ error: "A versão do planejamento não foi encontrada." }, 404);
+  const planContent = version.plan_content as { meals?: Array<{ items?: Array<Record<string, unknown>> }> };
+  const foodIds = [...new Set((Array.isArray(planContent?.meals) ? planContent.meals : []).flatMap((meal) => (Array.isArray(meal.items) ? meal.items : []).map((item) => item.food_library_id).filter((id): id is string => typeof id === "string")))];
+  const { data: catalogRows, error: catalogError } = foodIds.length
+    ? await serviceClient.from("nutrition_food_library").select("id,name,source,validation_status,energy_kcal_100g,proteins_g_100g,carbohydrates_g_100g,fats_g_100g,fibers_g_100g").in("id", foodIds)
+    : { data: [], error: null };
+  if (catalogError) {
+    console.error(`[${functionName}] Failed loading catalog rows for approval validation`);
+    return jsonResponse({ error: "Não foi possível conferir os alimentos na biblioteca antes da aprovação." }, 500);
+  }
+  const nutritionIssues = validateNutritionPlanForApproval(planContent, (catalogRows ?? []) as CatalogFood[]);
+  if (nutritionIssues.length) return jsonResponse({ error: `A aprovação foi bloqueada por inconsistências nutricionais: ${nutritionIssues.slice(0, 6).join(" ")}`, validation_issues: nutritionIssues }, 422);
   const { error: approvalError } = await serviceClient.rpc("approve_nutrition_plan", { p_plan_id: input.plan_id, p_version_id: input.version_id, p_profissional_id: approverId });
   if (approvalError) {
     console.error(`[${functionName}] Approval operation rejected`);

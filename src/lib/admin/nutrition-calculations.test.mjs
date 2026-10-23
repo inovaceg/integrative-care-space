@@ -46,19 +46,20 @@ describe("cálculos nutricionais", () => {
     const meals = [
       { name: "Café da manhã", items: [item("Café", 249.6, 100, 8, 30, 5, 3)] },
       { name: "Lanche da manhã", items: [item("Iogurte", 144, 100, 6, 20, 3, 0)] },
-      { name: "Almoço", items: [item("Arroz integral cozido", 124, 100, 2.6, 25.8, 1, 1.8), item("Filé de abadejo grelhado", 130, 120, 18.5, 0, 1, 0), item("Brócolis cozido", 25, 80, 2.1, 4.4, 0.5, 3.4)] },
+      { name: "Almoço", items: [item("Arroz integral cozido", 124, 100, 2.6, 25.8, 1, 2.7), item("Abadejo filé congelado grelhado", 130, 120, 27.6, 0, 1.3, null), item("Brócolis cozido", 25, 80, 2.1, 4.4, 0.5, 3.4)] },
       { name: "Lanche da tarde", items: [item("Fruta", 188.2, 100, 2, 35, 3, 5)] },
       { name: "Jantar", items: [item("Jantar", 294.5, 100, 20, 28, 9, 4)] },
       { name: "Ceia", items: [item("Ceia", 71, 100, 4, 10, 2, 1)] },
     ];
     const result = calculatePlanNutrition(meals);
     expect(result.meals[2].totals.calories_kcal).toBe(300);
-    expect(result.meals[2].totals.protein_g).toBe(26.48);
+    expect(result.meals[2].totals.protein_g).toBe(37.4);
     expect(result.meals[2].totals.carbohydrate_g).toBe(29.32);
-    expect(result.meals[2].totals.fat_g).toBe(2.6);
-    expect(result.meals[2].totals.fiber_g).toBe(4.52);
+    expect(result.meals[2].totals.fat_g).toBe(2.96);
+    expect(result.meals[2].totals.fiber_g).toBeNull();
     expect(result.totals.calories_kcal).toBe(1247.3);
-    expect(validateNutritionTotals(result)).toEqual([]);
+    expect(result.totals.fiber_g).toBeNull();
+    expect(validateNutritionTotals(result).length).toBeGreaterThan(0);
   });
   test("não transforma nutrientes ausentes em zero e marca o plano incompleto", () => {
     const result = calculatePlanNutrition([{ name: "Almoço", items: [item("Alimento sem fibra", 100, 100, 5, 10, 2, null)] }]);
