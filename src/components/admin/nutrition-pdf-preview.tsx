@@ -1,4 +1,5 @@
 import { formatNutritionAmount, type NutritionPdfDocument, type NutritionPdfTotals } from "@/lib/admin/nutrition-pdf";
+import { sumVerifiedMeal } from "@/lib/admin/nutrition-calculations";
 
 const totalLine = (totals: NutritionPdfTotals) => [
   `Proteínas: ${formatNutritionAmount(totals.protein, "g")}`,
@@ -14,16 +15,13 @@ export function NutritionPdfPreview({ document }: { document: NutritionPdfDocume
     fat: null,
     fiber: null,
   };
-  const allItems = document.pages.flatMap((page) => page.meals.flatMap((meal) => meal.items));
-  const sum = (key: "calories_kcal" | "protein_g" | "carbohydrate_g" | "fat_g" | "fiber_g", source: "calories_source" | "protein_source" | "carbohydrate_source" | "fat_source" | "fiber_source") => {
-    if (!allItems.length || !allItems.every((item) => typeof item[key] === "number" && Number.isFinite(item[key]) && typeof item[source] === "string" && /\b(TACO|TBCA|USDA|r[oó]tulo)\b/i.test(item[source]!))) return null;
-    return allItems.reduce((value, item) => value + (item[key] as number), 0);
-  };
-  dailyTotals.calories = sum("calories_kcal", "calories_source");
-  dailyTotals.protein = sum("protein_g", "protein_source");
-  dailyTotals.carbohydrate = sum("carbohydrate_g", "carbohydrate_source");
-  dailyTotals.fat = sum("fat_g", "fat_source");
-  dailyTotals.fiber = sum("fiber_g", "fiber_source");
+  const allItems = document.pages.flatMap((page) => page.meals.filter((meal) => meal.finalPart).flatMap((meal) => meal.items));
+  const records = allItems as unknown as Array<Record<string, unknown>>;
+  dailyTotals.calories = sumVerifiedMeal(records, "calories_kcal", "calories_source");
+  dailyTotals.protein = sumVerifiedMeal(records, "protein_g", "protein_source");
+  dailyTotals.carbohydrate = sumVerifiedMeal(records, "carbohydrate_g", "carbohydrate_source");
+  dailyTotals.fat = sumVerifiedMeal(records, "fat_g", "fat_source");
+  dailyTotals.fiber = sumVerifiedMeal(records, "fiber_g", "fiber_source");
 
   return <div className="max-h-[72vh] space-y-5 overflow-y-auto bg-slate-100 p-3 sm:p-6">
     {document.pages.map((page) => <article key={page.number} className="mx-auto min-h-[900px] w-full max-w-[640px] bg-white px-8 py-10 shadow-md sm:px-12 sm:py-12" style={{ fontFamily: "Arial, sans-serif" }}>

@@ -39,8 +39,8 @@ const charLines = (text: string, max = 43) => {
   if (line) lines.push(line);
   return lines.length ? lines : [""];
 };
-const rowHeight = (item: NutritionPdfItem) => charLines(item.food).length * 12 + 6 + (item.alternatives?.length ? 14 : 0);
-const mealOverhead = 61;
+const rowHeight = (item: NutritionPdfItem) => 17 + (charLines(item.food).length - 1) * 11 + (item.alternatives?.length ? charLines(`Alternativas para avaliação: ${item.alternatives.join(" · ")}`, 78).length * 12 : 0);
+const mealOverhead = 97;
 const totalsFor = (items: NutritionPdfItem[]): NutritionPdfTotals => {
   const records = items as unknown as Array<Record<string, unknown>>;
   return {
@@ -97,8 +97,7 @@ export function buildNutritionPdfDocument(input: Omit<NutritionPdfDocument, "pag
       available -= height;
     }
   }
-  const appendixHeight = 82 + input.observations.reduce((sum, item) => sum + charLines(item, 76).length * 12 + 6, 0) + input.warnings.reduce((sum, item) => sum + charLines(item, 76).length * 12 + 6, 0) + input.sources.length * 13;
-  if (appendixHeight > available) nextPage();
+  if (pages.some((page) => page.meals.length > 0) || available < 180) nextPage();
   pages[pages.length - 1].appendix = true;
   pages.forEach((page, index) => { page.number = index + 1; page.count = pages.length; });
   return { ...input, pages };
@@ -146,9 +145,11 @@ export function nutritionPdfDocumentPages(document: NutritionPdfDocument): Docum
         }
       }
       lines.push(rule(y, 52, 491)); y += 13;
-      lines.push(docLine(`Total da refeição: ${cap(meal.totals.calories, "kcal")}`, 52, y, 9.5, true, color.dark)); y += 14;
-      lines.push(docLine(macroText(meal.totals), 52, y, 8.5, false, color.muted)); y += 14;
-      if (meal.totals.fiber !== null) { lines.push(docLine(`Fibras: ${cap(meal.totals.fiber, "g")}`, 52, y, 8.5, false, color.muted)); y += 12; }
+      if (meal.finalPart) {
+        lines.push(docLine(`Total da refeição: ${cap(meal.totals.calories, "kcal")}`, 52, y, 9.5, true, color.dark)); y += 14;
+        lines.push(docLine(macroText(meal.totals), 52, y, 8.5, false, color.muted)); y += 14;
+        if (meal.totals.fiber !== null) { lines.push(docLine(`Fibras: ${cap(meal.totals.fiber, "g")}`, 52, y, 8.5, false, color.muted)); y += 12; }
+      }
       if (meal.notes) { charLines(meal.notes, 78).forEach((part) => { lines.push(docLine(part, 52, y, 8.5, false, color.muted)); y += 12; }); }
       y += 10;
     }
@@ -173,7 +174,7 @@ export function nutritionPdfDocumentPages(document: NutritionPdfDocument): Docum
       if (document.sources.length) {
         y += 8;
         lines.push(docLine("FONTES DOS DADOS NUTRICIONAIS", 52, y, 9, true, color.dark)); y += 13;
-        lines.push(docLine("Composição calculada a partir da TACO. Códigos dos alimentos:", 52, y, 8, false, color.muted)); y += 12;
+        lines.push(docLine("Referências de composição informadas no catálogo:", 52, y, 8, false, color.muted)); y += 12;
         for (const source of document.sources) {
           charLines(source, 78).forEach((part) => { lines.push(docLine(part, 52, y, 8, false, color.muted)); y += 11; });
         }
