@@ -4,13 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { EnergyPlan } from "@/components/admin/energy-section";
-import { calculateMacroDistribution } from "@/lib/admin/macronutrient-distribution";
+import { calculateMacroDistribution, isMacroDistributionStale } from "@/lib/admin/macronutrient-distribution";
 
 const show = (value: number | null) => value === null ? "—" : value.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
 const parse = (raw: string) => { const value = Number(raw.trim().replace(",", ".")); return raw.trim() && Number.isFinite(value) ? value : null; };
 
 export function MacroDistributionSection({ value, target, energyApproved, fallbackWeight, clinicalReviewFlags, onChange }: { value: EnergyPlan; target: number | null; energyApproved: boolean; fallbackWeight: number | null; clinicalReviewFlags: string[]; onChange: (next: EnergyPlan) => void }) {
-  const stale = value.macro_calculated_for_kcal !== null && (target === null || Math.abs(value.macro_calculated_for_kcal - target) > 0.02);
+  const stale = isMacroDistributionStale(value.macro_calculated_for_kcal, target);
   const calc = useMemo(() => {
     const percents = [value.carbohydrate_percent, value.protein_percent, value.fat_percent];
     if (target === null || percents.some((percent) => percent === null || !Number.isFinite(percent) || percent! < 0 || percent! > 100) || Math.abs(percents.reduce<number>((sum, percent) => sum + (percent ?? 0), 0) - 100) > 0.01) return null;

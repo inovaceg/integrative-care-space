@@ -172,7 +172,7 @@ function NutritionPlanningPage() {
         const activeTarget = energy.professional_reviewed ? energy.adjusted_daily_kcal : null;
         const staleText = [...(savedPlan.observations ?? []), ...(savedPlan.warnings ?? []), ...(savedPlan.professional_confirmations ?? [])].some((text) => isOldEnergyText(text, activeTarget));
         const energyChanged = savedPlan.energy && (!energyTargetMatches(savedPlan.energy.adjusted_daily_kcal, energy.adjusted_daily_kcal) || (savedPlan.energy.professional_reviewed && !energy.professional_reviewed));
-        const macrosChanged = savedPlan.energy?.macro_reviewed && (!energy.macro_reviewed || !energyTargetMatches(savedPlan.energy.macro_calculated_for_kcal, energy.adjusted_daily_kcal));
+        const macrosChanged = savedPlan.energy?.macro_reviewed && (!energy.macro_reviewed || isMacroDistributionStale(savedPlan.energy.macro_calculated_for_kcal, energy.adjusted_daily_kcal));
         if (staleText || energyChanged || macrosChanged) found.push("A meta energética ou a distribuição de macronutrientes desta proposta está desatualizada. Recalcule e confirme os macros para a meta vigente e gere uma nova proposta antes de exportar o PDF.");
       } catch { }
     }

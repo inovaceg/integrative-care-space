@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { calculateMacroDistribution } from "./macronutrient-distribution";
+import { calculateMacroDistribution, isMacroDistributionStale } from "./macronutrient-distribution";
 
 describe("distribuição individualizada de macronutrientes", () => {
   test("calcula gramas e percentuais a partir dos parâmetros individualizados", () => {
@@ -35,5 +35,27 @@ describe("distribuição individualizada de macronutrientes", () => {
   test("recusa entradas fora dos limites de validade", () => {
     expect(calculateMacroDistribution({ energyKcal: 499, referenceWeightKg: 70, proteinFactorGPerKg: 1, fatPercent: 30 }).distribution).toBeNull();
     expect(calculateMacroDistribution({ energyKcal: 2000, referenceWeightKg: 0, proteinFactorGPerKg: 1, fatPercent: 30 }).issues).toContain("Peso de referência válido entre 20 e 350 kg.");
+  });
+});
+
+describe("detecção de distribuição desatualizada", () => {
+  test("retorna falso quando a meta calórica não mudou", () => {
+    expect(isMacroDistributionStale(2000, 2000)).toBe(false);
+  });
+
+  test("retorna falso quando não há distribuição calculada", () => {
+    expect(isMacroDistributionStale(null, 2000)).toBe(false);
+  });
+
+  test("retorna verdadeiro quando a meta calórica mudou", () => {
+    expect(isMacroDistributionStale(2000, 1800)).toBe(true);
+  });
+
+  test("retorna verdadeiro quando não há meta calórica atual", () => {
+    expect(isMacroDistributionStale(2000, null)).toBe(true);
+  });
+
+  test("considera diferença de 0,02 kcal como não desatualizada", () => {
+    expect(isMacroDistributionStale(2000, 2000.01)).toBe(false);
   });
 });

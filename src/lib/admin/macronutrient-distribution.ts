@@ -43,3 +43,7 @@ export function calculateMacroDistribution(input: MacroDistributionInput): { dis
     issues: [],
   };
 }
+
+export function isMacroDistributionStale(calculatedForKcal: number | null, currentTargetKcal: number | null): boolean {
+  return calculatedForKcal !== null && (currentTargetKcal === null || Math.abs(calculatedForKcal - currentTargetKcal) > 0.02);
+}
