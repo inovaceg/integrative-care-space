@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { recommendMacronutrients } from "./macronutrient-recommendations";
+import { macroRecommendationKey, recommendMacronutrients } from "./macronutrient-recommendations";
 
 const base = {
   ageYears: 40,
@@ -19,6 +19,13 @@ const base = {
 };
 
 describe("recomendações automáticas de macronutrientes", () => {
+  test("cria chave de contexto opaca e sensível a mudanças sem armazenar texto clínico", () => {
+    const first = macroRecommendationKey({ ...base, medications: "tirzepatida" });
+    const changed = macroRecommendationKey({ ...base, medications: "semaglutida" });
+    expect(first).not.toContain("tirzepatida");
+    expect(first).not.toBe(changed);
+  });
+
   test("usa RDA adulta em manutenção e ponto médio da faixa AMDR para gorduras", () => {
     const result = recommendMacronutrients(base);
     expect(result.proteinFactorGPerKg).toBe(0.8);
@@ -45,12 +52,26 @@ describe("recomendações automáticas de macronutrientes", () => {
     expect(result.rationale.join(" ")).toContain("não o peso atual");
   });
 
+  test("usa massa livre de gordura estimada no protocolo de atleta em déficit com treino de força", () => {
+    const result = recommendMacronutrients({ ...base, weightKg: 80, objective: "weight_loss", activityDetails: "treino de força", bodyFatPercent: 15 });
+    expect(result.referenceWeightKg).toBeCloseTo(68);
+    expect(result.proteinFactorGPerKg).toBe(2.3);
+    expect(result.references.some((reference) => reference.includes("1550-2783-11-20"))).toBe(true);
+  });
+
   test("sinaliza idade avançada, medicação GLP-1 e função renal não documentada", () => {
     const result = recommendMacronutrients({ ...base, ageYears: 70, objective: "weight_loss", medications: "tirzepatida" });
     expect(result.proteinFactorGPerKg).toBe(1.2);
     expect(result.rationale.join(" ")).toContain("tirzepatida");
     expect(result.rationale.join(" ")).toContain("Função renal não documentada");
     expect(result.references.some((reference) => reference.includes("2014. Protein intake"))).toBe(true);
+  });
+
+  test("usa protocolo cauteloso de perda de peso para farmacoterapia sem alegar fator específico do fármaco", () => {
+    const result = recommendMacronutrients({ ...base, objective: "weight_loss", medications: "tirzepatida" });
+    expect(result.proteinFactorGPerKg).toBe(1.2);
+    expect(result.protocol).toContain("farmacoterapia para obesidade");
+    expect(result.rationale.join(" ")).toContain("Não há fator proteico específico validado");
   });
 
   test("não sugere fator proteico na doença renal e sinaliza avaliação clínica", () => {

@@ -18,7 +18,15 @@ export type MacroRecommendationInput = {
 };
 
 export function macroRecommendationKey(input: MacroRecommendationInput): string {
-  return JSON.stringify(input);
+  const source = JSON.stringify(input);
+  let first = 2166136261;
+  let second = 2654435769;
+  for (const char of source) {
+    const code = char.charCodeAt(0);
+    first = Math.imul(first ^ code, 16777619);
+    second = Math.imul(second ^ code, 2246822519);
+  }
+  return `${(first >>> 0).toString(16)}${(second >>> 0).toString(16)}`;
 }
 
 export type MacroRecommendation = {
@@ -55,6 +63,7 @@ const references = {
 } as const;
 
 const normalized = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
+const showValue = (value: number | null) => value === null ? "não calculada" : value.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
 
 export function recommendMacronutrients(input: MacroRecommendationInput): MacroRecommendation {
   const issues: string[] = [];
@@ -63,16 +72,22 @@ export function recommendMacronutrients(input: MacroRecommendationInput): MacroR
   const activity = normalized(`${input.activityLevel} ${input.activityDetails}`);
   const medicationOnWeightLoss = /tirzepatida|semaglutida|liraglutida|zepbound|mounjaro|wegovy|ozempic|saxenda/.test(text);
   const renalConcern = /doenca renal|insuficiencia renal|nefropatia|dialise|hemodialise|doenca renal cronica/.test(text);
-  const renalStatusDocumented = /funcao renal (?:preservada|normal|sem alteracao)|sem (?:alteracao|doenca) renal|tfg (?:normal|preservada)|egrf (?:normal|preservada)/.test(text);
+  const renalStatusDocumented = /funcao renal (?:preservada|normal|sem alteracao)|sem (?:alteracao|doenca) renal|tfg (?:normal|preservada)|egfr (?:normal|preservada)/.test(text);
   const specialClinicalConcern = /gestante|gravidez|lactante|amamenta|transtorno alimentar|anorexia|bulimia|cancer|oncolog|hepatopatia|cirrose|pos operatorio|pos-operatorio/.test(text);
   const strengthTraining = /musculacao|treino de forca|resistance training|levantamento de peso/.test(activity);
   const active = /ativo|intenso|moderado|treina|exercicio|atividade fisica/.test(activity);
   const bmi = input.weightKg !== null && input.heightCm !== null && input.heightCm > 0
     ? input.weightKg / ((input.heightCm / 100) ** 2)
     : null;
-  const referenceWeightKg = input.referenceWeightKg ?? (bmi !== null && bmi >= 30 && input.heightCm !== null
-    ? MACRO_PROTOCOL_CONFIGURATION.obesityReferenceBmi * (input.heightCm / 100) ** 2
-    : input.weightKg);
+  const fatFreeMassKg = input.bodyFatPercent !== null && input.bodyFatPercent >= 5 && input.bodyFatPercent <= 70 && input.weightKg !== null
+    ? input.weightKg * (1 - input.bodyFatPercent / 100)
+    : null;
+  const leanMassProtocol = input.objective === "weight_loss" && strengthTraining && fatFreeMassKg !== null;
+  const referenceWeightKg = input.referenceWeightKg ?? (leanMassProtocol
+    ? fatFreeMassKg
+    : bmi !== null && bmi >= 30 && input.heightCm !== null
+      ? MACRO_PROTOCOL_CONFIGURATION.obesityReferenceBmi * (input.heightCm / 100) ** 2
+      : input.weightKg);
 
   if (input.ageYears === null || input.ageYears < 18) issues.push("Idade adulta válida não disponível; não gerar sugestão automática de adulto.");
   if (input.objective === null) issues.push("Objetivo nutricional não confirmado; não selecionar protocolo automaticamente.");
@@ -80,6 +95,8 @@ export function recommendMacronutrients(input: MacroRecommendationInput): MacroR
   if (referenceWeightKg === null || !Number.isFinite(referenceWeightKg) || referenceWeightKg < 20 || referenceWeightKg > 350) issues.push("Peso de referência adequado precisa ser definido.");
   if (input.heightCm === null || !Number.isFinite(input.heightCm) || input.heightCm < 100 || input.heightCm > 250) issues.push("Altura válida não disponível para contextualizar o peso.");
   if (input.bodyFatPercent === null && input.muscleMassKg === null) rationale.push("Composição corporal não disponível; não foi inferida massa livre de gordura.");
+  if (input.bodyFatPercent !== null && input.bodyFatPercent >= 5 && input.bodyFatPercent <= 70) rationale.push(`Composição registrada: ${input.bodyFatPercent.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% de gordura; usada apenas quando o protocolo de treino de força em emagrecimento permite estimar massa livre de gordura (${showValue(fatFreeMassKg)} kg). Medidas por bioimpedância têm incerteza e exigem validação.`);
+  if (input.muscleMassKg !== null) rationale.push(`Massa muscular registrada: ${input.muscleMassKg.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg; considerada como alerta de preservação, não convertida em massa livre de gordura.`);
   if (input.weightLossHistoryPercent !== null && input.weightLossHistoryPercent >= 5) rationale.push(`Perda de peso documentada de ${input.weightLossHistoryPercent.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% no período avaliado; preservar massa magra requer revisão do plano e evolução clínica.`);
   if (medicationOnWeightLoss) rationale.push("Medicamento associado ao tratamento da obesidade detectado; acompanhar ingestão, tolerância, adequação proteica e preservação de massa magra. A evidência não define um fator exclusivo do fármaco.");
   if (renalConcern) issues.push("Possível doença renal identificada; fator proteico e peso de cálculo devem ser definidos pelo profissional com dados clínicos e renais.");
@@ -95,6 +112,16 @@ export function recommendMacronutrients(input: MacroRecommendationInput): MacroR
       proteinProtocol = "Pessoa idosa — sugestão inicial 1,2 g/kg/dia";
       proteinReference = references.older;
       rationale.push("Idade ≥65 anos: sugestão inicial de 1,2 g/kg/dia dentro da faixa geriátrica de 1,0–1,2 g/kg/dia; deve ser individualizada.");
+    } else if (leanMassProtocol) {
+      proteinFactorGPerKg = MACRO_PROTOCOL_CONFIGURATION.trainedAthleteProteinGPerKgLeanMass;
+      proteinProtocol = "Emagrecimento com treino de força — 2,3 g/kg de massa livre de gordura";
+      proteinReference = references.leanAthlete;
+      rationale.push("Treino de força e composição corporal disponível: 2,3 g/kg de massa livre de gordura (estimada por peso × [1 − percentual de gordura]), limite inferior da faixa de 2,3–3,1 g/kg FFM descrita para atletas magros em déficit; aplicação indireta, requer validação.");
+    } else if (input.objective === "weight_loss" && medicationOnWeightLoss) {
+      proteinFactorGPerKg = active ? MACRO_PROTOCOL_CONFIGURATION.activeWeightLossProteinGPerKg : MACRO_PROTOCOL_CONFIGURATION.weightLossProteinGPerKg;
+      proteinProtocol = `Perda de peso com farmacoterapia para obesidade — sugestão inicial ${proteinFactorGPerKg} g/kg/dia`;
+      proteinReference = references.weightLoss;
+      rationale.push("Fármaco associado a tratamento da obesidade detectado. Não há fator proteico específico validado para tirzepatida/semaglutida; foi selecionado um ponto inicial da faixa estudada em perda de peso, com revisão de ingestão, tolerância, treino e massa magra.");
     } else if (input.objective === "weight_loss") {
       proteinFactorGPerKg = strengthTraining ? MACRO_PROTOCOL_CONFIGURATION.strengthTrainingProteinGPerKg : active ? MACRO_PROTOCOL_CONFIGURATION.activeWeightLossProteinGPerKg : MACRO_PROTOCOL_CONFIGURATION.weightLossProteinGPerKg;
       proteinProtocol = strengthTraining ? "Emagrecimento com treino de força — 1,6 g/kg/dia" : "Emagrecimento — sugestão inicial 1,2–1,6 g/kg/dia";
@@ -115,13 +142,14 @@ export function recommendMacronutrients(input: MacroRecommendationInput): MacroR
       proteinProtocol = "Adulto em manutenção — referência RDA 0,8 g/kg/dia";
       rationale.push("Adulto em manutenção sem evidência de treino ou emagrecimento: referência RDA 0,8 g/kg/dia; não é meta terapêutica universal.");
     }
-    if (medicationOnWeightLoss && input.objective === "weight_loss") proteinFactorGPerKg = Math.max(proteinFactorGPerKg, 1.2);
-    if (bmi !== null && bmi >= 30 && input.referenceWeightKg === null) rationale.push(`IMC calculado ${bmi.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}: para a sugestão, foi usado peso de referência correspondente a IMC 25 (${referenceWeightKg?.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg), não o peso atual. O profissional deve confirmar a adequação.`);
+    if (proteinFactorGPerKg !== null && medicationOnWeightLoss && input.objective === "weight_loss") proteinFactorGPerKg = Math.max(proteinFactorGPerKg, MACRO_PROTOCOL_CONFIGURATION.weightLossProteinGPerKg);
+    if (bmi !== null && bmi >= 30 && input.referenceWeightKg === null && !leanMassProtocol) rationale.push(`IMC calculado ${bmi.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}: para a sugestão, foi usado peso de referência correspondente a IMC 25 (${referenceWeightKg?.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg), não o peso atual. O profissional deve confirmar a adequação.`);
+    if (leanMassProtocol) rationale.push("O peso de cálculo é a massa livre de gordura estimada, não o peso total; valide a confiabilidade do percentual de gordura e a adequação deste protocolo.");
     if (input.referenceWeightKg !== null) rationale.push("Foi mantido o peso de referência escolhido pelo profissional; o sistema não o substituiu pelo peso atual.");
   }
 
   const fatPercent = input.energyKcal !== null && input.energyKcal >= 500 && input.energyKcal <= 10000 && input.ageYears !== null && input.ageYears >= 18 && !renalConcern && !specialClinicalConcern
-    ? 30
+    ? MACRO_PROTOCOL_CONFIGURATION.adultFatEnergyPercent
     : null;
   if (fatPercent !== null) rationale.push("Gorduras sugeridas em 30% da energia: ponto médio aritmético da faixa AMDR de 20–35% para adultos; regra determinística configurada, não escolha aleatória nem recomendação universal. Reavaliar contexto clínico e tolerância alimentar.");
   const distributionResult = calculateMacroDistribution({ energyKcal: input.energyKcal, referenceWeightKg, proteinFactorGPerKg, fatPercent });
