@@ -67,7 +67,13 @@ export function NutritionFoodPicker({ allergies, intolerances, onAdd, disabled }
       .then(({ data, error: queryError }) => {
         if (!active) return;
         if (queryError) setError("Não foi possível carregar os alimentos validados.");
-        else setFoods((data as Food[] | null) ?? []);
+        else setFoods(((data as Food[] | null) ?? []).map((food) => ({
+          ...food,
+          energy_kcal_100g: Number(food.energy_kcal_100g),
+          proteins_g_100g: Number(food.proteins_g_100g),
+          carbohydrates_g_100g: Number(food.carbohydrates_g_100g),
+          fats_g_100g: food.fats_g_100g === null ? null : Number(food.fats_g_100g),
+        })));
         setLoading(false);
       });
     return () => { active = false; };
@@ -80,6 +86,8 @@ export function NutritionFoodPicker({ allergies, intolerances, onAdd, disabled }
     const intoleranceText = normalize(intolerances);
     return foods.filter((food) => {
       if (!isTrustedNutritionSource(food.source) || !food.license.trim()) return false;
+      const coreValues = [food.energy_kcal_100g, food.proteins_g_100g, food.carbohydrates_g_100g];
+      if (!coreValues.every((value) => Number.isFinite(value) && value >= 0) || (food.fats_g_100g !== null && (!Number.isFinite(food.fats_g_100g) || food.fats_g_100g < 0))) return false;
       const foodAllergens = food.allergens.map(normalize).filter(Boolean);
       if (allergyTerms.length && (!food.allergen_info_known || allergyTerms.some((term) => foodAllergens.some((allergen) => allergen.includes(term) || term.includes(allergen))))) return false;
       if (/gluten|trigo|cevada|centeio/.test(intoleranceText) && food.gluten_status !== "free") return false;

@@ -181,12 +181,19 @@ serve(async (req) => {
       console.error(`[${functionName}] Failed loading verified food library`);
       return jsonResponse({ error: "Não foi possível carregar a biblioteca alimentar verificada." }, 500);
     }
-    if (!foodRows?.length) return jsonResponse({ error: "A biblioteca de alimentos ainda está vazia: não há itens cadastrados como verificados. Cadastre e valide alimentos com fonte, licença, composição por 100 g e dados de alergênicos antes de gerar uma proposta." }, 409);
+    if (!foodRows?.length) return jsonResponse({ error: "A biblioteca de alimentos ainda está vazia: não há itens cadastrados como verificados. Cadastre e valide alimentos com fonte, licença e composição por 100 g antes de gerar uma proposta." }, 409);
+    const normalizedFoodRows = foodRows.map((food) => ({
+      ...food,
+      energy_kcal_100g: Number(food.energy_kcal_100g),
+      proteins_g_100g: Number(food.proteins_g_100g),
+      carbohydrates_g_100g: Number(food.carbohydrates_g_100g),
+      fats_g_100g: food.fats_g_100g === null ? null : Number(food.fats_g_100g),
+    }));
     const allergyTerms = isExplicitNegative(profile?.allergies) ? [] : splitTerms(profile?.allergies ?? "");
     const intoleranceText = normalize(profile?.intolerances ?? "");
     const avoidedTerms = [...splitTerms(profile?.avoided_foods ?? ""), ...splitTerms(profile?.cultural_restrictions ?? "")];
     const preferenceTerms = splitTerms(profile?.preferred_foods ?? "");
-    const safeFoods = (foodRows ?? []).filter((food) => {
+    const safeFoods = normalizedFoodRows.filter((food) => {
       const coreNutrients = [food.energy_kcal_100g, food.proteins_g_100g, food.carbohydrates_g_100g];
       if (typeof food.name !== "string" || !food.name.trim() || !Array.isArray(food.allergens) || !coreNutrients.every((value) => typeof value === "number" && Number.isFinite(value) && value >= 0) || (food.fats_g_100g !== null && (typeof food.fats_g_100g !== "number" || !Number.isFinite(food.fats_g_100g) || food.fats_g_100g < 0)) || !trustedSource(food.source ?? "") || !food.license?.trim()) return false;
       const allergens = food.allergens.map((item: string) => normalize(item));
@@ -200,7 +207,11 @@ serve(async (req) => {
       const bPreferred = preferenceTerms.some((term) => normalize(b.name).includes(term));
       return Number(bPreferred) - Number(aPreferred) || a.name.localeCompare(b.name, "pt-BR");
     });
-    if (!safeFoods.length) return jsonResponse({ error: "Não há alimentos verificados e compatíveis com as restrições registradas para gerar uma proposta." }, 409);
+    if (!safeFoods.length) {
+      const hasUnverifiedDietaryRestriction = allergyTerms.length > 0 || /gluten|trigo|cevada|centeio|lactose|leite/.test(intoleranceText);
+      if (hasUnverifiedDietaryRestriction) return jsonResponse({ error: "A planilha TACO importada não informa alergênicos, glúten ou lactose. Como há uma restrição registrada, não é possível confirmar que esses alimentos sejam compatíveis; revise os dados de segurança antes de gerar a proposta." }, 409);
+      return jsonResponse({ error: "Não há alimentos verificados e compatíveis com as restrições registradas para gerar uma proposta." }, 409);
+    }
     verifiedFoods = safeFoods as unknown as Record<string, unknown>[];
     const goal = normalize(input.goal!);
     const goalCategory = /emagrec|perder peso|reducao de peso/.test(goal) ? "redução de peso" : /ganhar peso|aumento de peso|hipertrof/.test(goal) ? "aumento de peso" : /manutenc/.test(goal) ? "manutenção" : "alimentação equilibrada";
