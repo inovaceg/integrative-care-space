@@ -176,12 +176,13 @@ function NutritionPlanningPage() {
     anamnesis: [anamnesis?.alimentacao, anamnesis?.sintomas_atuais, anamnesis?.respostas].map((item) => typeof item === "string" ? item : JSON.stringify(item ?? "")).join(" "),
   };
   useEffect(() => {
+    if (loading || !patientId || loadedPatientId.current !== patientId) return;
     if (objectiveAssessment.conflicting) {
       setEnergy((current) => current.objective_confirmed ? current : { ...current, objective: null, objective_confirmed: false, professional_reviewed: false });
     } else if (objectiveAssessment.objective) {
       setEnergy((current) => current.objective === null ? { ...current, objective: objectiveAssessment.objective } : current);
     }
-  }, [objectiveAssessment.conflicting, objectiveAssessment.objective]);
+  }, [patientId, loading, objectiveAssessment.conflicting, objectiveAssessment.objective]);
   const alerts = useMemo(() => {
     const found: string[] = [];
     if (objectiveAssessment.conflicting) found.push(`Há objetivos divergentes nos registros; confirme com a paciente antes de calcular a meta: ${objectiveAssessment.matches.map((entry) => `${entry.source}: ${entry.value}`).join("; ")}.`);
