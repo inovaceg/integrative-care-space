@@ -380,6 +380,7 @@ function NutritionPlanningPage() {
   }
 
   async function exportPdf() {
+    try {
     if (syntheticTest) { setError("O resultado do teste é fictício e não pode ser exportado como documento de paciente."); return; }
     if (!selected) return;
     if (activePlan?.status !== "approved" || !activePlan.approved_version_id) { setError("Somente a versão aprovada pode ser exportada como PDF de prescrição."); return; }
@@ -483,6 +484,10 @@ function NutritionPlanningPage() {
       line(`Nutricionista responsavel: ${nutritionist.full_name}`); line(`Registro CRN informado: ${nutritionist.crn}`); line(`Aprovado em: ${new Date(activePlan.approved_at ?? "").toLocaleString("pt-BR")}`);
     }
     await downloadDocumentPdf(pages, `planejamento-alimentar-${selected.nome.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`, true);
+    setError("");
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "Não foi possível gerar o PDF. Tente novamente.");
+    }
   }
 
   const textFields: [keyof Profile, string][] = [["exercise_details", "Tipo e frequência de exercícios"],["work_routine", "Rotina de trabalho"],["cooking_availability", "Disponibilidade para cozinhar"],["food_budget", "Orçamento alimentar"],["preferred_foods", "Alimentos preferidos"],["avoided_foods", "Alimentos que não consome"],["cultural_restrictions", "Restrições culturais/religiosas"],["allergies", "Alergias alimentares"],["intolerances", "Intolerâncias"],["diagnosed_conditions", "Doenças diagnosticadas"],["pregnancy_or_breastfeeding", "Gestação ou amamentação"],["medications", "Medicamentos em uso"],["supplements", "Suplementos"],["eating_disorder_history", "Histórico de transtornos alimentares"]];
