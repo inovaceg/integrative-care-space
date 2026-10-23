@@ -60,7 +60,7 @@ export const MACRO_PROTOCOLS = [
 ] as const;
 
 const references = {
-  adult: "National Academies (2005). Dietary Reference Intakes for Energy, Carbohydrate, Fiber, Fat, Fatty Acids, Cholesterol, Protein, and Amino Acids. doi:10.17226/10490."
+  adult: "National Academies (2005). Dietary Reference Intakes for Energy, Carbohydrate, Fiber, Fat, Fatty Acids, Cholesterol, Protein, and Amino Acids. doi:10.17226/10490.",
   sport: "Jäger et al. (2017). International Society of Sports Nutrition Position Stand: protein and exercise. JISSN 14:20. doi:10.1186/s12970-017-0177-8.",
   strength: "Morton et al. (2018). A systematic review, meta-analysis and meta-regression of protein supplementation and resistance training. Br J Sports Med 52:376–384. doi:10.1136/bjsports-2017-097608.",
   older: "Deutz et al. (2014). Protein intake and exercise for optimal muscle function with aging: recommendations from the ESPEN Expert Group. Clin Nutr 33:929–936. doi:10.1016/j.clnu.2014.04.007.",
