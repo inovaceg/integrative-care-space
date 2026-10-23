@@ -4,8 +4,8 @@ export type EnergyEstimate = { bmrKcal: number; totalKcal: number | null };
 export type NutritionValueKey = "calories_kcal" | "protein_g" | "carbohydrate_g" | "fat_g" | "fiber_g";
 export type NutritionSourceKey = "calories_source" | "protein_source" | "carbohydrate_source" | "fat_source" | "fiber_source";
 export type NutritionTotals = Record<NutritionValueKey, number | null>;
-export type NutritionMealResult = { name: string; items: Record<string, unknown>[]; totals: NutritionTotals };
-export type PlanNutritionResult = { meals: NutritionMealResult[]; totals: NutritionTotals; issues: string[] };
+export type NutritionMealResult = { name: string; items: Record<string, unknown>[]; totals: NutritionTotals; knownTotals: NutritionTotals };
+export type PlanNutritionResult = { meals: NutritionMealResult[]; totals: NutritionTotals; knownTotals: NutritionTotals; issues: string[] };
 
 const activityFactors: Record<string, number> = { sedentario: 1.2, leve: 1.375, moderado: 1.55, intenso: 1.725, "muito intenso": 1.9 };
 const nutrientFields: { key: NutritionValueKey; source: NutritionSourceKey; per100: string }[] = [
@@ -98,16 +98,24 @@ export function calculatePlanNutrition(meals: Array<{ name?: string; items?: Arr
       return item;
     });
     const totals = emptyTotals();
-    if (items.length) for (const field of nutrientFields) totals[field.key] = sumVerifiedMeal(items, field.key, field.source);
+    const knownTotals = emptyTotals();
+    if (items.length) for (const field of nutrientFields) {
+      totals[field.key] = sumVerifiedMeal(items, field.key, field.source);
+      const knownItems = items.filter((item) => typeof item[field.key] === "number" && Number.isFinite(item[field.key]) && (item[field.key] as number) >= 0 && isTrustedNutritionSource(item[field.source]));
+      knownTotals[field.key] = knownItems.length ? knownItems.reduce((sum, item) => sum + (item[field.key] as number), 0) : null;
+    }
     else issues.push(`${meal.name || `Refeição ${mealIndex + 1}`}: não há alimentos selecionados.`);
-    return { name: meal.name ?? `Refeição ${mealIndex + 1}`, items, totals };
+    return { name: meal.name ?? `Refeição ${mealIndex + 1}`, items, totals, knownTotals };
   });
   const totals = emptyTotals();
+  const knownTotals = emptyTotals();
   if (calculatedMeals.length) for (const field of nutrientFields) {
     const values = calculatedMeals.map((meal) => meal.totals[field.key]);
     totals[field.key] = values.every((value): value is number => value !== null) ? values.reduce((sum, value) => sum + value, 0) : null;
+    const knownValues = calculatedMeals.map((meal) => meal.knownTotals[field.key]).filter((value): value is number => value !== null);
+    knownTotals[field.key] = knownValues.length ? knownValues.reduce((sum, value) => sum + value, 0) : null;
   }
-  return { meals: calculatedMeals, totals, issues: [...new Set(issues)] };
+  return { meals: calculatedMeals, totals, knownTotals, issues: [...new Set(issues)] };
 }
 
 export function scalePlanPortionsToEnergyTarget(meals: Array<{ name?: string; items?: Array<Record<string, unknown>> }>, targetKcal: number): PlanNutritionResult {
@@ -120,7 +128,9 @@ export function scalePlanPortionsToEnergyTarget(meals: Array<{ name?: string; it
     name: meal.name,
     items: meal.items.map((item) => {
       if (!item.nutrition_per_100g || typeof item.quantity_g !== "number") throw new Error("Há alimentos sem composição/quantidade de catálogo para ajustar à meta.");
-      const quantity = Math.round(item.quantity_g * scale * 10) / 10;
+      const scaledQuantity = item.quantity_g * scale;
+      const step = scaledQuantity >= 100 ? 10 : 5;
+      const quantity = Math.round(scaledQuantity / step) * step;
       if (quantity < 1 || quantity > 2000) throw new Error("O ajuste à meta excede os limites de porção (1–2.000 g); revise a composição do cardápio.");
       return { ...item, quantity_g: quantity, portion: `${quantity} g` };
     }),
