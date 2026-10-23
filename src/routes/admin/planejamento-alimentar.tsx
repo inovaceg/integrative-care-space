@@ -381,12 +381,14 @@ function NutritionPlanningPage() {
 
   async function exportPdf() {
     try {
-    if (syntheticTest) { setError("O resultado do teste é fictício e não pode ser exportado como documento de paciente."); return; }
+    if (syntheticTest) { setError("O resultado do teste é fictício e não pode ser exportado."); return; }
     if (!selected) return;
-    if (activePlan?.status !== "approved" || !activePlan.approved_version_id) { setError("Somente a versão aprovada pode ser exportada como PDF de prescrição."); return; }
+    const isApproved = activePlan?.status === "approved";
+    if (isApproved && !activePlan?.approved_version_id) { setError("Não foi possível localizar a versão aprovada deste planejamento."); return; }
     let plan: PlanContent;
     try { plan = JSON.parse(contentText) as PlanContent; } catch { setError("Revise o conteúdo: não foi possível interpretar o planejamento para o PDF."); return; }
-    if (activePlan?.status === "approved" && activePlan.approved_version_id) {
+    if (!plan || !Array.isArray(plan.meals)) { setError("O planejamento não contém refeições válidas para exportar."); return; }
+    if (isApproved && activePlan?.approved_version_id) {
       const { data } = await supabase.from("nutrition_plan_versions").select("plan_content").eq("id", activePlan.approved_version_id).eq("plan_id", activePlan.id).maybeSingle();
       if (!data) { setError("Não foi possível carregar a versão aprovada imutável."); return; }
       plan = data.plan_content as PlanContent;
@@ -402,8 +404,8 @@ function NutritionPlanningPage() {
       if (chunk) rows.push(chunk);
       for (const row of rows) { if (y > 770) { page = []; pages.push(page); y = 55; } page.push({ text: row, x: 42, y, size, bold, color: bold ? "#123c3d" : "#334155" }); y += size + 7; }
     };
-    if (activePlan?.status !== "approved") line("RASCUNHO - NAO UTILIZAR COMO PRESCRICAO", 13, true);
-    line("PLANEJAMENTO ALIMENTAR", 18, true); line(`Paciente: ${selected.nome}`); line(`Data da avaliação: ${evaluations[0]?.evaluation_date ? new Date(`${evaluations[0].evaluation_date}T00:00:00`).toLocaleDateString("pt-BR") : "Não informada"}`); line(`Data de emissão: ${new Date().toLocaleDateString("pt-BR")}`); line(`Objetivo: ${plan.objective || activePlan.goal || profile.goal || "A confirmar"}`); line(`Status: ${statusNames[activePlan.status] ?? activePlan.status}`, 10, true); y += 8;
+    if (!isApproved) line("RASCUNHO — NÃO É PRESCRIÇÃO", 13, true);
+    line("PLANEJAMENTO ALIMENTAR", 18, true); line(`Paciente: ${selected.nome}`); line(`Data da avaliação: ${evaluations[0]?.evaluation_date ? new Date(`${evaluations[0].evaluation_date}T00:00:00`).toLocaleDateString("pt-BR") : "Não informada"}`); line(`Data de emissão: ${new Date().toLocaleDateString("pt-BR")}`); line(`Objetivo: ${plan.objective || activePlan?.goal || profile.goal || "A confirmar"}`); const planStatus = activePlan?.status ?? "draft"; line(`Status: ${statusNames[planStatus] ?? planStatus}`, 10, true); y += 8;
     for (const meal of plan.meals ?? []) {
       line(meal.name, 13, true);
       const mealItems = meal.items ?? [];
@@ -478,7 +480,7 @@ function NutritionPlanningPage() {
       if (energyPlan.activity_context) line(`Contexto considerado para seleção do fator (sem fator duplicado): ${energyPlan.activity_context}`);
       if (energyPlan.observations) line(`Justificativa/observações: ${energyPlan.observations}`);
     }
-    if (activePlan.approved_by) {
+    if (isApproved && activePlan?.approved_by) {
       const { data: nutritionist } = await supabase.from("nutritionist_credentials").select("full_name,crn").eq("profissional_id", activePlan.approved_by).maybeSingle();
       if (!nutritionist) { setError("Não foi possível carregar a identificação profissional vinculada à aprovação."); return; }
       line(`Nutricionista responsavel: ${nutritionist.full_name}`); line(`Registro CRN informado: ${nutritionist.crn}`); line(`Aprovado em: ${new Date(activePlan.approved_at ?? "").toLocaleString("pt-BR")}`);
@@ -511,7 +513,7 @@ function NutritionPlanningPage() {
       {message && <p className="mt-3 text-sm text-[#26786e]" role="status">{message}</p>}
       {error && <p className="mt-3 text-sm text-red-600" role="alert">{error}</p>}
     </SectionCard>
-    {(activePlan || contentText) && <SectionCard title={syntheticTest ? "Teste Gemini — somente dados fictícios" : "Proposta de Plano Alimentar"}><p className="mb-3 text-sm text-slate-500">Este plano é um rascunho até a aprovação profissional. Os itens adicionados da biblioteca validada permitem editar a quantidade e recalculam os totais com as fontes cadastradas.</p><Textarea className="min-h-[16rem] font-mono text-xs" value={contentText} onChange={(event) => setContentText(event.target.value)} disabled={syntheticTest || activePlan?.status === "approved"} /><NutritionPlanPreview raw={contentText} onQuantityChange={updatePlanQuantity} readOnly={syntheticTest || activePlan?.status === "approved"} /><div className="mt-4 flex flex-wrap gap-2"><Button type="button" onClick={() => void savePlan("draft")} disabled={saving || syntheticTest || activePlan?.status === "approved"}>{saving ? "Salvando..." : "Salvar rascunho"}</Button><Button type="button" variant="outline" onClick={() => void savePlan("pending_review")} disabled={saving || syntheticTest || activePlan?.status === "approved"}>Encaminhar para revisão</Button><Button type="button" variant="outline" onClick={() => void exportPdf()} disabled={syntheticTest || activePlan?.status !== "approved"}>Gerar PDF aprovado</Button>{!syntheticTest && activePlan?.status === "pending_review" && <Button type="button" onClick={() => void approvePlan()} disabled={saving}>Aprovar como nutricionista</Button>}</div>{syntheticTest && <p className="mt-3 text-sm font-medium text-amber-800">Conteúdo fictício de teste. Não salve, aprove ou use como recomendação clínica.</p>}{!syntheticTest && activePlan?.status === "approved" && <p className="mt-3 text-sm text-amber-800">Versão aprovada protegida contra edição. Gere outro plano para criar uma proposta nova.</p>}</SectionCard>}
+    {(activePlan || contentText) && <SectionCard title={syntheticTest ? "Teste Gemini — somente dados fictícios" : "Proposta de Plano Alimentar"}><p className="mb-3 text-sm text-slate-500">Este plano é um rascunho até a aprovação profissional. Os itens adicionados da biblioteca validada permitem editar a quantidade e recalculam os totais com as fontes cadastradas.</p><Textarea className="min-h-[16rem] font-mono text-xs" value={contentText} onChange={(event) => setContentText(event.target.value)} disabled={syntheticTest || activePlan?.status === "approved"} /><NutritionPlanPreview raw={contentText} onQuantityChange={updatePlanQuantity} readOnly={syntheticTest || activePlan?.status === "approved"} /><div className="mt-4 flex flex-wrap gap-2"><Button type="button" onClick={() => void savePlan("draft")} disabled={saving || syntheticTest || activePlan?.status === "approved"}>{saving ? "Salvando..." : "Salvar rascunho"}</Button><Button type="button" variant="outline" onClick={() => void savePlan("pending_review")} disabled={saving || syntheticTest || activePlan?.status === "approved"}>Encaminhar para revisão</Button><Button type="button" variant="outline" onClick={() => void exportPdf()} disabled={syntheticTest}>{activePlan?.status === "approved" ? "Gerar PDF aprovado" : "Gerar PDF de rascunho"}</Button>{!syntheticTest && activePlan?.status === "pending_review" && <Button type="button" onClick={() => void approvePlan()} disabled={saving}>Aprovar como nutricionista</Button>}</div>{syntheticTest && <p className="mt-3 text-sm font-medium text-amber-800">Conteúdo fictício de teste. Não salve, aprove ou use como recomendação clínica.</p>}{!syntheticTest && activePlan?.status === "approved" && <p className="mt-3 text-sm text-amber-800">Versão aprovada protegida contra edição. Gere outro plano para criar uma proposta nova.</p>}</SectionCard>}
     <SectionCard title="8. Histórico de planejamentos"><div className="space-y-3">{plans.length ? plans.map((plan) => <button key={plan.id} type="button" onClick={() => void loadVersions(plan)} className={`flex w-full flex-wrap items-center justify-between gap-3 rounded-xl border p-4 text-left ${activePlan?.id === plan.id ? "border-[#2f8f82] bg-[#f2f9f7]" : "border-slate-200 bg-white"}`}><span><strong>{plan.goal}</strong><span className="ml-2 rounded-full bg-slate-100 px-2 py-1 text-xs">{statusNames[plan.status] ?? plan.status}</span><span className="mt-1 block text-xs text-slate-500">{new Date(plan.created_at).toLocaleString("pt-BR")} · {plan.duration_days} dia(s) · {versions.length} versão(ões)</span></span><span className="text-sm text-[#26786e]">Ver versões</span></button>) : <div className="flex items-center gap-3 text-sm text-slate-500"><ClipboardList className="size-5" />Nenhum planejamento salvo para este paciente.</div>}{versions.length > 0 && <div className="border-t pt-4"><h3 className="font-semibold">Versões do plano selecionado</h3><div className="mt-2 flex flex-wrap gap-2">{versions.map((version) => <Button key={version.id} type="button" size="sm" variant="outline" onClick={() => selectVersion(version)}>v{version.version_number} · {new Date(version.created_at).toLocaleDateString("pt-BR")}</Button>)}</div></div>}</div></SectionCard>
     </>}
   </div></AdminLayout>;
