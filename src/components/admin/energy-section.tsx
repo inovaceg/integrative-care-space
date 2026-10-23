@@ -58,7 +58,7 @@ export function EnergySection({ value, onChange, weightKg, weightDate, weightSou
   const estimate = useMemo(() => calculateMifflinStJeor({ weightKg: weight, heightCm: height, ageYears: age, sex: value.sex_parameter, activityFactor: factor }), [weight, height, age, value.sex_parameter, factor]);
   const adjustment = value.adjustment_value ?? 0;
   const adjustmentMode = value.adjustment_mode ?? "percent";
-  const target = estimate && value.objective ? calculateEnergyTarget(estimate.totalKcal, value.objective, adjustmentMode, value.adjustment_value) : null;
+  const target = estimate?.totalKcal != null && value.objective ? calculateEnergyTarget(estimate.totalKcal, value.objective, adjustmentMode, value.adjustment_value) : null;
   const targetValid = target !== null && target >= 500 && target <= 10000;
   const justificationRequired = target !== null && (value.observations.trim().length < 40 || !value.reviewer_name.trim() || !value.activity_confirmed || !value.clinical_reviewed);
   useEffect(() => {

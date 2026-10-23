@@ -1,6 +1,6 @@
 export type SexParameter = "female" | "male";
 export type EnergyInputs = { weightKg: number | null; heightCm: number | null; ageYears: number | null; sex: SexParameter | null; activityFactor: number | null };
-export type EnergyEstimate = { bmrKcal: number; totalKcal: number };
+export type EnergyEstimate = { bmrKcal: number; totalKcal: number | null };
 export type NutritionValueKey = "calories_kcal" | "protein_g" | "carbohydrate_g" | "fat_g" | "fiber_g";
 export type NutritionSourceKey = "calories_source" | "protein_source" | "carbohydrate_source" | "fat_source" | "fiber_source";
 export type NutritionTotals = Record<NutritionValueKey, number | null>;
@@ -47,10 +47,10 @@ export function cmFromMeters(value: number): number { return value * 100; }
 
 export function calculateMifflinStJeor(inputs: EnergyInputs): EnergyEstimate | null {
   const { weightKg, heightCm, ageYears, sex, activityFactor } = inputs;
-  if (weightKg === null || heightCm === null || ageYears === null || (sex !== "female" && sex !== "male") || activityFactor === null) return null;
-  if (![weightKg, heightCm, ageYears, activityFactor].every(Number.isFinite) || weightKg < 20 || weightKg > 350 || heightCm < 100 || heightCm > 250 || !Number.isInteger(ageYears) || ageYears < 18 || ageYears > 120 || activityFactor < 1 || activityFactor > 2.5) return null;
+  if (weightKg === null || heightCm === null || ageYears === null || (sex !== "female" && sex !== "male")) return null;
+  if (![weightKg, heightCm, ageYears].every(Number.isFinite) || weightKg < 20 || weightKg > 350 || heightCm < 100 || heightCm > 250 || !Number.isInteger(ageYears) || ageYears < 18 || ageYears > 120 || (activityFactor !== null && (!Number.isFinite(activityFactor) || activityFactor < 1 || activityFactor > 2.5))) return null;
   const bmr = 10 * weightKg + 6.25 * heightCm - 5 * ageYears + (sex === "male" ? 5 : -161);
-  return { bmrKcal: Math.round(bmr * 100) / 100, totalKcal: Math.round(bmr * activityFactor * 100) / 100 };
+  return { bmrKcal: Math.round(bmr * 100) / 100, totalKcal: activityFactor === null ? null : Math.round(bmr * activityFactor * 100) / 100 };
 }
 
 export function calculateEnergyTarget(getKcal: number, objective: "maintenance" | "weight_loss" | "weight_gain", mode: "percent" | "kcal" | null, adjustment: number | null): number | null {

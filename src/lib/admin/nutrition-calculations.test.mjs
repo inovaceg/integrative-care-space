@@ -19,6 +19,9 @@ describe("cálculos nutricionais", () => {
     expect(calculateMifflinStJeor({ weightKg: 70, heightCm: 170, ageYears: 30, sex: "female", activityFactor: 1.2 })).toEqual({ bmrKcal: 1451.5, totalKcal: 1741.8 });
     expect(calculateMifflinStJeor({ weightKg: 80, heightCm: 165, ageYears: 35, sex: "female", activityFactor: 1.55 })).toEqual({ bmrKcal: 1495.25, totalKcal: 2317.64 });
   });
+  test("calcula TMB sem presumir GET quando o fator de atividade ainda não foi confirmado", () => {
+    expect(calculateMifflinStJeor({ weightKg: 70, heightCm: 170, ageYears: 30, sex: "female", activityFactor: null })).toEqual({ bmrKcal: 1451.5, totalKcal: null });
+  });
   test("não presume sexo nem aceita parâmetros impossíveis", () => {
     expect(calculateMifflinStJeor({ weightKg: 70, heightCm: 170, ageYears: 30, sex: null, activityFactor: 1.2 })).toBeNull();
     expect(calculateMifflinStJeor({ weightKg: 70, heightCm: 170, ageYears: 17, sex: "male", activityFactor: 1.2 })).toBeNull();
