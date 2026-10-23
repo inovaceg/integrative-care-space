@@ -1,8 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, Activity, ClipboardList, HeartPulse, Loader2, Save, Sparkles } from "lucide-react";
+import { AlertTriangle, Activity, ClipboardList, HeartPulse, Loader2, RefreshCw, Save } from "lucide-react";
 import { AdminLayout, AdminNotice, PageIntro, SectionCard } from "@/components/admin/admin-ui";
 import { NutritionPlanPreview } from "@/components/admin/nutrition-plan-preview";
+import { NutritionFoodPicker, type PlannedFood } from "@/components/admin/nutrition-food-picker";
 import { HydrationSection, type HydrationPlan } from "@/components/admin/hydration-section";
 import { ProteinSection, type ProteinPlan } from "@/components/admin/protein-section";
 import { EnergySection, type EnergyPlan } from "@/components/admin/energy-section";
@@ -18,7 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { downloadDocumentPdf, type DocumentPage } from "@/lib/admin/document-layout";
 
 type Patient = { id: string; nome: string; data_nascimento: string | null; genero: string | null; area: string | null; queixa_principal: string | null; observacoes_iniciais: string | null };
-type Evaluation = { id: string; evaluation_date: string; weight_kg: number | null; height_cm: number | null; bmi: number | null; waist_cm: number | null; abdomen_cm: number | null; hip_cm: number | null; body_fat_percentage: number | null; muscle_mass_kg: number | null; visceral_fat_level: number | null; body_water_percentage: number | null; basal_metabolism_kcal: number | null; clinical_notes: string | null };
+type Evaluation = { id: string; evaluation_date: string; weight_kg: number | null; height_cm: number | null; bmi: number | null; waist_cm: number | null; abdomen_cm: number | null; hip_cm: number | null; chest_cm: number | null; right_arm_cm: number | null; left_arm_cm: number | null; right_thigh_cm: number | null; left_thigh_cm: number | null; right_calf_cm: number | null; left_calf_cm: number | null; body_fat_percentage: number | null; muscle_mass_kg: number | null; visceral_fat_level: number | null; body_water_percentage: number | null; basal_metabolism_kcal: number | null; clinical_notes: string | null };
 type Application = { id: string; procedure_name: string; current_weight_kg: number; application_date: string; notes: string | null };
 type Anamnesis = { alimentacao: string | null; atividade_fisica: string | null; qualidade_sono: string | null; doencas_fisicas: string | null; medicamentos_atuais: string | null; usa_medicamentos: boolean | null; sintomas_atuais: unknown };
 type Profile = { height_cm: string; reference_weight_kg: string; goal: string; activity_level: string; exercise_details: string; wake_time: string; sleep_time: string; meal_schedule: string; desired_meals: string; work_routine: string; cooking_availability: string; food_budget: string; preferred_foods: string; avoided_foods: string; cultural_restrictions: string; simple_meals_preference: boolean; affordable_food_preference: boolean; allergies: string; intolerances: string; diagnosed_conditions: string; pregnancy_or_breastfeeding: string; medications: string; supplements: string; eating_disorder_history: string };
@@ -85,6 +86,8 @@ function NutritionPlanningPage() {
   const [generating, setGenerating] = useState(false);
   const [syntheticTest, setSyntheticTest] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [refreshingPatient, setRefreshingPatient] = useState(false);
+  const [patientRefreshKey, setPatientRefreshKey] = useState(0);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const selected = patients.find((patient) => patient.id === patientId) ?? null;
@@ -142,8 +145,8 @@ function NutritionPlanningPage() {
     let active = true;
     setLoading(true); setError(""); setActivePlan(null); setContentText("");
     void Promise.all([
-      supabase.from("body_evaluations").select("id,evaluation_date,weight_kg,height_cm,bmi,waist_cm,abdomen_cm,hip_cm,body_fat_percentage,muscle_mass_kg,visceral_fat_level,body_water_percentage,basal_metabolism_kcal,clinical_notes").eq("patient_id", patientId).eq("profissional_id", user.id).order("evaluation_date", { ascending: false }),
-      supabase.from("patient_applications").select("id,procedure_name,current_weight_kg,application_date,notes").eq("patient_id", patientId).eq("profissional_id", user.id).order("application_date", { ascending: false }).limit(1),
+      supabase.from("body_evaluations").select("id,evaluation_date,weight_kg,height_cm,bmi,waist_cm,abdomen_cm,hip_cm,chest_cm,right_arm_cm,left_arm_cm,right_thigh_cm,left_thigh_cm,right_calf_cm,left_calf_cm,body_fat_percentage,muscle_mass_kg,visceral_fat_level,body_water_percentage,basal_metabolism_kcal,clinical_notes").eq("patient_id", patientId).eq("profissional_id", user.id).order("evaluation_date", { ascending: false }),
+            supabase.from("patient_applications").select("id,procedure_name,current_weight_kg,application_date,notes").eq("patient_id", patientId).eq("profissional_id", user.id).order("application_date", { ascending: false }),
       supabase.from("anamneses").select("alimentacao,atividade_fisica,qualidade_sono,doencas_fisicas,medicamentos_atuais,usa_medicamentos,sintomas_atuais").eq("paciente_id", patientId).eq("profissional_id", user.id).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("patient_nutrition_profiles").select("*").eq("patient_id", patientId).eq("profissional_id", user.id).maybeSingle(),
       supabase.from("nutrition_plans").select("id,goal,duration_days,status,plan_content,model_name,created_at,approved_at,approved_by,approved_version_id").eq("patient_id", patientId).eq("profissional_id", user.id).order("created_at", { ascending: false }),
@@ -178,9 +181,10 @@ function NutritionPlanningPage() {
       }
       loadedPatientId.current = patientId;
       setLoading(false);
+      setRefreshingPatient(false);
     });
     return () => { active = false; };
-  }, [patientId, user]);
+  }, [patientId, user, patientRefreshKey]);
 
   useEffect(() => {
     if (!user || !patientId || loading || loadedPatientId.current !== patientId) return;
@@ -203,6 +207,22 @@ function NutritionPlanningPage() {
     setSaving(false); if (saveError) { setError("Não foi possível salvar o perfil nutricional."); return false; } setMessage("Perfil nutricional salvo."); return true;
   }
   const setField = (key: keyof Profile, value: string | boolean) => setProfile((old) => ({ ...old, [key]: value }));
+  const addFoodToPlan = (mealName: string, item: PlannedFood) => {
+    let draft: PlanContent;
+    try {
+      draft = contentText.trim() ? JSON.parse(contentText) as PlanContent : { summary: "", objective: profile.goal || "", warnings: [], meals: [], observations: [], professional_confirmations: [] };
+      if (!draft || !Array.isArray(draft.meals)) throw new Error();
+    } catch {
+      setError("Corrija o JSON do plano antes de adicionar alimentos da biblioteca.");
+      return;
+    }
+    const existingMeal = draft.meals.find((meal) => meal.name === mealName);
+    if (existingMeal) existingMeal.items.push(item);
+    else draft.meals.push({ name: mealName, items: [item] });
+    setContentText(JSON.stringify(draft, null, 2));
+    setError("");
+    setMessage(`${item.food} foi adicionado a ${mealName}.`);
+  };
 
   async function savePlan(status: "draft" | "pending_review" = "draft", contentOverride?: PlanContent, modelName?: string, allowFreshGeneratedPlan = false) {
     if (syntheticTest && !allowFreshGeneratedPlan) { setError("O resultado do teste é fictício e não pode ser salvo como plano de paciente."); return; }
@@ -314,9 +334,10 @@ function NutritionPlanningPage() {
     if (approvalError || !data?.approved) setError(data?.error ?? "A aprovação exige credencial CRN verificada e uma versão válida enviada para revisão."); else { setMessage("Planejamento aprovado."); await refreshPlans(activePlan.id); }
   }
 
-  async function exportPdf(_draftMark?: boolean) {
+  async function exportPdf() {
     if (syntheticTest) { setError("O resultado do teste é fictício e não pode ser exportado como documento de paciente."); return; }
     if (!selected) return;
+    if (activePlan?.status !== "approved" || !activePlan.approved_version_id) { setError("Somente a versão aprovada pode ser exportada como PDF de prescrição."); return; }
     let plan: PlanContent;
     try { plan = JSON.parse(contentText) as PlanContent; } catch { setError("Revise o conteúdo: não foi possível interpretar o planejamento para o PDF."); return; }
     if (activePlan?.status === "approved" && activePlan.approved_version_id) {
@@ -336,7 +357,7 @@ function NutritionPlanningPage() {
       for (const row of rows) { if (y > 770) { page = []; pages.push(page); y = 55; } page.push({ text: row, x: 42, y, size, bold, color: bold ? "#123c3d" : "#334155" }); y += size + 7; }
     };
     if (activePlan?.status !== "approved") line("RASCUNHO - NAO UTILIZAR COMO PRESCRICAO", 13, true);
-    line("PLANEJAMENTO ALIMENTAR", 18, true); line(`Paciente: ${selected.nome}`); line(`Data: ${new Date().toLocaleDateString("pt-BR")}`); line(`Objetivo: ${plan.objective || activePlan?.goal || profile.goal || "A confirmar"}`); line(`Status: ${statusNames[activePlan?.status ?? "draft"] ?? "Rascunho"}`, 10, true); y += 8;
+    line("PLANEJAMENTO ALIMENTAR", 18, true); line(`Paciente: ${selected.nome}`); line(`Data da avaliação: ${evaluations[0]?.evaluation_date ? new Date(`${evaluations[0].evaluation_date}T00:00:00`).toLocaleDateString("pt-BR") : "Não informada"}`); line(`Data de emissão: ${new Date().toLocaleDateString("pt-BR")}`); line(`Objetivo: ${plan.objective || activePlan.goal || profile.goal || "A confirmar"}`); line(`Status: ${statusNames[activePlan.status] ?? activePlan.status}`, 10, true); y += 8;
     for (const meal of plan.meals ?? []) {
       line(meal.name, 13, true);
       const mealItems = meal.items ?? [];
@@ -411,17 +432,17 @@ function NutritionPlanningPage() {
       if (energyPlan.activity_context) line(`Contexto considerado para seleção do fator (sem fator duplicado): ${energyPlan.activity_context}`);
       if (energyPlan.observations) line(`Justificativa/observações: ${energyPlan.observations}`);
     }
-    if (activePlan?.status === "approved" && activePlan.approved_by) {
-      const { data: nutritionist } = await supabase.from("nutritionist_credentials").select("full_name,crn").eq("profissional_id", activePlan.approved_by).eq("verification_status", "verified").maybeSingle();
-      if (!nutritionist) { setError("Não foi possível carregar a identificação do nutricionista verificado."); return; }
-      line(`Nutricionista responsavel: ${nutritionist.full_name}`); line(`CRN: ${nutritionist.crn}`); line(`Aprovado em: ${new Date(activePlan.approved_at ?? "").toLocaleString("pt-BR")}`);
+    if (activePlan.approved_by) {
+      const { data: nutritionist } = await supabase.from("nutritionist_credentials").select("full_name,crn").eq("profissional_id", activePlan.approved_by).maybeSingle();
+      if (!nutritionist) { setError("Não foi possível carregar a identificação profissional vinculada à aprovação."); return; }
+      line(`Nutricionista responsavel: ${nutritionist.full_name}`); line(`Registro CRN informado: ${nutritionist.crn}`); line(`Aprovado em: ${new Date(activePlan.approved_at ?? "").toLocaleString("pt-BR")}`);
     }
     await downloadDocumentPdf(pages, `planejamento-alimentar-${selected.nome.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`, true);
   }
 
   const textFields: [keyof Profile, string][] = [["exercise_details", "Tipo e frequência de exercícios"],["work_routine", "Rotina de trabalho"],["cooking_availability", "Disponibilidade para cozinhar"],["food_budget", "Orçamento alimentar"],["preferred_foods", "Alimentos preferidos"],["avoided_foods", "Alimentos que não consome"],["cultural_restrictions", "Restrições culturais/religiosas"],["allergies", "Alergias alimentares"],["intolerances", "Intolerâncias"],["diagnosed_conditions", "Doenças diagnosticadas"],["pregnancy_or_breastfeeding", "Gestação ou amamentação"],["medications", "Medicamentos em uso"],["supplements", "Suplementos"],["eating_disorder_history", "Histórico de transtornos alimentares"]];
 
-  return <AdminLayout><PageIntro eyebrow="Nutrição" title="Planejamento Alimentar com IA" description="Revise dados reais do paciente, configure os objetivos e prepare uma proposta para avaliação profissional." /><div className="space-y-6"><AdminNotice /><SectionCard title="1. Selecionar paciente"><Select value={patientId} onValueChange={setPatientId}><SelectTrigger className="max-w-xl"><SelectValue placeholder="Escolha um paciente cadastrado" /></SelectTrigger><SelectContent>{patients.map((patient) => <SelectItem key={patient.id} value={patient.id}>{patient.nome}</SelectItem>)}</SelectContent></Select>{error && <p role="alert" className="mt-3 text-sm text-red-600">{error}</p>}{message && <p role="status" className="mt-3 text-sm text-[#26786e]">{message}</p>}</SectionCard>
+  return <AdminLayout><PageIntro eyebrow="Nutrição" title="Planejamento Alimentar com IA" description="Revise dados reais do paciente, configure os objetivos e prepare uma proposta para avaliação profissional." /><div className="space-y-6"><AdminNotice /><SectionCard title="1. Selecionar paciente" action={selected ? <Button type="button" variant="outline" size="sm" disabled={loading || refreshingPatient} onClick={() => { setRefreshingPatient(true); setPatientRefreshKey((key) => key + 1); }}><RefreshCw className={`mr-2 size-4 ${refreshingPatient ? "animate-spin" : ""}`} />Atualizar dados do paciente</Button> : undefined}><Select value={patientId} onValueChange={setPatientId}><SelectTrigger className="max-w-xl"><SelectValue placeholder="Escolha um paciente cadastrado" /></SelectTrigger><SelectContent>{patients.map((patient) => <SelectItem key={patient.id} value={patient.id}>{patient.nome}</SelectItem>)}</SelectContent></Select>{error && <p role="alert" className="mt-3 text-sm text-red-600">{error}</p>}{message && <p role="status" className="mt-3 text-sm text-[#26786e]">{message}</p>}</SectionCard>
     {selected && <>{loading ? <p className="py-8 text-center text-sm text-slate-500">Carregando dados do paciente...</p> : <>
       <SectionCard title="2. Resumo clínico e corporal"><div className="grid gap-5 md:grid-cols-2"><div className="rounded-xl bg-slate-50 p-4"><h3 className="font-semibold text-slate-800">Dados do paciente</h3><dl className="mt-3 grid grid-cols-2 gap-3 text-sm"><div><dt className="text-slate-500">Nome</dt><dd>{selected.nome}</dd></div><div><dt className="text-slate-500">Idade</dt><dd>{display(ageFrom(selected.data_nascimento), " anos")}</dd></div><div><dt className="text-slate-500">Gênero registrado</dt><dd>{display(selected.genero)}</dd></div><div><dt className="text-slate-500">Área</dt><dd>{display(selected.area)}</dd></div></dl><p className="mt-3 text-sm"><span className="text-slate-500">Queixa principal: </span>{display(selected.queixa_principal)}</p><p className="mt-2 text-sm"><span className="text-slate-500">Observações iniciais: </span>{display(selected.observacoes_iniciais)}</p></div><div className="rounded-xl bg-slate-50 p-4"><h3 className="flex items-center gap-2 font-semibold text-slate-800"><HeartPulse className="size-4 text-[#2f8f82]" /> Anamnese relevante</h3>{anamnesis ? <div className="mt-3 space-y-2 text-sm">{([["Alimentação", anamnesis.alimentacao], ["Atividade física", anamnesis.atividade_fisica], ["Sono", anamnesis.qualidade_sono], ["Condições físicas", anamnesis.doencas_fisicas], ["Medicamentos", anamnesis.usa_medicamentos ? anamnesis.medicamentos_atuais : null]] as [string, string | null][]).map(([label, value]) => <p key={label}><span className="text-slate-500">{label}: </span>{display(value)}</p>)}</div> : <p className="mt-3 text-sm text-slate-500">Anamnese não localizada.</p>}</div></div></SectionCard>
       <SectionCard title="3. Histórico de evolução corporal"><div className="space-y-4">{evaluations.length ? <><div className="rounded-xl border border-slate-200 p-4"><div className="flex items-center gap-2 font-semibold"><Activity className="size-4 text-[#2f8f82]" />{new Date(`${evaluations[0].evaluation_date}T00:00:00`).toLocaleDateString("pt-BR")}<span className="rounded-full bg-[#e3f3ef] px-2 py-0.5 text-xs text-[#26786e]">Mais recente</span></div><div className="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">{[["Peso", display(evaluations[0].weight_kg, " kg")],["Altura", display(evaluations[0].height_cm, " cm")],["IMC", display(evaluations[0].bmi)],["Gordura corporal", display(evaluations[0].body_fat_percentage, "%")],["Massa muscular", display(evaluations[0].muscle_mass_kg, " kg")],["Cintura", display(evaluations[0].waist_cm, " cm")],["Abdômen", display(evaluations[0].abdomen_cm, " cm")],["Quadril", display(evaluations[0].hip_cm, " cm")],["Gordura visceral", display(evaluations[0].visceral_fat_level)],["Água corporal", display(evaluations[0].body_water_percentage, "%")],["Metabolismo basal registrado", display(evaluations[0].basal_metabolism_kcal, " kcal")]].map(([label, value]) => <div key={label}><p className="text-xs text-slate-500">{label}</p><p>{value}</p></div>)}</div>{evaluations[0].clinical_notes && <p className="mt-3 text-sm text-slate-600">Observações: {evaluations[0].clinical_notes}</p>}</div><div className="rounded-xl bg-[#f3f8f7] px-4 py-3 text-sm"><strong>Variação desde a primeira avaliação: </strong>{evaluations.length > 1 && evaluations[evaluations.length - 1].weight_kg !== null && evaluations[0].weight_kg !== null ? (() => { const change = evaluations[evaluations.length - 1].weight_kg! - evaluations[0].weight_kg!; const amount = Math.abs(change).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }); return change > 0 ? `Perda de ${amount} kg` : change < 0 ? `Ganho de ${amount} kg` : "Sem alteração (0,0 kg)"; })() : "São necessárias duas avaliações com peso registrado para calcular."}</div></> : <p className="text-sm text-slate-500">Sem avaliações corporais cadastradas.</p>}</div></SectionCard>
@@ -431,12 +452,12 @@ function NutritionPlanningPage() {
     <SectionCard title="5. Perfil nutricional complementar"><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{[["height_cm","Altura (cm)"],["reference_weight_kg","Peso de referência (kg)"],["desired_meals","Número de refeições desejado"]].map(([key,label]) => <div key={key}><Label>{label}</Label><Input className="mt-1" type="number" value={profile[key as keyof Profile] as string} onChange={(e) => setField(key as keyof Profile, e.target.value)} /></div>)}<div><Label>Atividade física</Label><Select value={profile.activity_level} onValueChange={(value) => setField("activity_level", value)}><SelectTrigger className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent>{["Sedentário", "Leve", "Moderado", "Intenso", "Muito intenso"].map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent></Select></div>{[["wake_time","Horário de acordar"],["sleep_time","Horário de dormir"]].map(([key,label]) => <div key={key}><Label>{label}</Label><Input className="mt-1" type="time" value={profile[key as keyof Profile] as string} onChange={(e) => setField(key as keyof Profile, e.target.value)} /></div>)}<div className="sm:col-span-2 lg:col-span-3"><Label>Objetivo alimentar</Label><Textarea className="mt-1" value={profile.goal} onChange={(e) => setField("goal", e.target.value)} placeholder="Objetivo acordado para avaliação do profissional" /></div>{textFields.map(([key,label]) => <div key={key} className="grid gap-1"><Label>{label}</Label><Textarea value={profile[key] as string} onChange={(e) => setField(key, e.target.value)} /></div>)}<div className="grid gap-1 sm:col-span-2"><Label>Horários habituais das refeições (um por linha)</Label><Textarea value={profile.meal_schedule} onChange={(e) => setField("meal_schedule", e.target.value)} /></div></div><div className="mt-4 flex flex-wrap gap-4 text-sm">{([["simple_meals_preference","Prefere refeições simples"],["affordable_food_preference","Priorizar alimentos acessíveis"]] as [keyof Profile,string][]).map(([key,label]) => <label key={key} className="flex items-center gap-2"><input type="checkbox" checked={profile[key] as boolean} onChange={(e) => setField(key,e.target.checked)} />{label}</label>)}</div><div className="mt-5 flex flex-wrap items-center gap-3"><Button type="button" variant="outline" onClick={() => void saveProfile()} disabled={saving}>{saving ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Save className="mr-2 size-4" />}Salvar perfil</Button></div></SectionCard>
     <SectionCard title="Necessidades Nutricionais"><Tabs defaultValue="energy"><TabsList className="grid h-auto w-full grid-cols-3"><TabsTrigger value="energy">Calorias</TabsTrigger><TabsTrigger value="protein">Proteínas</TabsTrigger><TabsTrigger value="hydration">Hidratação</TabsTrigger></TabsList><TabsContent value="energy"><EnergySection value={energy} onChange={setEnergy} weightKg={latestWeight(evaluations, applications)?.weight_kg ?? null} weightDate={latestWeight(evaluations, applications)?.weight_date ?? null} weightSource={latestWeight(evaluations, applications)?.weight_source ?? null} heightCm={currentEvaluation?.height_cm ?? (profile.height_cm ? Number(profile.height_cm) : null)} heightSource={currentEvaluation?.height_cm ? "Avaliação corporal" : profile.height_cm ? "Perfil nutricional" : "Não informado"} patientAge={ageFrom(selected.data_nascimento)} activityLevel={profile.activity_level} activityContext={[anamnesis?.atividade_fisica, profile.work_routine, profile.exercise_details].filter(Boolean).join(" · ")} onSave={() => void savePlan("draft")} saving={saving} canSave={Boolean(contentText)} /></TabsContent><TabsContent value="protein"><ProteinSection value={protein} onChange={setProtein} patientAge={ageFrom(selected.data_nascimento)} rawPlan={contentText} onPlanChange={setContentText} onSave={() => void savePlan("draft")} saving={saving} canSave={Boolean(contentText)} /></TabsContent><TabsContent value="hydration"><HydrationSection value={hydration} onChange={setHydration} patientAge={ageFrom(selected.data_nascimento)} onSave={() => void savePlan("draft")} saving={saving} canSave={Boolean(contentText)} /></TabsContent></Tabs></SectionCard>
     <SectionCard title="6. Configuração da proposta e geração">
+      <NutritionFoodPicker allergies={profile.allergies} intolerances={profile.intolerances} disabled={syntheticTest || activePlan?.status === "approved"} onAdd={addFoodToPlan} />
       <div className="grid gap-4 md:grid-cols-2">
         <div><Label>Objetivo da proposta</Label><Input className="mt-1" value={profile.goal} onChange={(e) => setField("goal", e.target.value)} placeholder="Ex.: organizar rotina alimentar" /></div>
         <div><Label>Período</Label><Select value={duration} onValueChange={setDuration}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="1">1 dia</SelectItem><SelectItem value="3">3 dias</SelectItem><SelectItem value="7">7 dias</SelectItem></SelectContent></Select></div>
       </div>
-      <p className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">A geração real está desabilitada enquanto a biblioteca validada e o motor interno não estiverem integrados e testados. A demonstração usa somente dados fictícios locais e não gera uma prescrição.</p>
-      <div className="mt-4 flex flex-wrap gap-2"><Button type="button" asChild><Link to="/admin/biblioteca-nutricional-demo"><Sparkles className="mr-2 size-4" />GERAR PLANO ALIMENTAR AUTOMATICAMENTE — DEMONSTRAÇÃO LOCAL</Link></Button><Button type="button" variant="outline" asChild><Link to="/admin/biblioteca-nutricional-demo">Abrir Biblioteca Nutricional</Link></Button></div>
+      <p className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">A composição nutricional e os totais são calculados localmente a partir dos alimentos verificados. A geração por IA permanece desativada neste fluxo até que o envio de dados clínicos a um provedor externo tenha base legal e configuração de privacidade aprovadas.</p>
       {message && <p className="mt-3 text-sm text-[#26786e]" role="status">{message}</p>}
       {error && <p className="mt-3 text-sm text-red-600" role="alert">{error}</p>}
     </SectionCard>

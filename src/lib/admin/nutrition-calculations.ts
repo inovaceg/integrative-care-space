@@ -20,6 +20,11 @@ export function calculateMifflinStJeor(inputs: EnergyInputs): EnergyEstimate | n
   return { bmrKcal: Math.round(bmr), totalKcal: Math.round(bmr * activityFactor) };
 }
 
+export function scaleNutritionPer100g(value: number | null, grams: number): number | null {
+  if (value === null || !Number.isFinite(value) || value < 0 || !Number.isFinite(grams) || grams <= 0) return null;
+  return Math.round(value * grams / 100 * 10) / 10;
+}
+
 export function isTrustedNutritionSource(value: unknown): boolean {
   return typeof value === "string" && /\b(TBCA|TACO|r[oó]tulo|USDA)\b/i.test(value.trim());
 }

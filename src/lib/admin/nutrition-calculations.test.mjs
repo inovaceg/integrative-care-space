@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { activityFactorForLevel, calculateMifflinStJeor, clonePlanSnapshot, cmFromMeters, isTrustedNutritionSource, kgFromGrams, sumVerifiedMeal, validateEnergyApproval } from "./nutrition-calculations";
+import { activityFactorForLevel, calculateMifflinStJeor, clonePlanSnapshot, cmFromMeters, isTrustedNutritionSource, kgFromGrams, scaleNutritionPer100g, sumVerifiedMeal, validateEnergyApproval } from "./nutrition-calculations";
 
 describe("cálculos nutricionais", () => {
   test("calcula Mifflin–St Jeor e o total com um só fator de atividade", () => {
