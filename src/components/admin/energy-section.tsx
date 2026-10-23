@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MacroDistributionSection } from "@/components/admin/macro-distribution-section";
 import { activityFactorForLevel, calculateEnergyTarget, calculateMifflinStJeor, type SexParameter } from "@/lib/admin/nutrition-calculations";
+import type { MacroRecommendationInput } from "@/lib/admin/macronutrient-recommendations";
 
 export type EnergyPlan = {
   method: "Mifflin-St Jeor";
@@ -34,6 +35,12 @@ export type EnergyPlan = {
   macro_calculated_for_kcal: number | null;
   macro_reviewed: boolean;
   macro_observations: string;
+  macro_auto_generated?: boolean;
+  macro_renal_reviewed?: boolean;
+  macro_context_key?: string | null;
+  macro_protocol?: string;
+  macro_rationale?: string[];
+  macro_references?: string[];
   objective_confirmed: boolean;
   activity_confirmed: boolean;
   clinical_reviewed: boolean;
