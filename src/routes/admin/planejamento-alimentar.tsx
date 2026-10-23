@@ -84,7 +84,6 @@ function NutritionPlanningPage() {
   const [contentText, setContentText] = useState("");
   const [duration, setDuration] = useState("1");
   const [saving, setSaving] = useState(false);
-  const [generating, setGenerating] = useState(false);
   const [syntheticTest, setSyntheticTest] = useState(false);
   const [loading, setLoading] = useState(false);
   const [refreshingPatient, setRefreshingPatient] = useState(false);
@@ -295,47 +294,6 @@ function NutritionPlanningPage() {
     const list = (data as Plan[] | null) ?? []; setPlans(list); const match = list.find((plan) => plan.id === (selectId ?? activePlan?.id)) ?? list[0]; if (match) { setActivePlan(match); setContentText(JSON.stringify(match.plan_content, null, 2)); const measurements = latestWeight(evaluations, applications); setHydration(hydrationForPlan(match.plan_content, measurements)); setProtein(proteinForPlan(match.plan_content, measurements)); setEnergy(energyForPlan(match.plan_content)); const { data: versionData } = await supabase.from("nutrition_plan_versions").select("id,version_number,plan_content,created_at,created_by").eq("plan_id", match.id).order("version_number", { ascending: false }); setVersions((versionData as PlanVersion[] | null) ?? []); }
   }
 
-  async function generatePlan(testMode = false) {
-    if (!user) return;
-    if (!testMode && (!patientId || profile.goal.trim().length < 3)) {
-      setError("Selecione um paciente e informe um objetivo com pelo menos 3 caracteres.");
-      return;
-    }
-    setError("");
-    setMessage(testMode ? "Testando o Gemini com dados fictícios..." : "Gerando com o Gemini. A resposta pode levar até 45 segundos...");
-    setGenerating(true);
-    try {
-      const body = testMode
-        ? { test_mode: true }
-        : { patient_id: patientId, goal: profile.goal.trim(), duration_days: Number(duration), desired_meals: profile.desired_meals ? Number(profile.desired_meals) : null, nutritional_profile: profile };
-      const { data, error: functionError } = await supabase.functions.invoke("nutrition-planning", { body });
-      if (functionError || !data?.plan) {
-        let responseError: string | undefined;
-        const response = functionError?.context as Response | undefined;
-        if (response instanceof Response) {
-          const body = await response.json().catch(() => null) as { error?: string } | null;
-          responseError = body?.error;
-        }
-        setError(data?.error ?? responseError ?? "Não foi possível concluir a geração. Sua proposta atual foi preservada; aguarde e tente novamente.");
-        setMessage("");
-        return;
-      }
-      setContentText(JSON.stringify(data.plan as PlanContent, null, 2));
-      if (testMode) {
-        setSyntheticTest(true);
-        setMessage("Teste Gemini concluído com dados fictícios. Este resultado não foi salvo no paciente.");
-      } else {
-        setSyntheticTest(false);
-        setMessage("Planejamento gerado. Revise o conteúdo antes de salvar ou enviar para aprovação.");
-        await savePlan("draft", data.plan as PlanContent, data.model ?? null, true);
-      }
-    } catch {
-      setError("Ocorreu um erro ao chamar o serviço Gemini.");
-      setMessage("");
-    } finally {
-      setGenerating(false);
-    }
-  }
 
   async function loadVersions(plan: Plan) {
     selectPlan(plan);
@@ -467,7 +425,7 @@ function NutritionPlanningPage() {
   const textFields: [keyof Profile, string][] = [["exercise_details", "Tipo e frequência de exercícios"],["work_routine", "Rotina de trabalho"],["cooking_availability", "Disponibilidade para cozinhar"],["food_budget", "Orçamento alimentar"],["preferred_foods", "Alimentos preferidos"],["avoided_foods", "Alimentos que não consome"],["cultural_restrictions", "Restrições culturais/religiosas"],["allergies", "Alergias alimentares"],["intolerances", "Intolerâncias"],["diagnosed_conditions", "Doenças diagnosticadas"],["pregnancy_or_breastfeeding", "Gestação ou amamentação"],["medications", "Medicamentos em uso"],["supplements", "Suplementos"],["eating_disorder_history", "Histórico de transtornos alimentares"]];
 
   return <AdminLayout><PageIntro eyebrow="Nutrição" title="Planejamento Alimentar com IA" description="Revise dados reais do paciente, configure os objetivos e prepare uma proposta para avaliação profissional." /><div className="space-y-6"><AdminNotice /><SectionCard title="1. Selecionar paciente" action={selected ? <Button type="button" variant="outline" size="sm" disabled={loading || refreshingPatient} onClick={() => { setRefreshingPatient(true); setPatientRefreshKey((key) => key + 1); }}><RefreshCw className={`mr-2 size-4 ${refreshingPatient ? "animate-spin" : ""}`} />Atualizar dados do paciente</Button> : undefined}><Select value={patientId} onValueChange={setPatientId}><SelectTrigger className="max-w-xl"><SelectValue placeholder="Escolha um paciente cadastrado" /></SelectTrigger><SelectContent>{patients.map((patient) => <SelectItem key={patient.id} value={patient.id}>{patient.nome}</SelectItem>)}</SelectContent></Select>{error && <p role="alert" className="mt-3 text-sm text-red-600">{error}</p>}{message && <p role="status" className="mt-3 text-sm text-[#26786e]">{message}</p>}</SectionCard>
-    {selected && <>{loading ? <p className="py-8 text-center text-sm text-slate-500">Carregando dados do paciente...</p> : <><PersonalizedDietCard patient={selected} evaluations={evaluations} profile={profile} latestWeight={latestWeight(evaluations, applications)} anamnesis={anamnesis} onProfileChange={setField} onGenerate={() => { setError("A geração com IA está indisponível até que a configuração de privacidade e a base legal para dados de saúde externos sejam aprovadas. Nenhum dado foi enviado e nenhuma proposta foi simulada."); setMessage(""); }} loading={loading} generating={generating} />
+    {selected && <>{loading ? <p className="py-8 text-center text-sm text-slate-500">Carregando dados do paciente...</p> : <><PersonalizedDietCard patient={selected} evaluations={evaluations} profile={profile} latestWeight={latestWeight(evaluations, applications)} anamnesis={anamnesis} onProfileChange={setField} onGenerate={() => { setError("A geração com IA está indisponível até que a configuração de privacidade e a base legal para dados de saúde externos sejam aprovadas. Nenhum dado foi enviado e nenhuma proposta foi simulada."); setMessage(""); }} loading={loading} />
       <SectionCard title="2. Resumo clínico e corporal"><div className="grid gap-5 md:grid-cols-2"><div className="rounded-xl bg-slate-50 p-4"><h3 className="font-semibold text-slate-800">Dados do paciente</h3><dl className="mt-3 grid grid-cols-2 gap-3 text-sm"><div><dt className="text-slate-500">Nome</dt><dd>{selected.nome}</dd></div><div><dt className="text-slate-500">Idade</dt><dd>{display(ageFrom(selected.data_nascimento), " anos")}</dd></div><div><dt className="text-slate-500">Gênero registrado</dt><dd>{display(selected.genero)}</dd></div><div><dt className="text-slate-500">Área</dt><dd>{display(selected.area)}</dd></div></dl><p className="mt-3 text-sm"><span className="text-slate-500">Queixa principal: </span>{display(selected.queixa_principal)}</p><p className="mt-2 text-sm"><span className="text-slate-500">Observações iniciais: </span>{display(selected.observacoes_iniciais)}</p></div><div className="rounded-xl bg-slate-50 p-4"><h3 className="flex items-center gap-2 font-semibold text-slate-800"><HeartPulse className="size-4 text-[#2f8f82]" /> Anamnese relevante</h3>{anamnesis ? <div className="mt-3 space-y-2 text-sm">{([["Alimentação", anamnesis.alimentacao], ["Atividade física", anamnesis.atividade_fisica], ["Sono", anamnesis.qualidade_sono], ["Condições físicas", anamnesis.doencas_fisicas], ["Medicamentos", anamnesis.usa_medicamentos ? anamnesis.medicamentos_atuais : null]] as [string, string | null][]).map(([label, value]) => <p key={label}><span className="text-slate-500">{label}: </span>{display(value)}</p>)}</div> : <p className="mt-3 text-sm text-slate-500">Anamnese não localizada.</p>}</div></div></SectionCard>
       <SectionCard title="3. Histórico de evolução corporal"><div className="space-y-4">{evaluations.length ? <><div className="rounded-xl border border-slate-200 p-4"><div className="flex items-center gap-2 font-semibold"><Activity className="size-4 text-[#2f8f82]" />{new Date(`${evaluations[0].evaluation_date}T00:00:00`).toLocaleDateString("pt-BR")}<span className="rounded-full bg-[#e3f3ef] px-2 py-0.5 text-xs text-[#26786e]">Mais recente</span></div><div className="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">{[["Peso", display(evaluations[0].weight_kg, " kg")],["Altura", display(evaluations[0].height_cm, " cm")],["IMC", display(evaluations[0].bmi)],["Gordura corporal", display(evaluations[0].body_fat_percentage, "%")],["Massa muscular", display(evaluations[0].muscle_mass_kg, " kg")],["Cintura", display(evaluations[0].waist_cm, " cm")],["Abdômen", display(evaluations[0].abdomen_cm, " cm")],["Quadril", display(evaluations[0].hip_cm, " cm")],["Gordura visceral", display(evaluations[0].visceral_fat_level)],["Água corporal", display(evaluations[0].body_water_percentage, "%")],["Metabolismo basal registrado", display(evaluations[0].basal_metabolism_kcal, " kcal")]].map(([label, value]) => <div key={label}><p className="text-xs text-slate-500">{label}</p><p>{value}</p></div>)}</div>{evaluations[0].clinical_notes && <p className="mt-3 text-sm text-slate-600">Observações: {evaluations[0].clinical_notes}</p>}</div><div className="rounded-xl bg-[#f3f8f7] px-4 py-3 text-sm"><strong>Variação desde a primeira avaliação: </strong>{evaluations.length > 1 && evaluations[evaluations.length - 1].weight_kg !== null && evaluations[0].weight_kg !== null ? (() => { const change = evaluations[evaluations.length - 1].weight_kg! - evaluations[0].weight_kg!; const amount = Math.abs(change).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }); return change > 0 ? `Perda de ${amount} kg` : change < 0 ? `Ganho de ${amount} kg` : "Sem alteração (0,0 kg)"; })() : "São necessárias duas avaliações com peso registrado para calcular."}</div></> : <p className="text-sm text-slate-500">Sem avaliações corporais cadastradas.</p>}</div></SectionCard>
       <SectionCard title="4. Aplicações e procedimentos"><div className="space-y-3">{applications.length ? applications.map((application) => <div key={application.id} className="flex flex-wrap items-start justify-between gap-2 rounded-lg border p-3 text-sm"><div><p className="font-medium">{application.procedure_name}</p><p className="text-slate-500">{new Date(`${application.application_date}T00:00:00`).toLocaleDateString("pt-BR")} · peso registrado {application.current_weight_kg} kg</p>{application.notes && <p className="mt-1 text-slate-500">{application.notes}</p>}</div><span className="text-xs text-slate-400">Contexto registrado; sem inferir efeitos clínicos</span></div>) : <p className="text-sm text-slate-500">Sem procedimentos registrados.</p>}</div></SectionCard>

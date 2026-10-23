@@ -23,6 +23,7 @@ type Evaluation = {
   left_calf_cm: number | null;
 };
 type Profile = {
+  reference_weight_kg: string;
   goal: string;
   desired_meals: string;
   preferred_foods: string;
@@ -35,7 +36,7 @@ type Profile = {
 const display = (value: number | null | undefined, unit = "") => value === null || value === undefined ? "Não informado" : `${value}${unit}`;
 const dateLabel = (value: string) => new Date(`${value}T00:00:00`).toLocaleDateString("pt-BR");
 
-export function PersonalizedDietCard({ patient, evaluations, profile, latestWeight, anamnesis, onProfileChange, onGenerate, loading, generating }: {
+export function PersonalizedDietCard({ patient, evaluations, profile, latestWeight, anamnesis, onProfileChange, onGenerate, loading }: {
   patient: { nome: string; data_nascimento: string | null };
   evaluations: Evaluation[];
   profile: Profile;
@@ -44,7 +45,6 @@ export function PersonalizedDietCard({ patient, evaluations, profile, latestWeig
   onProfileChange: (key: keyof Profile, value: string) => void;
   onGenerate: () => void;
   loading: boolean;
-  generating: boolean;
 }) {
   const latest = useMemo(() => {
     const keys: (keyof Evaluation)[] = ["height_cm", "bmi", "waist_cm", "abdomen_cm", "hip_cm", "chest_cm", "right_arm_cm", "left_arm_cm", "right_thigh_cm", "left_thigh_cm", "right_calf_cm", "left_calf_cm"];
@@ -58,6 +58,12 @@ export function PersonalizedDietCard({ patient, evaluations, profile, latestWeig
   })() : null;
   const measurements: [string, keyof Evaluation, string][] = [["Altura", "height_cm", " cm"], ["IMC registrado", "bmi", ""], ["Cintura", "waist_cm", " cm"], ["Abdômen", "abdomen_cm", " cm"], ["Quadril", "hip_cm", " cm"], ["Tórax", "chest_cm", " cm"], ["Braço direito", "right_arm_cm", " cm"], ["Braço esquerdo", "left_arm_cm", " cm"], ["Coxa direita", "right_thigh_cm", " cm"], ["Coxa esquerda", "left_thigh_cm", " cm"], ["Panturrilha direita", "right_calf_cm", " cm"], ["Panturrilha esquerda", "left_calf_cm", " cm"]];
   const fields: [keyof Profile, string][] = [["goal", "Objetivo do planejamento"], ["desired_meals", "Refeições por dia"], ["preferred_foods", "Preferências alimentares adicionais"], ["avoided_foods", "Alimentos a evitar"], ["allergies", "Alergias registradas"], ["intolerances", "Intolerâncias e restrições"], ["cultural_restrictions", "Restrições alimentares/culturais"], ["food_budget", "Orçamento aproximado"]];
+  const currentWeight = latestWeight ?? (() => {
+    const referenceWeight = Number(profile.reference_weight_kg);
+    return Number.isFinite(referenceWeight) && referenceWeight >= 20 && referenceWeight <= 350 ? { weight_kg: referenceWeight, weight_date: "", weight_source: "Peso de referência do perfil nutricional" } : null;
+  })();
+  const evaluationWithCurrentWeight = currentWeight?.weight_source === "Avaliação corporal" ? evaluations.find((row) => row.evaluation_date === currentWeight.weight_date && row.weight_kg === currentWeight.weight_kg) : null;
+  const calculatedBmi = evaluationWithCurrentWeight && latest.height_cm?.id === evaluationWithCurrentWeight.id && evaluationWithCurrentWeight.height_cm ? evaluationWithCurrentWeight.weight_kg! / (evaluationWithCurrentWeight.height_cm / 100) ** 2 : null;
 
   return <SectionCard title="Gerar Dieta Personalizada">
     <p className="text-sm text-slate-600">Prepare uma proposta alimentar individualizada a partir dos dados da paciente.</p>
@@ -65,7 +71,7 @@ export function PersonalizedDietCard({ patient, evaluations, profile, latestWeig
       <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
         <h3 className="flex items-center gap-2 font-semibold text-slate-800"><HeartPulse className="size-4 text-[#2f8f82]" />Dados carregados do cadastro</h3>
         <p className="mt-3 text-sm"><strong>{patient.nome}</strong> · {age === null ? "Idade: Não informado" : `Idade: ${age} anos`}</p>
-        <p className="mt-2 text-sm">Peso atual: {latestWeight ? `${latestWeight.weight_kg} kg` : "Não informado"}{latestWeight && <span className="text-slate-500"> · {latestWeight.weight_source} · {dateLabel(latestWeight.weight_date)}</span>}</p>
+        <p className="mt-2 text-sm">Peso atual: {currentWeight ? `${currentWeight.weight_kg} kg` : "Não informado"}{currentWeight && <span className="text-slate-500"> · {currentWeight.weight_source} · {currentWeight.weight_date ? dateLabel(currentWeight.weight_date) : "data não informada"}</span>}</p>
         {measurements.map(([label, key, unit]) => {
           const evaluation = latest[key];
           const value = evaluation ? evaluation[key] as number : null;
@@ -78,7 +84,7 @@ export function PersonalizedDietCard({ patient, evaluations, profile, latestWeig
         <h3 className="font-semibold text-slate-800">Configuração profissional</h3>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">{fields.map(([key, label]) => <div key={key}><Label htmlFor={`diet-${key}`}>{label}</Label>{key === "goal" || key === "desired_meals" || key === "food_budget" ? <Input id={`diet-${key}`} className="mt-1" type={key === "desired_meals" ? "number" : "text"} value={profile[key]} onChange={(event) => onProfileChange(key, event.target.value)} /> : <Textarea id={`diet-${key}`} className="mt-1 min-h-20" value={profile[key]} onChange={(event) => onProfileChange(key, event.target.value)} />}</div>)}</div>
         <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">Metas de energia e macronutrientes são estimativas separadas e precisam de confirmação profissional. A geração por IA não enviará dados clínicos até haver configuração e aprovação de privacidade/base legal.</p>
-        <Button type="button" className="mt-4 w-full bg-[#2f8f82] hover:bg-[#26786e]" disabled={loading || generating} onClick={onGenerate}><Sparkles className="mr-2 size-4" />{generating ? "Verificando disponibilidade..." : "Gerar proposta alimentar com IA"}</Button>
+        <Button type="button" className="mt-4 w-full bg-[#2f8f82] hover:bg-[#26786e]" disabled={loading} onClick={onGenerate}><Sparkles className="mr-2 size-4" />Gerar proposta alimentar com IA</Button>
       </div>
     </div>
   </SectionCard>;

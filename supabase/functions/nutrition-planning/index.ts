@@ -98,6 +98,7 @@ serve(async (req) => {
   try { input = await req.json(); } catch { return jsonResponse({ error: "Requisição inválida." }, 400); }
   const testMode = input.test_mode === true;
   if (input.nutritional_profile !== undefined && (!input.nutritional_profile || typeof input.nutritional_profile !== "object" || Array.isArray(input.nutritional_profile))) return jsonResponse({ error: "Perfil nutricional inválido." }, 400);
+  if (!testMode) return jsonResponse({ error: "A geração clínica externa permanece bloqueada até aprovação da configuração de privacidade e da base legal para tratamento de dados de saúde." }, 503);
   if (!testMode) {
     if (!input.patient_id || typeof input.patient_id !== "string" || ![1, 3, 7].includes(Number(input.duration_days))) return jsonResponse({ error: "Paciente ou período inválido." }, 400);
     if (typeof input.goal !== "string" || input.goal.trim().length < 3 || input.goal.length > 1000) return jsonResponse({ error: "Informe um objetivo com até 1.000 caracteres." }, 400);
