@@ -9,7 +9,7 @@ import { HydrationSection, type HydrationPlan } from "@/components/admin/hydrati
 import { ProteinSection, type ProteinPlan } from "@/components/admin/protein-section";
 import { EnergySection, type EnergyPlan } from "@/components/admin/energy-section";
 import { activityFactorForLevel, ageInYears, calculateMifflinStJeor, calculatePlanNutrition, clonePlanSnapshot, identifyEnergyObjective, isTrustedNutritionSource, nutritionCalculationMatches, scaleNutritionPer100g, scalePlanPortionsToEnergyTarget, sumVerifiedMeal, validateEnergyApproval, validateNutritionTotals } from "@/lib/admin/nutrition-calculations";
-import { calculateMacroDistribution } from "@/lib/admin/macronutrient-distribution";
+import { calculateMacroDistribution, isMacroDistributionStale } from "@/lib/admin/macronutrient-distribution";
 import { cleanStaleEnergyTexts, energyTargetMatches, hasActivityDetails, isOldEnergyText, mergeAnamnesisNutritionProfile, relevantAnamnesisReview, waterIntakeFromAnamnesis } from "@/lib/admin/nutrition-context";
 import { verifiedAlternatives, type SubstitutionFood } from "@/lib/admin/nutrition-substitutions";
 import { useAuth } from "@/components/auth/auth-provider";
@@ -317,16 +317,22 @@ function NutritionPlanningPage() {
   };
 
   function recalculatePlanPortions() {
-    if (!energy.professional_reviewed || energy.adjusted_daily_kcal === null) return;
-    try {
-      const draft = JSON.parse(contentText) as PlanContent;
-      const adjusted = scalePlanPortionsToEnergyTarget(draft.meals as unknown as Array<{ name?: string; items?: Array<Record<string, unknown>> }>, energy.adjusted_daily_kcal);
-      const next = { ...draft, meals: adjusted.meals as unknown as PlanContent["meals"] };
-      setContentText(JSON.stringify(next, null, 2));
-      setMessage("Porções recalculadas proporcionalmente; revise novamente todos os nutrientes antes de salvar ou encaminhar.");
-      setError("");
-    } catch (failure) { setError(failure instanceof Error ? failure.message : "Não foi possível recalcular as porções."); }
-  }
+      if (!energy.professional_reviewed || energy.adjusted_daily_kcal === null) return;
+      const macroPercents = [energy.carbohydrate_percent, energy.protein_percent, energy.fat_percent];
+      const validMacroDistribution = energy.macro_reviewed === true && energy.macro_calculated_for_kcal !== null && energy.macro_calculated_for_kcal !== undefined && Math.abs(energy.macro_calculated_for_kcal - energy.adjusted_daily_kcal) <= 0.02 && macroPercents.every((value) => typeof value === "number" && value >= 0 && value <= 100) && Math.abs((macroPercents[0]! + macroPercents[1]! + macroPercents[2]!) - 100) < 0.01;
+      if (validMacroDistribution) {
+        setError("Ajuste proporcional por calorias suspenso: a distribuição de macronutrientes confirmada para a meta vigente deve ser respeitada. Edite as porções individualmente se necessário.");
+        return;
+      }
+      try {
+        const draft = JSON.parse(contentText) as PlanContent;
+        const adjusted = scalePlanPortionsToEnergyTarget(draft.meals as unknown as Array<{ name?: string; items?: Array<Record<string, unknown>> }>, energy.adjusted_daily_kcal);
+        const next = { ...draft, meals: adjusted.meals as unknown as PlanContent["meals"] };
+        setContentText(JSON.stringify(next, null, 2));
+        setMessage("Porções recalculadas proporcionalmente; revise novamente todos os nutrientes antes de salvar ou encaminhar.");
+        setError("");
+      } catch (failure) { setError(failure instanceof Error ? failure.message : "Não foi possível recalcular as porções."); }
+    }
 
   async function generatePersonalizedPlan() {
     if (!patientId || !selected || generating || activePlan?.status === "approved") return;
