@@ -39,8 +39,9 @@ type Profile = {
 const display = (value: number | null | undefined, unit = "") => value === null || value === undefined ? "Não informado" : `${value}${unit}`;
 const dateLabel = (value: string) => new Date(`${value}T00:00:00`).toLocaleDateString("pt-BR");
 
-export function PersonalizedDietCard({ patient, evaluations, profile, latestWeight, anamnesis, onProfileChange, onGenerate, loading, generating, error, message }: {
+export function PersonalizedDietCard({ patient, evaluations, profile, latestWeight, anamnesis, energyTarget, onProfileChange, onGenerate, loading, generating, error, message }: {
   patient: { nome: string; data_nascimento: string | null };
+  energyTarget: number | null;
   evaluations: Evaluation[];
   profile: Profile;
   latestWeight: { weight_kg: number; weight_date: string; weight_source: string } | null;
@@ -91,8 +92,9 @@ export function PersonalizedDietCard({ patient, evaluations, profile, latestWeig
       <div>
         <h3 className="font-semibold text-slate-800">Configuração profissional</h3>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">{fields.map(([key, label]) => <div key={key}><Label htmlFor={`diet-${key}`}>{label}</Label>{key === "goal" || key === "desired_meals" || key === "food_budget" ? <Input id={`diet-${key}`} className="mt-1" type={key === "desired_meals" ? "number" : "text"} value={profile[key]} onChange={(event) => onProfileChange(key, event.target.value)} /> : <Textarea id={`diet-${key}`} className="mt-1 min-h-20" value={profile[key]} onChange={(event) => onProfileChange(key, event.target.value)} />}</div>)}</div>
-        <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">A IA recebe apenas uma categoria de objetivo, a quantidade de refeições e nomes de alimentos verificados já filtrados localmente. Nome, identificação, medidas, avaliações e anamnese não são enviados. Composição e nutrientes vêm exclusivamente da biblioteca validada e do cálculo proporcional determinístico.{needsSpecialistReview ? " Há condição que exige avaliação individualizada; a geração automática está bloqueada." : " Toda proposta será salva como rascunho para revisão profissional."}</p>
-        <Button type="button" className="mt-4 w-full bg-[#2f8f82] hover:bg-[#26786e]" disabled={loading || generating || needsSpecialistReview} onClick={onGenerate}><Sparkles className="mr-2 size-4" />{generating ? "Gerando proposta..." : "Gerar proposta alimentar com IA"}</Button>
+        <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">A geração usa a meta energética aprovada, a categoria de objetivo, a quantidade de refeições e nomes de alimentos verificados já filtrados localmente. A IA recebe a meta como referência; as porções finais são calculadas proporcionalmente com a biblioteca validada para atingir esse valor. Nome, identificação, medidas, avaliações e anamnese não são enviados.{needsSpecialistReview ? " Há condição que exige avaliação individualizada; a geração automática está bloqueada." : " Toda proposta será salva como rascunho para revisão profissional."}</p>
+        <div className={`mt-3 rounded-lg border p-3 text-sm ${energyTarget === null ? "border-amber-200 bg-amber-50 text-amber-900" : "border-emerald-200 bg-emerald-50 text-emerald-900"}`} aria-live="polite"><strong>Meta calórica diária aprovada para esta proposta: </strong>{energyTarget === null ? "pendente. Calcule e aprove a meta em Necessidades Nutricionais → Calorias." : `${energyTarget.toLocaleString("pt-BR", { maximumFractionDigits: 0 })} kcal/dia. As porções serão dimensionadas por esse valor.`}</div>
+        <Button type="button" className="mt-4 w-full bg-[#2f8f82] hover:bg-[#26786e]" disabled={loading || generating || needsSpecialistReview || energyTarget === null} onClick={onGenerate}><Sparkles className="mr-2 size-4" />{generating ? "Gerando proposta..." : "Gerar proposta a partir da meta calórica"}</Button>
         {error && <p role="alert" className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</p>}
         {message && <p role="status" className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{message}</p>}
       </div>
