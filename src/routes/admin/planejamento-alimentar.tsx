@@ -9,6 +9,7 @@ import { HydrationSection, type HydrationPlan } from "@/components/admin/hydrati
 import { ProteinSection, type ProteinPlan } from "@/components/admin/protein-section";
 import { EnergySection, type EnergyPlan } from "@/components/admin/energy-section";
 import { activityFactorForLevel, ageInYears, calculateMifflinStJeor, calculatePlanNutrition, clonePlanSnapshot, identifyEnergyObjective, isTrustedNutritionSource, scaleNutritionPer100g, scalePlanPortionsToEnergyTarget, sumVerifiedMeal, validateEnergyApproval, validateNutritionTotals } from "@/lib/admin/nutrition-calculations";
+import { cleanStaleEnergyTexts, energyTargetMatches, mergeAnamnesisNutritionProfile, relevantAnamnesisReview, waterIntakeFromAnamnesis } from "@/lib/admin/nutrition-context";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -25,7 +26,7 @@ import { downloadDocumentPdf, type DocumentPage } from "@/lib/admin/document-lay
 type Patient = { id: string; nome: string; data_nascimento: string | null; genero: string | null; area: string | null; queixa_principal: string | null; observacoes_iniciais: string | null };
 type Evaluation = { id: string; evaluation_date: string; weight_kg: number | null; height_cm: number | null; bmi: number | null; waist_cm: number | null; abdomen_cm: number | null; hip_cm: number | null; chest_cm: number | null; right_arm_cm: number | null; left_arm_cm: number | null; right_thigh_cm: number | null; left_thigh_cm: number | null; right_calf_cm: number | null; left_calf_cm: number | null; body_fat_percentage: number | null; muscle_mass_kg: number | null; visceral_fat_level: number | null; body_water_percentage: number | null; basal_metabolism_kcal: number | null; clinical_notes: string | null };
 type Application = { id: string; procedure_name: string; current_weight_kg: number; application_date: string; notes: string | null };
-type Anamnesis = { alimentacao: string | null; atividade_fisica: string | null; qualidade_sono: string | null; doencas_fisicas: string | null; medicamentos_atuais: string | null; usa_medicamentos: boolean | null; sintomas_atuais: unknown; expectativas_tratamento?: string | null; queixa_principal?: string | null; objetivos_terapia?: string | null; respostas?: Record<string, unknown> | null };
+type Anamnesis = { alimentacao: string | null; atividade_fisica: string | null; qualidade_sono: string | null; doencas_fisicas: string | null; medicamentos_atuais: string | null; medicamentos_detalhes?: unknown; usa_medicamentos: boolean | null; sintomas_atuais: unknown; expectativas_tratamento?: string | null; queixa_principal?: string | null; objetivos_terapia?: string | null; respostas?: Record<string, unknown> | null };
 type Profile = { height_cm: string; reference_weight_kg: string; goal: string; activity_level: string; exercise_details: string; wake_time: string; sleep_time: string; meal_schedule: string; desired_meals: string; work_routine: string; cooking_availability: string; food_budget: string; preferred_foods: string; avoided_foods: string; cultural_restrictions: string; simple_meals_preference: boolean; affordable_food_preference: boolean; allergies: string; intolerances: string; diagnosed_conditions: string; pregnancy_or_breastfeeding: string; medications: string; supplements: string; eating_disorder_history: string };
 type Meal = { name: string; items: { food: string; portion: string; alternatives?: string[]; protein_g?: number; protein_source?: string; calories_kcal?: number; calories_source?: string; carbohydrate_g?: number; carbohydrate_source?: string; fat_g?: number; fat_source?: string; fiber_g?: number; fiber_source?: string; food_library_id?: string; quantity_g?: number; nutrition_per_100g?: { calories_kcal: number; protein_g: number; carbohydrate_g: number; fat_g: number | null; fiber_g?: number | null }; notes?: string }[]; notes?: string };
 type PlanContent = { summary: string; objective: string; warnings: string[]; meals: Meal[]; observations: string[]; professional_confirmations: string[]; hydration?: HydrationPlan; protein?: ProteinPlan; energy?: EnergyPlan };
@@ -69,7 +70,6 @@ export const Route = createFileRoute("/admin/planejamento-alimentar")({ componen
 
 function NutritionPlanningPage() {
   const { user, isLoading: authLoading } = useAuth();
-  const [entryDraft, setEntryDraft] = useState<PlanningDraft>({});
   const loadedPatientId = useRef<string | null>(null);
   const scrollRestored = useRef(false);
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -100,6 +100,9 @@ function NutritionPlanningPage() {
   const selected = patients.find((patient) => patient.id === patientId) ?? null;
   const currentEvaluation = evaluations[0] ?? null;
   const responseData = anamnesis?.respostas && typeof anamnesis.respostas === "object" ? anamnesis.respostas : {};
+  const waterIntake = waterIntakeFromAnamnesis(anamnesis);
+  const mealHistory = anamnesis?.alimentacao && waterIntake === anamnesis.alimentacao ? null : anamnesis?.alimentacao ?? null;
+  const anamnesisReviewItems = relevantAnamnesisReview(anamnesis, profile);
   const objectiveAssessment = identifyEnergyObjective([
     { source: "Perfil nutricional", value: profile.goal },
     { source: "Queixa da anamnese", value: anamnesis?.queixa_principal },
@@ -110,7 +113,6 @@ function NutritionPlanningPage() {
   useEffect(() => {
     if (!user) return;
     const draft = readPlanningDraft(user.id);
-    setEntryDraft(draft);
     if (!draft.patientId) return;
     setPatientId(draft.patientId);
     if (draft.profile) setProfile({ ...emptyProfile, ...draft.profile });
@@ -133,9 +135,8 @@ function NutritionPlanningPage() {
     scrollRestored.current = true;
   }, [patientId, loading]);
   const clinicalReviewFlags = [
-    (/tirzepatida|mounjaro|monjaro/i.test(`${profile.medications} ${anamnesis?.medicamentos_atuais ?? ""}`) || String(responseData.tirzepatida ?? "").toLocaleLowerCase("pt-BR") === "sim") ? "Uso de tirzepatida registrado: revisar tolerância alimentar, ingestão proteica e preservação de massa muscular." : "",
-    (Array.isArray(responseData.sintomas) && responseData.sintomas.some((symptom) => /compuls[aã]o/i.test(String(symptom)))) || /compuls[aã]o/i.test(`${anamnesis?.alimentacao ?? ""} ${anamnesis?.queixa_principal ?? ""}`) ? "Relato de compulsão alimentar: avaliar segurança e adequação do plano com o profissional responsável." : "",
-    typeof responseData.exames === "string" && /apresentar durante|pendente|aguardando/i.test(responseData.exames) ? "Exames foram informados como pendentes de apresentação; considerar na revisão clínica." : "",
+    (Array.isArray(responseData.sintomas) && responseData.sintomas.some((symptom) => /compuls[aã]o/i.test(String(symptom)))) || /compuls[aã]o/i.test(`${anamnesis?.alimentacao ?? ""} ${anamnesis?.queixa_principal ?? ""}`) ? "Relato alimentar/emocional a revisar com o profissional responsável antes de finalizar a proposta." : "",
+    ...anamnesisReviewItems,
   ].filter(Boolean);
   useEffect(() => {
     if (objectiveAssessment.conflicting) {
@@ -158,8 +159,21 @@ function NutritionPlanningPage() {
     }
     if (!selected?.data_nascimento) found.push("Data de nascimento não informada.");
     if (!currentEvaluation?.height_cm && !profile.height_cm) found.push("Altura não disponível.");
+    const currentWeight = latestWeight(evaluations, applications);
+    const lastEvaluationWeight = evaluations.find((row) => row.weight_kg !== null);
+    if (currentWeight && lastEvaluationWeight && (currentWeight.weight_kg !== lastEvaluationWeight.weight_kg || currentWeight.weight_date !== lastEvaluationWeight.evaluation_date)) found.push(`Peso atual mais recente: ${currentWeight.weight_kg} kg (${currentWeight.weight_source}, ${currentWeight.weight_date}); última avaliação corporal com peso: ${lastEvaluationWeight.weight_kg} kg (${lastEvaluationWeight.evaluation_date}). Confirme o peso de referência na seção energética.`);
     return found;
-  }, [currentEvaluation, profile.height_cm, profile.goal, selected, objectiveAssessment, clinicalReviewFlags]);
+  }, [currentEvaluation, evaluations, applications, profile.height_cm, profile.goal, selected, objectiveAssessment, clinicalReviewFlags]);
+  const planNeedsEnergyRefresh = useMemo(() => {
+    if (!contentText.trim() || activePlan?.status === "approved") return false;
+    try {
+      const saved = (JSON.parse(contentText) as PlanContent).energy;
+      if (!saved) return Boolean(energy.professional_reviewed && energy.adjusted_daily_kcal !== null);
+      const factor = activityFactorForLevel(energy.activity_level || profile.activity_level);
+      const estimate = calculateMifflinStJeor({ weightKg: energy.weight_kg ?? latestWeight(evaluations, applications)?.weight_kg ?? null, heightCm: energy.height_cm ?? currentEvaluation?.height_cm ?? (profile.height_cm ? Number(profile.height_cm) : null), ageYears: energy.age_years ?? ageFrom(selected?.data_nascimento ?? null), sex: energy.sex_parameter, activityFactor: factor });
+      return !energyTargetMatches(saved.adjusted_daily_kcal, energy.adjusted_daily_kcal) || !energyTargetMatches(saved.bmr_kcal, estimate?.bmrKcal ?? null) || !energyTargetMatches(saved.estimated_daily_kcal, estimate?.totalKcal ?? null) || saved.objective !== energy.objective || !energyTargetMatches(saved.activity_factor, factor);
+    } catch { return false; }
+  }, [contentText, activePlan?.status, energy, profile.activity_level, profile.height_cm, evaluations, applications, currentEvaluation, selected]);
 
   function selectPlan(plan: Plan) { setSyntheticTest(false); setActivePlan(plan); setContentText(JSON.stringify(plan.plan_content, null, 2)); setDuration(String(plan.duration_days)); const measurements = latestWeight(evaluations, applications); setHydration(hydrationForPlan(plan.plan_content, measurements)); setProtein(proteinForPlan(plan.plan_content, measurements)); setEnergy(energyForPlan(plan.plan_content)); }
 
@@ -177,8 +191,8 @@ function NutritionPlanningPage() {
     setLoading(true); setError(""); setActivePlan(null); setContentText("");
     void Promise.all([
       supabase.from("body_evaluations").select("id,evaluation_date,weight_kg,height_cm,bmi,waist_cm,abdomen_cm,hip_cm,chest_cm,right_arm_cm,left_arm_cm,right_thigh_cm,left_thigh_cm,right_calf_cm,left_calf_cm,body_fat_percentage,muscle_mass_kg,visceral_fat_level,body_water_percentage,basal_metabolism_kcal,clinical_notes").eq("patient_id", patientId).eq("profissional_id", user.id).order("evaluation_date", { ascending: false }),
-            supabase.from("patient_applications").select("id,procedure_name,current_weight_kg,application_date,notes").eq("patient_id", patientId).eq("profissional_id", user.id).order("application_date", { ascending: false }).limit(1),
-      supabase.from("anamneses").select("alimentacao,atividade_fisica,qualidade_sono,doencas_fisicas,medicamentos_atuais,usa_medicamentos,sintomas_atuais,expectativas_tratamento,queixa_principal,objetivos_terapia,respostas").eq("paciente_id", patientId).eq("profissional_id", user.id).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
+            supabase.from("patient_applications").select("id,procedure_name,current_weight_kg,application_date,notes").eq("patient_id", patientId).eq("profissional_id", user.id).order("application_date", { ascending: false }),
+            supabase.from("anamneses").select("alimentacao,atividade_fisica,qualidade_sono,doencas_fisicas,medicamentos_atuais,medicamentos_detalhes,usa_medicamentos,sintomas_atuais,expectativas_tratamento,queixa_principal,objetivos_terapia,respostas").eq("paciente_id", patientId).eq("profissional_id", user.id).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("patient_nutrition_profiles").select("*").eq("patient_id", patientId).eq("profissional_id", user.id).maybeSingle(),
       supabase.from("nutrition_plans").select("id,goal,duration_days,status,plan_content,model_name,created_at,approved_at,approved_by,approved_version_id").eq("patient_id", patientId).eq("profissional_id", user.id).order("created_at", { ascending: false }),
     ]).then(([evaluationResult, applicationResult, anamnesisResult, profileResult, planResult]) => {
@@ -191,7 +205,9 @@ function NutritionPlanningPage() {
       const savedDraft = readPlanningDraft(user.id);
       const resume = savedDraft.patientId === patientId;
       const selectedPlan = resume && savedDraft.activePlanId === null ? null : list.find((plan) => plan.id === savedDraft.activePlanId) ?? list[0] ?? null;
-      setEvaluations(evaluationRows); setApplications(applicationRows); setAnamnesis((anamnesisResult.data as Anamnesis | null) ?? null); setProfile(resume && savedDraft.profile ? savedDraft.profile : asProfile(profileResult.data as Record<string, unknown> | null));
+      const anamnesisRow = (anamnesisResult.data as Anamnesis | null) ?? null;
+      const resolvedProfile = mergeAnamnesisNutritionProfile(resume && savedDraft.profile ? savedDraft.profile : asProfile(profileResult.data as Record<string, unknown> | null), anamnesisRow);
+      setEvaluations(evaluationRows); setApplications(applicationRows); setAnamnesis(anamnesisRow); setProfile(resolvedProfile);
       setPlans(list); setActivePlan(selectedPlan);
       const lastWeight = latestWeight(evaluationRows, applicationRows);
       if (selectedPlan) {
@@ -205,10 +221,13 @@ function NutritionPlanningPage() {
         setDuration(resume && savedDraft.duration ? savedDraft.duration : "1");
         setHydration(resume && savedDraft.hydration ? savedDraft.hydration : hydrationForPlan(null, lastWeight));
         setProtein(resume && savedDraft.protein ? savedDraft.protein : proteinForPlan(null, lastWeight));
-        const latestHeight = evaluationRows.find((row) => row.height_cm !== null && row.height_cm >= 100 && row.height_cm <= 250)?.height_cm ?? (Number(profileResult.data?.height_cm) >= 100 && Number(profileResult.data?.height_cm) <= 250 ? Number(profileResult.data?.height_cm) : null);
-        const profileWeight = Number(profileResult.data?.reference_weight_kg);
-        const measure = lastWeight ?? (Number.isFinite(profileWeight) && profileWeight >= 20 && profileWeight <= 350 ? { weight_kg: profileWeight, weight_date: "", weight_source: "Peso de referência do perfil nutricional" } : null);
-        setEnergy(resume && savedDraft.energy ? savedDraft.energy : { ...emptyEnergy, weight_kg: measure?.weight_kg ?? null, weight_date: measure?.weight_date ?? null, weight_source: measure?.weight_source ?? null, height_cm: latestHeight, height_source: latestHeight === null ? null : evaluationRows.some((row) => row.height_cm === latestHeight) ? "Avaliação corporal" : "Perfil nutricional", age_years: ageFrom(patients.find((p) => p.id === patientId)?.data_nascimento ?? null), age_source: "Data de nascimento do cadastro", activity_level: (resume && savedDraft.profile ? savedDraft.profile : asProfile(profileResult.data as Record<string, unknown> | null)).activity_level, activity_context: [anamnesisResult.data?.atividade_fisica, (resume && savedDraft.profile ? savedDraft.profile : asProfile(profileResult.data as Record<string, unknown> | null)).work_routine, (resume && savedDraft.profile ? savedDraft.profile : asProfile(profileResult.data as Record<string, unknown> | null)).exercise_details].filter(Boolean).join(" · ") });
+        const latestHeightRow = evaluationRows.find((row) => row.height_cm !== null && row.height_cm >= 100 && row.height_cm <= 250);
+        const latestHeight = latestHeightRow?.height_cm ?? (Number(resolvedProfile.height_cm) >= 100 && Number(resolvedProfile.height_cm) <= 250 ? Number(resolvedProfile.height_cm) : null);
+        const profileWeight = Number(resolvedProfile.reference_weight_kg);
+        const measure = Number.isFinite(profileWeight) && profileWeight >= 20 && profileWeight <= 350
+          ? { weight_kg: profileWeight, weight_date: "", weight_source: "Peso de referência escolhido no perfil nutricional" }
+          : lastWeight;
+        setEnergy(resume && savedDraft.energy ? savedDraft.energy : { ...emptyEnergy, weight_kg: measure?.weight_kg ?? null, weight_date: measure?.weight_date ?? null, weight_source: measure?.weight_source ?? null, height_cm: latestHeight, height_source: latestHeight === null ? null : latestHeightRow ? "Avaliação corporal" : "Perfil nutricional", age_years: ageFrom(patients.find((p) => p.id === patientId)?.data_nascimento ?? null), age_source: "Data de nascimento do cadastro", activity_level: resolvedProfile.activity_level, activity_context: [anamnesisRow?.atividade_fisica, resolvedProfile.work_routine, resolvedProfile.exercise_details].filter(Boolean).join(" · ") });
       }
       loadedPatientId.current = patientId;
       setLoading(false);
@@ -221,14 +240,6 @@ function NutritionPlanningPage() {
     if (!user || !patientId || loading || loadedPatientId.current !== patientId) return;
     savePlanningDraft(user.id, { patientId, profile, hydration, protein, energy, activePlanId: activePlan?.id ?? null, contentText, duration });
   }, [user, patientId, loading, profile, hydration, protein, energy, activePlan, contentText, duration]);
-
-  useEffect(() => {
-    if (entryDraft.patientId === patientId && entryDraft.profile) return;
-    const latestWeight = evaluations[0]?.weight_kg;
-    if (latestWeight !== null && latestWeight !== undefined) {
-      setProfile((current) => ({ ...current, reference_weight_kg: String(latestWeight) }));
-    }
-  }, [entryDraft, evaluations, patientId]);
 
   async function saveProfile(): Promise<boolean> {
     if (!user || !patientId) return false;
@@ -361,6 +372,7 @@ function NutritionPlanningPage() {
     let parsed: PlanContent;
     try { parsed = contentOverride ?? JSON.parse(contentText) as PlanContent; if (!parsed || !Array.isArray(parsed.meals)) throw new Error(); }
     catch { setError("O conteúdo precisa ser um JSON válido com uma lista de refeições."); return; }
+    parsed = cleanStaleEnergyTexts(parsed, energy.professional_reviewed ? energy.adjusted_daily_kcal : null);
     const nutritionCalculation = calculatePlanNutrition(parsed.meals as unknown as Array<{ name?: string; items?: Array<Record<string, unknown>> }>);
     const nutritionIssues = validateNutritionTotals(nutritionCalculation);
     if (status === "pending_review" && nutritionIssues.length) { setError(`Não é possível enviar para aprovação: ${nutritionIssues.slice(0, 5).join(" ")}`); return; }
@@ -439,6 +451,7 @@ function NutritionPlanningPage() {
     setError("");
     setMessage("");
     try {
+      if (planNeedsEnergyRefresh) throw new Error("A meta ou os parâmetros energéticos mudaram. Atualize e salve uma nova proposta antes de pré-visualizar ou exportar o PDF.");
       const isApproved = activePlan?.status === "approved";
       let plan: PlanContent;
       try { plan = JSON.parse(contentText) as PlanContent; }

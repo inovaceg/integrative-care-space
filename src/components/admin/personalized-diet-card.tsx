@@ -79,7 +79,9 @@ export function PersonalizedDietCard({ patient, evaluations, profile, latestWeig
       <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
         <h3 className="flex items-center gap-2 font-semibold text-slate-800"><HeartPulse className="size-4 text-[#2f8f82]" />Dados carregados do cadastro</h3>
         <p className="mt-3 text-sm"><strong>{patient.nome}</strong> · {age === null ? "Idade: Não informado" : `Idade: ${age} anos`}</p>
-        <p className="mt-2 text-sm">Peso atual: {currentWeight ? `${currentWeight.weight_kg} kg` : "Não informado"}{currentWeight && <span className="text-slate-500"> · {currentWeight.weight_source} · {currentWeight.weight_date ? dateLabel(currentWeight.weight_date) : "data não informada"}</span>}</p>
+        <p className="mt-2 text-sm">Peso atual mais recente: {currentWeight ? `${currentWeight.weight_kg} kg` : "Não informado"}{currentWeight && <span className="text-slate-500"> · {currentWeight.weight_source} · {currentWeight.weight_date ? dateLabel(currentWeight.weight_date) : "data não informada"}</span>}</p>
+        <p className="mt-1 text-sm">Peso da última avaliação corporal: {evaluations.find((row) => row.weight_kg !== null)?.weight_kg ?? "Não informado"}{evaluations.find((row) => row.weight_kg !== null) && <span className="text-slate-500"> kg · {dateLabel(evaluations.find((row) => row.weight_kg !== null)!.evaluation_date)}</span>}</p>
+        <p className="mt-1 text-sm">Peso de referência salvo para planejamento: {profile.reference_weight_kg ? `${profile.reference_weight_kg} kg` : "A confirmar"}</p>
         {measurements.map(([label, key, unit]) => {
           const evaluation = latest[key];
           const value = evaluation ? evaluation[key] as number : null;
