@@ -53,13 +53,14 @@ export function EnergySection({ value, onChange, weightKg, weightDate, weightSou
   const activityOption = Object.keys(activityFactors).find((label) => activityFactors[label] === factor) ?? "none";
   const estimate = useMemo(() => calculateMifflinStJeor({ weightKg: weight, heightCm: height, ageYears: age, sex: value.sex_parameter, activityFactor: factor }), [weight, height, age, value.sex_parameter, factor]);
   const adjustment = value.adjustment_value ?? 0;
-  const target = estimate && value.objective ? calculateEnergyTarget(estimate.totalKcal, value.objective, value.adjustment_mode, value.adjustment_value) : null;
+  const adjustmentMode = value.adjustment_mode ?? "percent";
+  const target = estimate && value.objective ? calculateEnergyTarget(estimate.totalKcal, value.objective, adjustmentMode, value.adjustment_value) : null;
   const targetValid = target !== null && target >= 500 && target <= 10000;
   const justificationRequired = target !== null && !value.observations.trim();
   useEffect(() => {
     if (value.adjusted_daily_kcal !== target || (target === null && value.professional_reviewed)) onChange({ ...value, adjusted_daily_kcal: target, bmr_kcal: estimate?.bmrKcal ?? null, estimated_daily_kcal: estimate?.totalKcal ?? null, activity_factor: factor, professional_reviewed: false, reviewed_at: null });
   }, [target, value, onChange, estimate, factor]);
-  const set = <K extends keyof EnergyPlan>(key: K, field: EnergyPlan[K]) => onChange({ ...value, [key]: field, professional_reviewed: false, reviewed_at: null });
+  const set = <K extends keyof EnergyPlan>(key: K, field: EnergyPlan[K]) => onChange({ ...value, [key]: field, ...(key === "objective" && field !== "maintenance" && !value.adjustment_mode ? { adjustment_mode: "percent" as const } : {}), professional_reviewed: false, reviewed_at: null });
   const updateParam = (key: "weight_kg" | "height_cm" | "age_years", raw: string, setter: (s: string) => void) => {
     setter(raw);
     const parsed = raw.trim() ? parseNumber(raw) : null;

@@ -284,7 +284,7 @@ function NutritionPlanningPage() {
     const energyFactor = activityFactorForLevel(energy.activity_level || profile.activity_level);
     const energyEstimate = calculateMifflinStJeor({ weightKg: energy.weight_kg ?? registeredWeight?.weight_kg ?? null, heightCm: energy.height_cm ?? currentEvaluation?.height_cm ?? (profile.height_cm ? Number(profile.height_cm) : null), ageYears: energy.age_years ?? ageFrom(selected.data_nascimento), sex: energy.sex_parameter, activityFactor: energyFactor });
     if (!energyEstimate || !energy.professional_reviewed || !energy.objective || !energy.observations.trim() || !energy.adjusted_daily_kcal) { setError("Revise e aprove as necessidades energéticas antes de solicitar a geração do cardápio."); setMessage(""); return; }
-    if (profile.pregnancy_or_breastfeeding.trim() && !/^(nao|não|nenhum|nenhuma|n\\/?a|nao se aplica)$/i.test(profile.pregnancy_or_breastfeeding.trim())) { setError("Gestação/amamentação exige avaliação clínica individualizada; geração automática bloqueada."); setMessage(""); return; }
+    if (profile.pregnancy_or_breastfeeding.trim() && !/^(nao|não|nenhum|nenhuma|n\/?a|nao se aplica)$/i.test(profile.pregnancy_or_breastfeeding.trim())) { setError("Gestação/amamentação exige avaliação clínica individualizada; geração automática bloqueada."); setMessage(""); return; }
     setGenerating(true); setError(""); setMessage("");
     try {
       if (!(await saveProfile())) return;
