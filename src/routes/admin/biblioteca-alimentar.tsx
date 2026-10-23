@@ -28,9 +28,12 @@ function TacoFoodLibraryPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     let active = true;
+    setLoading(true);
+    setError("");
     void supabase.from("nutrition_food_library")
       .select("id,source_code,name,energy_kcal_100g,proteins_g_100g,carbohydrates_g_100g,fats_g_100g,fibers_g_100g,sodium_mg_100g,validation_status")
       .eq("source", "TACO")
@@ -43,7 +46,7 @@ function TacoFoodLibraryPage() {
         setLoading(false);
       });
     return () => { active = false; };
-  }, []);
+  }, [refreshKey]);
 
   const visibleFoods = useMemo(() => {
     const term = normalize(search.trim());
@@ -53,7 +56,7 @@ function TacoFoodLibraryPage() {
   return <AdminLayout>
     <PageIntro eyebrow="Nutrição" title="Banco Nutricional TACO" description="Importe e consulte a composição dos alimentos da TACO por 100 g. A aba ‘Composição completa’ não é importada neste fluxo." />
     <div className="space-y-6">
-      <TacoXlsxImporter />
+      <TacoXlsxImporter onImported={() => setRefreshKey((key) => key + 1)} />
       <SectionCard title={`Alimentos cadastrados na TACO (${foods.length})`}>
         {error && <p role="alert" className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
         <div className="mb-4 flex items-center gap-3"><div className="relative w-full max-w-md"><Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar alimento TACO" className="pl-9" /></div><span className="whitespace-nowrap text-xs text-slate-500">{visibleFoods.length} resultado(s)</span></div>

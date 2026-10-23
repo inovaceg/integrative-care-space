@@ -9,7 +9,7 @@ import { checkTacoReferenceFoods, parseTacoWorkbook, validTacoRows, type TacoImp
 type ImportReport = { imported: number; updated: number; ignored: number; rejected: number; rejected_rows?: Array<{ codigo_taco: number | null; nome: string; error: string }> };
 const sourceCode = (code: number) => `TACO-${code}`;
 
-export function TacoXlsxImporter() {
+export function TacoXlsxImporter({ onImported }: { onImported?: () => void }) {
   const { role } = useAuth();
   const [fileName, setFileName] = useState("");
   const [rows, setRows] = useState<TacoImportRow[]>([]);
@@ -67,6 +67,7 @@ export function TacoXlsxImporter() {
     }
     if (data?.error) { setError(typeof data.error === "string" ? data.error : "Não foi possível importar a planilha."); return; }
     setReport(data as ImportReport);
+    onImported?.();
     const codes = importRows.map((row) => sourceCode(row.codigo_taco));
     const { data: updatedCodes } = await supabase.from("nutrition_food_library").select("source_code").in("source_code", codes);
     if (updatedCodes) setDatabaseDuplicates(new Set(updatedCodes.map((row) => row.source_code).filter((code): code is string => typeof code === "string")));
