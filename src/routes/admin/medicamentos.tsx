@@ -189,6 +189,10 @@ function MedicationsPage() {
     return medications.filter((item) => !term || `${item.name} ${item.supplier ?? ""}`.toLowerCase().includes(term));
   }, [medications, search]);
 
+  useEffect(() => {
+    setMedications((current) => [...current].sort((a, b) => stockFor(b.id, movements) - stockFor(a.id, movements) || a.name.localeCompare(b.name)));
+  }, [movements]);
+
   const visibleMovements = useMemo(() => {
     const medicationIds = new Set(visibleMedications.map((item) => item.id));
     return movements.filter((item) => medicationIds.has(item.medication_id) && (movementFilter === "all" || item.movement_type === movementFilter));
