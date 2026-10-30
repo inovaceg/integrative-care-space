@@ -213,7 +213,25 @@ function MedicationsPage() {
     const addReportActions = () => {
       const reportTable = [...document.querySelectorAll("table")].find((table) => [...table.querySelectorAll("th")].some((header) => header.textContent?.trim() === "Nome do produto"));
       if (!reportTable) return;
+      if (!reportTable.parentElement?.querySelector("[data-report-search]")) {
+        const searchWrap = document.createElement("div");
+        searchWrap.dataset.reportSearch = "true";
+        searchWrap.className = "mb-3";
+        const searchInput = document.createElement("input");
+        searchInput.type = "search";
+        searchInput.placeholder = "Localizar item no relatório";
+        searchInput.setAttribute("aria-label", "Localizar item no relatório de estoque");
+        searchInput.className = "h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm shadow-none sm:max-w-sm";
+        searchInput.addEventListener("input", () => {
+          const term = searchInput.value.trim().toLocaleLowerCase("pt-BR");
+          reportTable.querySelectorAll("tbody tr").forEach((row) => { row.hidden = !row.textContent?.toLocaleLowerCase("pt-BR").includes(term); });
+        });
+        searchWrap.append(searchInput);
+        reportTable.parentElement?.before(searchWrap);
+      }
+      const term = reportTable.parentElement?.querySelector<HTMLInputElement>("[data-report-search] input")?.value.trim().toLocaleLowerCase("pt-BR") ?? "";
       reportTable.querySelectorAll("tbody tr").forEach((row) => {
+        row.hidden = !row.textContent?.toLocaleLowerCase("pt-BR").includes(term);
         if (row.querySelector("[data-report-actions]")) return;
         const medication = medications.find((item) => item.name === row.querySelector("td")?.textContent?.trim());
         if (!medication) return;
