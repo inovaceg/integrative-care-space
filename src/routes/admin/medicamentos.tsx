@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowDownToLine, ArrowUpFromLine, Edit3, History, Loader2, PackageOpen, Pencil, Pill, Plus, Search, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { ArrowDownToLine, ArrowUpFromLine, Camera, Edit3, History, Loader2, PackageOpen, Pencil, Pill, Plus, Search, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { createWorker } from "tesseract.js";
 import { useAuth } from "@/components/auth/auth-provider";
 import { AdminLayout, AdminNotice, EmptyState, PageIntro, SectionCard } from "@/components/admin/admin-ui";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -71,12 +72,75 @@ function MedicationDialog({ medication, open, onOpenChange, onSaved }: { medicat
   const [form, setForm] = useState<MedicationInput>({ name: "", unit: "unit", unit_price: 0, supplier: null, notes: null });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [cameraError, setCameraError] = useState("");
+  const [scanning, setScanning] = useState(false);
+  const [scanMessage, setScanMessage] = useState("");
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (!open) return;
     setForm({ name: medication?.name ?? "", unit: medication?.unit ?? "unit", unit_price: medication?.unit_price ?? 0, supplier: medication?.supplier ?? null, notes: medication?.notes ?? null });
     setError("");
   }, [medication, open]);
+
+  useEffect(() => {
+    if (!cameraOpen) return;
+    let disposed = false;
+    let stream: MediaStream | null = null;
+    setCameraError("");
+    setScanMessage("");
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setCameraError("A câmera não está disponível neste navegador ou contexto. Digite o nome manualmente.");
+      return;
+    }
+    void navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false }).then((cameraStream) => {
+      if (disposed) { cameraStream.getTracks().forEach((track) => track.stop()); return; }
+      stream = cameraStream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = cameraStream;
+        void videoRef.current.play();
+      }
+    }).catch(() => setCameraError("Não foi possível acessar a câmera. Verifique as permissões do navegador ou digite o nome manualmente."));
+    return () => {
+      disposed = true;
+      stream?.getTracks().forEach((track) => track.stop());
+    };
+  }, [cameraOpen]);
+
+  async function scanProductName() {
+    const video = videoRef.current;
+    if (!video || video.videoWidth === 0) {
+      setCameraError("A câmera ainda não está pronta. Aguarde a imagem aparecer e tente novamente.");
+      return;
+    }
+    setScanning(true);
+    setCameraError("");
+    setScanMessage("Lendo o texto da embalagem...");
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("Não foi possível processar a imagem.");
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const worker = await createWorker("por");
+      try {
+        const { data } = await worker.recognize(canvas);
+        const productName = data.text.split(/\r?\n/).map((line) => line.replace(/[^\p{L}\p{N} .+()-]/gu, " ").replace(/\s+/g, " ").trim()).find((line) => line.length >= 2 && /\p{L}/u.test(line));
+        if (!productName) throw new Error("Não encontrei um nome legível. Tente aproximar e melhorar a iluminação.");
+        setForm((current) => ({ ...current, name: productName }));
+        setScanMessage(`Nome reconhecido: ${productName}. Confira antes de cadastrar.`);
+      } finally {
+        await worker.terminate();
+      }
+    } catch (failure) {
+      setCameraError(failure instanceof Error ? failure.message : "Não foi possível ler o texto da imagem.");
+      setScanMessage("");
+    } finally {
+      setScanning(false);
+    }
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -96,7 +160,23 @@ function MedicationDialog({ medication, open, onOpenChange, onSaved }: { medicat
     onOpenChange(false);
   }
 
-  return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg"><DialogHeader><DialogTitle>{medication ? "Editar medicamento" : "Cadastrar medicamento"}</DialogTitle><DialogDescription>{medication ? "Atualize os dados de identificação e armazenamento." : "Cadastre um medicamento para acompanhar seu estoque."}</DialogDescription></DialogHeader><form onSubmit={submit} className="grid gap-4"><div className="grid gap-2"><Label htmlFor="medication-name">Nome *</Label><Input id="medication-name" value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} required autoFocus /></div><div className="grid gap-2 sm:grid-cols-3"><div className="grid gap-2"><Label htmlFor="medication-unit">Unidade *</Label><Select value={form.unit} onValueChange={(unit: MedicationUnit) => setForm((current) => ({ ...current, unit }))}><SelectTrigger id="medication-unit"><SelectValue /></SelectTrigger><SelectContent>{Object.entries(unitLabels).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select></div><div className="grid gap-2"><Label htmlFor="medication-unit-price">Valor unitário *</Label><Input id="medication-unit-price" type="number" min="0" step="0.01" value={form.unit_price} onChange={(event) => setForm((current) => ({ ...current, unit_price: Number(event.target.value) }))} required /></div><div className="grid gap-2"><Label htmlFor="medication-supplier">Fornecedor</Label><Input id="medication-supplier" value={form.supplier ?? ""} onChange={(event) => setForm((current) => ({ ...current, supplier: event.target.value }))} /></div></div><div className="grid gap-2"><Label htmlFor="medication-notes">Observações</Label><Textarea id="medication-notes" value={form.notes ?? ""} onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))} rows={3} /></div>{error && <p role="alert" className="text-sm text-red-600">{error}</p>}<DialogFooter><Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button><Button type="submit" disabled={saving} className="bg-[#2f8f82] text-white hover:bg-[#26796e]">{saving && <Loader2 className="mr-2 size-4 animate-spin" />}{medication ? "Salvar alterações" : "Cadastrar medicamento"}</Button></DialogFooter></form></DialogContent></Dialog>;
+  return <>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+        <DialogHeader><DialogTitle>{medication ? "Editar medicamento" : "Cadastrar medicamento"}</DialogTitle><DialogDescription>{medication ? "Atualize os dados de identificação e armazenamento." : "Cadastre um medicamento para acompanhar seu estoque."}</DialogDescription></DialogHeader>
+        <form onSubmit={submit} className="grid gap-4">
+          <div className="grid gap-2"><Label htmlFor="medication-name">Nome *</Label><Input id="medication-name" value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} required autoFocus /><Button type="button" variant="outline" className="w-fit gap-2" onClick={() => setCameraOpen(true)}><Camera className="size-4" />Abrir câmera e digitalizar nome</Button>{scanMessage && <p role="status" className="text-sm text-emerald-700">{scanMessage}</p>}</div>
+          <div className="grid gap-2 sm:grid-cols-3"><div className="grid gap-2"><Label htmlFor="medication-unit">Unidade *</Label><Select value={form.unit} onValueChange={(unit: MedicationUnit) => setForm((current) => ({ ...current, unit }))}><SelectTrigger id="medication-unit"><SelectValue /></SelectTrigger><SelectContent>{Object.entries(unitLabels).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select></div><div className="grid gap-2"><Label htmlFor="medication-unit-price">Valor unitário *</Label><Input id="medication-unit-price" type="number" min="0" step="0.01" value={form.unit_price} onChange={(event) => setForm((current) => ({ ...current, unit_price: Number(event.target.value) }))} required /></div><div className="grid gap-2"><Label htmlFor="medication-supplier">Fornecedor</Label><Input id="medication-supplier" value={form.supplier ?? ""} onChange={(event) => setForm((current) => ({ ...current, supplier: event.target.value }))} /></div></div>
+          <div className="grid gap-2"><Label htmlFor="medication-notes">Observações</Label><Textarea id="medication-notes" value={form.notes ?? ""} onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))} rows={3} /></div>
+          {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
+          <DialogFooter><Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button><Button type="submit" disabled={saving} className="bg-[#2f8f82] text-white hover:bg-[#26796e]">{saving && <Loader2 className="mr-2 size-4 animate-spin" />}{medication ? "Salvar alterações" : "Cadastrar medicamento"}</Button></DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+    <Dialog open={cameraOpen} onOpenChange={setCameraOpen}>
+      <DialogContent className="sm:max-w-xl"><DialogHeader><DialogTitle>Digitalizar nome do produto</DialogTitle><DialogDescription>Posicione o rótulo com boa iluminação. O texto reconhecido será preenchido no campo Nome para você conferir.</DialogDescription></DialogHeader><video ref={videoRef} autoPlay playsInline muted className="max-h-[55vh] w-full rounded-lg bg-black object-contain" />{cameraError && <p role="alert" className="text-sm text-red-700">{cameraError}</p>}{scanning && <p role="status" className="text-sm text-slate-600">Processando imagem em português…</p>}<DialogFooter><Button type="button" variant="outline" onClick={() => setCameraOpen(false)}>Fechar câmera</Button><Button type="button" disabled={scanning} onClick={() => void scanProductName()} className="gap-2 bg-[#2f8f82] text-white hover:bg-[#26796e]">{scanning && <Loader2 className="size-4 animate-spin" />}<Camera className="size-4" />{scanning ? "Digitalizando…" : "Capturar e ler nome"}</Button></DialogFooter></DialogContent>
+    </Dialog>
+  </>;
 }
 
 function MovementDialog({ medication, movement, medications, movements, open, onOpenChange, onSaved }: { medication: MedicationRecord | null; movement: MedicationMovementRecord | null; medications: MedicationRecord[]; movements: MedicationMovementRecord[]; open: boolean; onOpenChange: (open: boolean) => void; onSaved: (movement: MedicationMovementRecord) => void }) {
