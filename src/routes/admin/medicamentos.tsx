@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowDownToLine, ArrowUpFromLine, Camera, Download, Edit3, Eye, History, Loader2, PackageOpen, Pencil, Pill, Plus, Search, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type ComponentProps, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type FormEvent } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { AdminLayout, AdminNotice, EmptyState, PageIntro, SectionCard } from "@/components/admin/admin-ui";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -31,6 +31,10 @@ function isMovementFilter(value: unknown): value is MedicationMovementType | "al
   return value === "all" || value === "entry" || value === "exit";
 }
 
+function isMovementType(value: unknown): value is MedicationMovementType {
+  return value === "entry" || value === "exit";
+}
+
 function isString(value: unknown): value is string {
   return typeof value === "string";
 }
@@ -56,7 +60,7 @@ function isNullableMovementRecord(value: unknown): value is MedicationMovementRe
   if (value === null) return true;
   if (typeof value !== "object") return false;
   const record = value as Partial<MedicationMovementRecord>;
-  return typeof record.id === "string" && typeof record.medication_id === "string" && typeof record.user_id === "string" && (record.movement_type === "entry" || record.movement_type === "exit") && typeof record.quantity === "number" && typeof record.movement_date === "string";
+  return typeof record.id === "string" && typeof record.medication_id === "string" && typeof record.user_id === "string" && (record.movement_type === "entry" || record.movement_type === "exit") && typeof record.quantity === "number" && (record.batch === null || typeof record.batch === "string") && (record.expiration_date === null || typeof record.expiration_date === "string") && typeof record.movement_date === "string" && (record.notes === null || typeof record.notes === "string") && typeof record.created_at === "string";
 }
 
 function isValidDate(value: string) {
@@ -184,7 +188,7 @@ function MedicationDialog({ medication, open, onOpenChange, onSaved }: { medicat
   const { user } = useAuth();
   const initialForm = useMemo<MedicationInput>(() => ({ name: medication?.name ?? "", unit: medication?.unit ?? "unit", unit_price: medication?.unit_price ?? 0, supplier: medication?.supplier ?? null, notes: medication?.notes ?? null }), [medication?.id, medication?.name, medication?.unit, medication?.unit_price, medication?.supplier, medication?.notes]);
   const draftKey = `admin-medications:${user?.id ?? "anonymous"}:medication-form:${medication?.id ?? "new"}`;
-  const [form, setForm] = useSessionStorageState(draftKey, initialForm);
+  const [form, setForm] = useSessionStorageState(draftKey, initialForm, isMedicationInput);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -299,13 +303,13 @@ function MedicationDialog({ medication, open, onOpenChange, onSaved }: { medicat
 function MovementDialog({ medication, movement, medications, movements, open, onOpenChange, onSaved }: { medication: MedicationRecord | null; movement: MedicationMovementRecord | null; medications: MedicationRecord[]; movements: MedicationMovementRecord[]; open: boolean; onOpenChange: (open: boolean) => void; onSaved: (movement: MedicationMovementRecord) => void }) {
   const { user } = useAuth();
   const draftKey = `admin-medications:${user?.id ?? "anonymous"}:movement-form:${movement?.id ?? medication?.id ?? "new"}`;
-  const [medicationId, setMedicationId] = useSessionStorageState(draftKey + ":medication", movement?.medication_id ?? medication?.id ?? medications[0]?.id ?? "");
-  const [movementType, setMovementType] = useSessionStorageState<MedicationMovementType>(draftKey + ":type", movement?.movement_type ?? "entry");
-  const [quantity, setQuantity] = useSessionStorageState(draftKey + ":quantity", movement ? String(movement.quantity) : "");
-  const [batch, setBatch] = useSessionStorageState(draftKey + ":batch", movement?.batch ?? "");
-  const [expirationDate, setExpirationDate] = useSessionStorageState(draftKey + ":expiration", movement?.expiration_date ?? "");
-  const [movementDate, setMovementDate] = useSessionStorageState(draftKey + ":date", movement?.movement_date?.slice(0, 10) ?? new Date().toISOString().slice(0, 10));
-  const [notes, setNotes] = useSessionStorageState(draftKey + ":notes", movement?.notes ?? "");
+  const [medicationId, setMedicationId] = useSessionStorageState(draftKey + ":medication", movement?.medication_id ?? medication?.id ?? medications[0]?.id ?? "", isString);
+  const [movementType, setMovementType] = useSessionStorageState<MedicationMovementType>(draftKey + ":type", movement?.movement_type ?? "entry", isMovementType);
+  const [quantity, setQuantity] = useSessionStorageState(draftKey + ":quantity", movement ? String(movement.quantity) : "", isString);
+  const [batch, setBatch] = useSessionStorageState(draftKey + ":batch", movement?.batch ?? "", isString);
+  const [expirationDate, setExpirationDate] = useSessionStorageState(draftKey + ":expiration", movement?.expiration_date ?? "", isString);
+  const [movementDate, setMovementDate] = useSessionStorageState(draftKey + ":date", movement?.movement_date?.slice(0, 10) ?? new Date().toISOString().slice(0, 10), isString);
+  const [notes, setNotes] = useSessionStorageState(draftKey + ":notes", movement?.notes ?? "", isString);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -353,19 +357,19 @@ function MedicationsPage() {
   const { user, isLoading: authLoading } = useAuth();
   const storagePrefix = `admin-medications:${user?.id ?? "anonymous"}`;
   const [activeTab, setActiveTab] = useSessionStorageState<MedicationTab>(`${storagePrefix}:active-tab`, "estoque", isMedicationTab);
-  const [search, setSearch] = useSessionStorageState(`${storagePrefix}:search`, "");
+  const [search, setSearch] = useSessionStorageState(`${storagePrefix}:search`, "", isString);
   const [movementFilter, setMovementFilter] = useSessionStorageState<MedicationMovementType | "all">(`${storagePrefix}:movement-filter`, "all", isMovementFilter);
   const [medications, setMedications] = useState<MedicationRecord[]>([]);
   const [movements, setMovements] = useState<MedicationMovementRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [observationPreviewOpen, setObservationPreviewOpen] = useSessionStorageState(`${storagePrefix}:observation-preview-open`, false);
-  const [medicationDialogOpen, setMedicationDialogOpen] = useSessionStorageState(`${storagePrefix}:medication-dialog-open`, false);
-  const [movementDialogOpen, setMovementDialogOpen] = useSessionStorageState(`${storagePrefix}:movement-dialog-open`, false);
-  const [selectedMedication, setSelectedMedication] = useSessionStorageState<MedicationRecord | null>(`${storagePrefix}:selected-medication`, null);
-  const [selectedMovement, setSelectedMovement] = useSessionStorageState<MedicationMovementRecord | null>(`${storagePrefix}:selected-movement`, null);
-  const [medicationToDelete, setMedicationToDelete] = useSessionStorageState<MedicationRecord | null>(`${storagePrefix}:medication-to-delete`, null);
-  const [movementToDelete, setMovementToDelete] = useSessionStorageState<MedicationMovementRecord | null>(`${storagePrefix}:movement-to-delete`, null);
+  const [observationPreviewOpen, setObservationPreviewOpen] = useSessionStorageState(`${storagePrefix}:observation-preview-open`, false, isBoolean);
+  const [medicationDialogOpen, setMedicationDialogOpen] = useSessionStorageState(`${storagePrefix}:medication-dialog-open`, false, isBoolean);
+  const [movementDialogOpen, setMovementDialogOpen] = useSessionStorageState(`${storagePrefix}:movement-dialog-open`, false, isBoolean);
+  const [selectedMedication, setSelectedMedication] = useSessionStorageState<MedicationRecord | null>(`${storagePrefix}:selected-medication`, null, isNullableMedicationRecord);
+  const [selectedMovement, setSelectedMovement] = useSessionStorageState<MedicationMovementRecord | null>(`${storagePrefix}:selected-movement`, null, isNullableMovementRecord);
+  const [medicationToDelete, setMedicationToDelete] = useSessionStorageState<MedicationRecord | null>(`${storagePrefix}:medication-to-delete`, null, isNullableMedicationRecord);
+  const [movementToDelete, setMovementToDelete] = useSessionStorageState<MedicationMovementRecord | null>(`${storagePrefix}:movement-to-delete`, null, isNullableMovementRecord);
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
@@ -432,25 +436,25 @@ function MedicationsPage() {
     setMovementDialogOpen(true);
   }
 
-  async function generateObservationsPdf() {
+  const generateObservationsPdf = useCallback(async () => {
     setError("");
     try {
       await downloadDocumentPdf(observationPdfPages(medications), `relatorio-observacoes-medicamentos-${new Date().toISOString().slice(0, 10)}`, true);
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Não foi possível gerar o PDF das observações.");
     }
-  }
+  }, [medications]);
 
-  const Tabs = (props: ComponentProps<typeof BaseTabs>) => (
+  const Tabs = useMemo(() => (props: ComponentProps<typeof BaseTabs>) => (
     <BaseTabs {...props} value={activeTab} onValueChange={(value) => { if (isMedicationTab(value)) setActiveTab(value); }} />
-  );
-  const TabsList = ({ children, ...props }: ComponentProps<typeof BaseTabsList>) => (
+  ), [activeTab, setActiveTab]);
+  const TabsList = useMemo(() => ({ children, ...props }: ComponentProps<typeof BaseTabsList>) => (
     <BaseTabsList {...props}>
       {children}
       <TabsTrigger value="observacoes" className="rounded-lg bg-white px-4 py-2.5 data-[state=active]:bg-[#e3f3ef] data-[state=active]:text-[#216d64]">Relatório de Observações</TabsTrigger>
     </BaseTabsList>
-  );
-  const TabsContent = ({ value, children, ...props }: ComponentProps<typeof BaseTabsContent>) => (
+  ), []);
+  const TabsContent = useMemo(() => ({ value, children, ...props }: ComponentProps<typeof BaseTabsContent>) => (
     <>
       <BaseTabsContent value={value} {...props}>{children}</BaseTabsContent>
       {value === "relatorio" && <BaseTabsContent value="observacoes">
@@ -470,7 +474,7 @@ function MedicationsPage() {
         </Dialog>
       </BaseTabsContent>}
     </>
-  );
+  ), [generateObservationsPdf, medications, observationPreviewOpen]);
 
   useEffect(() => {
     const attachReportControls = () => {
