@@ -75,6 +75,7 @@ serve(async (request) => {
     if (!title || !uri) return [];
     try {
       const sourceUrl = new URL(uri);
+      if (sourceUrl.protocol !== "https:") return [];
       const host = sourceUrl.hostname.toLowerCase();
       const isAnvisa = host === "anvisa.gov.br" || host.endsWith(".anvisa.gov.br") || (host === "www.gov.br" && sourceUrl.pathname.startsWith("/anvisa/"));
       const isPubMed = host === "pubmed.ncbi.nlm.nih.gov";
