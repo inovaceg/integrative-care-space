@@ -144,6 +144,8 @@ function clearSessionValue(key: string) {
 
 function observationPdfPages(medications: MedicationRecord[]): DocumentPage[] {
   const pages: DocumentPage[] = [];
+  const contentBottom = 730;
+  const measureContext = document.createElement("canvas").getContext("2d");
   let page: DocumentPage = [];
   let y = 0;
   const startPage = () => {
@@ -154,34 +156,54 @@ function observationPdfPages(medications: MedicationRecord[]): DocumentPage[] {
     pages.push(page);
     y = 118;
   };
-  const wrapText = (text: string) => text.split(/\r?\n/).flatMap((paragraph) => {
-    const words = paragraph.split(/\s+/);
-    const lines: string[] = [];
-    let line = "";
-    words.forEach((word) => {
-      if (line && `${line} ${word}`.length > 88) {
-        lines.push(line);
-        line = word;
-      } else {
-        line = line ? `${line} ${word}` : word;
+  const wrapText = (text: string, size: number, bold: boolean, maxWidth: number) => {
+    if (measureContext) measureContext.font = `${bold ? "bold" : "normal"} ${size}px Helvetica`;
+    const measure = (value: string) => measureContext?.measureText(value).width ?? value.length * size * 0.52;
+    return text.replace(/\r/g, "").split("\n").flatMap((paragraph) => {
+      if (!paragraph) return [""];
+      const lines: string[] = [];
+      let line = "";
+      for (const word of paragraph.split(/\s+/)) {
+        const candidate = line ? `${line} ${word}` : word;
+        if (measure(candidate) <= maxWidth) { line = candidate; continue; }
+        if (line) lines.push(line);
+        line = "";
+        for (const character of Array.from(word)) {
+          if (line && measure(line + character) > maxWidth) { lines.push(line); line = ""; }
+          line += character;
+        }
       }
+      if (line) lines.push(line);
+      return lines;
     });
-    lines.push(line);
-    return lines;
-  });
+  };
   startPage();
   medications.forEach((medication, index) => {
-    const noteLines = wrapText(medication.notes?.trim() || "—");
-    const blockHeight = 18 + noteLines.length * 14 + 10;
-    if (y + blockHeight > 690) startPage();
-    page.push({ text: `${index + 1}. ${medication.name}`, x: 42, y, size: 11, bold: true, color: "#17232d" });
-    y += 17;
+    const title = `${index + 1}. ${medication.name}`;
+    const titleLines = wrapText(title, 11, true, 511);
+    titleLines.forEach((line) => {
+      if (y + 16 > contentBottom) startPage();
+      page.push({ text: line, x: 42, y, size: 11, bold: true, color: "#17232d" });
+      y += 16;
+    });
+    y += 3;
+    const noteLines = wrapText(medication.notes?.trim() || "—", 10, false, 487);
     noteLines.forEach((line) => {
+      if (y + 14 > contentBottom) {
+        startPage();
+        page.push({ text: `${medication.name} (continuação)`, x: 42, y, size: 10, bold: true, color: "#475569" });
+        y += 16;
+      }
       page.push({ text: line, x: 54, y, size: 10, color: "#475569" });
       y += 14;
     });
-    y += 11;
+    y += 8;
+    if (index < medications.length - 1 && y + 8 < contentBottom) {
+      page.push({ text: "", x: 42, y, size: 1, color: "#dbe5e2", kind: "rule", width: 511 });
+      y += 12;
+    }
   });
+  pages.forEach((currentPage, index) => currentPage.push({ text: `Página ${index + 1} de ${pages.length}`, x: 480, y: 750, size: 8, color: "#64748b" }));
   return pages;
 }
 
