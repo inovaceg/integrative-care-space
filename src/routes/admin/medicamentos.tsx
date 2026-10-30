@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowDownToLine, ArrowUpFromLine, Camera, Edit3, History, Loader2, PackageOpen, Pencil, Pill, Plus, Search, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentProps, type FormEvent } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { AdminLayout, AdminNotice, EmptyState, PageIntro, SectionCard } from "@/components/admin/admin-ui";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent as BaseTabsContent, TabsList as BaseTabsList, TabsTrigger } from "@/components/ui/tabs";
 import { createMedication, createMedicationMovement, deleteMedication, deleteMedicationMovement, fetchMedicationMovements, fetchMedications, updateMedication, updateMedicationMovement, type MedicationInput, type MedicationMovementInput } from "@/lib/admin/records";
 import type { MedicationMovementRecord, MedicationMovementType, MedicationRecord, MedicationUnit } from "@/lib/admin/types";
 
@@ -288,6 +288,23 @@ function MedicationsPage() {
     setSelectedMovement(movement ?? null);
     setMovementDialogOpen(true);
   }
+
+  const TabsList = ({ children, ...props }: ComponentProps<typeof BaseTabsList>) => (
+    <BaseTabsList {...props}>
+      {children}
+      <TabsTrigger value="observacoes" className="rounded-lg bg-white px-4 py-2.5 data-[state=active]:bg-[#e3f3ef] data-[state=active]:text-[#216d64]">Relatório de Observações</TabsTrigger>
+    </BaseTabsList>
+  );
+  const TabsContent = ({ value, children, ...props }: ComponentProps<typeof BaseTabsContent>) => (
+    <>
+      <BaseTabsContent value={value} {...props}>{children}</BaseTabsContent>
+      {value === "relatorio" && <BaseTabsContent value="observacoes">
+        <SectionCard title="Relatório de Observações" className="mt-0">
+          {medications.length === 0 ? <EmptyState title="Nenhum medicamento cadastrado" description="Cadastre medicamentos para consultar suas observações aqui." /> : <div className="overflow-x-auto"><table className="w-full min-w-[560px] text-left text-sm"><thead><tr className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-400"><th className="px-3 py-3 font-medium">Nome do produto</th><th className="px-3 py-3 font-medium">Observação</th></tr></thead><tbody>{medications.map((medication) => <tr key={medication.id} className="border-b border-slate-50 last:border-0"><td className="px-3 py-3 font-medium text-slate-700">{medication.name}</td><td className="whitespace-pre-wrap px-3 py-3 text-slate-600">{medication.notes?.trim() || "—"}</td></tr>)}</tbody></table></div>}
+        </SectionCard>
+      </BaseTabsContent>}
+    </>
+  );
 
   useEffect(() => {
     const attachReportControls = () => {
