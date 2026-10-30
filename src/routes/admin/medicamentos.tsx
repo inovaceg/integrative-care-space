@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowDownToLine, ArrowUpFromLine, Camera, Download, Edit3, Eye, History, Loader2, PackageOpen, Pencil, Pill, Plus, Search, Trash2 } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine, Camera, Download, Edit3, Eye, History, Loader2, PackageOpen, Pencil, Pill, Plus, Search, Sparkles, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type FormEvent } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { AdminLayout, AdminNotice, EmptyState, PageIntro, SectionCard } from "@/components/admin/admin-ui";
@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs as BaseTabs, TabsContent as BaseTabsContent, TabsList as BaseTabsList, TabsTrigger } from "@/components/ui/tabs";
 import { createMedication, createMedicationMovement, deleteMedication, deleteMedicationMovement, fetchMedicationMovements, fetchMedications, updateMedication, updateMedicationMovement, type MedicationInput, type MedicationMovementInput } from "@/lib/admin/records";
+import { generateMedicationObservation } from "@/lib/admin/medication-observation-ai";
 import { downloadDocumentPdf, type DocumentPage } from "@/lib/admin/document-layout";
 import type { MedicationMovementRecord, MedicationMovementType, MedicationRecord, MedicationUnit } from "@/lib/admin/types";
 
@@ -191,6 +192,10 @@ function MedicationDialog({ medication, open, onOpenChange, onSaved }: { medicat
   const [form, setForm] = useSessionStorageState(draftKey, initialForm, isMedicationInput);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [generatingObservation, setGeneratingObservation] = useState(false);
+  const [aiError, setAiError] = useState("");
+  const [aiNotice, setAiNotice] = useState("");
+  const aiBaseNotesRef = useRef<string | null>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState("");
   const [scanning, setScanning] = useState(false);
@@ -198,7 +203,12 @@ function MedicationDialog({ medication, open, onOpenChange, onSaved }: { medicat
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    if (open) setError("");
+    if (open) {
+      setError("");
+      setAiError("");
+      setAiNotice("");
+      aiBaseNotesRef.current = null;
+    }
   }, [open]);
 
   useEffect(() => {
@@ -260,6 +270,32 @@ function MedicationDialog({ medication, open, onOpenChange, onSaved }: { medicat
     }
   }
 
+  async function generateObservation() {
+    if (!user) { setAiError("Sua sessão não está disponível. Entre novamente para continuar."); return; }
+    const name = form.name.trim();
+    if (name.length < 2) { setAiError("Informe o nome do produto antes de gerar a observação."); return; }
+    setGeneratingObservation(true);
+    setAiError("");
+    setAiNotice("");
+    try {
+      const result = await generateMedicationObservation({ name, unit: form.unit, additionalDetails: form.notes ?? "" });
+      if (result.error) { setAiError(result.error.message || "Não foi possível gerar o rascunho. Tente novamente."); return; }
+      const generated = result.data;
+      if (!generated?.draft) { setAiError("A IA não retornou um rascunho. Tente novamente."); return; }
+      const marker = "RASCUNHO GERADO POR IA — SUJEITO À REVISÃO PROFISSIONAL";
+      const currentNotes = form.notes?.trim() ?? "";
+      const priorDraft = currentNotes.indexOf(marker);
+      const baseNotes = aiBaseNotesRef.current ?? (priorDraft >= 0 ? currentNotes.slice(0, priorDraft).trim() : currentNotes);
+      aiBaseNotesRef.current = baseNotes;
+      setForm((current) => ({ ...current, notes: [baseNotes, generated.draft].filter(Boolean).join("\n\n") }));
+      setAiNotice(generated.needsMoreInformation ? "Não foi possível identificar o produto com segurança. O campo foi preenchido com um pedido de informações adicionais; revise profissionalmente." : "Rascunho gerado com IA. Revise e edite antes de salvar.");
+    } catch {
+      setAiError("Não foi possível acessar o serviço de IA. Verifique a conexão e tente novamente.");
+    } finally {
+      setGeneratingObservation(false);
+    }
+  }
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!user) { setError("Sua sessão não está disponível. Entre novamente para continuar."); return; }
@@ -288,9 +324,9 @@ function MedicationDialog({ medication, open, onOpenChange, onSaved }: { medicat
         <form onSubmit={submit} className="grid gap-4">
           <div className="grid gap-2"><Label htmlFor="medication-name">Nome *</Label><Input id="medication-name" value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} required autoFocus /><Button type="button" variant="outline" className="w-fit gap-2" onClick={() => setCameraOpen(true)}><Camera className="size-4" />Abrir câmera e digitalizar nome</Button>{scanMessage && <p role="status" className="text-sm text-emerald-700">{scanMessage}</p>}</div>
           <div className="grid gap-2 sm:grid-cols-3"><div className="grid gap-2"><Label htmlFor="medication-unit">Unidade *</Label><Select value={form.unit} onValueChange={(unit: MedicationUnit) => setForm((current) => ({ ...current, unit }))}><SelectTrigger id="medication-unit"><SelectValue /></SelectTrigger><SelectContent>{Object.entries(unitLabels).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select></div><div className="grid gap-2"><Label htmlFor="medication-unit-price">Valor unitário *</Label><Input id="medication-unit-price" type="number" min="0" step="0.01" value={form.unit_price} onChange={(event) => setForm((current) => ({ ...current, unit_price: Number(event.target.value) }))} required /></div><div className="grid gap-2"><Label htmlFor="medication-supplier">Fornecedor</Label><Input id="medication-supplier" value={form.supplier ?? ""} onChange={(event) => setForm((current) => ({ ...current, supplier: event.target.value }))} /></div></div>
-          <div className="grid gap-2"><Label htmlFor="medication-notes">Observações</Label><Textarea id="medication-notes" value={form.notes ?? ""} onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))} rows={3} /></div>
+          <div className="grid gap-2"><div className="flex flex-wrap items-center justify-between gap-2"><Label htmlFor="medication-notes">Observações</Label><Button type="button" variant="outline" disabled={generatingObservation || !form.name.trim()} onClick={() => void generateObservation()} className="gap-2 border-[#b9ded5] text-[#26796e] hover:bg-[#e3f3ef]">{generatingObservation ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}{generatingObservation ? "Gerando rascunho…" : "Gerar observação com IA"}</Button></div><Textarea id="medication-notes" value={form.notes ?? ""} onChange={(event) => { setAiNotice(""); setForm((current) => ({ ...current, notes: event.target.value })); }} rows={5} />{aiNotice && <p role="status" className="text-sm text-amber-800">{aiNotice}</p>}{aiError && <p role="alert" className="text-sm text-red-600">{aiError}</p>}<p className="text-xs text-slate-500">O texto gerado é um rascunho sujeito à revisão profissional. Confira as fontes e os dados antes de salvar.</p></div>
           {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
-          <DialogFooter><Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button><Button type="submit" disabled={saving} className="bg-[#2f8f82] text-white hover:bg-[#26796e]">{saving && <Loader2 className="mr-2 size-4 animate-spin" />}{medication ? "Salvar alterações" : "Cadastrar medicamento"}</Button></DialogFooter>
+          <DialogFooter><Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button><Button type="submit" disabled={saving || generatingObservation} className="bg-[#2f8f82] text-white hover:bg-[#26796e]">{saving && <Loader2 className="mr-2 size-4 animate-spin" />}{medication ? "Salvar alterações" : "Cadastrar medicamento"}</Button></DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
