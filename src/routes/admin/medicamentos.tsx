@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowDownToLine, ArrowUpFromLine, Camera, Edit3, History, Loader2, PackageOpen, Pencil, Pill, Plus, Search, Trash2 } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine, Camera, Download, Edit3, Eye, History, Loader2, PackageOpen, Pencil, Pill, Plus, Search, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ComponentProps, type FormEvent } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { AdminLayout, AdminNotice, EmptyState, PageIntro, SectionCard } from "@/components/admin/admin-ui";
@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent as BaseTabsContent, TabsList as BaseTabsList, TabsTrigger } from "@/components/ui/tabs";
 import { createMedication, createMedicationMovement, deleteMedication, deleteMedicationMovement, fetchMedicationMovements, fetchMedications, updateMedication, updateMedicationMovement, type MedicationInput, type MedicationMovementInput } from "@/lib/admin/records";
+import { downloadDocumentPdf, type DocumentPage } from "@/lib/admin/document-layout";
 import type { MedicationMovementRecord, MedicationMovementType, MedicationRecord, MedicationUnit } from "@/lib/admin/types";
 
 export const Route = createFileRoute("/admin/medicamentos")({ component: MedicationsPage });
@@ -57,6 +58,49 @@ function nearestExpirationFor(medicationId: string, movements: MedicationMovemen
 function formatNearestExpiration(medicationId: string, movements: MedicationMovementRecord[]) {
   const expirationDate = nearestExpirationFor(medicationId, movements);
   return expirationDate ? formatDate(expirationDate) : "Não informada";
+}
+
+function observationPdfPages(medications: MedicationRecord[]): DocumentPage[] {
+  const pages: DocumentPage[] = [];
+  let page: DocumentPage = [];
+  let y = 0;
+  const startPage = () => {
+    page = [
+      { text: "RELATÓRIO DE OBSERVAÇÕES", x: 42, y: 64, size: 16, bold: true, color: "#123c3d" },
+      { text: `Gerado em ${new Date().toLocaleDateString("pt-BR")}`, x: 42, y: 86, size: 10, color: "#475569" },
+    ];
+    pages.push(page);
+    y = 118;
+  };
+  const wrapText = (text: string) => text.split(/\r?\n/).flatMap((paragraph) => {
+    const words = paragraph.split(/\s+/);
+    const lines: string[] = [];
+    let line = "";
+    words.forEach((word) => {
+      if (line && `${line} ${word}`.length > 88) {
+        lines.push(line);
+        line = word;
+      } else {
+        line = line ? `${line} ${word}` : word;
+      }
+    });
+    lines.push(line);
+    return lines;
+  });
+  startPage();
+  medications.forEach((medication, index) => {
+    const noteLines = wrapText(medication.notes?.trim() || "—");
+    const blockHeight = 18 + noteLines.length * 14 + 10;
+    if (y + blockHeight > 690) startPage();
+    page.push({ text: `${index + 1}. ${medication.name}`, x: 42, y, size: 11, bold: true, color: "#17232d" });
+    y += 17;
+    noteLines.forEach((line) => {
+      page.push({ text: line, x: 54, y, size: 10, color: "#475569" });
+      y += 14;
+    });
+    y += 11;
+  });
+  return pages;
 }
 
 let medicationUiState = {
@@ -236,6 +280,7 @@ function MedicationsPage() {
   const [movementFilter, setMovementFilter] = useState<MedicationMovementType | "all">("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [observationPreviewOpen, setObservationPreviewOpen] = useState(false);
   const [medicationDialogOpen, setMedicationDialogOpen] = useState(medicationUiState.medicationDialogOpen);
   const [movementDialogOpen, setMovementDialogOpen] = useState(medicationUiState.movementDialogOpen);
   const [selectedMedication, setSelectedMedication] = useState<MedicationRecord | null>(medicationUiState.selectedMedication);
@@ -289,6 +334,15 @@ function MedicationsPage() {
     setMovementDialogOpen(true);
   }
 
+  async function generateObservationsPdf() {
+    setError("");
+    try {
+      await downloadDocumentPdf(observationPdfPages(medications), `relatorio-observacoes-medicamentos-${new Date().toISOString().slice(0, 10)}`, true);
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "Não foi possível gerar o PDF das observações.");
+    }
+  }
+
   const TabsList = ({ children, ...props }: ComponentProps<typeof BaseTabsList>) => (
     <BaseTabsList {...props}>
       {children}
@@ -300,8 +354,19 @@ function MedicationsPage() {
       <BaseTabsContent value={value} {...props}>{children}</BaseTabsContent>
       {value === "relatorio" && <BaseTabsContent value="observacoes">
         <SectionCard title="Relatório de Observações" className="mt-0">
+          <div className="mb-4 flex flex-wrap justify-end gap-2">
+            <Button type="button" variant="outline" disabled={medications.length === 0} onClick={() => setObservationPreviewOpen(true)}><Eye className="mr-2 size-4" />Visualizar</Button>
+            <Button type="button" disabled={medications.length === 0} onClick={() => void generateObservationsPdf()} className="bg-[#2f8f82] text-white hover:bg-[#26796e]"><Download className="mr-2 size-4" />Gerar PDF</Button>
+          </div>
           {medications.length === 0 ? <EmptyState title="Nenhum medicamento cadastrado" description="Cadastre medicamentos para consultar suas observações aqui." /> : <div className="overflow-x-auto"><table className="w-full min-w-[560px] text-left text-sm"><thead><tr className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-400"><th className="px-3 py-3 font-medium">Nome do produto</th><th className="px-3 py-3 font-medium">Observação</th></tr></thead><tbody>{medications.map((medication) => <tr key={medication.id} className="border-b border-slate-50 last:border-0"><td className="px-3 py-3 font-medium text-slate-700">{medication.name}</td><td className="whitespace-pre-wrap px-3 py-3 text-slate-600">{medication.notes?.trim() || "—"}</td></tr>)}</tbody></table></div>}
         </SectionCard>
+        <Dialog open={observationPreviewOpen} onOpenChange={setObservationPreviewOpen}>
+          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+            <DialogHeader><DialogTitle>Visualização — Relatório de Observações</DialogTitle><DialogDescription>Confira os produtos e observações antes de gerar o PDF.</DialogDescription></DialogHeader>
+            <div className="overflow-x-auto rounded-lg border border-slate-200"><table className="w-full min-w-[500px] text-left text-sm"><thead><tr className="border-b bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><th className="px-3 py-3 font-medium">Nome do produto</th><th className="px-3 py-3 font-medium">Observação</th></tr></thead><tbody>{medications.map((medication) => <tr key={medication.id} className="border-b last:border-0"><td className="px-3 py-3 align-top font-medium text-slate-700">{medication.name}</td><td className="whitespace-pre-wrap px-3 py-3 text-slate-600">{medication.notes?.trim() || "—"}</td></tr>)}</tbody></table></div>
+            <div className="flex justify-end"><Button type="button" onClick={() => void generateObservationsPdf()} className="bg-[#2f8f82] text-white hover:bg-[#26796e]"><Download className="mr-2 size-4" />Gerar PDF</Button></div>
+          </DialogContent>
+        </Dialog>
       </BaseTabsContent>}
     </>
   );
