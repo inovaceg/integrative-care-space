@@ -61,9 +61,13 @@ serve(async (request) => {
       body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }], tools: [{ google_search: {} }] }),
     });
   } catch {
+    console.error("[medication-observation] Network request to Gemini failed");
     return jsonResponse({ error: "Não foi possível acessar o serviço de pesquisa e IA. Tente novamente mais tarde." }, 502);
   }
-  if (!response.ok) return jsonResponse({ error: "O serviço de IA não conseguiu gerar o rascunho. Tente novamente mais tarde." }, 502);
+  if (!response.ok) {
+    console.error(`[medication-observation] Gemini returned HTTP ${response.status}`);
+    return jsonResponse({ error: `O serviço de IA recusou a solicitação (HTTP ${response.status}). Confira a configuração da chave Gemini e tente novamente.` }, 502);
+  }
 
   const result = await response.json();
   const candidate = result?.candidates?.[0];
