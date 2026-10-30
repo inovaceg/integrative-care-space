@@ -18,8 +18,46 @@ import type { MedicationMovementRecord, MedicationMovementType, MedicationRecord
 
 export const Route = createFileRoute("/admin/medicamentos")({ component: MedicationsPage });
 
+type MedicationTab = "estoque" | "relatorio" | "observacoes";
+const validMedicationTabs = ["estoque", "relatorio", "observacoes"] as const;
 const unitLabels: Record<MedicationUnit, string> = { unit: "Unidade", box: "Caixa", bottle: "Frasco" };
 const movementLabels: Record<MedicationMovementType, string> = { entry: "Entrada", exit: "Saída" };
+
+function isMedicationTab(value: unknown): value is MedicationTab {
+  return validMedicationTabs.includes(value as MedicationTab);
+}
+
+function isMovementFilter(value: unknown): value is MedicationMovementType | "all" {
+  return value === "all" || value === "entry" || value === "exit";
+}
+
+function isString(value: unknown): value is string {
+  return typeof value === "string";
+}
+
+function isBoolean(value: unknown): value is boolean {
+  return typeof value === "boolean";
+}
+
+function isMedicationInput(value: unknown): value is MedicationInput {
+  if (typeof value !== "object" || value === null) return false;
+  const form = value as Partial<MedicationInput>;
+  return typeof form.name === "string" && (form.unit === "unit" || form.unit === "box" || form.unit === "bottle") && typeof form.unit_price === "number" && (form.supplier === null || typeof form.supplier === "string") && (form.notes === null || typeof form.notes === "string");
+}
+
+function isNullableMedicationRecord(value: unknown): value is MedicationRecord | null {
+  if (value === null) return true;
+  if (typeof value !== "object") return false;
+  const record = value as Partial<MedicationRecord>;
+  return typeof record.id === "string" && typeof record.name === "string" && (record.unit === "unit" || record.unit === "box" || record.unit === "bottle") && typeof record.unit_price === "number" && typeof record.user_id === "string" && (record.supplier === null || typeof record.supplier === "string") && (record.notes === null || typeof record.notes === "string") && typeof record.created_at === "string" && typeof record.updated_at === "string";
+}
+
+function isNullableMovementRecord(value: unknown): value is MedicationMovementRecord | null {
+  if (value === null) return true;
+  if (typeof value !== "object") return false;
+  const record = value as Partial<MedicationMovementRecord>;
+  return typeof record.id === "string" && typeof record.medication_id === "string" && typeof record.user_id === "string" && (record.movement_type === "entry" || record.movement_type === "exit") && typeof record.quantity === "number" && typeof record.movement_date === "string";
+}
 
 function isValidDate(value: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -60,19 +98,24 @@ function formatNearestExpiration(medicationId: string, movements: MedicationMove
   return expirationDate ? formatDate(expirationDate) : "Não informada";
 }
 
-function useSessionStorageState<T>(key: string, initialValue: T) {
+function useSessionStorageState<T>(key: string, initialValue: T, validate?: (value: unknown) => value is T) {
   const [value, setValue] = useState(initialValue);
   const [loadedKey, setLoadedKey] = useState("");
 
   useEffect(() => {
     try {
       const saved = window.sessionStorage.getItem(key);
-      setValue(saved === null ? initialValue : JSON.parse(saved) as T);
+      if (saved === null) {
+        setValue(initialValue);
+      } else {
+        const parsed: unknown = JSON.parse(saved);
+        setValue(validate && !validate(parsed) ? initialValue : parsed as T);
+      }
     } catch {
       setValue(initialValue);
     }
     setLoadedKey(key);
-  }, [key, initialValue]);
+  }, [key, initialValue, validate]);
 
   useEffect(() => {
     if (loadedKey !== key) return;
@@ -227,9 +270,10 @@ function MedicationDialog({ medication, open, onOpenChange, onSaved }: { medicat
     setSaving(false);
     if (result.error) { setError(result.error.message); return; }
     if (!result.data) { setError("Não foi possível salvar o medicamento."); return; }
+    const savedMedication = result.data as MedicationRecord;
     clearSessionValue(draftKey);
-    setForm(initialForm);
-    onSaved(result.data as MedicationRecord);
+    setForm({ name: savedMedication.name, unit: savedMedication.unit, unit_price: savedMedication.unit_price, supplier: savedMedication.supplier, notes: savedMedication.notes });
+    onSaved(savedMedication);
     onOpenChange(false);
   }
 
@@ -289,15 +333,16 @@ function MovementDialog({ medication, movement, medications, movements, open, on
     setSaving(false);
     if (result.error) { setError(result.error.message); return; }
     if (!result.data) { setError("Não foi possível salvar a movimentação."); return; }
+    const savedMovement = result.data as MedicationMovementRecord;
     clearSessionValue(draftKey);
-    setMedicationId(movement?.medication_id ?? medication?.id ?? medications[0]?.id ?? "");
-    setMovementType(movement?.movement_type ?? "entry");
-    setQuantity(movement ? String(movement.quantity) : "");
-    setBatch(movement?.batch ?? "");
-    setExpirationDate(movement?.expiration_date ?? "");
-    setMovementDate(movement?.movement_date?.slice(0, 10) ?? new Date().toISOString().slice(0, 10));
-    setNotes(movement?.notes ?? "");
-    onSaved(result.data as MedicationMovementRecord);
+    setMedicationId(savedMovement.medication_id);
+    setMovementType(savedMovement.movement_type);
+    setQuantity(String(savedMovement.quantity));
+    setBatch(savedMovement.batch ?? "");
+    setExpirationDate(savedMovement.expiration_date ?? "");
+    setMovementDate(savedMovement.movement_date.slice(0, 10));
+    setNotes(savedMovement.notes ?? "");
+    onSaved(savedMovement);
     onOpenChange(false);
   }
 
@@ -307,18 +352,18 @@ function MovementDialog({ medication, movement, medications, movements, open, on
 function MedicationsPage() {
   const { user, isLoading: authLoading } = useAuth();
   const storagePrefix = `admin-medications:${user?.id ?? "anonymous"}`;
-  const [activeTab, setActiveTab] = useSessionStorageState(`${storagePrefix}:active-tab`, "estoque");
+  const [activeTab, setActiveTab] = useSessionStorageState<MedicationTab>(`${storagePrefix}:active-tab`, "estoque", isMedicationTab);
   const [search, setSearch] = useSessionStorageState(`${storagePrefix}:search`, "");
-  const [movementFilter, setMovementFilter] = useSessionStorageState<MedicationMovementType | "all">(`${storagePrefix}:movement-filter`, "all");
+  const [movementFilter, setMovementFilter] = useSessionStorageState<MedicationMovementType | "all">(`${storagePrefix}:movement-filter`, "all", isMovementFilter);
   const [medications, setMedications] = useState<MedicationRecord[]>([]);
   const [movements, setMovements] = useState<MedicationMovementRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [observationPreviewOpen, setObservationPreviewOpen] = useSessionStorageState(`${storagePrefix}:observation-preview-open`, false);
-  const [medicationDialogOpen, setMedicationDialogOpen] = useSessionStorageState(`${storagePrefix}:medication-dialog-open`, medicationUiState.medicationDialogOpen);
-  const [movementDialogOpen, setMovementDialogOpen] = useSessionStorageState(`${storagePrefix}:movement-dialog-open`, medicationUiState.movementDialogOpen);
-  const [selectedMedication, setSelectedMedication] = useSessionStorageState<MedicationRecord | null>(`${storagePrefix}:selected-medication`, medicationUiState.selectedMedication);
-  const [selectedMovement, setSelectedMovement] = useSessionStorageState<MedicationMovementRecord | null>(`${storagePrefix}:selected-movement`, medicationUiState.selectedMovement);
+  const [medicationDialogOpen, setMedicationDialogOpen] = useSessionStorageState(`${storagePrefix}:medication-dialog-open`, false);
+  const [movementDialogOpen, setMovementDialogOpen] = useSessionStorageState(`${storagePrefix}:movement-dialog-open`, false);
+  const [selectedMedication, setSelectedMedication] = useSessionStorageState<MedicationRecord | null>(`${storagePrefix}:selected-medication`, null);
+  const [selectedMovement, setSelectedMovement] = useSessionStorageState<MedicationMovementRecord | null>(`${storagePrefix}:selected-movement`, null);
   const [medicationToDelete, setMedicationToDelete] = useSessionStorageState<MedicationRecord | null>(`${storagePrefix}:medication-to-delete`, null);
   const [movementToDelete, setMovementToDelete] = useSessionStorageState<MedicationMovementRecord | null>(`${storagePrefix}:movement-to-delete`, null);
   const [deleting, setDeleting] = useState(false);
@@ -331,7 +376,7 @@ function MedicationsPage() {
     } catch {
       savedPosition = 0;
     }
-    requestAnimationFrame(() => window.scrollTo(0, Number.isFinite(savedPosition) ? savedPosition : 0));
+    if (!loading && !authLoading) requestAnimationFrame(() => window.scrollTo(0, Number.isFinite(savedPosition) ? savedPosition : 0));
     const savePosition = () => {
       try {
         window.sessionStorage.setItem(scrollKey, String(window.scrollY));
@@ -340,12 +385,11 @@ function MedicationsPage() {
       }
     };
     window.addEventListener("scroll", savePosition, { passive: true });
-    return () => window.removeEventListener("scroll", savePosition);
-  }, [storagePrefix]);
-
-  useEffect(() => {
-    medicationUiState = { medicationDialogOpen, movementDialogOpen, selectedMedication, selectedMovement };
-  }, [medicationDialogOpen, movementDialogOpen, selectedMedication, selectedMovement]);
+    return () => {
+      savePosition();
+      window.removeEventListener("scroll", savePosition);
+    };
+  }, [authLoading, loading, storagePrefix]);
 
   useEffect(() => {
     let active = true;
@@ -398,7 +442,7 @@ function MedicationsPage() {
   }
 
   const Tabs = (props: ComponentProps<typeof BaseTabs>) => (
-    <BaseTabs {...props} value={activeTab} onValueChange={setActiveTab} />
+    <BaseTabs {...props} value={activeTab} onValueChange={(value) => { if (isMedicationTab(value)) setActiveTab(value); }} />
   );
   const TabsList = ({ children, ...props }: ComponentProps<typeof BaseTabsList>) => (
     <BaseTabsList {...props}>
@@ -470,11 +514,13 @@ function MedicationsPage() {
 
   function handleMedicationSaved(saved: MedicationRecord) {
     setMedications((current) => current.some((item) => item.id === saved.id) ? current.map((item) => item.id === saved.id ? saved : item) : [...current, saved].sort((a, b) => a.name.localeCompare(b.name)));
+    if (selectedMedication?.id === saved.id) setSelectedMedication(saved);
     setError("");
   }
 
   function handleMovementSaved(saved: MedicationMovementRecord) {
     setMovements((current) => current.some((item) => item.id === saved.id) ? current.map((item) => item.id === saved.id ? saved : item) : [saved, ...current]);
+    if (selectedMovement?.id === saved.id) setSelectedMovement(saved);
     setError("");
   }
 
