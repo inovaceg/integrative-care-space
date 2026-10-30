@@ -210,30 +210,36 @@ function MedicationsPage() {
   }
 
   useEffect(() => {
-    const reportTable = [...document.querySelectorAll("table")].find((table) => [...table.querySelectorAll("th")].some((header) => header.textContent?.trim() === "Nome do produto"));
-    if (!reportTable) return;
-    reportTable.querySelectorAll("[data-report-actions]").forEach((cell) => cell.remove());
-    reportTable.querySelectorAll("tbody tr").forEach((row) => {
-      const medication = medications.find((item) => item.name === row.querySelector("td")?.textContent?.trim());
-      if (!medication) return;
-      const cell = document.createElement("td");
-      cell.dataset.reportActions = "true";
-      cell.className = "px-2 py-3 text-right";
-      const edit = document.createElement("button");
-      edit.type = "button";
-      edit.textContent = "Editar";
-      edit.setAttribute("aria-label", `Editar ${medication.name}`);
-      edit.className = "mr-2 rounded-md border px-2 py-1 text-xs font-medium hover:bg-slate-50";
-      edit.addEventListener("click", () => openMedicationDialog(medication));
-      const move = document.createElement("button");
-      move.type = "button";
-      move.textContent = "Movimentar";
-      move.setAttribute("aria-label", `Movimentar ${medication.name}`);
-      move.className = "rounded-md border px-2 py-1 text-xs font-medium text-[#26796e] hover:bg-[#e3f3ef]";
-      move.addEventListener("click", () => openMovementDialog(medication));
-      cell.append(edit, move);
-      row.append(cell);
-    });
+    const addReportActions = () => {
+      const reportTable = [...document.querySelectorAll("table")].find((table) => [...table.querySelectorAll("th")].some((header) => header.textContent?.trim() === "Nome do produto"));
+      if (!reportTable) return;
+      reportTable.querySelectorAll("tbody tr").forEach((row) => {
+        if (row.querySelector("[data-report-actions]")) return;
+        const medication = medications.find((item) => item.name === row.querySelector("td")?.textContent?.trim());
+        if (!medication) return;
+        const cell = document.createElement("td");
+        cell.dataset.reportActions = "true";
+        cell.className = "px-2 py-3 text-right";
+        const edit = document.createElement("button");
+        edit.type = "button";
+        edit.textContent = "Editar";
+        edit.setAttribute("aria-label", `Editar ${medication.name}`);
+        edit.className = "mr-2 rounded-md border px-2 py-1 text-xs font-medium hover:bg-slate-50";
+        edit.addEventListener("click", () => openMedicationDialog(medication));
+        const move = document.createElement("button");
+        move.type = "button";
+        move.textContent = "Movimentar";
+        move.setAttribute("aria-label", `Movimentar ${medication.name}`);
+        move.className = "rounded-md border px-2 py-1 text-xs font-medium text-[#26796e] hover:bg-[#e3f3ef]";
+        move.addEventListener("click", () => openMovementDialog(medication));
+        cell.append(edit, move);
+        row.append(cell);
+      });
+    };
+    addReportActions();
+    const observer = new MutationObserver(addReportActions);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
   }, [medications, movements]);
 
   function handleMedicationSaved(saved: MedicationRecord) {
