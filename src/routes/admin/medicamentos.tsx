@@ -209,64 +209,6 @@ function MedicationsPage() {
     setMovementDialogOpen(true);
   }
 
-  useEffect(() => {
-    const addReportActions = () => {
-      const reportTable = [...document.querySelectorAll("table")].find((table) => [...table.querySelectorAll("th")].some((header) => header.textContent?.trim() === "Nome do produto"));
-      if (!reportTable) return;
-      const headerRow = reportTable.querySelector("thead tr");
-      if (headerRow && !headerRow.querySelector("[data-report-actions-header]")) {
-        const actionsHeader = document.createElement("th");
-        actionsHeader.dataset.reportActionsHeader = "true";
-        actionsHeader.textContent = "Ações";
-        actionsHeader.className = "px-2 py-3 text-right font-medium";
-        headerRow.append(actionsHeader);
-      }
-      if (!reportTable.parentElement?.querySelector("[data-report-search]")) {
-        const searchWrap = document.createElement("div");
-        searchWrap.dataset.reportSearch = "true";
-        searchWrap.className = "mb-3";
-        const searchInput = document.createElement("input");
-        searchInput.type = "search";
-        searchInput.placeholder = "Localizar item no relatório";
-        searchInput.setAttribute("aria-label", "Localizar item no relatório de estoque");
-        searchInput.className = "h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm shadow-none sm:max-w-sm";
-        searchInput.addEventListener("input", () => {
-          const term = searchInput.value.trim().toLocaleLowerCase("pt-BR");
-          reportTable.querySelectorAll("tbody tr").forEach((row) => { row.hidden = !row.textContent?.toLocaleLowerCase("pt-BR").includes(term); });
-        });
-        searchWrap.append(searchInput);
-        reportTable.parentElement?.before(searchWrap);
-      }
-      const term = reportTable.parentElement?.querySelector<HTMLInputElement>("[data-report-search] input")?.value.trim().toLocaleLowerCase("pt-BR") ?? "";
-      reportTable.querySelectorAll("tbody tr").forEach((row) => {
-        row.hidden = !row.textContent?.toLocaleLowerCase("pt-BR").includes(term);
-        if (row.querySelector("[data-report-actions]")) return;
-        const medication = medications.find((item) => item.name === row.querySelector("td")?.textContent?.trim());
-        if (!medication) return;
-        const cell = document.createElement("td");
-        cell.dataset.reportActions = "true";
-        cell.className = "px-2 py-3 text-right";
-        const edit = document.createElement("button");
-        edit.type = "button";
-        edit.textContent = "Editar";
-        edit.setAttribute("aria-label", `Editar ${medication.name}`);
-        edit.className = "mr-2 rounded-md border px-2 py-1 text-xs font-medium hover:bg-slate-50";
-        edit.addEventListener("click", () => openMedicationDialog(medication));
-        const move = document.createElement("button");
-        move.type = "button";
-        move.textContent = "Movimentar";
-        move.setAttribute("aria-label", `Movimentar ${medication.name}`);
-        move.className = "rounded-md border px-2 py-1 text-xs font-medium text-[#26796e] hover:bg-[#e3f3ef]";
-        move.addEventListener("click", () => openMovementDialog(medication));
-        cell.append(edit, move);
-        row.append(cell);
-      });
-    };
-    addReportActions();
-    const observer = new MutationObserver(addReportActions);
-    observer.observe(document.body, { childList: true, subtree: true });
-    return () => observer.disconnect();
-  }, [medications, movements]);
 
   function handleMedicationSaved(saved: MedicationRecord) {
     setMedications((current) => current.some((item) => item.id === saved.id) ? current.map((item) => item.id === saved.id ? saved : item) : [...current, saved].sort((a, b) => a.name.localeCompare(b.name)));
