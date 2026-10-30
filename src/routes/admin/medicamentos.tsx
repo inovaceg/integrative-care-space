@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent as BaseTabsContent, TabsList as BaseTabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs as BaseTabs, TabsContent as BaseTabsContent, TabsList as BaseTabsList, TabsTrigger } from "@/components/ui/tabs";
 import { createMedication, createMedicationMovement, deleteMedication, deleteMedicationMovement, fetchMedicationMovements, fetchMedications, updateMedication, updateMedicationMovement, type MedicationInput, type MedicationMovementInput } from "@/lib/admin/records";
 import { downloadDocumentPdf, type DocumentPage } from "@/lib/admin/document-layout";
 import type { MedicationMovementRecord, MedicationMovementType, MedicationRecord, MedicationUnit } from "@/lib/admin/types";
@@ -60,6 +60,40 @@ function formatNearestExpiration(medicationId: string, movements: MedicationMove
   return expirationDate ? formatDate(expirationDate) : "Não informada";
 }
 
+function useSessionStorageState<T>(key: string, initialValue: T) {
+  const [value, setValue] = useState(initialValue);
+  const [loadedKey, setLoadedKey] = useState("");
+
+  useEffect(() => {
+    try {
+      const saved = window.sessionStorage.getItem(key);
+      setValue(saved === null ? initialValue : JSON.parse(saved) as T);
+    } catch {
+      setValue(initialValue);
+    }
+    setLoadedKey(key);
+  }, [key, initialValue]);
+
+  useEffect(() => {
+    if (loadedKey !== key) return;
+    try {
+      window.sessionStorage.setItem(key, JSON.stringify(value));
+    } catch {
+      return;
+    }
+  }, [key, loadedKey, value]);
+
+  return [value, setValue, loadedKey === key] as const;
+}
+
+function clearSessionValue(key: string) {
+  try {
+    window.sessionStorage.removeItem(key);
+  } catch {
+    return;
+  }
+}
+
 function observationPdfPages(medications: MedicationRecord[]): DocumentPage[] {
   const pages: DocumentPage[] = [];
   let page: DocumentPage = [];
@@ -103,16 +137,11 @@ function observationPdfPages(medications: MedicationRecord[]): DocumentPage[] {
   return pages;
 }
 
-let medicationUiState = {
-  medicationDialogOpen: false,
-  movementDialogOpen: false,
-  selectedMedication: null as MedicationRecord | null,
-  selectedMovement: null as MedicationMovementRecord | null,
-};
-
 function MedicationDialog({ medication, open, onOpenChange, onSaved }: { medication: MedicationRecord | null; open: boolean; onOpenChange: (open: boolean) => void; onSaved: (medication: MedicationRecord) => void }) {
   const { user } = useAuth();
-  const [form, setForm] = useState<MedicationInput>({ name: "", unit: "unit", unit_price: 0, supplier: null, notes: null });
+  const initialForm = useMemo<MedicationInput>(() => ({ name: medication?.name ?? "", unit: medication?.unit ?? "unit", unit_price: medication?.unit_price ?? 0, supplier: medication?.supplier ?? null, notes: medication?.notes ?? null }), [medication?.id, medication?.name, medication?.unit, medication?.unit_price, medication?.supplier, medication?.notes]);
+  const draftKey = `admin-medications:${user?.id ?? "anonymous"}:medication-form:${medication?.id ?? "new"}`;
+  const [form, setForm] = useSessionStorageState(draftKey, initialForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -122,10 +151,8 @@ function MedicationDialog({ medication, open, onOpenChange, onSaved }: { medicat
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    if (!open) return;
-    setForm({ name: medication?.name ?? "", unit: medication?.unit ?? "unit", unit_price: medication?.unit_price ?? 0, supplier: medication?.supplier ?? null, notes: medication?.notes ?? null });
-    setError("");
-  }, [medication, open]);
+    if (open) setError("");
+  }, [open]);
 
   useEffect(() => {
     if (!cameraOpen) return;
@@ -200,6 +227,8 @@ function MedicationDialog({ medication, open, onOpenChange, onSaved }: { medicat
     setSaving(false);
     if (result.error) { setError(result.error.message); return; }
     if (!result.data) { setError("Não foi possível salvar o medicamento."); return; }
+    clearSessionValue(draftKey);
+    setForm(initialForm);
     onSaved(result.data as MedicationRecord);
     onOpenChange(false);
   }
@@ -225,27 +254,22 @@ function MedicationDialog({ medication, open, onOpenChange, onSaved }: { medicat
 
 function MovementDialog({ medication, movement, medications, movements, open, onOpenChange, onSaved }: { medication: MedicationRecord | null; movement: MedicationMovementRecord | null; medications: MedicationRecord[]; movements: MedicationMovementRecord[]; open: boolean; onOpenChange: (open: boolean) => void; onSaved: (movement: MedicationMovementRecord) => void }) {
   const { user } = useAuth();
-  const [medicationId, setMedicationId] = useState("");
-  const [movementType, setMovementType] = useState<MedicationMovementType>("entry");
-  const [quantity, setQuantity] = useState("");
-  const [batch, setBatch] = useState("");
-  const [expirationDate, setExpirationDate] = useState("");
-  const [movementDate, setMovementDate] = useState("");
-  const [notes, setNotes] = useState("");
+  const draftKey = `admin-medications:${user?.id ?? "anonymous"}:movement-form:${movement?.id ?? medication?.id ?? "new"}`;
+  const [medicationId, setMedicationId] = useSessionStorageState(draftKey + ":medication", movement?.medication_id ?? medication?.id ?? medications[0]?.id ?? "");
+  const [movementType, setMovementType] = useSessionStorageState<MedicationMovementType>(draftKey + ":type", movement?.movement_type ?? "entry");
+  const [quantity, setQuantity] = useSessionStorageState(draftKey + ":quantity", movement ? String(movement.quantity) : "");
+  const [batch, setBatch] = useSessionStorageState(draftKey + ":batch", movement?.batch ?? "");
+  const [expirationDate, setExpirationDate] = useSessionStorageState(draftKey + ":expiration", movement?.expiration_date ?? "");
+  const [movementDate, setMovementDate] = useSessionStorageState(draftKey + ":date", movement?.movement_date?.slice(0, 10) ?? new Date().toISOString().slice(0, 10));
+  const [notes, setNotes] = useSessionStorageState(draftKey + ":notes", movement?.notes ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (!open) return;
-    setMedicationId(movement?.medication_id ?? medication?.id ?? medications[0]?.id ?? "");
-    setMovementType(movement?.movement_type ?? "entry");
-    setQuantity(movement ? String(movement.quantity) : "");
-    setBatch(movement?.batch ?? "");
-    setExpirationDate(movement?.expiration_date ?? "");
-    setMovementDate(movement?.movement_date?.slice(0, 10) ?? new Date().toISOString().slice(0, 10));
-    setNotes(movement?.notes ?? "");
     setError("");
-  }, [medication, medications, movement, open]);
+    if (!medicationId && medications[0]) setMedicationId(medications[0].id);
+  }, [open, medicationId, medications]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -265,6 +289,14 @@ function MovementDialog({ medication, movement, medications, movements, open, on
     setSaving(false);
     if (result.error) { setError(result.error.message); return; }
     if (!result.data) { setError("Não foi possível salvar a movimentação."); return; }
+    clearSessionValue(draftKey);
+    setMedicationId(movement?.medication_id ?? medication?.id ?? medications[0]?.id ?? "");
+    setMovementType(movement?.movement_type ?? "entry");
+    setQuantity(movement ? String(movement.quantity) : "");
+    setBatch(movement?.batch ?? "");
+    setExpirationDate(movement?.expiration_date ?? "");
+    setMovementDate(movement?.movement_date?.slice(0, 10) ?? new Date().toISOString().slice(0, 10));
+    setNotes(movement?.notes ?? "");
     onSaved(result.data as MedicationMovementRecord);
     onOpenChange(false);
   }
@@ -274,20 +306,42 @@ function MovementDialog({ medication, movement, medications, movements, open, on
 
 function MedicationsPage() {
   const { user, isLoading: authLoading } = useAuth();
+  const storagePrefix = `admin-medications:${user?.id ?? "anonymous"}`;
+  const [activeTab, setActiveTab] = useSessionStorageState(`${storagePrefix}:active-tab`, "estoque");
+  const [search, setSearch] = useSessionStorageState(`${storagePrefix}:search`, "");
+  const [movementFilter, setMovementFilter] = useSessionStorageState<MedicationMovementType | "all">(`${storagePrefix}:movement-filter`, "all");
   const [medications, setMedications] = useState<MedicationRecord[]>([]);
   const [movements, setMovements] = useState<MedicationMovementRecord[]>([]);
-  const [search, setSearch] = useState("");
-  const [movementFilter, setMovementFilter] = useState<MedicationMovementType | "all">("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [observationPreviewOpen, setObservationPreviewOpen] = useState(false);
-  const [medicationDialogOpen, setMedicationDialogOpen] = useState(medicationUiState.medicationDialogOpen);
-  const [movementDialogOpen, setMovementDialogOpen] = useState(medicationUiState.movementDialogOpen);
-  const [selectedMedication, setSelectedMedication] = useState<MedicationRecord | null>(medicationUiState.selectedMedication);
-  const [selectedMovement, setSelectedMovement] = useState<MedicationMovementRecord | null>(medicationUiState.selectedMovement);
-  const [medicationToDelete, setMedicationToDelete] = useState<MedicationRecord | null>(null);
-  const [movementToDelete, setMovementToDelete] = useState<MedicationMovementRecord | null>(null);
+  const [observationPreviewOpen, setObservationPreviewOpen] = useSessionStorageState(`${storagePrefix}:observation-preview-open`, false);
+  const [medicationDialogOpen, setMedicationDialogOpen] = useSessionStorageState(`${storagePrefix}:medication-dialog-open`, medicationUiState.medicationDialogOpen);
+  const [movementDialogOpen, setMovementDialogOpen] = useSessionStorageState(`${storagePrefix}:movement-dialog-open`, medicationUiState.movementDialogOpen);
+  const [selectedMedication, setSelectedMedication] = useSessionStorageState<MedicationRecord | null>(`${storagePrefix}:selected-medication`, medicationUiState.selectedMedication);
+  const [selectedMovement, setSelectedMovement] = useSessionStorageState<MedicationMovementRecord | null>(`${storagePrefix}:selected-movement`, medicationUiState.selectedMovement);
+  const [medicationToDelete, setMedicationToDelete] = useSessionStorageState<MedicationRecord | null>(`${storagePrefix}:medication-to-delete`, null);
+  const [movementToDelete, setMovementToDelete] = useSessionStorageState<MedicationMovementRecord | null>(`${storagePrefix}:movement-to-delete`, null);
   const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    const scrollKey = `${storagePrefix}:scroll-y`;
+    let savedPosition = 0;
+    try {
+      savedPosition = Number(window.sessionStorage.getItem(scrollKey));
+    } catch {
+      savedPosition = 0;
+    }
+    requestAnimationFrame(() => window.scrollTo(0, Number.isFinite(savedPosition) ? savedPosition : 0));
+    const savePosition = () => {
+      try {
+        window.sessionStorage.setItem(scrollKey, String(window.scrollY));
+      } catch {
+        return;
+      }
+    };
+    window.addEventListener("scroll", savePosition, { passive: true });
+    return () => window.removeEventListener("scroll", savePosition);
+  }, [storagePrefix]);
 
   useEffect(() => {
     medicationUiState = { medicationDialogOpen, movementDialogOpen, selectedMedication, selectedMovement };
@@ -343,6 +397,9 @@ function MedicationsPage() {
     }
   }
 
+  const Tabs = (props: ComponentProps<typeof BaseTabs>) => (
+    <BaseTabs {...props} value={activeTab} onValueChange={setActiveTab} />
+  );
   const TabsList = ({ children, ...props }: ComponentProps<typeof BaseTabsList>) => (
     <BaseTabsList {...props}>
       {children}
