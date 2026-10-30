@@ -209,6 +209,45 @@ function MedicationsPage() {
     setMovementDialogOpen(true);
   }
 
+  useEffect(() => {
+    const attachReportControls = () => {
+      const table = Array.from(document.querySelectorAll("table")).find((candidate) => Array.from(candidate.querySelectorAll("th")).some((header) => header.textContent?.trim().toLowerCase() === "nome do produto"));
+      if (!table) return;
+      const headerRow = table.querySelector("thead tr");
+      if (headerRow && !headerRow.querySelector("[data-medication-report-actions-heading]")) {
+        const heading = document.createElement("th");
+        heading.dataset.medicationReportActionsHeading = "true";
+        heading.className = "px-2 py-3 text-right font-medium";
+        heading.textContent = "Ações";
+        headerRow.appendChild(heading);
+      }
+      Array.from(table.querySelectorAll("tbody tr")).forEach((row) => {
+        if (row.querySelector("[data-medication-report-actions]")) return;
+        const name = row.querySelector("td")?.textContent?.trim();
+        const medication = medications.find((item) => item.name === name);
+        if (!medication) return;
+        const cell = document.createElement("td");
+        cell.dataset.medicationReportActions = "true";
+        cell.className = "whitespace-nowrap px-2 py-3 text-right";
+        const edit = document.createElement("button");
+        edit.type = "button";
+        edit.textContent = "Editar";
+        edit.className = "mr-2 rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50";
+        edit.addEventListener("click", () => openMedicationDialog(medication));
+        const move = document.createElement("button");
+        move.type = "button";
+        move.textContent = "Movimentar";
+        move.className = "rounded-md border border-[#b9ded5] px-2 py-1 text-xs font-medium text-[#26796e] hover:bg-[#e3f3ef]";
+        move.addEventListener("click", () => openMovementDialog(medication));
+        cell.append(edit, move);
+        row.appendChild(cell);
+      });
+    };
+    attachReportControls();
+    const observer = new MutationObserver(attachReportControls);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [medications, movements]);
 
   function handleMedicationSaved(saved: MedicationRecord) {
     setMedications((current) => current.some((item) => item.id === saved.id) ? current.map((item) => item.id === saved.id ? saved : item) : [...current, saved].sort((a, b) => a.name.localeCompare(b.name)));
