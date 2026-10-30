@@ -107,8 +107,13 @@ serve(async (request) => {
     return jsonResponse({ error: "Não foi possível acessar o serviço de pesquisa e IA. Tente novamente mais tarde." }, 502);
   }
   if (!response.ok) {
-    console.error(`[${functionName}] xAI returned HTTP ${response.status}`);
-    return jsonResponse({ error: `O serviço xAI recusou a solicitação (HTTP ${response.status}). Confira a chave e os limites da API.` }, 502);
+    const providerError = await response.json().catch(() => null) as { error?: string | { message?: string; code?: string }; message?: string } | null;
+    const detail = typeof providerError?.error === "string"
+      ? providerError.error
+      : providerError?.error?.message ?? providerError?.message;
+    const safeDetail = detail?.replace(/\bxai-[A-Za-z0-9_-]{8,}\b/gi, "[chave ocultada]").slice(0, 400);
+    console.error(`[${functionName}] xAI returned HTTP ${response.status}; code=${typeof providerError?.error === "object" ? providerError.error.code ?? "none" : "none"}`);
+    return jsonResponse({ error: safeDetail ? `xAI (HTTP ${response.status}): ${safeDetail}` : `O serviço xAI recusou a solicitação (HTTP ${response.status}). Confira a chave e os limites da API.` }, 502);
   }
 
   const result = await response.json() as Record<string, unknown>;
