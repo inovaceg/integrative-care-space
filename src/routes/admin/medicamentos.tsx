@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowDownToLine, ArrowUpFromLine, Camera, Edit3, History, Loader2, PackageOpen, Pencil, Pill, Plus, Search, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { createWorker } from "tesseract.js";
 import { useAuth } from "@/components/auth/auth-provider";
 import { AdminLayout, AdminNotice, EmptyState, PageIntro, SectionCard } from "@/components/admin/admin-ui";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -124,6 +123,7 @@ function MedicationDialog({ medication, open, onOpenChange, onSaved }: { medicat
       const context = canvas.getContext("2d");
       if (!context) throw new Error("Não foi possível processar a imagem.");
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const { createWorker } = await import("tesseract.js");
       const worker = await createWorker("por");
       try {
         const { data } = await worker.recognize(canvas);
