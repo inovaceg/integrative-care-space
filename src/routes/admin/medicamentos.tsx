@@ -213,6 +213,14 @@ function MedicationsPage() {
     const addReportActions = () => {
       const reportTable = [...document.querySelectorAll("table")].find((table) => [...table.querySelectorAll("th")].some((header) => header.textContent?.trim() === "Nome do produto"));
       if (!reportTable) return;
+      const headerRow = reportTable.querySelector("thead tr");
+      if (headerRow && !headerRow.querySelector("[data-report-actions-header]")) {
+        const actionsHeader = document.createElement("th");
+        actionsHeader.dataset.reportActionsHeader = "true";
+        actionsHeader.textContent = "Ações";
+        actionsHeader.className = "px-2 py-3 text-right font-medium";
+        headerRow.append(actionsHeader);
+      }
       if (!reportTable.parentElement?.querySelector("[data-report-search]")) {
         const searchWrap = document.createElement("div");
         searchWrap.dataset.reportSearch = "true";
