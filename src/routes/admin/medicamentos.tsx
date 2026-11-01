@@ -37,14 +37,14 @@ function isMovementType(value: unknown): value is MedicationMovementType {
   return value === "entry" || value === "exit";
 }
 
-function MedicationProductFilter({ medications, showReviewFlags = false }: { medications: MedicationRecord[]; showReviewFlags?: boolean }) {
+function MedicationProductFilter({ medications, showReviewFlags = false, selectedId, onSelect }: { medications: MedicationRecord[]; showReviewFlags?: boolean; selectedId?: string | null; onSelect?: (medication: MedicationRecord) => void }) {
   const [query, setQuery] = useState("");
   const term = query.trim().toLocaleLowerCase("pt-BR");
   const filtered = medications.filter((medication) => !term || `${medication.name} ${medication.supplier ?? ""}`.toLocaleLowerCase("pt-BR").includes(term));
 
   return <div className="grid gap-4">
     <div className="relative max-w-lg"><Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" /><Input aria-label="Filtrar produtos" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar produto ou fornecedor" className="h-10 border-slate-200 bg-white pl-9 shadow-none" /></div>
-    {filtered.length === 0 ? <EmptyState title={medications.length === 0 ? "Nenhum medicamento cadastrado" : "Nenhum produto encontrado"} description={medications.length === 0 ? "Cadastre medicamentos para consultar suas observações aqui." : "Tente buscar por outro nome ou fornecedor."} /> : <div className="overflow-x-auto"><table className="w-full min-w-[560px] text-left text-sm"><thead><tr className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-400"><th className="px-3 py-3 font-medium">Nome do produto</th><th className="px-3 py-3 font-medium">Observação</th></tr></thead><tbody>{filtered.map((medication) => <tr key={medication.id} className="border-b border-slate-50 last:border-0"><td className="px-3 py-3 align-top font-medium text-slate-700">{medication.name}{showReviewFlags && <MedicationReviewBadges medication={medication} />}</td><td className="whitespace-pre-wrap px-3 py-3 align-top text-slate-600">{medication.notes?.trim() || "—"}</td></tr>)}</tbody></table></div>}
+    {filtered.length === 0 ? <EmptyState title={medications.length === 0 ? "Nenhum medicamento cadastrado" : "Nenhum produto encontrado"} description={medications.length === 0 ? "Cadastre medicamentos para consultar suas observações aqui." : "Tente buscar por outro nome ou fornecedor."} /> : <div className="overflow-x-auto"><table className="w-full min-w-[560px] text-left text-sm"><thead><tr className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-400"><th className="px-3 py-3 font-medium">Nome do produto</th><th className="px-3 py-3 font-medium">Observação</th>{onSelect && <th className="px-3 py-3 text-right font-medium">Seleção</th>}</tr></thead><tbody>{filtered.map((medication) => <tr key={medication.id} className={`border-b border-slate-50 last:border-0 ${selectedId === medication.id ? "bg-[#f0faf7]" : ""}`}><td className="px-3 py-3 align-top font-medium text-slate-700">{medication.name}{showReviewFlags && <MedicationReviewBadges medication={medication} />}</td><td className="whitespace-pre-wrap px-3 py-3 align-top text-slate-600">{medication.notes?.trim() || "—"}</td>{onSelect && <td className="px-3 py-3 text-right"><Button type="button" variant="outline" size="sm" aria-pressed={selectedId === medication.id} onClick={() => onSelect(medication)}>{selectedId === medication.id ? "Selecionado" : "Selecionar"}</Button></td>}</tr>)}</tbody></table></div>}
   </div>;
 }
 
@@ -369,6 +369,7 @@ function MedicationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [observationPreviewOpen, setObservationPreviewOpen] = useSessionStorageState(`${storagePrefix}:observation-preview-open`, false, isBoolean);
+  const [selectedObservationMedication, setSelectedObservationMedication] = useState<MedicationRecord | null>(null);
   const [medicationDialogOpen, setMedicationDialogOpen] = useSessionStorageState(`${storagePrefix}:medication-dialog-open`, false, isBoolean);
   const [movementDialogOpen, setMovementDialogOpen] = useSessionStorageState(`${storagePrefix}:movement-dialog-open`, false, isBoolean);
   const [selectedMedication, setSelectedMedication] = useSessionStorageState<MedicationRecord | null>(`${storagePrefix}:selected-medication`, null, isNullableMedicationRecord);
@@ -465,22 +466,21 @@ function MedicationsPage() {
       {value === "relatorio" && <BaseTabsContent value="observacoes">
         <SectionCard title="Relatório de Observações" className="mt-0">
           <div className="mb-4 flex flex-wrap justify-end gap-2">
-            <Button type="button" variant="outline" disabled={medications.length === 0} onClick={() => setObservationPreviewOpen(true)}><Eye className="mr-2 size-4" />Visualizar</Button>
+            <Button type="button" variant="outline" disabled={!selectedObservationMedication} onClick={() => setObservationPreviewOpen(true)}><Eye className="mr-2 size-4" />Visualizar</Button>
             <Button type="button" disabled={medications.length === 0} onClick={() => void generateObservationsPdf()} className="bg-[#2f8f82] text-white hover:bg-[#26796e]"><Download className="mr-2 size-4" />Gerar PDF</Button>
           </div>
           <p className="mb-3 text-xs text-slate-500">Indicadores internos para revisão; não representam aprovação sanitária nem validação clínica.</p>
-          <MedicationProductFilter medications={medications} showReviewFlags />
+          <MedicationProductFilter medications={medications} showReviewFlags selectedId={selectedObservationMedication?.id} onSelect={setSelectedObservationMedication} />
         </SectionCard>
-        <Dialog open={observationPreviewOpen} onOpenChange={setObservationPreviewOpen}>
+        <Dialog open={observationPreviewOpen && Boolean(selectedObservationMedication)} onOpenChange={setObservationPreviewOpen}>
           <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
-            <DialogHeader><DialogTitle>Visualização — Relatório de Observações</DialogTitle><DialogDescription>Confira os produtos e observações antes de gerar o PDF.</DialogDescription></DialogHeader>
-            <MedicationProductFilter medications={medications} />
-            <div className="flex justify-end"><Button type="button" onClick={() => void generateObservationsPdf()} className="bg-[#2f8f82] text-white hover:bg-[#26796e]"><Download className="mr-2 size-4" />Gerar PDF</Button></div>
+            <DialogHeader><DialogTitle>Visualização — {selectedObservationMedication?.name}</DialogTitle><DialogDescription>Exibindo somente o produto selecionado.</DialogDescription></DialogHeader>
+            {selectedObservationMedication && <div className="rounded-lg border border-slate-200 p-4"><div className="mb-3 text-base font-semibold text-slate-800">{selectedObservationMedication.name}<MedicationReviewBadges medication={selectedObservationMedication} /></div><div className="whitespace-pre-wrap text-sm leading-6 text-slate-600">{selectedObservationMedication.notes?.trim() || "Nenhuma observação cadastrada."}</div></div>}
           </DialogContent>
         </Dialog>
       </BaseTabsContent>}
     </>
-  ), [generateObservationsPdf, medications, observationPreviewOpen]);
+  ), [generateObservationsPdf, medications, observationPreviewOpen, selectedObservationMedication]);
 
   useEffect(() => {
     const attachReportControls = () => {
