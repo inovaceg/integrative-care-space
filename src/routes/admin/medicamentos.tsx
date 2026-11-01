@@ -499,7 +499,7 @@ function MedicationsPage() {
   const { user, isLoading: authLoading } = useAuth();
   const storagePrefix = `admin-medications:${user?.id ?? "anonymous"}`;
   const [activeTab, setActiveTab] = useSessionStorageState<MedicationTab>(`${storagePrefix}:active-tab`, "estoque", isMedicationTab);
-  const [search, setSearch] = useSessionStorageState(`${storagePrefix}:search`, "", isString);
+  const [search, setSearch] = useState("");
   const [movementFilter, setMovementFilter] = useSessionStorageState<MedicationMovementType | "all">(`${storagePrefix}:movement-filter`, "all", isMovementFilter);
   const [medications, setMedications] = useState<MedicationRecord[]>([]);
   const [movements, setMovements] = useState<MedicationMovementRecord[]>([]);
