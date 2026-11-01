@@ -67,19 +67,19 @@ function observationContent(medication: MedicationRecord, index: number) {
   const parsed = parseObservation(medication.notes ?? "");
   const id = `medication-${index + 1}`;
   const blocks: any[] = [
-    { text: `${String(index + 1).padStart(2, "0")}  ${medication.name}`, id, tocItem: true, style: "productTitle", margin: [0, 0, 0, 4] },
+    { text: `${String(index + 1).padStart(2, "0")}  ${medication.name}`, id, tocItem: true, style: "productTitle", margin: [0, 0, 0, 2] },
   ];
   const flags = medicationReviewFlags(medication);
-  if (flags.length) blocks.push({ text: flags.map((flag) => ({ text: `${flag.label}   `, color: flagColor(flag.tone), bold: true })).flat(), fontSize: 7.5, margin: [5, 0, 0, 4] });
+  if (flags.length) blocks.push({ text: flags.map((flag) => ({ text: `${flag.label}   `, color: flagColor(flag.tone), bold: true })).flat(), fontSize: 7.5, margin: [5, 0, 0, 2] });
 
   sections.forEach((heading) => {
     const paragraphs = parsed.sections[heading];
-    blocks.push({ text: heading, style: heading === "CUIDADOS E CONTRAINDICAÇÕES" ? "careHeading" : "sectionHeading", margin: [5, 4, 0, 1] });
-    blocks.push({ text: paragraphs.length ? paragraphs.join("\n\n") : "Não informado na observação cadastrada.", style: "bodyText", margin: [13, 0, 2, 0] });
+    blocks.push({ text: heading, style: heading === "CUIDADOS E CONTRAINDICAÇÕES" ? "careHeading" : "sectionHeading", margin: [5, 2, 0, 0] });
+    blocks.push({ text: paragraphs.length ? paragraphs.join("\n\n") : "Não informado na observação cadastrada.", style: "bodyText", margin: [11, 0, 0, 0] });
   });
 
   const complementary = parsed.sections["CONTEÚDO COMPLEMENTAR"];
-  if (complementary.length) blocks.push({ text: [{ text: "INFORMAÇÕES COMPLEMENTARES\n", bold: true, color: colors.teal }, complementary.join("\n\n")], style: "bodyText", margin: [5, 5, 0, 0] });
+  if (complementary.length) blocks.push({ text: [{ text: "INFORMAÇÕES COMPLEMENTARES\n", bold: true, color: colors.teal }, complementary.join("\n\n")], style: "bodyText", margin: [5, 3, 0, 0] });
   return { id, name: medication.name, blocks, references: parsed.references };
 }
 
@@ -108,8 +108,8 @@ export async function downloadMedicationObservationReport(medications: Medicatio
   if (products.length) contents[contents.length - 1].pageBreak = "after";
 
   products.forEach((product, index) => {
-    contents.push({ stack: product.blocks, unbreakable: true, margin: [0, 0, 0, 11], dontBreakRows: true });
-    if (index < products.length - 1) contents.push({ canvas: [{ type: "line", x1: 0, y1: 0, x2: 499, y2: 0, lineWidth: 0.6, lineColor: colors.line }], margin: [0, 0, 0, 10] });
+    contents.push({ stack: product.blocks, unbreakable: true, margin: [0, 0, 0, 6] });
+    if (index < products.length - 1) contents.push({ canvas: [{ type: "line", x1: 0, y1: 0, x2: 519, y2: 0, lineWidth: 0.5, lineColor: colors.line }], margin: [0, 0, 0, 4] });
   });
 
   const references = products.flatMap((product) => product.references.map((reference) => ({ name: product.name, reference })));
@@ -122,7 +122,7 @@ export async function downloadMedicationObservationReport(medications: Medicatio
 
   const definition = {
     pageSize: "A4",
-    pageMargins: [48, 70, 48, 48],
+    pageMargins: [38, 62, 38, 40],
     defaultStyle: { font: "Roboto", fontSize: 9, color: colors.body, lineHeight: 1.2 },
     styles: {
       coverBrand: { fontSize: 11, bold: true, color: colors.teal, characterSpacing: 1.2 },
@@ -136,7 +136,7 @@ export async function downloadMedicationObservationReport(medications: Medicatio
       bodyText: { fontSize: 8.7, color: colors.body, lineHeight: 1.17 },
     },
     header: (page: number) => page === 1 ? null : ({
-      margin: [48, 22, 48, 0],
+      margin: [38, 15, 38, 0],
       columns: [
         { svg: logo, width: 22, height: 22, margin: [0, 0, 8, 0] },
         { text: "DR. FREDERIK  ·  RELATÓRIO DE OBSERVAÇÕES", fontSize: 8, bold: true, color: colors.purple, margin: [0, 6, 0, 0] },
@@ -144,7 +144,7 @@ export async function downloadMedicationObservationReport(medications: Medicatio
       ],
     }),
     footer: (page: number, pageCount: number) => ({
-      margin: [48, 0, 48, 18],
+      margin: [38, 0, 38, 14],
       columns: [
         { text: "RELATÓRIO DE OBSERVAÇÕES", fontSize: 7.5, color: colors.muted },
         { text: date, alignment: "center", fontSize: 7.5, color: colors.muted },
