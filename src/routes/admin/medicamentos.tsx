@@ -15,8 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs as BaseTabs, TabsContent as BaseTabsContent, TabsList as BaseTabsList, TabsTrigger } from "@/components/ui/tabs";
 import { createMedication, createMedicationMovement, deleteMedication, deleteMedicationMovement, fetchMedicationMovements, fetchMedications, updateMedication, updateMedicationMovement, type MedicationInput, type MedicationMovementInput } from "@/lib/admin/records";
 import { generateMedicationObservation } from "@/lib/admin/medication-observation-ai";
-import { medicationObservationPdfPages, medicationReviewFlags } from "@/lib/admin/medication-observation-report";
-import { downloadDocumentPdf, type DocumentPage } from "@/lib/admin/document-layout";
+import { downloadMedicationObservationReport, medicationReviewFlags } from "@/lib/admin/medication-observation-report";
 import type { MedicationMovementRecord, MedicationMovementType, MedicationRecord, MedicationUnit } from "@/lib/admin/types";
 
 export const Route = createFileRoute("/admin/medicamentos")({ component: MedicationsPage });
@@ -142,10 +141,6 @@ function clearSessionValue(key: string) {
   } catch {
     return;
   }
-}
-
-function observationPdfPages(medications: MedicationRecord[]): DocumentPage[] {
-  return medicationObservationPdfPages(medications);
 }
 
 function MedicationDialog({ medication, open, onOpenChange, onSaved }: { medication: MedicationRecord | null; open: boolean; onOpenChange: (open: boolean) => void; onSaved: (medication: MedicationRecord) => void }) {
@@ -438,7 +433,7 @@ function MedicationsPage() {
   const generateObservationsPdf = useCallback(async () => {
     setError("");
     try {
-      await downloadDocumentPdf(observationPdfPages(medications), `relatorio-observacoes-medicamentos-${new Date().toISOString().slice(0, 10)}`, true);
+      await downloadMedicationObservationReport(medications, `relatorio-observacoes-medicamentos-${new Date().toISOString().slice(0, 10)}`);
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Não foi possível gerar o PDF das observações.");
     }

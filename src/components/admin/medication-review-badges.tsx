@@ -9,7 +9,7 @@ const toneClasses = {
 } as const;
 
 export function MedicationReviewBadges({ medication }: { medication: MedicationRecord }) {
-  return <div className="mt-2 flex flex-wrap gap-1.5" aria-label="Indicadores internos de revisão">
-    {medicationReviewFlags(medication).map((flag) => <span key={flag.label} className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-medium leading-4 ${toneClasses[flag.tone]}`}>{flag.label}</span>)}
+  return <div className="mt-1.5 flex flex-wrap gap-1" aria-label="Indicadores internos de revisão">
+    {medicationReviewFlags(medication).map((flag) => <span key={flag.label} className={`inline-flex rounded-full border px-1.5 py-0.5 text-[9px] font-medium leading-3.5 ${toneClasses[flag.tone]}`}>{flag.label}</span>)}
   </div>;
 }

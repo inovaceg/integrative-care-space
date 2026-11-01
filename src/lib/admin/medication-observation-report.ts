@@ -1,46 +1,25 @@
 import type { MedicationRecord } from "@/lib/admin/types";
-import type { DocumentPage, DocumentLine } from "@/lib/admin/document-layout";
+import pdfMake from "pdfmake/build/pdfmake";
+import pdfFonts from "pdfmake/build/vfs_fonts";
 
-export type MedicationReviewFlag = {
-  label: string;
-  tone: "amber" | "rose" | "slate" | "teal";
-};
+type ReviewFlag = { label: string; tone: "amber" | "rose" | "slate" };
+type ObservationSection = "PARA QUE SERVE?" | "PRINCIPAIS APLICAÇÕES" | "MECANISMO DE AÇÃO" | "CUIDADOS E CONTRAINDICAÇÕES";
 
-const observationSections = [
+const sections: ObservationSection[] = [
   "PARA QUE SERVE?",
   "PRINCIPAIS APLICAÇÕES",
   "MECANISMO DE AÇÃO",
   "CUIDADOS E CONTRAINDICAÇÕES",
-] as const;
+];
+const colors = { purple: "#39245d", teal: "#26796e", body: "#302a38", muted: "#746c7e", line: "#e7e2ed", amber: "#9a5b00", rose: "#a43650", slate: "#586273" };
+const logo = '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><rect width="64" height="64" rx="15" fill="#26796e"/><g fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M32 14v37M25 51h14M27 14h10M14 18h8v11c0 10 6 14 14 14s14-4 14-14V18h-8"/></g></svg>';
 
-type ParsedObservation = {
-  sections: Record<(typeof observationSections)[number] | "CONTEÚDO COMPLEMENTAR", string[]>;
-  references: string[];
-};
-
-function normalized(value: string) {
+function normalizeHeading(value: string) {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toUpperCase();
 }
 
-export function medicationReviewFlags(medication: MedicationRecord): MedicationReviewFlag[] {
-  const name = normalized(medication.name);
-  const flags: MedicationReviewFlag[] = [];
-  const commercialNamePending = /\b(MASTEROM|TIZERC|DURA|ENATHATE)\b/.test(name);
-  const possibleDuplicate = /\bMAGANES\b|\bMANGANES\s*20\s*MG\b/.test(name);
-  const compositionConfirmed = /^STATUS INTERNO:\\s*COMPOSIÇÃO CONFIRMADA\\s*$/im.test(medication.notes ?? "");
-  const hasReferences = Boolean(parseObservation(medication.notes ?? "").references.length);
-
-  flags.push(compositionConfirmed
-    ? { label: "Composição confirmada", tone: "teal" }
-    : { label: "Composição pendente de confirmação", tone: "amber" });
-  if (commercialNamePending) flags.push({ label: "Nome comercial pendente de identificação", tone: "rose" });
-  if (possibleDuplicate) flags.push({ label: "Possível duplicidade cadastral", tone: "rose" });
-  if (!hasReferences) flags.push({ label: "Informação técnica pendente de validação", tone: "slate" });
-  return flags;
-}
-
-function parseObservation(notes: string): ParsedObservation {
-  const sections: ParsedObservation["sections"] = {
+function parseObservation(notes: string) {
+  const result: Record<ObservationSection | "CONTEÚDO COMPLEMENTAR", string[]> = {
     "PARA QUE SERVE?": [],
     "PRINCIPAIS APLICAÇÕES": [],
     "MECANISMO DE AÇÃO": [],
@@ -48,248 +27,137 @@ function parseObservation(notes: string): ParsedObservation {
     "CONTEÚDO COMPLEMENTAR": [],
   };
   const references: string[] = [];
-  let current: keyof ParsedObservation["sections"] | "REFERÊNCIAS TÉCNICAS" = "CONTEÚDO COMPLEMENTAR";
+  let active: ObservationSection | "CONTEÚDO COMPLEMENTAR" | "REFERÊNCIAS TÉCNICAS" = "CONTEÚDO COMPLEMENTAR";
 
   for (const line of notes.split(/\r\n|\n|\r/)) {
-    const heading = normalized(line);
-    const section = observationSections.find((candidate) => normalized(candidate) === heading);
-    if (section) {
-      current = section;
+    const heading = normalizeHeading(line);
+    const match = sections.find((section) => normalizeHeading(section) === heading);
+    if (match) {
+      active = match;
       continue;
     }
     if (heading.startsWith("STATUS INTERNO:")) continue;
-    if (heading === "REFERÊNCIAS TÉCNICAS") {
-      current = "REFERÊNCIAS TÉCNICAS";
+    if (heading === "REFERENCIAS TECNICAS") {
+      active = "REFERÊNCIAS TÉCNICAS";
       continue;
     }
-    if (current === "REFERÊNCIAS TÉCNICAS") {
-      if (line.trim()) references.push(line.trim());
-    } else if (line.trim()) {
-      sections[current].push(line.trim());
-    }
+    if (!line.trim()) continue;
+    if (active === "REFERÊNCIAS TÉCNICAS") references.push(line.trim());
+    else result[active].push(line.trim());
   }
-  return { sections, references };
+  return { sections: result, references };
 }
 
-function measurementContext() {
-  return typeof document === "undefined" ? null : document.createElement("canvas").getContext("2d");
+export function medicationReviewFlags(medication: MedicationRecord): ReviewFlag[] {
+  const name = normalizeHeading(medication.name);
+  const flags: ReviewFlag[] = [];
+  const compositionConfirmed = /^STATUS INTERNO:\s*COMPOSIÇÃO CONFIRMADA\s*$/im.test(medication.notes ?? "");
+  if (!compositionConfirmed) flags.push({ label: "Composição pendente", tone: "amber" });
+  if (/\b(MASTEROM|TIZERC|DURA|ENATHATE)\b/.test(name)) flags.push({ label: "Nome comercial a confirmar", tone: "rose" });
+  if (/\bMAGANES\b|\bMANGANES\s*20\s*MG\b/.test(name)) flags.push({ label: "Possível duplicidade", tone: "rose" });
+  if (!parseObservation(medication.notes ?? "").references.length) flags.push({ label: "Informação técnica pendente", tone: "slate" });
+  return flags;
 }
 
-function wrapText(text: string, size: number, bold: boolean, maxWidth: number, context: CanvasRenderingContext2D | null) {
-  if (!context) return text.split(/\r\n|\n|\r/).flatMap((line) => line.match(new RegExp(`.{1,${Math.max(1, Math.floor(maxWidth / (size * 0.52)))}(?:\\s|$)|\\S+`, "gu")) ?? [""]);
-  context.font = `${bold ? "bold" : "normal"} ${size}px Helvetica`;
-  return text.split(/\r\n|\n|\r/).flatMap((paragraph) => {
-    if (!paragraph) return [""];
-    const words = paragraph.match(/\s+|\S+/g) ?? [""];
-    const lines: string[] = [];
-    let line = "";
-    for (const word of words) {
-      if (/^\s+$/.test(word) && !line) continue;
-      if (context.measureText(line + word).width <= maxWidth) {
-        line += word;
-        continue;
-      }
-      if (line.trim()) lines.push(line.trimEnd());
-      line = "";
-      for (const character of Array.from(word.trimStart())) {
-        if (line && context.measureText(line + character).width > maxWidth) {
-          lines.push(line);
-          line = "";
-        }
-        line += character;
-      }
-    }
-    if (line.trim()) lines.push(line.trimEnd());
-    return lines;
-  });
+function flagColor(tone: ReviewFlag["tone"]) {
+  return tone === "amber" ? colors.amber : tone === "rose" ? colors.rose : colors.slate;
 }
 
-const palette = {
-  purple: "#39245d",
-  teal: "#26796e",
-  muted: "#655a73",
-  body: "#302a38",
-  care: "#51404a",
-  rule: "#e9e3f2",
-};
-
-function buildMedicationBlock(medication: MedicationRecord, index: number, fontSize: number, context: CanvasRenderingContext2D | null): DocumentLine[] {
-  const parsed = parseObservation(medication.notes?.trim() || "Observação não informada.");
-  const lines: DocumentLine[] = [];
-  let y = 0;
-  const addText = (text: string, x: number, size: number, bold: boolean, color: string, maxWidth: number, lineHeight: number) => {
-    const wrapped = wrapText(text, size, bold, maxWidth, context);
-    wrapped.forEach((line) => {
-      lines.push({ text: line, x, y, size, bold, color });
-      y += lineHeight;
-    });
-  };
-
-  addText(`${index + 1}. ${medication.name}`, 50, 12, true, palette.purple, 495, 16);
-  y += 2;
-  const flags = medicationReviewFlags(medication);
-  if (flags.length) {
-    addText(`SITUAÇÃO INTERNA: ${flags.map((flag) => flag.label).join(" · ")}`, 56, Math.max(7.5, fontSize - 1), true, palette.muted, 475, Math.max(9, fontSize + 1));
-    y += 3;
-  }
-
-  for (const heading of observationSections) {
-    const body = parsed.sections[heading];
-    if (!body.length) continue;
-    y += 3;
-    const headingColor = heading === "CUIDADOS E CONTRAINDICAÇÕES" ? palette.care : palette.teal;
-    addText(heading, 56, fontSize, true, headingColor, 475, fontSize + 3);
-    y += 1;
-    for (const paragraph of body) {
-      addText(paragraph, 64, fontSize, false, palette.body, 465, fontSize + 3);
-      y += 2;
-    }
-  }
-  const extra = parsed.sections["CONTEÚDO COMPLEMENTAR"];
-  if (extra.length) {
-    y += 3;
-    addText("CONTEÚDO COMPLEMENTAR", 56, fontSize, true, palette.teal, 475, fontSize + 3);
-    for (const paragraph of extra) {
-      addText(paragraph, 64, fontSize, false, palette.body, 465, fontSize + 3);
-      y += 2;
-    }
-  }
-  y += 4;
-  lines.push({ text: "", x: 50, y, size: 1, color: palette.rule, kind: "rule", width: 495 });
-  y += 10;
-  return lines.map((line) => ({ ...line, y: line.y + 148 }));
-}
-
-function wrapEntry(name: string, page: number, context: CanvasRenderingContext2D | null) {
-  const lines = wrapText(name, 9.5, false, 425, context);
-  return { name, page, lines, height: Math.max(22, lines.length * 12 + 5) };
-}
-
-export function medicationObservationPdfPages(medications: MedicationRecord[]): DocumentPage[] {
-  const context = measurementContext();
-  const date = new Date().toLocaleDateString("pt-BR");
-  const reportPages: DocumentPage[] = [];
-  const firstProductPages: number[] = [];
-  let current: DocumentPage = [];
-  let currentY = 0;
-  const bodyTop = 148;
-  const bodyBottom = 716;
-  const bodyHeight = bodyBottom - bodyTop;
-
-  const startPage = () => {
-    current = [
-      { text: "DR. FREDERIK", x: 42, y: 48, size: 10, bold: true, color: palette.purple },
-      { text: `Gerado em ${date}`, x: 445, y: 48, size: 8, color: palette.muted },
-      { text: "RELATÓRIO DE OBSERVAÇÕES", x: 42, y: 100, size: 13, bold: true, color: palette.purple },
-      { text: "Conteúdo organizado por produto; cada observação permanece íntegra em uma página.", x: 42, y: 120, size: 8, color: palette.muted },
-    ];
-    reportPages.push(current);
-    currentY = bodyTop;
-  };
-  startPage();
-
-  medications.forEach((medication, index) => {
-    let block: DocumentLine[] = [];
-    let fontSize = 9.2;
-    while (fontSize >= 7 && block.length === 0) {
-      const candidate = buildMedicationBlock(medication, index, fontSize, context);
-      const height = candidate.reduce((max, line) => Math.max(max, line.y - 148 + (line.kind === "rule" ? 10 : fontSize + 3)), 0);
-      if (height <= bodyHeight) block = candidate;
-      else fontSize -= 0.5;
-    }
-    if (!block.length) throw new Error(`A observação de “${medication.name}” é longa demais para caber em uma página sem corte. Revise a formatação antes de exportar.`);
-    const blockHeight = Math.max(...block.map((line) => line.y - 148 + (line.kind === "rule" ? 10 : fontSize + 3)));
-    if (currentY + blockHeight > bodyBottom && current.length > 4) startPage();
-    const offset = currentY - bodyTop;
-    block.forEach((line) => current.push({ ...line, y: line.y + offset }));
-    firstProductPages.push(reportPages.length - 1);
-    currentY += blockHeight;
-  });
-
-  const tocGroups: Array<Array<ReturnType<typeof wrapEntry>>> = [];
-  let tocGroup: Array<ReturnType<typeof wrapEntry>> = [];
-  let tocY = 178;
-  medications.forEach((medication, index) => {
-    const entry = wrapEntry(medication.name, firstProductPages[index], context);
-    if (tocGroup.length && tocY + entry.height > 718) {
-      tocGroups.push(tocGroup);
-      tocGroup = [];
-      tocY = 178;
-    }
-    tocGroup.push(entry);
-    tocY += entry.height;
-  });
-  if (tocGroup.length || tocGroups.length === 0) tocGroups.push(tocGroup);
-
-  const tocPages: DocumentPage[] = tocGroups.map((entries) => {
-    const page: DocumentPage = [
-      { text: "DR. FREDERIK", x: 42, y: 48, size: 10, bold: true, color: palette.purple },
-      { text: `Gerado em ${date}`, x: 445, y: 48, size: 8, color: palette.muted },
-      { text: "SUMÁRIO", x: 42, y: 112, size: 18, bold: true, color: palette.purple },
-    ];
-    let y = 175;
-    entries.forEach((entry) => {
-      entry.lines.forEach((line, index) => page.push({ text: line, x: 54, y: y + index * 12, size: 9.5, color: palette.purple }));
-      const globalPage = 1 + tocGroups.length + entry.page + 1;
-      page.push({ text: String(globalPage), x: 520, y, size: 10, bold: true, color: palette.purple });
-      y += entry.height;
-      if (y < 716) page.push({ text: "", x: 54, y: y - 4, size: 1, color: palette.rule, kind: "rule", width: 487 });
-    });
-    return page;
-  });
-
-  const referenceLines: DocumentLine[] = [];
-  medications.forEach((medication) => {
-    const references = parseObservation(medication.notes ?? "").references;
-    if (!references.length) return;
-    referenceLines.push({ text: medication.name, x: 50, y: 0, size: 10, bold: true, color: palette.purple });
-    for (const reference of references) referenceLines.push({ text: reference, x: 62, y: 0, size: 9, color: palette.body });
-  });
-  if (!referenceLines.length) referenceLines.push({ text: "Nenhuma fonte técnica foi registrada nas observações dos medicamentos.", x: 50, y: 0, size: 10, color: palette.muted });
-
-  const referencePages: DocumentPage[] = [];
-  let referencePage: DocumentPage = [];
-  let referenceY = 172;
-  const startReferencePage = () => {
-    referencePage = [
-      { text: "DR. FREDERIK", x: 42, y: 48, size: 10, bold: true, color: palette.purple },
-      { text: `Gerado em ${date}`, x: 445, y: 48, size: 8, color: palette.muted },
-      { text: "REFERÊNCIAS TÉCNICAS", x: 42, y: 112, size: 16, bold: true, color: palette.purple },
-    ];
-    referencePages.push(referencePage);
-    referenceY = 172;
-  };
-  startReferencePage();
-  referenceLines.forEach((line) => {
-    const wrapped = wrapText(line.text, line.size, Boolean(line.bold), line.bold ? 490 : 475, context);
-    const height = wrapped.length * 13 + (line.bold ? 7 : 3);
-    if (referenceY + height > 716) startReferencePage();
-    wrapped.forEach((text) => {
-      referencePage.push({ ...line, text, x: line.x, y: referenceY });
-      referenceY += 13;
-    });
-    referenceY += line.bold ? 7 : 3;
-  });
-
-  const purple = palette.purple;
-  const cover: DocumentPage = [
-    { text: "DR. FREDERIK", x: 220, y: 255, size: 19, bold: true, color: purple },
-    { text: "", x: 72, y: 310, size: 1, color: palette.rule, kind: "rule", width: 451 },
-    { text: "RELATÓRIO DE OBSERVAÇÕES", x: 145, y: 375, size: 23, bold: true, color: purple },
-    { text: "Observações de Medicamentos", x: 195, y: 414, size: 14, color: palette.muted },
-    { text: date, x: 275, y: 472, size: 10, color: palette.muted },
+function observationContent(medication: MedicationRecord, index: number) {
+  const parsed = parseObservation(medication.notes ?? "");
+  const id = `medication-${index + 1}`;
+  const blocks: any[] = [
+    { text: `${String(index + 1).padStart(2, "0")}  ${medication.name}`, id, tocItem: true, style: "productTitle", margin: [0, 0, 0, 4] },
   ];
-  const allPages = [...[cover], ...tocPages, ...reportPages, ...referencePages];
-  allPages.forEach((page, index) => {
-    page.push({ text: "RELATÓRIO DE OBSERVAÇÕES", x: 42, y: 750, size: 8, color: palette.muted });
-    page.push({ text: date, x: 272, y: 750, size: 8, color: palette.muted });
-    page.push({ text: `Página ${index + 1} de ${allPages.length}`, x: 472, y: 750, size: 8, color: palette.muted });
+  const flags = medicationReviewFlags(medication);
+  if (flags.length) blocks.push({ text: flags.map((flag) => ({ text: `${flag.label}   `, color: flagColor(flag.tone), bold: true })).flat(), fontSize: 7.5, margin: [5, 0, 0, 4] });
+
+  sections.forEach((heading) => {
+    const paragraphs = parsed.sections[heading];
+    blocks.push({ text: heading, style: heading === "CUIDADOS E CONTRAINDICAÇÕES" ? "careHeading" : "sectionHeading", margin: [5, 4, 0, 1] });
+    blocks.push({ text: paragraphs.length ? paragraphs.join("\n\n") : "Não informado na observação cadastrada.", style: "bodyText", margin: [13, 0, 2, 0] });
   });
-  return allPages;
+
+  const complementary = parsed.sections["CONTEÚDO COMPLEMENTAR"];
+  if (complementary.length) blocks.push({ text: [{ text: "INFORMAÇÕES COMPLEMENTARES\n", bold: true, color: colors.teal }, complementary.join("\n\n")], style: "bodyText", margin: [5, 5, 0, 0] });
+  return { id, name: medication.name, blocks, references: parsed.references };
+}
+
+export async function downloadMedicationObservationReport(medications: MedicationRecord[], filename: string) {
+  (pdfMake as any).vfs = pdfFonts;
+  const products = medications.map(observationContent);
+  const splitAt = Math.ceil(products.length / 2);
+  const tocColumn = (entries: typeof products) => entries.map((entry) => ({
+    columns: [
+      { text: entry.name, linkToDestination: entry.id, width: "*", fontSize: 8.5, color: colors.purple },
+      { text: "0", pageReference: entry.id, width: 25, alignment: "right", fontSize: 8.5, color: colors.muted },
+    ],
+    margin: [0, 0, 0, 7],
+  }));
+  const date = new Date().toLocaleDateString("pt-BR");
+  const contents: any[] = [
+    { image: logo, width: 54, height: 54, alignment: "center", margin: [0, 95, 0, 20] },
+    { text: "DR. FREDERIK", style: "coverBrand", alignment: "center" },
+    { canvas: [{ type: "line", x1: 0, y1: 0, x2: 160, y2: 0, lineWidth: 1, lineColor: colors.teal }], alignment: "center", margin: [0, 22, 0, 22] },
+    { text: "RELATÓRIO DE\nOBSERVAÇÕES", style: "coverTitle", alignment: "center" },
+    { text: "Observações de Medicamentos", style: "coverSubtitle", alignment: "center", margin: [0, 12, 0, 0] },
+    { text: `Gerado em ${date}`, style: "coverDate", alignment: "center", margin: [0, 32, 0, 0], pageBreak: "after" },
+    { text: "SUMÁRIO", style: "contentsTitle", margin: [0, 0, 0, 16] },
+    { columns: [{ stack: tocColumn(products.slice(0, splitAt)), width: "*" }, { stack: tocColumn(products.slice(splitAt)), width: "*" }], columnGap: 28, margin: [0, 0, 0, 12] },
+  ];
+  if (products.length) contents[contents.length - 1].pageBreak = "after";
+
+  products.forEach((product, index) => {
+    contents.push({ stack: product.blocks, unbreakable: true, margin: [0, 0, 0, 11], dontBreakRows: true });
+    if (index < products.length - 1) contents.push({ canvas: [{ type: "line", x1: 0, y1: 0, x2: 499, y2: 0, lineWidth: 0.6, lineColor: colors.line }], margin: [0, 0, 0, 10] });
+  });
+
+  const references = products.flatMap((product) => product.references.map((reference) => ({ name: product.name, reference })));
+  contents.push({ text: "REFERÊNCIAS TÉCNICAS", style: "contentsTitle", pageBreak: "before", margin: [0, 0, 0, 14] });
+  if (references.length) {
+    references.forEach(({ name, reference }) => contents.push({ stack: [{ text: name, bold: true, color: colors.purple, fontSize: 9 }, { text: reference, fontSize: 8.5, color: colors.body }], margin: [0, 0, 0, 9], unbreakable: true }));
+  } else {
+    contents.push({ text: "Nenhuma referência técnica foi registrada nas observações dos medicamentos.", fontSize: 9, color: colors.muted });
+  }
+
+  const definition = {
+    pageSize: "A4",
+    pageMargins: [48, 70, 48, 48],
+    defaultStyle: { font: "Roboto", fontSize: 9, color: colors.body, lineHeight: 1.2 },
+    styles: {
+      coverBrand: { fontSize: 11, bold: true, color: colors.teal, characterSpacing: 1.2 },
+      coverTitle: { fontSize: 24, bold: true, color: colors.purple, lineHeight: 1.18 },
+      coverSubtitle: { fontSize: 13, color: colors.muted },
+      coverDate: { fontSize: 9, color: colors.muted },
+      contentsTitle: { fontSize: 16, bold: true, color: colors.purple },
+      productTitle: { fontSize: 12, bold: true, color: colors.purple },
+      sectionHeading: { fontSize: 8, bold: true, color: colors.teal, characterSpacing: 0.35 },
+      careHeading: { fontSize: 8, bold: true, color: "#76503d", characterSpacing: 0.35 },
+      bodyText: { fontSize: 8.7, color: colors.body, lineHeight: 1.17 },
+    },
+    header: (page: number) => page === 1 ? null : ({
+      margin: [48, 22, 48, 0],
+      columns: [
+        { image: logo, width: 22, height: 22, margin: [0, 0, 8, 0] },
+        { text: "DR. FREDERIK  ·  RELATÓRIO DE OBSERVAÇÕES", fontSize: 8, bold: true, color: colors.purple, margin: [0, 6, 0, 0] },
+        { text: date, alignment: "right", fontSize: 8, color: colors.muted, margin: [0, 6, 0, 0] },
+      ],
+    }),
+    footer: (page: number, pageCount: number) => ({
+      margin: [48, 0, 48, 18],
+      columns: [
+        { text: "RELATÓRIO DE OBSERVAÇÕES", fontSize: 7.5, color: colors.muted },
+        { text: date, alignment: "center", fontSize: 7.5, color: colors.muted },
+        { text: `Página ${page} de ${pageCount}`, alignment: "right", fontSize: 7.5, color: colors.muted },
+      ],
+    }),
+    content: contents,
+  };
+  pdfMake.createPdf(definition as any).download(filename);
 }
 
 export function registeredTechnicalReferences(medications: MedicationRecord[]) {
-  return medications.reduce((total, medication) => total + parseObservation(medication.notes ?? "").references.length, 0);
+  return medications.reduce((count, medication) => count + parseObservation(medication.notes ?? "").references.length, 0);
 }
 
-export const medicationObservationSections = observationSections;
+export const medicationObservationSections = sections;
