@@ -475,7 +475,7 @@ function MedicationsPage() {
         <Dialog open={observationPreviewOpen && Boolean(selectedObservationMedication)} onOpenChange={setObservationPreviewOpen}>
           <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
             <DialogHeader><DialogTitle>Visualização — {selectedObservationMedication?.name}</DialogTitle><DialogDescription>Exibindo somente o produto selecionado.</DialogDescription></DialogHeader>
-            {selectedObservationMedication && <div className="rounded-lg border border-slate-200 p-4"><div className="mb-3 text-base font-semibold text-slate-800">{selectedObservationMedication.name}<MedicationReviewBadges medication={selectedObservationMedication} /></div><div className="whitespace-pre-wrap text-sm leading-6 text-slate-600">{selectedObservationMedication.notes?.trim() || "Nenhuma observação cadastrada."}</div></div>}
+            {selectedObservationMedication && <div className="rounded-lg border border-slate-200 p-4"><div className="mb-3 text-base font-semibold text-slate-800">{selectedObservationMedication.name}</div><div className="whitespace-pre-wrap text-sm leading-6 text-slate-600">{selectedObservationMedication.notes?.trim() || "Nenhuma observação cadastrada."}</div></div>}
           </DialogContent>
         </Dialog>
       </BaseTabsContent>}
