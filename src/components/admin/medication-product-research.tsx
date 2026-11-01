@@ -1,6 +1,5 @@
 import { useState, type FormEvent } from "react";
 import { Loader2, Search } from "lucide-react";
-import { SectionCard } from "@/components/admin/admin-ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,8 +41,8 @@ export function MedicationProductResearch() {
     }
   }
 
-  return <SectionCard title="Pesquisa de produto" className="mt-0">
-    <p className="mb-5 text-sm text-slate-600">Pesquise informações técnicas em fontes oficiais e científicas. O resultado é apenas informativo e não altera o cadastro nem as observações do estoque.</p>
+  return <section aria-label="Pesquisa de produto" className="space-y-5">
+    <p className="text-sm text-slate-600">Pesquise informações técnicas em fontes oficiais e científicas. O resultado é apenas informativo e não altera o cadastro nem as observações do estoque.</p>
     <form onSubmit={searchProduct} className="grid gap-4">
       <div className="grid gap-2">
         <Label htmlFor="medication-product-search">Nome do produto</Label>
@@ -56,7 +55,7 @@ export function MedicationProductResearch() {
       {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
       <div><Button type="submit" disabled={searching} className="gap-2 bg-[#39245d] text-white hover:bg-[#2f1d4b]">{searching ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}{searching ? "Pesquisando…" : "Pesquisar produto"}</Button></div>
     </form>
-    {result && <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4 sm:p-6">
+    {result && <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6">
       <h3 className="font-display text-base font-semibold text-[#39245d]">Resultado da pesquisa</h3>
       <p className="mt-1 text-xs text-slate-500">Conteúdo gerado para revisão profissional; não constitui recomendação individual.</p>
       <div className="mt-4 whitespace-pre-wrap text-sm leading-6 text-slate-700">{result.draft}</div>
@@ -67,5 +66,5 @@ export function MedicationProductResearch() {
         </ul>
       </div>}
     </div>}
-  </SectionCard>;
+  </section>;
 }
