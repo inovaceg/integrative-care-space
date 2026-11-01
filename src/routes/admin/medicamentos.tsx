@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps,
 import { useAuth } from "@/components/auth/auth-provider";
 import { AdminLayout, AdminNotice, EmptyState, PageIntro, SectionCard } from "@/components/admin/admin-ui";
 import { MedicationReviewBadges } from "@/components/admin/medication-review-badges";
-import { MedicationProductResearch } from "@/components/admin/medication-product-research";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,8 +20,8 @@ import type { MedicationMovementRecord, MedicationMovementType, MedicationRecord
 
 export const Route = createFileRoute("/admin/medicamentos")({ component: MedicationsPage });
 
-type MedicationTab = "estoque" | "relatorio" | "observacoes" | "pesquisa";
-const validMedicationTabs = ["estoque", "relatorio", "observacoes", "pesquisa"] as const;
+type MedicationTab = "estoque" | "relatorio" | "observacoes";
+const validMedicationTabs = ["estoque", "relatorio", "observacoes"] as const;
 const unitLabels: Record<MedicationUnit, string> = { unit: "Unidade", box: "Caixa", bottle: "Frasco" };
 const movementLabels: Record<MedicationMovementType, string> = { entry: "Entrada", exit: "Saída" };
 
@@ -447,13 +446,11 @@ function MedicationsPage() {
     <BaseTabsList {...props}>
       {children}
       <TabsTrigger value="observacoes" className="rounded-lg bg-white px-4 py-2.5 data-[state=active]:bg-[#e3f3ef] data-[state=active]:text-[#216d64]">Relatório de Observações</TabsTrigger>
-      <TabsTrigger value="pesquisa" className="rounded-lg bg-white px-4 py-2.5 data-[state=active]:bg-[#e3f3ef] data-[state=active]:text-[#216d64]">Pesquisa de produto</TabsTrigger>
     </BaseTabsList>
   ), []);
   const TabsContent = useMemo(() => ({ value, children, ...props }: ComponentProps<typeof BaseTabsContent>) => (
     <>
       <BaseTabsContent value={value} {...props}>{children}</BaseTabsContent>
-      {value === "relatorio" && <BaseTabsContent value="pesquisa"><MedicationProductResearch /></BaseTabsContent>}
       {value === "relatorio" && <BaseTabsContent value="observacoes">
         <SectionCard title="Relatório de Observações" className="mt-0">
           <div className="mb-4 flex flex-wrap justify-end gap-2">
