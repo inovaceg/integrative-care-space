@@ -113,11 +113,9 @@ export async function downloadMedicationObservationReport(medications: Medicatio
   });
 
   const references = products.flatMap((product) => product.references.map((reference) => ({ name: product.name, reference })));
-  contents.push({ text: "REFERÊNCIAS TÉCNICAS", style: "contentsTitle", pageBreak: "before", margin: [0, 0, 0, 14] });
   if (references.length) {
+    contents.push({ text: "REFERÊNCIAS TÉCNICAS", style: "contentsTitle", margin: [0, 10, 0, 12], keepWithNext: true });
     references.forEach(({ name, reference }) => contents.push({ stack: [{ text: name, bold: true, color: colors.purple, fontSize: 9 }, { text: reference, fontSize: 8.5, color: colors.body }], margin: [0, 0, 0, 9], unbreakable: true }));
-  } else {
-    contents.push({ text: "Nenhuma referência técnica foi registrada nas observações dos medicamentos.", fontSize: 9, color: colors.muted });
   }
 
   const definition = {
