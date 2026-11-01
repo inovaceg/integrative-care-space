@@ -96,7 +96,7 @@ export async function downloadMedicationObservationReport(medications: Medicatio
   }));
   const date = new Date().toLocaleDateString("pt-BR");
   const contents: any[] = [
-    { image: logo, width: 54, height: 54, alignment: "center", margin: [0, 95, 0, 20] },
+    { svg: logo, width: 54, height: 54, alignment: "center", margin: [0, 95, 0, 20] },
     { text: "DR. FREDERIK", style: "coverBrand", alignment: "center" },
     { canvas: [{ type: "line", x1: 0, y1: 0, x2: 160, y2: 0, lineWidth: 1, lineColor: colors.teal }], alignment: "center", margin: [0, 22, 0, 22] },
     { text: "RELATÓRIO DE\nOBSERVAÇÕES", style: "coverTitle", alignment: "center" },
@@ -138,7 +138,7 @@ export async function downloadMedicationObservationReport(medications: Medicatio
     header: (page: number) => page === 1 ? null : ({
       margin: [48, 22, 48, 0],
       columns: [
-        { image: logo, width: 22, height: 22, margin: [0, 0, 8, 0] },
+        { svg: logo, width: 22, height: 22, margin: [0, 0, 8, 0] },
         { text: "DR. FREDERIK  ·  RELATÓRIO DE OBSERVAÇÕES", fontSize: 8, bold: true, color: colors.purple, margin: [0, 6, 0, 0] },
         { text: date, alignment: "right", fontSize: 8, color: colors.muted, margin: [0, 6, 0, 0] },
       ],
