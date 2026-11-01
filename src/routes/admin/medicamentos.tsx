@@ -37,6 +37,17 @@ function isMovementType(value: unknown): value is MedicationMovementType {
   return value === "entry" || value === "exit";
 }
 
+function MedicationProductFilter({ medications, showReviewFlags = false }: { medications: MedicationRecord[]; showReviewFlags?: boolean }) {
+  const [query, setQuery] = useState("");
+  const term = query.trim().toLocaleLowerCase("pt-BR");
+  const filtered = medications.filter((medication) => !term || `${medication.name} ${medication.supplier ?? ""}`.toLocaleLowerCase("pt-BR").includes(term));
+
+  return <div className="grid gap-4">
+    <div className="relative max-w-lg"><Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" /><Input aria-label="Filtrar produtos" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar produto ou fornecedor" className="h-10 border-slate-200 bg-white pl-9 shadow-none" /></div>
+    {filtered.length === 0 ? <EmptyState title={medications.length === 0 ? "Nenhum medicamento cadastrado" : "Nenhum produto encontrado"} description={medications.length === 0 ? "Cadastre medicamentos para consultar suas observações aqui." : "Tente buscar por outro nome ou fornecedor."} /> : <div className="overflow-x-auto"><table className="w-full min-w-[560px] text-left text-sm"><thead><tr className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-400"><th className="px-3 py-3 font-medium">Nome do produto</th><th className="px-3 py-3 font-medium">Observação</th></tr></thead><tbody>{filtered.map((medication) => <tr key={medication.id} className="border-b border-slate-50 last:border-0"><td className="px-3 py-3 align-top font-medium text-slate-700">{medication.name}{showReviewFlags && <MedicationReviewBadges medication={medication} />}</td><td className="whitespace-pre-wrap px-3 py-3 align-top text-slate-600">{medication.notes?.trim() || "—"}</td></tr>)}</tbody></table></div>}
+  </div>;
+}
+
 function isString(value: unknown): value is string {
   return typeof value === "string";
 }
@@ -458,20 +469,18 @@ function MedicationsPage() {
             <Button type="button" disabled={medications.length === 0} onClick={() => void generateObservationsPdf()} className="bg-[#2f8f82] text-white hover:bg-[#26796e]"><Download className="mr-2 size-4" />Gerar PDF</Button>
           </div>
           <p className="mb-3 text-xs text-slate-500">Indicadores internos para revisão; não representam aprovação sanitária nem validação clínica.</p>
-          <div className="relative mb-4 max-w-lg"><Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" /><Input aria-label="Filtrar produtos do relatório" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar produto ou fornecedor" className="h-10 border-slate-200 bg-white pl-9 shadow-none" /></div>
-          {medications.length === 0 ? <EmptyState title="Nenhum medicamento cadastrado" description="Cadastre medicamentos para consultar suas observações aqui." /> : visibleMedications.length === 0 ? <EmptyState title="Nenhum produto encontrado" description="Tente buscar por outro nome ou fornecedor." /> : <div className="overflow-x-auto"><table className="w-full min-w-[560px] text-left text-sm"><thead><tr className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-400"><th className="px-3 py-3 font-medium">Nome do produto</th><th className="px-3 py-3 font-medium">Observação</th></tr></thead><tbody>{visibleMedications.map((medication) => <tr key={medication.id} className="border-b border-slate-50 last:border-0"><td className="px-3 py-3 align-top font-medium text-slate-700">{medication.name}<MedicationReviewBadges medication={medication} /></td><td className="whitespace-pre-wrap px-3 py-3 align-top text-slate-600">{medication.notes?.trim() || "—"}</td></tr>)}</tbody></table></div>}
+          <MedicationProductFilter medications={medications} showReviewFlags />
         </SectionCard>
         <Dialog open={observationPreviewOpen} onOpenChange={setObservationPreviewOpen}>
           <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
             <DialogHeader><DialogTitle>Visualização — Relatório de Observações</DialogTitle><DialogDescription>Confira os produtos e observações antes de gerar o PDF.</DialogDescription></DialogHeader>
-            <div className="relative max-w-lg"><Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" /><Input aria-label="Filtrar produtos da visualização" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar produto ou fornecedor" className="h-10 border-slate-200 bg-white pl-9 shadow-none" /></div>
-            <div className="overflow-x-auto rounded-lg border border-slate-200"><table className="w-full min-w-[500px] text-left text-sm"><thead><tr className="border-b bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><th className="px-3 py-3 font-medium">Nome do produto</th><th className="px-3 py-3 font-medium">Observação</th></tr></thead><tbody>{visibleMedications.map((medication) => <tr key={medication.id} className="border-b last:border-0"><td className="px-3 py-3 align-top font-medium text-slate-700">{medication.name}</td><td className="whitespace-pre-wrap px-3 py-3 text-slate-600">{medication.notes?.trim() || "—"}</td></tr>)}</tbody></table></div>
+            <MedicationProductFilter medications={medications} />
             <div className="flex justify-end"><Button type="button" onClick={() => void generateObservationsPdf()} className="bg-[#2f8f82] text-white hover:bg-[#26796e]"><Download className="mr-2 size-4" />Gerar PDF</Button></div>
           </DialogContent>
         </Dialog>
       </BaseTabsContent>}
     </>
-  ), [generateObservationsPdf, medications, observationPreviewOpen, search, setSearch, visibleMedications]);
+  ), [generateObservationsPdf, medications, observationPreviewOpen]);
 
   useEffect(() => {
     const attachReportControls = () => {
