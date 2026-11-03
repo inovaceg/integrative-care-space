@@ -9,7 +9,7 @@ export function ProfessionalAreaSelector({ value, onChange, onContinue }: { valu
       <div className="grid gap-4 md:grid-cols-2">
         {(Object.keys(professionalAreas) as ProfessionalArea[]).map(key => {
           const area = professionalAreas[key];
-          const Icon = key === 'psicologia' ? Brain : Stethoscope;
+          const Icon = key === 'psicologia' ? Brain : key === 'manual' ? FileText : Stethoscope;
           return (
             <button key={key} type="button" aria-pressed={value === key} onClick={() => onChange(key)} className={`flex flex-col items-start rounded-xl border-2 p-6 text-left transition-colors ${value === key ? 'border-[#2f8f82] bg-[#eff9f6]' : 'border-slate-200 hover:border-[#2f8f82]'}`}>
               <Icon className="mb-4 size-7 text-[#2f8f82]" />

@@ -5,6 +5,7 @@ export const professionalDocumentFooter = `${professionalName}\nDr. em Psicanál
 export const professionalAreas = {
   psicologia: { label: 'Psicologia', title: 'Dr. em Psicanálise • Psicólogo Clínico', registration: 'CRP 04/86194', types: ['Orientações ao Paciente', 'Documento Profissional'] },
   biomedicina: { label: 'Biomedicina', title: 'Biomédico Esteta e Integrativo', registration: 'CRBM 30421', types: ['Receituário', 'Solicitação de Exames', 'Orientações ao Paciente'] },
+  manual: { label: 'Modelo para preenchimento manual', title: 'Modelo em branco para preenchimento à mão', registration: 'Uso pelo profissional responsável', types: [] },
 } as const;
 export type ProfessionalArea = keyof typeof professionalAreas;
 export const areaSpecialties: Record<ProfessionalArea, string[]> = {
@@ -18,6 +19,7 @@ export const areaSpecialties: Record<ProfessionalArea, string[]> = {
     'Farmacologia e Prescrição Farmacêutica',
     'Estética Regenerativa e Ortomolecular',
   ],
+  manual: [],
 };
 export type DocumentType = (typeof professionalAreas)[ProfessionalArea]['types'][number];
 export type PrescriptionItem = { id: string; product: string; presentation: string; concentration: string; quantity: string; route: string; dosage: string; duration: string; notes: string };
