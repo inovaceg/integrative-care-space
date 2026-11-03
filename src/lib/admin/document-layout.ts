@@ -236,7 +236,7 @@ async function signatureJpeg() {
   return { bytes, width: canvas.width, height: canvas.height };
 }
 
-export async function downloadDocumentPdf(pages: DocumentPage[], filename: string, showBrand = false) {
+export async function downloadDocumentPdf(pages: DocumentPage[], filename: string, showBrand = false, cleanPage = false) {
   const hasSignature = pages.some(page => page.some(line => line.kind === 'signature-line'));
   const objects: string[] = ['', '', '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>', '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>'];
   const imageId = 5;
@@ -254,11 +254,7 @@ export async function downloadDocumentPdf(pages: DocumentPage[], filename: strin
     const streamId = pageId + 1;
     kids.push(`${pageId} 0 R`);
     
-    // Draw decorative header elements in PDF stream
-    // 1) Central emblem, optionally replaced by the prescription brand
-    // 2) Top header separator line
-    // 3) Footer separator line
-    let drawCommands = `${showBrand ? documentBrandPdf : `q
+    let drawCommands = cleanPage ? '' : `${showBrand ? documentBrandPdf : `q
 0.184 0.561 0.510 rg
 297.5 818 10 0 360 arc fill
 1 1 1 rg
