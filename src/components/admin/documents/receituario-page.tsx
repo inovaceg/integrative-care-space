@@ -142,23 +142,42 @@ export default function ReceituarioPage() {
     } });
   }
   const manualPrescriptionPage: DocumentPage = [
-    { text: professionalName.toUpperCase(), x: 166, y: 58, size: 15, bold: true, color: '#39245d', align: 'center' },
-    { text: 'BIOMÉDICO ESTETA E INTEGRATIVO  •  CRBM 30421', x: 176, y: 78, size: 9, bold: true, color: '#26796e', align: 'center' },
-    { text: 'RECEITUÁRIO', x: 248, y: 132, size: 19, bold: true, color: '#39245d', align: 'center' },
-    { text: 'Paciente:', x: 48, y: 184, size: 11, bold: true },
-    { text: '________________________________________________________________________________', x: 48, y: 204, size: 11, color: '#64748b' },
-    { text: 'Documento:', x: 48, y: 235, size: 11, bold: true },
-    { text: '________________________________________', x: 48, y: 255, size: 11, color: '#64748b' },
-    { text: 'Data de nascimento:', x: 340, y: 235, size: 11, bold: true },
-    { text: '________________________', x: 340, y: 255, size: 11, color: '#64748b' },
-    { text: 'USO / PRESCRIÇÃO', x: 48, y: 303, size: 10, bold: true, color: '#26796e' },
-    ...Array.from({ length: 11 }, (_, index) => ({ text: '________________________________________________________________________________', x: 48, y: 337 + index * 34, size: 11, color: '#cbd5e1' })),
-    { text: 'Data:', x: 48, y: 746, size: 11, bold: true },
-    { text: '____ / ____ / ________', x: 83, y: 746, size: 11, color: '#64748b' },
-    { text: '________________________________________', x: 316, y: 726, size: 11, color: '#64748b' },
-    { text: professionalName, x: 326, y: 744, size: 9, bold: true, color: '#39245d', align: 'center' },
-    { text: 'Assinatura e carimbo do profissional', x: 337, y: 761, size: 8, color: '#64748b', align: 'center' },
-    { text: 'Modelo em branco para preenchimento manual pelo profissional responsável.', x: 52, y: 811, size: 7.5, color: '#64748b' },
+    { text: professionalName.toUpperCase(), x: 178, y: 60, size: 15, bold: true, color: '#172d45' },
+    { text: 'BIOMÉDICO ESTETA E INTEGRATIVO  ·  CRBM 30421', x: 179, y: 79, size: 8.5, bold: true, color: '#26796e' },
+    { text: '', x: 48, y: 101, size: 1, kind: 'rule', width: 499, color: '#cbd5dc' },
+    { text: 'RECEITUÁRIO', x: 236, y: 139, size: 18, bold: true, color: '#172d45' },
+    { text: '', x: 258, y: 151, size: 1, kind: 'rule', width: 80, color: '#26796e' },
+    { text: 'IDENTIFICAÇÃO DO PACIENTE', x: 48, y: 181, size: 8, bold: true, color: '#26796e' },
+    { text: 'NOME COMPLETO', x: 48, y: 204, size: 7, bold: true, color: '#596675' },
+    { text: '', x: 48, y: 229, size: 1, kind: 'rule', width: 499, color: '#cbd5dc' },
+    { text: 'CPF / DOCUMENTO', x: 48, y: 253, size: 7, bold: true, color: '#596675' },
+    { text: '', x: 48, y: 278, size: 1, kind: 'rule', width: 235, color: '#cbd5dc' },
+    { text: 'DATA DE NASCIMENTO', x: 310, y: 253, size: 7, bold: true, color: '#596675' },
+    { text: '', x: 310, y: 278, size: 1, kind: 'rule', width: 237, color: '#cbd5dc' },
+    { text: 'DATA DO ATENDIMENTO', x: 48, y: 301, size: 7, bold: true, color: '#596675' },
+    { text: '', x: 48, y: 326, size: 1, kind: 'rule', width: 235, color: '#cbd5dc' },
+    { text: 'LOCAL', x: 310, y: 301, size: 7, bold: true, color: '#596675' },
+    { text: '', x: 310, y: 326, size: 1, kind: 'rule', width: 237, color: '#cbd5dc' },
+    { text: 'PRESCRIÇÃO / ORIENTAÇÕES', x: 48, y: 361, size: 8, bold: true, color: '#26796e' },
+    { text: 'PRODUTO / MEDICAMENTO', x: 48, y: 384, size: 7, bold: true, color: '#596675' },
+    { text: 'CONCENTRAÇÃO / APRESENTAÇÃO', x: 310, y: 384, size: 7, bold: true, color: '#596675' },
+    { text: '', x: 48, y: 410, size: 1, kind: 'rule', width: 235, color: '#cbd5dc' },
+    { text: '', x: 310, y: 410, size: 1, kind: 'rule', width: 237, color: '#cbd5dc' },
+    { text: 'POSOLOGIA / FREQUÊNCIA', x: 48, y: 436, size: 7, bold: true, color: '#596675' },
+    { text: '', x: 48, y: 462, size: 1, kind: 'rule', width: 499, color: '#cbd5dc' },
+    { text: 'VIA DE ADMINISTRAÇÃO  ·  DURAÇÃO', x: 48, y: 488, size: 7, bold: true, color: '#596675' },
+    { text: '', x: 48, y: 514, size: 1, kind: 'rule', width: 499, color: '#cbd5dc' },
+    { text: 'RECOMENDAÇÕES / OBSERVAÇÕES', x: 48, y: 540, size: 7, bold: true, color: '#596675' },
+    ...Array.from({ length: 4 }, (_, index) => ({ text: '', x: 48, y: 566 + index * 31, size: 1, kind: 'rule' as const, width: 499, color: '#cbd5dc' })),
+    { text: 'Data: ____ / ____ / ________', x: 48, y: 726, size: 8, bold: true, color: '#172d45' },
+    { text: '', x: 337, y: 707, size: 1, kind: 'rule', width: 210, color: '#172d45' },
+    { text: 'ASSINATURA E CARIMBO PROFISSIONAL', x: 337, y: 724, size: 7, bold: true, color: '#596675' },
+    { text: professionalName, x: 337, y: 740, size: 8, bold: true, color: '#172d45' },
+    { text: 'CRBM 30421', x: 337, y: 753, size: 7.5, color: '#26796e' },
+    { text: '', x: 48, y: 776, size: 1, kind: 'rule', width: 499, color: '#cbd5dc' },
+    { text: `${professionalName}  ·  CRBM 30421  ·  (32) 9 9193-1779`, x: 48, y: 793, size: 7, color: '#596675' },
+    { text: 'Juiz de Fora – MG  ·  drfredmartins.com.br', x: 48, y: 806, size: 7, color: '#596675' },
+    { text: 'Modelo de apoio. Verifique a habilitação e os requisitos legais aplicáveis antes da emissão.', x: 48, y: 823, size: 6.5, color: '#596675' },
   ];
   return <AdminLayout>
     <PageIntro eyebrow="Documentação profissional" title="Receituário" description="Criação e gerenciamento de documentos profissionais" action={step === 0 ? <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => setSettingsOpen(true)}><Settings className="size-4" />Dados do rodapé</Button><Button disabled={loading || busy} onClick={start} className="bg-[#2f8f82] text-white hover:bg-[#26796e]"><Plus className="size-4" /> Novo documento</Button></div> : undefined} />
@@ -169,7 +188,7 @@ export default function ReceituarioPage() {
     {step === 1 && <ProfessionalAreaSelector value={area} onChange={value => { setArea(value); setType(null); }} onContinue={() => setStep(2)} />}
     {step === 2 && area && area !== 'manual' && <DocumentTypeSelector area={area} value={type} onChange={setType} onContinue={() => setStep(3)} onBack={() => setStep(1)} />}
     {step === 2 && area === 'manual' && <section className="space-y-5 rounded-xl border border-slate-200 bg-white p-6"><div><h2 className="font-display text-xl font-semibold text-slate-800">Modelo para preenchimento manual</h2><p className="mt-2 text-sm leading-6 text-slate-600">Imprima a folha A4 em branco e preencha os dados da receita à mão.</p></div><div className="flex gap-3"><Button variant="outline" onClick={() => setStep(1)}>Voltar</Button><Button onClick={() => setStep(3)}>Continuar</Button></div></section>}
-    {step === 3 && area === 'manual' && <section className="space-y-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-display text-lg font-semibold text-slate-800">Receituário em branco</h2><p className="text-sm text-slate-500">A4 · pronto para impressão e preenchimento à mão</p></div><div className="flex gap-2"><Button variant="outline" onClick={() => setStep(2)}>Voltar</Button><Button onClick={() => print([manualPrescriptionPage], 'modelo-receituario-em-branco')}>Imprimir modelo</Button></div></div><DocumentPreview pages={[manualPrescriptionPage]} showBrand /></section>}
+    {step === 3 && area === 'manual' && <section className="space-y-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-display text-lg font-semibold text-slate-800">Receituário em branco</h2><p className="text-sm text-slate-500">A4 · modelo para imprimir e preencher à mão</p></div><div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => setStep(2)}>Voltar</Button><Button variant="outline" onClick={() => void download([manualPrescriptionPage], 'modelo-receituario-em-branco')}>Gerar PDF</Button><Button onClick={() => print([manualPrescriptionPage], 'modelo-receituario-em-branco')}>Imprimir modelo</Button></div></div><DocumentPreview pages={[manualPrescriptionPage]} showBrand /></section>}
     {step === 3 && area && area !== 'manual' && type && <>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#cce7df] bg-[#eff9f6] p-4"><div className="flex items-center gap-3"><FileText className="size-6 text-[#2f8f82]" /><div><p className="text-xs text-slate-500">Emitindo como:</p><strong>{professionalAreas[area].label} · {professionalAreas[area].registration}</strong><p className="text-sm text-slate-600">{type}</p></div></div><Button variant="outline" disabled={busy} onClick={() => setConfirmation({ title: 'Alterar área profissional?', description: 'Os dados do paciente serão preservados. O conteúdo clínico será limpo para evitar a mistura de documentos entre profissões.', action: () => { setContent({ ...emptyContent(content.footer), patient: content.patient }); setSavedId(undefined); setType(null); setArea(null); setStep(1); setDirty(true); setReviewed(false); } })}>Alterar área</Button></div>
       <p className="mb-5 text-sm leading-6 text-slate-500">Ferramenta de elaboração de documentos. Nenhum medicamento, dose, exame ou tratamento é sugerido automaticamente. Todo conteúdo deve ser informado e revisado pelo profissional responsável.</p>

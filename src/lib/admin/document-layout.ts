@@ -1,5 +1,4 @@
 import { areaSpecialties, displayDate, professionalAreas, professionalDocumentFooter, professionalName, type DocumentContent, type DocumentType, type ProfessionalArea } from './documents';
-import { layoutMedicalPrescription } from './medical-prescription-layout';
 import { documentBrandPdf } from './document-brand';
 
 export type DocumentLine = { text: string; x: number; y: number; size: number; bold?: boolean; color?: string; align?: 'left' | 'center' | 'right'; kind?: 'signature-line' | 'rule'; width?: number };
@@ -46,7 +45,6 @@ function centeredX(text: string, size: number, bold = false): number {
 }
 
 export function layoutDocument(area: ProfessionalArea, type: DocumentType, content: DocumentContent, draft = false): DocumentPage[] {
-  if (area === 'biomedicina' && type === 'Receituário') return layoutMedicalPrescription(content, draft);
   const identity = professionalAreas[area];
   const specialtyLines = areaSpecialties[area].flatMap(text => wrap(text, 9.5, false, 511));
   
