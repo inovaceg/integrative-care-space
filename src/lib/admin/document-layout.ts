@@ -254,7 +254,7 @@ export async function downloadDocumentPdf(pages: DocumentPage[], filename: strin
     const streamId = pageId + 1;
     kids.push(`${pageId} 0 R`);
     
-    let drawCommands = cleanPage ? '' : `${showBrand ? documentBrandPdf : `q
+    let drawCommands = cleanPage ? (showBrand ? documentBrandPdf : '') : `${showBrand ? documentBrandPdf : `q
 0.184 0.561 0.510 rg
 297.5 818 10 0 360 arc fill
 1 1 1 rg

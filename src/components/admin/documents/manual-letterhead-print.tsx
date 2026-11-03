@@ -4,7 +4,6 @@ import type { DocumentPage } from "@/lib/admin/document-layout";
 
 export function ManualLetterheadPrint({ page }: { page: DocumentPage }) {
   if (typeof document === "undefined") return null;
-  const logoSize = 42;
   return createPortal(<div id="manual-letterhead-print">
     <style>{`
       #manual-letterhead-print { display: none; }
@@ -18,7 +17,7 @@ export function ManualLetterheadPrint({ page }: { page: DocumentPage }) {
     `}</style>
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 595 842" role="img" aria-label="Papel timbrado A4 do Dr. Frederick">
       <rect width="595" height="842" fill="#fff" />
-      <g transform={`translate(48 32) scale(${logoSize / 64})`} aria-label="Logomarca original">
+      <g transform={documentBrand.transform} aria-label="Logomarca original">
         <path d={documentBrand.backgroundPath} fill={documentBrand.color} />
         <path d={documentBrand.symbolPath} fill="none" stroke="white" strokeWidth={documentBrand.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
       </g>
