@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { FileText, Plus, Settings } from 'lucide-react';
 import { useAuth } from '@/components/auth/auth-provider';
@@ -9,11 +9,9 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import { PatientForm, PrescriptionEditor, ExamRequestEditor, Field } from './document-fields';
 import { ProfessionalAreaSelector, DocumentTypeSelector } from './document-selectors';
 import { DocumentPreview, PrintDocument } from './document-preview';
-import { ManualLetterheadPreview } from './manual-letterhead-preview';
-import { ManualLetterheadPrint } from './manual-letterhead-print';
 import { DocumentHistory } from './document-history';
-import { deleteDocument, emptyContent, getDocuments, professionalDocumentFooter, professionalName, saveDocument, professionalAreas, today, type DocumentContent, type DocumentType, type ProfessionalArea, type ProfessionalDocument } from '@/lib/admin/documents';
-import { documentFilename, downloadDocumentPdf, layoutDocument, type DocumentPage } from '@/lib/admin/document-layout';
+import { deleteDocument, emptyContent, getDocuments, professionalDocumentFooter, saveDocument, professionalAreas, today, type DocumentContent, type DocumentType, type ProfessionalArea, type ProfessionalDocument } from '@/lib/admin/documents';
+import { documentFilename, downloadDocumentPdf, layoutDocument } from '@/lib/admin/document-layout';
 import { fetchPatient, fetchPatientOptions } from '@/lib/admin/records';
 
 let receituarioDraftState = {
@@ -28,6 +26,7 @@ let receituarioDraftState = {
 
 export default function ReceituarioPage() {
   const { user } = useAuth();
+  const manualPdfFrame = useRef<HTMLIFrameElement>(null);
   const [documents, setDocuments] = useState<ProfessionalDocument[]>([]);
   const [patientOptions, setPatientOptions] = useState<{ id: string; nome: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -143,16 +142,6 @@ export default function ReceituarioPage() {
       deleteDocument(record.id).then(() => { setDocuments(rows => rows.filter(row => row.id !== record.id)); setMessage('Documento excluído.'); }).catch(() => setError('Não foi possível excluir o documento.')).finally(() => setBusy(false));
     } });
   }
-  const manualPrescriptionPage: DocumentPage = [
-    { text: professionalName.toUpperCase(), x: 297.5, y: 119, size: 21, bold: true, color: '#102e54', align: 'center' },
-    { text: 'BIOMÉDICO ESTETA E INTEGRATIVO  ·  CRBM 30421', x: 297.5, y: 143, size: 10, bold: true, color: '#172d45', align: 'center' },
-    { text: 'RECEITUÁRIO', x: 249, y: 208, size: 17, bold: true, color: '#102e54' },
-    { text: '', x: 337, y: 729, size: 1, kind: 'rule', width: 210, color: '#102e54' },
-    { text: 'Assinatura e carimbo profissional', x: 337, y: 741, size: 7, color: '#596675' },
-    { text: professionalName, x: 48, y: 765, size: 7.5, bold: true, color: '#102e54' },
-    { text: 'CRBM 30421  ·  (32) 9 9193-1779', x: 48, y: 778, size: 7, color: '#102e54' },
-    { text: 'Juiz de Fora – MG  ·  drfredmartins.com.br', x: 48, y: 791, size: 7, color: '#102e54' },
-  ];
   return <AdminLayout>
     <PageIntro eyebrow="Documentação profissional" title="Receituário" description="Criação e gerenciamento de documentos profissionais" action={step === 0 ? <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => setSettingsOpen(true)}><Settings className="size-4" />Dados do rodapé</Button><Button disabled={loading || busy} onClick={start} className="bg-[#2f8f82] text-white hover:bg-[#26796e]"><Plus className="size-4" /> Novo documento</Button></div> : undefined} />
     {error && <p role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
@@ -162,7 +151,7 @@ export default function ReceituarioPage() {
     {step === 1 && <ProfessionalAreaSelector value={area} onChange={value => { setArea(value); setType(null); }} onContinue={() => setStep(2)} />}
     {step === 2 && area && area !== 'manual' && <DocumentTypeSelector area={area} value={type} onChange={setType} onContinue={() => setStep(3)} onBack={() => setStep(1)} />}
     {step === 2 && area === 'manual' && <section className="space-y-5 rounded-xl border border-slate-200 bg-white p-6"><div><h2 className="font-display text-xl font-semibold text-slate-800">Modelo para preenchimento manual</h2><p className="mt-2 text-sm leading-6 text-slate-600">Imprima a folha A4 em branco e preencha os dados da receita à mão.</p></div><div className="flex gap-3"><Button variant="outline" onClick={() => setStep(1)}>Voltar</Button><Button onClick={() => setStep(3)}>Continuar</Button></div></section>}
-    {step === 3 && area === 'manual' && <section className="space-y-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-display text-lg font-semibold text-slate-800">Papel timbrado profissional</h2><p className="text-sm text-slate-500">A4 · centro da folha livre para preenchimento manual</p></div><div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => setStep(2)}>Voltar</Button><Button variant="outline" onClick={() => void downloadDocumentPdf([manualPrescriptionPage], 'papel-timbrado-dr-frederick', true, true, true)}>Gerar PDF</Button><Button onClick={() => print([manualPrescriptionPage], 'papel-timbrado-dr-frederick')}>Imprimir</Button></div></div><div className="mx-auto max-w-[794px] overflow-hidden border border-slate-200 bg-white"><ManualLetterheadPreview page={manualPrescriptionPage} /></div></section>}
+    {step === 3 && area === 'manual' && <section className="space-y-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-display text-lg font-semibold text-slate-800">Modelo para preenchimento manual</h2><p className="text-sm text-slate-500">Prévia fiel do arquivo de receituário anexado</p></div><div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => setStep(2)}>Voltar</Button><Button variant="outline" onClick={() => { const link = document.createElement('a'); link.href = '/receituario-dr-frederick-minimalista.pdf'; link.download = 'receituario-dr-frederick-martins.pdf'; link.click(); }}>Gerar PDF</Button><Button onClick={() => manualPdfFrame.current?.contentWindow?.print()}>Imprimir</Button></div></div><div className="mx-auto aspect-[210/297] w-full max-w-[794px] overflow-hidden border border-slate-200 bg-white shadow-sm"><iframe ref={manualPdfFrame} src="/receituario-dr-frederick-minimalista.pdf#toolbar=0&navpanes=0&scrollbar=0" title="Modelo de receituário manual anexado" className="size-full" /></div></section>}
     {step === 3 && area && area !== 'manual' && type && <>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#cce7df] bg-[#eff9f6] p-4"><div className="flex items-center gap-3"><FileText className="size-6 text-[#2f8f82]" /><div><p className="text-xs text-slate-500">Emitindo como:</p><strong>{professionalAreas[area].label} · {professionalAreas[area].registration}</strong><p className="text-sm text-slate-600">{type}</p></div></div><Button variant="outline" disabled={busy} onClick={() => setConfirmation({ title: 'Alterar área profissional?', description: 'Os dados do paciente serão preservados. O conteúdo clínico será limpo para evitar a mistura de documentos entre profissões.', action: () => { setContent({ ...emptyContent(content.footer), patient: content.patient }); setSavedId(undefined); setType(null); setArea(null); setStep(1); setDirty(true); setReviewed(false); } })}>Alterar área</Button></div>
       <p className="mb-5 text-sm leading-6 text-slate-500">Ferramenta de elaboração de documentos. Nenhum medicamento, dose, exame ou tratamento é sugerido automaticamente. Todo conteúdo deve ser informado e revisado pelo profissional responsável.</p>
@@ -190,8 +179,6 @@ export default function ReceituarioPage() {
     <Dialog open={!!preview} onOpenChange={value => { if (!value) setPreview(null); }}><DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-4xl"><DialogHeader><DialogTitle>Visualizar documento</DialogTitle><DialogDescription>Documento privado. Revise o conteúdo e a identificação profissional.</DialogDescription></DialogHeader>{preview && <><div className="flex flex-wrap gap-2"><Button onClick={() => print(preview.pages, preview.filename)}>Imprimir</Button><Button variant="outline" onClick={() => download(preview.pages, preview.filename)}>Gerar PDF</Button>{preview.record?.status === 'Rascunho' && <Button variant="outline" onClick={() => open(preview.record!, false)}>Editar rascunho</Button>}</div>{preview.record && <p className="break-all text-xs text-slate-500">{preview.record.status} · Identificador: {preview.record.id} · Criado em {new Date(preview.record.created_at).toLocaleString('pt-BR')}</p>}<DocumentPreview pages={preview.pages} showBrand /></>}</DialogContent></Dialog>
     <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}><DialogContent><DialogHeader><DialogTitle>Dados do rodapé</DialogTitle><DialogDescription>Este bloco padronizado é aplicado aos documentos emitidos.</DialogDescription></DialogHeader><p className="whitespace-pre-line rounded-lg border border-slate-200 bg-slate-50 p-4 text-center text-sm leading-6 text-slate-700">{professionalDocumentFooter}</p></DialogContent></Dialog>
     <AlertDialog open={!!confirmation} onOpenChange={open => { if (!open) setConfirmation(null); }}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{confirmation?.title}</AlertDialogTitle><AlertDialogDescription>{confirmation?.description}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Voltar</AlertDialogCancel><AlertDialogAction onClick={() => { const action = confirmation?.action; setConfirmation(null); action?.(); }}>Confirmar</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
-    {area === 'manual' && step === 3
-      ? <ManualLetterheadPrint page={manualPrescriptionPage} />
-      : (pages.length > 0 || preview || printPages.length > 0) && <PrintDocument pages={printPages.length ? printPages : preview?.pages ?? pages} showBrand />}
+    {(pages.length > 0 || preview || printPages.length > 0) && <PrintDocument pages={printPages.length ? printPages : preview?.pages ?? pages} showBrand />}
   </AdminLayout>;
 }
