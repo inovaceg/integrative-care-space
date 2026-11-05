@@ -11,7 +11,7 @@ export function ManualLetterheadArt({ page, className }: { page: DocumentPage; c
       <path d={documentBrand.symbolPath} fill="none" stroke="white" strokeWidth={documentBrand.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
     </g>
     <line x1="52" y1="137" x2="543" y2="137" stroke="#d5ad4d" strokeWidth="1" />
-    <line x1="234" y1="160" x2="234" y2="757" stroke="#d5ad4d" strokeWidth="1.2" />
+    <line x1="250" y1="160" x2="250" y2="757" stroke="#d5ad4d" strokeWidth="1.2" />
     <path d="M23 154H204Q213 154 213 163V172Q213 181 204 181H23Z" fill="#102e54" />
     <text x="118" y="172" fontFamily="Georgia, 'Times New Roman', serif" fontSize="11" fontWeight="700" fill="#fff" textAnchor="middle">Áreas de Atuação</text>
     <g fontFamily="Georgia, 'Times New Roman', serif" fontSize="8.2" fontWeight="700" fill="#102e54">
