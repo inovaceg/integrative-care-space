@@ -57,3 +57,10 @@ ${strokeWidth} w
 ${pdfPath(psi)}
 S
 Q`;
+
+export const documentBrandWatermarkPdf = `q
+${3.5} 0 0 ${-3.5} 185 476 cm
+0.91 0.94 0.97 rg
+${pdfPath(psi)}
+f
+Q`;

@@ -1,5 +1,6 @@
 import { areaSpecialties, displayDate, professionalAreas, professionalDocumentFooter, professionalName, type DocumentContent, type DocumentType, type ProfessionalArea } from './documents';
 import { documentBrandPdf } from './document-brand';
+import { letterheadArtPdf } from './letterhead-art-pdf';
 
 export type DocumentLine = { text: string; x: number; y: number; size: number; bold?: boolean; color?: string; align?: 'left' | 'center' | 'right'; kind?: 'signature-line' | 'rule'; width?: number };
 export type DocumentPage = DocumentLine[];
@@ -236,7 +237,7 @@ async function signatureJpeg() {
   return { bytes, width: canvas.width, height: canvas.height };
 }
 
-export async function downloadDocumentPdf(pages: DocumentPage[], filename: string, showBrand = false, cleanPage = false) {
+export async function downloadDocumentPdf(pages: DocumentPage[], filename: string, showBrand = false, cleanPage = false, letterhead = false) {
   const hasSignature = pages.some(page => page.some(line => line.kind === 'signature-line'));
   const objects: string[] = ['', '', '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>', '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>'];
   const imageId = 5;
@@ -254,7 +255,7 @@ export async function downloadDocumentPdf(pages: DocumentPage[], filename: strin
     const streamId = pageId + 1;
     kids.push(`${pageId} 0 R`);
     
-    let drawCommands = cleanPage ? (showBrand ? documentBrandPdf : '') : `${showBrand ? documentBrandPdf : `q
+    let drawCommands = letterhead ? letterheadArtPdf : cleanPage ? (showBrand ? documentBrandPdf : '') : `${showBrand ? documentBrandPdf : `q
 0.184 0.561 0.510 rg
 297.5 818 10 0 360 arc fill
 1 1 1 rg
