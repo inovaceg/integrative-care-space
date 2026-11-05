@@ -10,10 +10,24 @@ import { importProtocolWord, normalizeProtocolSearch, protocolStorageKey, type P
 export default function ProtocolsPage() {
   const [library, setLibrary] = useState<ProtocolLibrary>({ source: "", protocols: [] });
   const [query, setQuery] = useState("");
+  const [indexValue, setIndexValue] = useState("");
+  const [viewRestored, setViewRestored] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setQuery(sessionStorage.getItem("admin:protocols:query") ?? "");
+    setIndexValue(sessionStorage.getItem("admin:protocols:index") ?? "");
+    setViewRestored(true);
+  }, []);
+
+  useEffect(() => {
+    if (!viewRestored) return;
+    sessionStorage.setItem("admin:protocols:query", query);
+    sessionStorage.setItem("admin:protocols:index", indexValue);
+  }, [query, indexValue, viewRestored]);
 
   function saveLibrary(result: ProtocolLibrary) {
     setLibrary(result);
@@ -95,7 +109,7 @@ export default function ProtocolsPage() {
       {error && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</p>}
       {notice && <p role="status" className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">{notice}</p>}
       {loading && <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-500"><Loader2 className="size-5 animate-spin" />Organizando os cards a partir das tabelas do Word…</div>}
-      {filtered.length > 0 && <Accordion type="single" collapsible className="rounded-xl border border-slate-200 bg-white px-5 shadow-sm">
+      {viewRestored && filtered.length > 0 && <Accordion type="single" collapsible value={indexValue} onValueChange={setIndexValue} className="rounded-xl border border-slate-200 bg-white px-5 shadow-sm">
         <AccordionItem value="index" className="border-0">
           <AccordionTrigger className="font-semibold text-[#102e4e]"><span className="flex items-center gap-2"><BookOpen className="size-4 text-[#b18b45]" />Índice dos protocolos</span></AccordionTrigger>
           <AccordionContent><ol className="grid gap-2 sm:grid-cols-2">{filtered.map(({ protocol, id }) => <li key={id}><a href={`#${id}`} className="flex gap-3 rounded-md px-2 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-[#102e4e]"><span className="font-bold tabular-nums text-[#b18b45]">{protocol.number}</span><span>{protocol.title}</span></a></li>)}</ol></AccordionContent>
