@@ -63,8 +63,8 @@ export function ManualLetterheadArt(
                 <text x="45" y="483">TOD, TDAH e TEA</text>
             </g>
             <text
-                x="317.5"
-                y="595"
+                x="410"
+                y="550"
                 textAnchor="middle"
                 fontFamily="Georgia, 'Times New Roman', serif"
                 fontSize="235"
