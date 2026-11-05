@@ -37,7 +37,7 @@ export function ManualLetterheadArt(
                 textAnchor="middle">Áreas de Atuação</text>
             <g
                 fontFamily="Georgia, 'Times New Roman', serif"
-                fontSize="9.5"
+                fontSize="11.5"
                 fontWeight="700"
                 fill="#102e54">
                 <text x="45" y="205">Biomédico esteta</text>
