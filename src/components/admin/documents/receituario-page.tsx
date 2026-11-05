@@ -147,8 +147,7 @@ export default function ReceituarioPage() {
     { text: professionalName.toUpperCase(), x: 178, y: 70, size: 15, bold: true, color: '#ffffff' },
     { text: 'BIOMÉDICO ESTETA E INTEGRATIVO  ·  CRBM 30421', x: 179, y: 91, size: 8.5, bold: true, color: '#ffffff' },
     { text: 'RECEITUÁRIO', x: 249, y: 168, size: 17, bold: true, color: '#102e54' },
-    { text: '', x: 249, y: 172, size: 1, kind: 'rule', width: 97, color: '#d5ad4d' },
-    { text: '', x: 337, y: 729, size: 1, kind: 'rule', width: 210, color: '#102e54' }
+    { text: '', x: 337, y: 729, size: 1, kind: 'rule', width: 210, color: '#102e54' },
     { text: 'Assinatura e carimbo profissional', x: 337, y: 741, size: 7, color: '#596675' },
     { text: professionalName, x: 48, y: 765, size: 7.5, bold: true, color: '#102e54' },
     { text: 'CRBM 30421  ·  (32) 9 9193-1779', x: 48, y: 778, size: 7, color: '#102e54' },
