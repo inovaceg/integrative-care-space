@@ -37,20 +37,20 @@ export function ManualLetterheadArt(
                 textAnchor="middle">Áreas de Atuação</text>
             <g
                 fontFamily="Georgia, 'Times New Roman', serif"
-                fontSize="11.5"
+                fontSize="12.5"
                 fontWeight="700"
                 fill="#102e54">
-                <text x="45" y="205">Biomédico esteta</text>
-                <text x="45" y="231">Ortomolecular e</text><text x="45" y="242">regenerativa</text>
-                <text x="45" y="268">Farmacologia clínica e</text><text x="45" y="279">prescrição farmacêutica</text>
-                <text x="45" y="305">Saúde mental</text>
-                <text x="45" y="331">Depressão e ansiedade</text>
-                <text x="45" y="357">Dependência química</text>
-                <text x="45" y="383">Terapia familiar e de casal</text>
-                <text x="45" y="409">Sexologia</text>
-                <text x="45" y="435">Neuropsicologia clínica</text>
-                <text x="45" y="446">e reabilitação</text><text x="45" y="457">neuropsicológica</text>
-                <text x="45" y="483">TOD, TDAH e TEA</text>
+                <text x="40" y="205">Biomédico esteta</text>
+                <text x="40" y="238">Ortomolecular e</text><text x="40" y="253">regenerativa</text>
+                <text x="40" y="286">Farmacologia clínica e</text><text x="40" y="301">prescrição farmacêutica</text>
+                <text x="40" y="334">Saúde mental</text>
+                <text x="40" y="367">Depressão e ansiedade</text>
+                <text x="40" y="400">Dependência química</text>
+                <text x="40" y="433">Terapia familiar e de casal</text>
+                <text x="40" y="466">Sexologia</text>
+                <text x="40" y="499">Neuropsicologia clínica</text>
+                <text x="40" y="514">e reabilitação</text><text x="40" y="529">neuropsicológica</text>
+                <text x="40" y="562">TOD, TDAH e TEA</text>
             </g>
             <text
                 x="410"
