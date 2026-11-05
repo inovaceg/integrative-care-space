@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BookOpen, FileUp, Loader2, Search } from "lucide-react";
+import { BookOpen, FileDown, FileUp, Loader2, Printer, Search } from "lucide-react";
 import { AdminLayout, PageIntro } from "@/components/admin/admin-ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ProtocolCard } from "./protocol-card";
 import { importProtocolWord, normalizeProtocolSearch, protocolStorageKey, type ProtocolLibrary } from "@/lib/admin/protocols";
+import { downloadProtocolsPdf, printProtocols } from "@/lib/admin/protocols-report";
 
 export default function ProtocolsPage() {
   const [library, setLibrary] = useState<ProtocolLibrary>({ source: "", protocols: [] });
@@ -98,7 +99,11 @@ export default function ProtocolsPage() {
   return <AdminLayout>
     <PageIntro eyebrow="Biblioteca clínica" title="Protocolos" description="Cada protocolo organizado com fórmula, via, técnica e demais informações do documento original." action={<>
       <input ref={fileRef} type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="hidden" onChange={event => void importFile(event.target.files?.[0])} />
-      <Button disabled={loading} onClick={() => fileRef.current?.click()} className="bg-[#2f8f82] text-white hover:bg-[#26796e]"><FileUp className="mr-2 size-4" />Importar Word</Button>
+      <div className="flex flex-wrap gap-2">
+        <Button disabled={loading || filtered.length === 0} variant="outline" onClick={() => printProtocols(filtered.map(item => item.protocol))}><Printer className="mr-2 size-4" />Imprimir</Button>
+        <Button disabled={loading || filtered.length === 0} variant="outline" onClick={() => downloadProtocolsPdf(filtered.map(item => item.protocol))}><FileDown className="mr-2 size-4" />Gerar PDF</Button>
+        <Button disabled={loading} onClick={() => fileRef.current?.click()} className="bg-[#2f8f82] text-white hover:bg-[#26796e]"><FileUp className="mr-2 size-4" />Importar Word</Button>
+      </div>
     </>} />
     <div className="mx-auto max-w-5xl space-y-6">
       <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5" aria-label="Localizar protocolos">
