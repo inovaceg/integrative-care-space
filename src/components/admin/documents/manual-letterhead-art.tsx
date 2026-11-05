@@ -18,23 +18,13 @@ export function ManualLetterheadArt(
             aria-label="Papel timbrado A4 do Dr. Frederick"
             className={className}>
             <rect width="595" height="842" fill="#fff" />
-            <path
-                d="M0 0H595V103C498 117 410 92 304 98C195 104 91 126 0 111Z"
-                fill="#102e54" />
-            <path
-                d="M0 105C103 120 197 98 304 93C410 87 498 112 595 97V106C498 121 410 96 304 102C195 108 91 130 0 115Z"
-                fill="#d5ad4d" />
-            <g transform={documentBrand.transform} aria-label="Logomarca original">
-                <path d={documentBrand.backgroundPath} fill={documentBrand.color} />
-                <path
-                    d={documentBrand.symbolPath}
-                    fill="none"
-                    stroke="white"
-                    strokeWidth={documentBrand.strokeWidth}
-                    strokeLinecap="round"
-                    strokeLinejoin="round" />
+            <path d="M0 0H230C153 13 72 51 0 105Z" fill="#102e54" />
+            <path d="M0 98C73 48 153 10 230 0H257C160 17 78 58 0 112Z" fill="#d5ad4d" />
+            <g aria-label="Logomarca original">
+                <circle cx="297.5" cy="54" r="35" fill="#102e54" stroke="#d5ad4d" strokeWidth="2" />
+                <text x="297.5" y="69" textAnchor="middle" fontFamily="Georgia, 'Times New Roman', serif" fontSize="48" fill="#fff">Ψ</text>
             </g>
-            <line x1="52" y1="137" x2="543" y2="137" stroke="#d5ad4d" strokeWidth="1" />
+            <line x1="52" y1="158" x2="543" y2="158" stroke="#d5ad4d" strokeWidth="1" />
             <line x1="220" y1="160" x2="220" y2="757" stroke="#d5ad4d" strokeWidth="1.2" />
             <path d="M23 154H204Q213 154 213 163V172Q213 181 204 181H23Z" fill="#102e54" />
             <text

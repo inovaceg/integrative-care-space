@@ -144,9 +144,9 @@ export default function ReceituarioPage() {
     } });
   }
   const manualPrescriptionPage: DocumentPage = [
-    { text: professionalName.toUpperCase(), x: 178, y: 70, size: 15, bold: true, color: '#ffffff' },
-    { text: 'BIOMÉDICO ESTETA E INTEGRATIVO  ·  CRBM 30421', x: 179, y: 91, size: 8.5, bold: true, color: '#ffffff' },
-    { text: 'RECEITUÁRIO', x: 249, y: 168, size: 17, bold: true, color: '#102e54' },
+    { text: professionalName.toUpperCase(), x: 297.5, y: 119, size: 21, bold: true, color: '#102e54' },
+    { text: 'BIOMÉDICO ESTETA E INTEGRATIVO  ·  CRBM 30421', x: 297.5, y: 143, size: 10, bold: true, color: '#172d45' },
+    { text: 'RECEITUÁRIO', x: 249, y: 208, size: 17, bold: true, color: '#102e54' },
     { text: '', x: 337, y: 729, size: 1, kind: 'rule', width: 210, color: '#102e54' },
     { text: 'Assinatura e carimbo profissional', x: 337, y: 741, size: 7, color: '#596675' },
     { text: professionalName, x: 48, y: 765, size: 7.5, bold: true, color: '#102e54' },
