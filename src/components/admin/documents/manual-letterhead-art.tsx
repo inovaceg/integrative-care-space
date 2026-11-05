@@ -11,6 +11,21 @@ export function ManualLetterheadArt({ page, className }: { page: DocumentPage; c
       <path d={documentBrand.symbolPath} fill="none" stroke="white" strokeWidth={documentBrand.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
     </g>
     <line x1="52" y1="137" x2="543" y2="137" stroke="#d5ad4d" strokeWidth="1" />
+    <g fontFamily="Arial, Helvetica, sans-serif" fontSize="5.7" fill="#102e54" textAnchor="end">
+      <text x="568" y="160" fontSize="6.2" fontWeight="700" fill="#b08b35">ESPECIALIDADES</text>
+      <text x="568" y="174">Depressão e ansiedade</text>
+      <text x="568" y="188">Biomédico esteta</text>
+      <text x="568" y="202">Ortomolecular e</text><text x="568" y="210">regenerativa</text>
+      <text x="568" y="224">Farmacologia clínica e</text><text x="568" y="232">prescrição farmacêutica</text>
+      <text x="568" y="246">Saúde mental</text>
+      <text x="568" y="260">Dependência química</text>
+      <text x="568" y="274">Terapia familiar e de casal</text>
+      <text x="568" y="288">Sexologia</text>
+      <text x="568" y="302">Neuropsicologia clínica</text>
+      <text x="568" y="310">e reabilitação</text>
+      <text x="568" y="318">neuropsicológica</text>
+      <text x="568" y="332">TOD · TDAH · TEA</text>
+    </g>
     <text x="297.5" y="595" textAnchor="middle" fontFamily="Georgia, 'Times New Roman', serif" fontSize="235" fill="#e7eef5">Ψ</text>
     {page.map((line, index) => line.kind === "rule" ? <line key={index} x1={line.x} y1={line.y} x2={line.x + (line.width ?? 0)} y2={line.y} stroke={line.color ?? "#cbd5dc"} strokeWidth="0.7" /> : <text key={index} x={line.x} y={line.y} fontFamily="Arial, Helvetica, sans-serif" fontSize={line.size} fontWeight={line.bold ? 700 : 400} fill={line.color ?? "#172d45"} textDecoration={line.text === "RECEITUÁRIO" ? "underline" : undefined} xmlSpace="preserve">{line.text}</text>)}
     <path d="M0 802C121 788 185 816 281 810C395 804 476 773 595 794V842H0Z" fill="#102e54" />
