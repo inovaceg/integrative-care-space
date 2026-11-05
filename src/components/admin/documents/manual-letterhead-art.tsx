@@ -36,9 +36,7 @@ export function ManualLetterheadArt({ page, className }: { page: DocumentPage; c
       <circle cx="399" cy="735" r="9" /><ellipse cx="399" cy="735" rx="4" ry="9" /><path d="M390 735h18m-16-5h14m-14 10h14" />
     </g>
     <text x="94" y="738" fontFamily="Arial, Helvetica, sans-serif" fontSize="8.5" fontWeight="700" fill="#102e54">(32) 9 9193-1779</text>
-    <line x1="202" y1="726" x2="202" y2="744" stroke="#333" strokeWidth="0.7" />
     <text x="268" y="738" fontFamily="Arial, Helvetica, sans-serif" fontSize="8.5" fontWeight="700" fill="#102e54">Juiz de Fora – MG</text>
-    <line x1="365" y1="726" x2="365" y2="744" stroke="#333" strokeWidth="0.7" />
     <text x="414" y="738" fontFamily="Arial, Helvetica, sans-serif" fontSize="8.5" fontWeight="700" fill="#102e54">drfredmartins.com.br</text>
     <path d="M0 802C90 758 160 762 250 755C367 746 485 774 595 736V842H0Z" fill="#102e54" />
     <path d="M0 799C90 755 160 759 250 752C367 743 485 771 595 733V741C485 779 367 751 250 760C160 767 90 763 0 807Z" fill="#d5ad4d" />
