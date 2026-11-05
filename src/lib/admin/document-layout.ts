@@ -273,7 +273,8 @@ Q
     const textStream = lines.filter(line => line.kind !== 'signature-line' && line.kind !== 'rule').map(line => {
       const hex = (line.color ?? '#17232d').slice(1);
       const color = [0, 2, 4].map(i => (parseInt(hex.slice(i, i + 2), 16) / 255).toFixed(3)).join(' ');
-      return `BT /${line.bold ? 'F2' : 'F1'} ${line.size} Tf ${color} rg 1 0 0 1 ${line.x} ${842 - line.y} Tm ${pdfText(line.text)} Tj ET`;
+      const textX = line.align === 'center' ? line.x - measureTextWidth(line.text, line.size, line.bold) / 2 : line.x;
+      return `BT /${line.bold ? 'F2' : 'F1'} ${line.size} Tf ${color} rg 1 0 0 1 ${textX} ${842 - line.y} Tm ${pdfText(line.text)} Tj ET`;
     }).join('\n');
     const ruleCommands = lines.filter(line => line.kind === 'rule').map(line => {
       const hex = (line.color ?? '#72958a').slice(1);

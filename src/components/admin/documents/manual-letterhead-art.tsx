@@ -74,6 +74,7 @@ export function ManualLetterheadArt(
                 fontSize={line.size}
                 fontWeight={line.bold ? 700 : 400}
                 fill={line.color ?? "#172d45"}
+                textAnchor={line.align === "center" ? "middle" : undefined}
                 textDecoration={line.text === "RECEITUÁRIO" ? "underline" : undefined}
                 xmlSpace="preserve">{line.text}</text>)}
             <line x1="48" y1="704" x2="547" y2="704" stroke="#d5ad4d" strokeWidth="0.8" />
