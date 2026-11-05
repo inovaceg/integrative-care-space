@@ -29,13 +29,21 @@ export function ManualLetterheadArt({ page, className }: { page: DocumentPage; c
     </g>
     <text x="297.5" y="595" textAnchor="middle" fontFamily="Georgia, 'Times New Roman', serif" fontSize="235" fill="#e7eef5">Ψ</text>
     {page.filter(line => line.y < 720).map((line, index) => line.kind === "rule" ? <line key={index} x1={line.x} y1={line.y} x2={line.x + (line.width ?? 0)} y2={line.y} stroke={line.color ?? "#cbd5dc"} strokeWidth="0.7" /> : <text key={index} x={line.x} y={line.y} fontFamily="Arial, Helvetica, sans-serif" fontSize={line.size} fontWeight={line.bold ? 700 : 400} fill={line.color ?? "#172d45"} textDecoration={line.text === "RECEITUÁRIO" ? "underline" : undefined} xmlSpace="preserve">{line.text}</text>)}
-    <line x1="48" y1="720" x2="547" y2="720" stroke="#d5ad4d" strokeWidth="0.8" />
-    <text x="80" y="750" fontFamily="Arial, Helvetica, sans-serif" fontSize="8" fontWeight="700" fill="#102e54">(32) 9 9193-1779</text>
-    <line x1="220" y1="737" x2="220" y2="755" stroke="#777" strokeWidth="0.7" />
-    <text x="244" y="750" fontFamily="Arial, Helvetica, sans-serif" fontSize="8" fontWeight="700" fill="#102e54">Juiz de Fora – MG</text>
-    <line x1="365" y1="737" x2="365" y2="755" stroke="#777" strokeWidth="0.7" />
-    <text x="388" y="750" fontFamily="Arial, Helvetica, sans-serif" fontSize="8" fontWeight="700" fill="#102e54">drfredmartins.com.br</text>
-    <path d="M0 802C121 788 185 816 281 810C395 804 476 773 595 794V842H0Z" fill="#102e54" />
-    <path d="M0 802C121 788 185 816 281 810C395 804 476 773 595 794V804C476 783 395 814 281 820C185 826 121 798 0 812Z" fill="#d5ad4d" />
+    <line x1="48" y1="704" x2="547" y2="704" stroke="#d5ad4d" strokeWidth="0.8" />
+    <g fill="none" stroke="#c49a3a" strokeWidth="1.5">
+      <circle cx="79" cy="735" r="9" /><path d="M73 731q1-4 4-1l2 3-2 2q2 3 5 4l2-2 3 2q1 3-3 4-9-2-12-10z" />
+      <path d="M252 726a8 8 0 0 0-8 8c0 6 8 14 8 14s8-8 8-14a8 8 0 0 0-8-8zm0 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6z" fill="#c49a3a" />
+      <circle cx="399" cy="735" r="9" /><ellipse cx="399" cy="735" rx="4" ry="9" /><path d="M390 735h18m-16-5h14m-14 10h14" />
+    </g>
+    <text x="94" y="738" fontFamily="Arial, Helvetica, sans-serif" fontSize="8.5" fontWeight="700" fill="#102e54">(32) 9 9193-1779</text>
+    <line x1="202" y1="726" x2="202" y2="744" stroke="#333" strokeWidth="0.7" />
+    <text x="268" y="738" fontFamily="Arial, Helvetica, sans-serif" fontSize="8.5" fontWeight="700" fill="#102e54">Juiz de Fora – MG</text>
+    <line x1="365" y1="726" x2="365" y2="744" stroke="#333" strokeWidth="0.7" />
+    <text x="414" y="738" fontFamily="Arial, Helvetica, sans-serif" fontSize="8.5" fontWeight="700" fill="#102e54">drfredmartins.com.br</text>
+    <path d="M0 802C90 758 160 762 250 755C367 746 485 774 595 736V842H0Z" fill="#102e54" />
+    <path d="M0 799C90 755 160 759 250 752C367 743 485 771 595 733V741C485 779 367 751 250 760C160 767 90 763 0 807Z" fill="#d5ad4d" />
+    <line x1="76" y1="794" x2="125" y2="794" stroke="#d5ad4d" strokeWidth="1" />
+    <text x="297.5" y="801" textAnchor="middle" fontFamily="Georgia, 'Times New Roman', serif" fontSize="14" fontStyle="italic" fontWeight="700" fill="#fff">Um olhar diferente para cada paciente</text>
+    <line x1="470" y1="794" x2="519" y2="794" stroke="#d5ad4d" strokeWidth="1" />
   </svg>;
 }
