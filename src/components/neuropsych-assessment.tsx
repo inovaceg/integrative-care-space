@@ -102,6 +102,7 @@ export function NeuropsychAssessment() {
   const whatsappLabel = appointment ? "Solicitar agendamento pelo WhatsApp" : "Falar com a equipe do Dr. Fred Martins";
 
   function goBack() {
+    if (savingAnswers) return;
     if (questionIndex === 0) setScreen("intro");
     else setQuestionIndex(index => index - 1);
   }
@@ -113,10 +114,15 @@ export function NeuropsychAssessment() {
       return;
     }
     setAnswerSaveError("");
+    const finalAnswers = { ...answers };
+    if (skipDetails) {
+      for (const id of ["areas", "onset", "change", "contexts", "impact"]) delete finalAnswers[id];
+    }
+    setAnswers(finalAnswers);
     setSavingAnswers(true);
     try {
       const { data, error } = await supabase.functions.invoke(intakeFunctionName, {
-        body: { action: "save_questionnaire_answers", questionnaireToken, answers },
+        body: { action: "save_questionnaire_answers", questionnaireToken, answers: finalAnswers },
       });
       if (error || !data?.saved) throw new Error("Não foi possível registrar suas respostas. Tente novamente.");
       setScreen("feedback");
