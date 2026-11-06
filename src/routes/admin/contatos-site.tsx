@@ -20,7 +20,6 @@ type SiteContact = { id: string; full_name: string; whatsapp: string; birth_date
 const statuses: SiteContact["status"][] = ["Novo", "Em contato", "Finalizado"];
 const questionLabels: Record<string, string> = {
   who: "Para quem busca informações?",
-  age: "Faixa etária",
   reason: "Motivo da busca",
   areas: "O que tem observado?",
   onset: "Quando começou a perceber?",
@@ -45,7 +44,7 @@ function SiteContactsPage() {
     setError("");
     const { data, error: queryError } = await supabase.from("site_contact_requests").select("id,full_name,whatsapp,birth_date,request_type,status,created_at,questionnaire_answers").order("created_at", { ascending: false });
     if (queryError) setError("Não foi possível carregar os contatos autorizados.");
-    else setItems((data as SiteContact[] | null) ?? []);
+    else setItems(((data as SiteContact[] | null) ?? []).map(item => ({ ...item, questionnaire_answers: item.questionnaire_answers ? Object.fromEntries(Object.entries(item.questionnaire_answers).filter(([key]) => key !== "age")) : null })));
     setLoading(false);
   }
 
@@ -60,7 +59,7 @@ function SiteContactsPage() {
 
   function startEditing(item: SiteContact) {
     if (!item.questionnaire_answers) return;
-    setDraftAnswers(Object.fromEntries(Object.entries(item.questionnaire_answers).map(([key, value]) => [key, Array.isArray(value) ? value.join("\n") : value])));
+    setDraftAnswers(Object.fromEntries(Object.entries(item.questionnaire_answers).filter(([key]) => key !== "age").map(([key, value]) => [key, Array.isArray(value) ? value.join("\n") : value])));
     setEditingId(item.id);
   }
 

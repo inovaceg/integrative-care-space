@@ -7,7 +7,7 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 const requestTypes = ["Tirar dúvidas sobre a avaliação", "Consultar valores e horários", "Solicitar uma conversa inicial", "Questionário de orientação neuropsicológica"];
-const answerKeys = new Set(["who", "age", "reason", "areas", "onset", "change", "contexts", "impact", "goal"]);
+const answerKeys = new Set(["who", "reason", "areas", "onset", "change", "contexts", "impact", "goal"]);
 const maxBodyLength = 4096;
 const toHex = (bytes: Uint8Array) => Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
 
