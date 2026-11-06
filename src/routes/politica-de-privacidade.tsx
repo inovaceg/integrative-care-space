@@ -10,8 +10,8 @@ export const Route = createFileRoute("/politica-de-privacidade")({
 function Page() {
   return <><PageIntro eyebrow="LGPD" title="Política de Privacidade" text="Transparência sobre o uso das informações enviadas por você." /><section className="section-space"><article className="container-site prose-legal">
     <h2>Informações de contato</h2>
-    <p>Ao enviar o formulário geral de contato e autorizar o retorno, o site registra seu nome, WhatsApp, tipo de pedido, data e status do atendimento. E-mail, área de interesse e mensagem são usados para preparar a conversa no WhatsApp e não são armazenados no site. Antes de iniciar o questionário de orientação neuropsicológica, seu primeiro nome e WhatsApp são registrados após sua autorização, junto com o tipo de pedido, data e status.</p>
-    <p>As respostas ao questionário ficam somente na memória da página durante a visita: não são enviadas, gravadas, incluídas em URL, logs ou ferramentas de análise, nem associadas aos dados de contato.</p>
+    <p>Ao enviar o formulário geral de contato e autorizar o retorno, o site registra seu nome, WhatsApp, tipo de pedido, data e status do atendimento. E-mail, área de interesse e mensagem são usados para preparar a conversa no WhatsApp e não são armazenados no site. Antes de iniciar o questionário de orientação neuropsicológica, seu primeiro nome e WhatsApp são registrados após sua autorização. Ao concluir o questionário, as respostas são vinculadas a esse pedido para consulta pela equipe autorizada.</p>
+    <p>As respostas são mantidas no registro protegido de contato do site e não são incluídas na mensagem aberta no WhatsApp, em URLs ou em eventos de análise. Se o questionário não for concluído, as respostas que ficaram na página não são salvas.</p>
     <h2>Como as informações são utilizadas</h2>
     <p>Os dados mínimos de contato são utilizados exclusivamente para responder ao pedido enviado. O acesso aos contatos registrados é restrito à equipe autorizada do Espaço de Saúde Integrativa.</p>
     <h2>Compartilhamento e segurança</h2>

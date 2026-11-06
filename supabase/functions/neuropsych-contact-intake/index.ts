@@ -7,6 +7,9 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 const requestTypes = ["Tirar dúvidas sobre a avaliação", "Consultar valores e horários", "Solicitar uma conversa inicial", "Questionário de orientação neuropsicológica"];
+const answerKeys = new Set(["who", "age", "reason", "areas", "onset", "change", "contexts", "impact", "goal"]);
+const maxBodyLength = 4096;
+const toHex = (bytes: Uint8Array) => Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
 
 serve(async request => {
   if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -15,14 +18,44 @@ serve(async request => {
   let body: unknown;
   try {
     const rawBody = await request.text();
-    if (rawBody.length > 4096) return Response.json({ error: "Solicitação inválida." }, { status: 413, headers: corsHeaders });
+    if (rawBody.length > maxBodyLength) return Response.json({ error: "Solicitação inválida." }, { status: 413, headers: corsHeaders });
     body = JSON.parse(rawBody);
   } catch {
     return Response.json({ error: "Solicitação inválida." }, { status: 400, headers: corsHeaders });
   }
-  if (!body || typeof body !== "object") return Response.json({ error: "Solicitação inválida." }, { status: 400, headers: corsHeaders });
+  if (!body || typeof body !== "object" || Array.isArray(body)) return Response.json({ error: "Solicitação inválida." }, { status: 400, headers: corsHeaders });
 
   const input = body as Record<string, unknown>;
+  const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
+
+  if (input.action === "save_questionnaire_answers") {
+    const answers = input.answers;
+    const questionnaireToken = typeof input.questionnaireToken === "string" ? input.questionnaireToken : "";
+    if (!/^[0-9a-f]{64}$/i.test(questionnaireToken) || !answers || typeof answers !== "object" || Array.isArray(answers)) {
+      return Response.json({ error: "Respostas inválidas." }, { status: 400, headers: corsHeaders });
+    }
+    const entries = Object.entries(answers as Record<string, unknown>);
+    const validAnswers = entries.length > 0 && entries.every(([key, value]) => answerKeys.has(key) && (
+      typeof value === "string" && value.length <= 200 ||
+      Array.isArray(value) && value.length <= 12 && value.every(item => typeof item === "string" && item.length <= 200)
+    ));
+    if (!validAnswers || JSON.stringify(answers).length > 3500) {
+      return Response.json({ error: "Respostas inválidas." }, { status: 400, headers: corsHeaders });
+    }
+    const tokenBytes = new Uint8Array(32);
+    for (let index = 0; index < tokenBytes.length; index += 1) tokenBytes[index] = Number.parseInt(questionnaireToken.slice(index * 2, index * 2 + 2), 16);
+    const tokenHash = toHex(new Uint8Array(await crypto.subtle.digest("SHA-256", tokenBytes)));
+    const { data, error } = await supabase.from("site_contact_requests")
+      .update({ questionnaire_answers: answers })
+      .eq("questionnaire_token_hash", tokenHash)
+      .eq("request_type", "Questionário de orientação neuropsicológica")
+      .select("id")
+      .maybeSingle();
+    if (error) return Response.json({ error: "Não foi possível salvar as respostas." }, { status: 500, headers: corsHeaders });
+    if (!data) return Response.json({ error: "Solicitação não encontrada." }, { status: 404, headers: corsHeaders });
+    return Response.json({ saved: true }, { status: 200, headers: corsHeaders });
+  }
+
   const fullNameInput = typeof input.name === "string" ? input.name : typeof input.firstName === "string" ? input.firstName : "";
   const fullName = fullNameInput.trim().replace(/\s+/g, " ");
   const phoneDigits = typeof input.whatsapp === "string" ? input.whatsapp.replace(/\D/g, "") : "";
@@ -38,8 +71,15 @@ serve(async request => {
     return Response.json({ error: "Confirme o pedido de contato para continuar." }, { status: 400, headers: corsHeaders });
   }
 
-  const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
-  const { error } = await supabase.from("site_contact_requests").insert({ full_name: fullName, whatsapp, request_type: requestType });
+  const tokenBytes = requestType === "Questionário de orientação neuropsicológica" ? crypto.getRandomValues(new Uint8Array(32)) : null;
+  const questionnaireToken = tokenBytes ? toHex(tokenBytes) : null;
+  const questionnaireTokenHash = tokenBytes ? toHex(new Uint8Array(await crypto.subtle.digest("SHA-256", tokenBytes))) : null;
+  const { error } = await supabase.from("site_contact_requests").insert({
+    full_name: fullName,
+    whatsapp,
+    request_type: requestType,
+    questionnaire_token_hash: questionnaireTokenHash,
+  });
   if (error) return Response.json({ error: "Não foi possível registrar o pedido agora. Tente novamente." }, { status: 500, headers: corsHeaders });
-  return Response.json({ received: true }, { status: 201, headers: corsHeaders });
+  return Response.json({ received: true, questionnaireToken }, { status: 201, headers: corsHeaders });
 });
