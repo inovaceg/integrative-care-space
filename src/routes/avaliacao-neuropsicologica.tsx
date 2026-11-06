@@ -10,5 +10,5 @@ export const Route = createFileRoute("/avaliacao-neuropsicologica")({
 });
 
 function Page() {
-  return <SiteLayout><PageIntro tone="psychology" eyebrow="Psicologia • CRP 04/86194" title="Avaliação Neuropsicológica" text="Uma orientação inicial para ajudar a organizar dúvidas e exemplos antes de conversar com o profissional." /><NeuropsychAssessment /></SiteLayout>;
+  return <SiteLayout minimalHeader><PageIntro tone="psychology" eyebrow="Psicologia • CRP 04/86194" title="Avaliação Neuropsicológica" text="Uma orientação inicial para ajudar a organizar dúvidas e exemplos antes de conversar com o profissional." /><NeuropsychAssessment /></SiteLayout>;
 }

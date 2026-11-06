@@ -17,23 +17,25 @@ export function Brand() {
   );
 }
 
-export function Header() {
+export function Header({ minimal = false }: { minimal?: boolean }) {
   const [open, setOpen] = useState(false);
   return (
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/95 backdrop-blur-xl">
       <div className="container-site grid min-h-20 grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
         <Brand />
-        <nav className="hidden items-center gap-1 xl:flex" aria-label="Navegação principal">
-          {navItems.map(([label, to]) => <Link key={to} to={to} activeProps={{ className: "text-primary" }} className="px-3 py-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{label}</Link>)}
-          <Link to="/admin/login" className="px-3 py-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Área administrativa</Link>
-          <Button asChild size="lg" className="ml-2"><a href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackAnalyticsEvents(["appointment_click", "whatsapp_click"])}><MessageCircle className="size-4 mr-2" />Agende sua consulta</a></Button>
-        </nav>
-        <div className="flex items-center gap-2 xl:hidden">
-          <Button asChild size="sm" className="hidden sm:inline-flex"><a href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackAnalyticsEvents(["appointment_click", "whatsapp_click"])}>Agendar</a></Button>
-          <Button variant="ghost" size="icon" onClick={() => setOpen((v) => !v)} aria-label={open ? "Fechar menu" : "Abrir menu"} aria-expanded={open}>{open ? <X /> : <Menu />}</Button>
-        </div>
+        {!minimal && <>
+          <nav className="hidden items-center gap-1 xl:flex" aria-label="Navegação principal">
+            {navItems.map(([label, to]) => <Link key={to} to={to} activeProps={{ className: "text-primary" }} className="px-3 py-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{label}</Link>)}
+            <Link to="/admin/login" className="px-3 py-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Área administrativa</Link>
+            <Button asChild size="lg" className="ml-2"><a href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackAnalyticsEvents(["appointment_click", "whatsapp_click"])}><MessageCircle className="size-4 mr-2" />Agende sua consulta</a></Button>
+          </nav>
+          <div className="flex items-center gap-2 xl:hidden">
+            <Button asChild size="sm" className="hidden sm:inline-flex"><a href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackAnalyticsEvents(["appointment_click", "whatsapp_click"])}>Agendar</a></Button>
+            <Button variant="ghost" size="icon" onClick={() => setOpen((v) => !v)} aria-label={open ? "Fechar menu" : "Abrir menu"} aria-expanded={open}>{open ? <X /> : <Menu />}</Button>
+          </div>
+        </>}
       </div>
-      {open && <nav className="border-t border-border bg-background px-5 py-4 xl:hidden" aria-label="Navegação móvel">
+      {!minimal && open && <nav className="border-t border-border bg-background px-5 py-4 xl:hidden" aria-label="Navegação móvel">
         <div className="mx-auto grid max-w-xl grid-cols-2 gap-1">
           {navItems.map(([label, to]) => <Link key={to} to={to} onClick={() => setOpen(false)} className="rounded-sm px-3 py-3 text-sm font-medium hover:bg-muted">{label}</Link>)}
           <Link to="/admin/login" onClick={() => setOpen(false)} className="rounded-sm px-3 py-3 text-sm font-medium hover:bg-muted">Área administrativa</Link>
@@ -89,6 +91,6 @@ export function WhatsAppFloat() {
   return <a href={whatsappUrl} target="_blank" rel="noreferrer" aria-label="Falar pelo WhatsApp" onClick={() => trackAnalyticsEvent("whatsapp_click")} className="fixed bottom-5 right-5 z-40 grid size-14 place-items-center rounded-full bg-whatsapp text-whatsapp-foreground shadow-float transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><MessageCircle className="size-6" /></a>;
 }
 
-export function SiteLayout({ children }: { children: React.ReactNode }) {
-  return <><Header /><main>{children}</main><Footer /><WhatsAppFloat /></>;
+export function SiteLayout({ children, minimalHeader = false }: { children: React.ReactNode; minimalHeader?: boolean }) {
+  return <><Header minimal={minimalHeader} /><main>{children}</main><Footer /><WhatsAppFloat /></>;
 }
