@@ -72,7 +72,7 @@ const pageTitles: Record<string, { title: string; description: string }> = {
   "/admin/receituario": { title: "Receituário", description: "Criação e gerenciamento de documentos profissionais." },
   "/admin/protocolos": { title: "Protocolos", description: "Índice e consulta dos protocolos clínicos." },
   "/admin/contatos-site": { title: "Contatos do site", description: "Solicitações de contato enviadas pelo site." },
-  "/admin/recibos": { title: "Recibos", description: "Emissão e histórico de recibos de consultas." }
+  "/admin/recibos": { title: "Recibos", description: "Emissão e histórico de recibos de consultas." },
   "/admin/medicamentos": { title: "Controle de medicamentos", description: "Acompanhe o estoque e o histórico de movimentações." },
   "/admin/financeiro": { title: "Financeiro", description: "Tenha clareza sobre receitas e despesas." },
   "/admin/relatorios": { title: "Relatórios", description: "Insights para acompanhar a evolução do espaço." },
