@@ -29,6 +29,15 @@ const questionLabels: Record<string, string> = {
   goal: "Próximo passo desejado",
 };
 
+function formatBirthDateAndAge(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
+  const today = new Date();
+  let age = today.getFullYear() - year;
+  if (today.getMonth() + 1 < month || (today.getMonth() + 1 === month && today.getDate() < day)) age -= 1;
+  const date = new Date(`${value}T00:00:00Z`).toLocaleDateString("pt-BR", { timeZone: "UTC" });
+  return `${date} · ${age} ${age === 1 ? "ano" : "anos"}`;
+}
+
 function SiteContactsPage() {
   const { isAdmin, isLoading: authLoading } = useAuth();
   const [items, setItems] = useState<SiteContact[]>([]);
@@ -116,13 +125,13 @@ function SiteContactsPage() {
               <Badge variant="outline">{item.status}</Badge>
             </div>
             <p className="ml-6 mt-1 text-sm text-slate-600">{item.request_type}</p>
-            {item.birth_date && <p className="ml-6 mt-1 text-xs text-slate-500">Nascimento: {new Date(`${item.birth_date}T00:00:00Z`).toLocaleDateString("pt-BR", { timeZone: "UTC" })}</p>}
+            {item.birth_date && <p className="ml-6 mt-1 text-xs text-slate-500">Nascimento: {formatBirthDateAndAge(item.birth_date)}</p>}
           </div>
           <Select value={item.status} onValueChange={value => void updateStatus(item.id, value as SiteContact["status"])}><SelectTrigger className="w-full sm:w-44" aria-label={`Status de ${item.full_name}`}><SelectValue /></SelectTrigger><SelectContent>{statuses.map(status => <SelectItem key={status} value={status}>{status}</SelectItem>)}</SelectContent></Select>
         </div>
         {expanded && <div className="border-t border-slate-100 px-4 pb-5 pt-4 sm:px-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-4"><a href={`https://wa.me/${item.whatsapp}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm text-[#26786e] underline"><MessageCircle className="size-4" />{item.whatsapp}</a>{item.birth_date && <p className="text-sm text-slate-600"><strong className="font-medium">Data de nascimento:</strong> {new Date(`${item.birth_date}T00:00:00Z`).toLocaleDateString("pt-BR", { timeZone: "UTC" })}</p>}</div>
+            <div className="flex flex-wrap items-center gap-4"><a href={`https://wa.me/${item.whatsapp}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm text-[#26786e] underline"><MessageCircle className="size-4" />{item.whatsapp}</a>{item.birth_date && <p className="text-sm text-slate-600"><strong className="font-medium">Data de nascimento:</strong> {formatBirthDateAndAge(item.birth_date)}</p>}</div>
             <time className="text-xs text-slate-400" dateTime={item.created_at}>{new Date(item.created_at).toLocaleString("pt-BR")}</time>
           </div>
           {hasQuestionnaire && (item.questionnaire_answers && Object.keys(item.questionnaire_answers).length > 0 ? <section className="mt-4 rounded-xl border border-[#cce7df] bg-[#f4faf8] p-4"><div className="flex flex-wrap items-center justify-between gap-3"><h3 className="text-sm font-semibold text-[#245f57]">Respostas do questionário para avaliação</h3>{editingId === item.id ? <div className="flex gap-2"><Button size="sm" onClick={() => void saveAnswers(item)} disabled={savingAnswers}><Save className="mr-2 size-4" />{savingAnswers ? "Salvando…" : "Salvar"}</Button><Button size="sm" variant="outline" onClick={() => setEditingId(null)} disabled={savingAnswers}><X className="mr-2 size-4" />Cancelar</Button></div> : <div className="flex gap-2"><Button size="sm" variant="outline" onClick={() => startEditing(item)}><Pencil className="mr-2 size-4" />Editar</Button><Button size="sm" variant="outline" className="border-red-200 text-red-700 hover:bg-red-50" onClick={() => void deleteAnswers(item)}><Trash2 className="mr-2 size-4" />Excluir respostas</Button></div>}</div><dl className="mt-4 grid gap-3 sm:grid-cols-2">{Object.entries(item.questionnaire_answers).map(([key, answer]) => <div key={key} className="rounded-lg bg-white p-3"><dt className="text-xs font-semibold text-slate-500">{questionLabels[key] ?? key}</dt><dd className="mt-1 text-sm leading-6 text-slate-800">{editingId === item.id ? <Textarea aria-label={questionLabels[key] ?? key} value={draftAnswers[key] ?? ""} onChange={event => setDraftAnswers(current => ({ ...current, [key]: event.target.value }))} rows={Array.isArray(answer) ? 3 : 2} /> : Array.isArray(answer) ? answer.join(" · ") : answer}</dd>{editingId === item.id && Array.isArray(answer) && <p className="mt-1 text-xs text-slate-500">Em respostas com múltipla escolha, deixe uma opção por linha.</p>}</div>)}</dl></section> : <p className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">Este contato ainda não tem respostas salvas; o questionário pode não ter sido concluído.</p>)}
