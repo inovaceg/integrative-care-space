@@ -23,12 +23,13 @@ serve(async request => {
   if (!body || typeof body !== "object") return Response.json({ error: "Solicitação inválida." }, { status: 400, headers: corsHeaders });
 
   const input = body as Record<string, unknown>;
-  const firstName = typeof input.firstName === "string" ? input.firstName.trim().replace(/\s+/g, " ").split(" ")[0] : "";
+  const fullNameInput = typeof input.name === "string" ? input.name : typeof input.firstName === "string" ? input.firstName : "";
+  const fullName = fullNameInput.trim().replace(/\s+/g, " ");
   const phoneDigits = typeof input.whatsapp === "string" ? input.whatsapp.replace(/\D/g, "") : "";
   const whatsapp = phoneDigits.length === 10 || phoneDigits.length === 11 ? `55${phoneDigits}` : phoneDigits;
   const requestType = typeof input.requestType === "string" ? input.requestType : "";
-  if (firstName.length < 2 || firstName.length > 60 || !/^[\p{L}][\p{L}\p{M}'’.-]*$/u.test(firstName)) {
-    return Response.json({ error: "Informe um primeiro nome válido." }, { status: 400, headers: corsHeaders });
+  if (fullName.length < 2 || fullName.length > 100 || !/^[\p{L}][\p{L}\p{M}'’.-]*(?: [\p{L}][\p{L}\p{M}'’.-]*)*$/u.test(fullName)) {
+    return Response.json({ error: "Informe um nome válido." }, { status: 400, headers: corsHeaders });
   }
   if (phoneDigits.length < 10 || phoneDigits.length > 13) {
     return Response.json({ error: "Informe um WhatsApp válido com DDD." }, { status: 400, headers: corsHeaders });
@@ -38,7 +39,7 @@ serve(async request => {
   }
 
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
-  const { error } = await supabase.from("site_contact_requests").insert({ first_name: firstName, whatsapp, request_type: requestType });
+  const { error } = await supabase.from("site_contact_requests").insert({ full_name: fullName, whatsapp, request_type: requestType });
   if (error) return Response.json({ error: "Não foi possível registrar o pedido agora. Tente novamente." }, { status: 500, headers: corsHeaders });
   return Response.json({ received: true }, { status: 201, headers: corsHeaders });
 });

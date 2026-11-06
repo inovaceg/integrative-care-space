@@ -119,6 +119,7 @@ export function NeuropsychAssessment() {
 
   async function submitContact(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!event.currentTarget.reportValidity()) return;
     setSubmitError("");
     if (!consent) { setSubmitError("Marque a autorização para que a equipe possa entrar em contato pelo WhatsApp."); return; }
     setSubmitting(true);
