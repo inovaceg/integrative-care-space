@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { MessageCircle, RefreshCw } from "lucide-react";
+import { ChevronDown, ChevronRight, MessageCircle, RefreshCw } from "lucide-react";
 import { AdminLayout, PageIntro } from "@/components/admin/admin-ui";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +34,7 @@ function SiteContactsPage() {
   const [items, setItems] = useState<SiteContact[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
@@ -54,10 +55,32 @@ function SiteContactsPage() {
   }
 
   return <AdminLayout>
-    <PageIntro eyebrow="Solicitações recebidas" title="Contatos do site" description="Contatos do site e respostas dos questionários de orientação, disponíveis somente para a equipe autorizada." action={<Button variant="outline" onClick={() => void load()} disabled={loading}><RefreshCw className="mr-2 size-4" />Atualizar</Button>} />
+    <PageIntro eyebrow="Solicitações recebidas" title="Contatos do site" description="Selecione o nome de um contato para consultar as informações e respostas do questionário." action={<Button variant="outline" onClick={() => void load()} disabled={loading}><RefreshCw className="mr-2 size-4" />Atualizar</Button>} />
     {error && <p role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-    {loading ? <p className="text-sm text-slate-500">Carregando solicitações…</p> : items.length === 0 ? <Card><CardContent className="py-12 text-center text-sm text-slate-500">Ainda não há solicitações de contato.</CardContent></Card> : <div className="space-y-3">{items.map(item => <Card key={item.id} className="border-slate-200/80 shadow-sm"><CardContent className="flex flex-col justify-between gap-4 p-5 sm:flex-row sm:items-start"><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h2 className="font-semibold text-slate-900">{item.full_name}</h2><Badge variant="outline">{item.status}</Badge></div><a href={`https://wa.me/${item.whatsapp}`} target="_blank" rel="noreferrer" className="mt-1 inline-flex items-center gap-1 text-sm text-[#26786e] underline"><MessageCircle className="size-4" />{item.whatsapp}</a><p className="mt-2 text-sm text-slate-600">{item.request_type}</p><time className="mt-1 block text-xs text-slate-400" dateTime={item.created_at}>{new Date(item.created_at).toLocaleString("pt-BR")}</time>
-      {item.request_type === "Questionário de orientação neuropsicológica" && (item.questionnaire_answers ? <section className="mt-4 rounded-xl border border-[#cce7df] bg-[#f4faf8] p-4"><h3 className="text-sm font-semibold text-[#245f57]">Respostas do questionário para avaliação</h3><dl className="mt-4 grid gap-3 sm:grid-cols-2">{Object.entries(item.questionnaire_answers).map(([key, answer]) => <div key={key} className="rounded-lg bg-white p-3"><dt className="text-xs font-semibold text-slate-500">{questionLabels[key] ?? key}</dt><dd className="mt-1 text-sm leading-6 text-slate-800">{Array.isArray(answer) ? answer.join(" · ") : answer}</dd></div>)}</dl></section> : <p className="mt-3 text-sm text-slate-500">Questionário ainda não concluído.</p>)}
-      </div><Select value={item.status} onValueChange={value => void updateStatus(item.id, value as SiteContact["status"])}><SelectTrigger className="w-full sm:w-44" aria-label={`Status de ${item.full_name}`}><SelectValue /></SelectTrigger><SelectContent>{statuses.map(status => <SelectItem key={status} value={status}>{status}</SelectItem>)}</SelectContent></Select></CardContent></Card>)}</div>}
+    {loading ? <p className="text-sm text-slate-500">Carregando solicitações…</p> : items.length === 0 ? <Card><CardContent className="py-12 text-center text-sm text-slate-500">Ainda não há solicitações de contato.</CardContent></Card> : <div className="space-y-2">{items.map(item => {
+      const expanded = expandedId === item.id;
+      const hasQuestionnaire = item.request_type === "Questionário de orientação neuropsicológica";
+      return <Card key={item.id} className="border-slate-200/80 shadow-sm"><CardContent className="p-0">
+        <div className="flex flex-col justify-between gap-3 p-4 sm:flex-row sm:items-center sm:p-5">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <button type="button" aria-expanded={expanded} onClick={() => setExpandedId(expanded ? null : item.id)} className="inline-flex min-h-10 items-center gap-2 text-left font-semibold text-slate-900 hover:text-[#26786e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2f8f82] focus-visible:ring-offset-2">
+                {expanded ? <ChevronDown className="size-4 shrink-0" /> : <ChevronRight className="size-4 shrink-0" />}{item.full_name}
+              </button>
+              <Badge variant="outline">{item.status}</Badge>
+            </div>
+            <p className="ml-6 mt-1 text-sm text-slate-600">{item.request_type}</p>
+          </div>
+          <Select value={item.status} onValueChange={value => void updateStatus(item.id, value as SiteContact["status"])}><SelectTrigger className="w-full sm:w-44" aria-label={`Status de ${item.full_name}`}><SelectValue /></SelectTrigger><SelectContent>{statuses.map(status => <SelectItem key={status} value={status}>{status}</SelectItem>)}</SelectContent></Select>
+        </div>
+        {expanded && <div className="border-t border-slate-100 px-4 pb-5 pt-4 sm:px-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <a href={`https://wa.me/${item.whatsapp}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm text-[#26786e] underline"><MessageCircle className="size-4" />{item.whatsapp}</a>
+            <time className="text-xs text-slate-400" dateTime={item.created_at}>{new Date(item.created_at).toLocaleString("pt-BR")}</time>
+          </div>
+          {hasQuestionnaire && (item.questionnaire_answers && Object.keys(item.questionnaire_answers).length > 0 ? <section className="mt-4 rounded-xl border border-[#cce7df] bg-[#f4faf8] p-4"><h3 className="text-sm font-semibold text-[#245f57]">Respostas do questionário para avaliação</h3><dl className="mt-4 grid gap-3 sm:grid-cols-2">{Object.entries(item.questionnaire_answers).map(([key, answer]) => <div key={key} className="rounded-lg bg-white p-3"><dt className="text-xs font-semibold text-slate-500">{questionLabels[key] ?? key}</dt><dd className="mt-1 text-sm leading-6 text-slate-800">{Array.isArray(answer) ? answer.join(" · ") : answer}</dd></div>)}</dl></section> : <p className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">Este contato ainda não tem respostas salvas; o questionário pode não ter sido concluído.</p>)}
+        </div>}
+      </CardContent></Card>;
+    })}</div>}
   </AdminLayout>;
 }
