@@ -25,7 +25,7 @@ const questions: Question[] = [
   { id: "goal", title: "O que você espera esclarecer numa conversa inicial?", options: ["Entender melhor as dificuldades observadas", "Conversar sobre um encaminhamento", "Entender como funciona a avaliação e a devolutiva", "Saber valores e horários", "Agendar uma conversa inicial"] },
 ];
 const allQuestionIds = questions.map(question => question.id);
-const noAnswer = new Set(["Ainda não sei ou prefiro não informar", "Ainda não identifiquei", "Prefiro não responder"]);
+const noAnswer = new Set(["Ainda não sei ou prefiro não informar", "Ainda não identifiquei", "Não sei dizer", "Ainda não consigo avaliar o impacto", "Prefiro não responder"]);
 
 function selectedValues(answer: string | string[] | undefined) {
   return Array.isArray(answer) ? answer : answer ? [answer] : [];
