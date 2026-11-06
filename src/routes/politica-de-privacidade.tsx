@@ -13,7 +13,7 @@ function Page() {
     <p>Ao enviar o formulário geral de contato e autorizar o retorno, o site registra seu nome, WhatsApp, tipo de pedido, data e status do atendimento. E-mail, área de interesse e mensagem são usados para preparar a conversa no WhatsApp e não são armazenados no site. Antes de iniciar o questionário de orientação neuropsicológica, seu primeiro nome, WhatsApp e a data de nascimento da pessoa avaliada são registrados após sua autorização. Ao concluir o questionário, as respostas são vinculadas a esse pedido para consulta pela equipe autorizada.</p>
     <p>As respostas são mantidas no registro protegido de contato do site e não são incluídas na mensagem aberta no WhatsApp, em URLs ou em eventos de análise. Se o questionário não for concluído, as respostas que ficaram na página não são salvas.</p>
     <h2>Como as informações são utilizadas</h2>
-    <p>Os dados mínimos de contato são utilizados exclusivamente para responder ao pedido enviado. O acesso aos contatos registrados é restrito à equipe autorizada do Espaço de Saúde Integrativa.</p>
+    <p>Os dados mínimos de contato são utilizados para responder ao pedido enviado. Para acompanhar a solicitação, a equipe autorizada pode registrar observações internas no contato. O acesso aos contatos, respostas e observações é restrito à equipe autorizada do Espaço de Saúde Integrativa.</p>
     <h2>Compartilhamento e segurança</h2>
     <p>As informações não são comercializadas. São aplicadas medidas técnicas e organizacionais para limitar o acesso aos dados de contato às pessoas autorizadas.</p>
     <h2>Direitos do titular</h2>
