@@ -14,7 +14,9 @@ serve(async request => {
 
   let body: unknown;
   try {
-    body = await request.json();
+    const rawBody = await request.text();
+    if (rawBody.length > 4096) return Response.json({ error: "Solicitação inválida." }, { status: 413, headers: corsHeaders });
+    body = JSON.parse(rawBody);
   } catch {
     return Response.json({ error: "Solicitação inválida." }, { status: 400, headers: corsHeaders });
   }
