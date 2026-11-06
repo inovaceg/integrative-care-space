@@ -6,8 +6,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
-const requestTypes = ["Tirar dúvidas sobre a avaliação", "Consultar valores e horários", "Solicitar uma conversa inicial", "Questionário de orientação neuropsicológica"];
-const answerKeys = new Set(["who", "areas", "onset", "onset_type", "change", "contexts", "impact", "factors", "reason", "goal"]);
+const neuropsychRequestType = "Questionário de orientação neuropsicológica";
+const tdahRequestType = "Questionário de orientação sobre TDAH";
+const requestTypes = ["Tirar dúvidas sobre a avaliação", "Consultar valores e horários", "Solicitar uma conversa inicial", neuropsychRequestType, tdahRequestType];
+const answerKeys = new Set(["who", "areas", "onset", "onset_type", "change", "contexts", "impact", "factors", "reason", "goal", "tdah_who", "tdah_attention", "tdah_hyperactivity", "tdah_frequency", "tdah_onset", "tdah_contexts", "tdah_impact", "tdah_motivation", "tdah_next_step"]);
 const maxBodyLength = 4096;
 const questionLabels: Record<string, string> = {
   who: "Para quem você está buscando orientação?",
@@ -20,7 +22,17 @@ const questionLabels: Record<string, string> = {
   factors: "Você percebeu algo que coincidiu com o início ou a piora das dificuldades?",
   reason: "O que motivou você a buscar orientação agora?",
   goal: "Como você prefere seguir?",
+  tdah_who: "Para quem você está buscando orientação?",
+  tdah_attention: "Quais dificuldades de atenção ou organização você tem observado?",
+  tdah_hyperactivity: "Quais sinais de inquietação ou impulsividade você tem observado?",
+  tdah_frequency: "Nos últimos seis meses, com que frequência as dificuldades assinaladas ocorreram?",
+  tdah_onset: "Em que fase da vida essas dificuldades foram percebidas pela primeira vez?",
+  tdah_contexts: "Em quais contextos essas dificuldades aparecem?",
+  tdah_impact: "Quais efeitos essas dificuldades têm na rotina?",
+  tdah_motivation: "O que motivou você a buscar orientação agora?",
+  tdah_next_step: "Qual próximo passo você deseja?",
 };
+const tdahAnswerKeys = new Set(["tdah_who", "tdah_attention", "tdah_hyperactivity", "tdah_frequency", "tdah_onset", "tdah_contexts", "tdah_impact", "tdah_motivation", "tdah_next_step"]);
 const toHex = (bytes: Uint8Array) => Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
 
 function formatBirthDateAndAge(value: string) {
@@ -32,11 +44,43 @@ function formatBirthDateAndAge(value: string) {
   return `${date} · ${age} ${age === 1 ? "ano" : "anos"}`;
 }
 
-function buildQuestionnaireReport(fullName: string, birthDate: string | null, answers: Record<string, string | string[]>) {
+function buildQuestionnaireReport(fullName: string, birthDate: string | null, answers: Record<string, string | string[]>, requestType = neuropsychRequestType) {
   const value = (key: string) => {
     const answer = answers[key];
     return Array.isArray(answer) ? answer.join(", ") : answer ?? "não informado";
   };
+  if (requestType === tdahRequestType) {
+    const attention = value("tdah_attention");
+    const hyperactivity = value("tdah_hyperactivity");
+    const contexts = value("tdah_contexts");
+    const impact = value("tdah_impact");
+    const summary = [
+      `A orientação é buscada para ${value("tdah_who")}. Foram relatadas dificuldades de atenção ou organização (${attention}) e sinais de inquietação ou impulsividade (${hyperactivity}).`,
+      `Nos últimos seis meses, a frequência foi descrita como ${value("tdah_frequency")}; as dificuldades foram percebidas pela primeira vez ${value("tdah_onset")}.`,
+      `Os contextos mencionados são ${contexts}, com efeitos relatados na rotina: ${impact}.`,
+      `A busca foi motivada por ${value("tdah_motivation")}; o próximo passo desejado é ${value("tdah_next_step")}.`,
+    ];
+    const points = [
+      `Aprofundar exemplos, frequência e impacto das dificuldades de atenção/organização (${attention}) e inquietação/impulsividade (${hyperactivity}).`,
+      `Contextualizar a frequência recente (${value("tdah_frequency")}) e a fase da primeira percepção (${value("tdah_onset")}), considerando o relato e a história de desenvolvimento.`,
+      `Explorar as diferenças entre os contextos (${contexts}) e os efeitos na rotina (${impact}).`,
+      `Considerar o motivo da busca e o passo desejado: ${value("tdah_motivation")} / ${value("tdah_next_step")}.`,
+    ];
+    return [
+      "SÍNTESE INFORMATIVA — ORIENTAÇÃO INICIAL SOBRE TDAH",
+      `Pessoa avaliada: ${fullName}`,
+      `Nascimento / idade: ${birthDate ? formatBirthDateAndAge(birthDate) : "Não informada"}`,
+      `Relatório gerado em: ${new Date().toLocaleString("pt-BR")}`,
+      "",
+      "SÍNTESE DAS RESPOSTAS",
+      ...summary,
+      "",
+      "ASPECTOS A APROFUNDAR NA CONVERSA PROFISSIONAL",
+      ...points.map(point => `• ${point}`),
+      "",
+      "Síntese descritiva para apoiar o primeiro contato. Este questionário não é instrumento diagnóstico e não confirma nem descarta TDAH; a avaliação cabe ao profissional responsável.",
+    ].join("\\n");
+  }
   const areas = value("areas");
   const contexts = value("contexts");
   const impact = value("impact");
@@ -97,10 +141,12 @@ serve(async request => {
       return Response.json({ error: "Respostas inválidas." }, { status: 400, headers: corsHeaders });
     }
     const entries = Object.entries(answers as Record<string, unknown>);
-    const validAnswers = entries.length > 0 && entries.every(([key, value]) => answerKeys.has(key) && (
+    const tdahAnswers = entries.length === tdahAnswerKeys.size && entries.every(([key]) => tdahAnswerKeys.has(key));
+    const neuropsychAnswers = entries.length === 10 && entries.every(([key]) => answerKeys.has(key) && !tdahAnswerKeys.has(key));
+    const validAnswers = (tdahAnswers || neuropsychAnswers) && entries.every(([, value]) =>
       typeof value === "string" && value.length <= 200 ||
       Array.isArray(value) && value.length <= 12 && value.every(item => typeof item === "string" && item.length <= 200)
-    ));
+    );
     if (!validAnswers || JSON.stringify(answers).length > 3500) {
       return Response.json({ error: "Respostas inválidas." }, { status: 400, headers: corsHeaders });
     }
@@ -108,13 +154,14 @@ serve(async request => {
     for (let index = 0; index < tokenBytes.length; index += 1) tokenBytes[index] = Number.parseInt(questionnaireToken.slice(index * 2, index * 2 + 2), 16);
     const tokenHash = toHex(new Uint8Array(await crypto.subtle.digest("SHA-256", tokenBytes)));
     const { data: contact, error: lookupError } = await supabase.from("site_contact_requests")
-      .select("id,full_name,birth_date")
+      .select("id,full_name,birth_date,request_type")
       .eq("questionnaire_token_hash", tokenHash)
-      .eq("request_type", "Questionário de orientação neuropsicológica")
+      .in("request_type", [neuropsychRequestType, tdahRequestType])
       .maybeSingle();
     if (lookupError) return Response.json({ error: "Não foi possível salvar as respostas." }, { status: 500, headers: corsHeaders });
     if (!contact) return Response.json({ error: "Solicitação não encontrada." }, { status: 404, headers: corsHeaders });
-    const questionnaireReport = buildQuestionnaireReport(contact.full_name, contact.birth_date, answers as Record<string, string | string[]>);
+    if ((contact.request_type === tdahRequestType) !== tdahAnswers) return Response.json({ error: "Respostas inválidas." }, { status: 400, headers: corsHeaders });
+    const questionnaireReport = buildQuestionnaireReport(contact.full_name, contact.birth_date, answers as Record<string, string | string[]>, contact.request_type);
     const { error } = await supabase.from("site_contact_requests")
       .update({ questionnaire_answers: answers, questionnaire_report: questionnaireReport })
       .eq("id", contact.id);
@@ -137,21 +184,21 @@ serve(async request => {
     return Response.json({ error: "Confirme o pedido de contato para continuar." }, { status: 400, headers: corsHeaders });
   }
   const birthDate = typeof input.birthDate === "string" ? input.birthDate : "";
-  if (requestType === "Questionário de orientação neuropsicológica") {
+  if (requestType === neuropsychRequestType || requestType === tdahRequestType) {
     const parsedBirthDate = /^\d{4}-\d{2}-\d{2}$/.test(birthDate) ? new Date(`${birthDate}T00:00:00.000Z`) : null;
     if (!parsedBirthDate || Number.isNaN(parsedBirthDate.getTime()) || parsedBirthDate.toISOString().slice(0, 10) !== birthDate || birthDate > new Date().toISOString().slice(0, 10)) {
       return Response.json({ error: "Informe uma data de nascimento válida." }, { status: 400, headers: corsHeaders });
     }
   }
 
-  const tokenBytes = requestType === "Questionário de orientação neuropsicológica" ? crypto.getRandomValues(new Uint8Array(32)) : null;
+  const tokenBytes = requestType === neuropsychRequestType || requestType === tdahRequestType ? crypto.getRandomValues(new Uint8Array(32)) : null;
   const questionnaireToken = tokenBytes ? toHex(tokenBytes) : null;
   const questionnaireTokenHash = tokenBytes ? toHex(new Uint8Array(await crypto.subtle.digest("SHA-256", tokenBytes))) : null;
   const { error } = await supabase.from("site_contact_requests").insert({
     full_name: fullName,
     whatsapp,
     request_type: requestType,
-    birth_date: requestType === "Questionário de orientação neuropsicológica" ? birthDate : null,
+    birth_date: requestType === neuropsychRequestType || requestType === tdahRequestType ? birthDate : null,
     questionnaire_token_hash: questionnaireTokenHash,
   });
   if (error) return Response.json({ error: "Não foi possível registrar o pedido agora. Tente novamente." }, { status: 500, headers: corsHeaders });

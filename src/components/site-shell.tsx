@@ -71,6 +71,8 @@ export function Footer() {
           <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-gold-soft">Navegue</h2>
           <nav className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-footer-muted">
             <Link to="/psicologia" className="hover:text-footer-foreground">Psicologia</Link>
+            <Link to="/orientacao-tdah" className="hover:text-footer-foreground">Orientação sobre TDAH</Link>
+            <Link to="/avaliacao-neuropsicologica" className="hover:text-footer-foreground">Avaliação Neuropsicológica</Link>
             <Link to="/biomedicina" className="hover:text-footer-foreground">Biomedicina</Link>
             <Link to="/servicos" className="hover:text-footer-foreground">Serviços</Link>
             <Link to="/sobre" className="hover:text-footer-foreground">Sobre</Link>

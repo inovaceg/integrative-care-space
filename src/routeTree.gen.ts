@@ -17,6 +17,7 @@ import { Route as BlogRouteImport } from './routes/blog'
 import { Route as ContatoRouteImport } from './routes/contato'
 import { Route as EstruturaRouteImport } from './routes/estrutura'
 import { Route as FaqRouteImport } from './routes/faq'
+import { Route as OrientacaoTdahRouteImport } from './routes/orientacao-tdah'
 import { Route as PoliticaDePrivacidadeRouteImport } from './routes/politica-de-privacidade'
 import { Route as PsicologiaRouteImport } from './routes/psicologia'
 import { Route as ServicosRouteImport } from './routes/servicos'
@@ -89,6 +90,11 @@ const EstruturaRoute = EstruturaRouteImport.update({
 const FaqRoute = FaqRouteImport.update({
   id: '/faq',
   path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrientacaoTdahRoute = OrientacaoTdahRouteImport.update({
+  id: '/orientacao-tdah',
+  path: '/orientacao-tdah',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PoliticaDePrivacidadeRoute = PoliticaDePrivacidadeRouteImport.update({
@@ -265,6 +271,7 @@ export interface FileRoutesByFullPath {
   '/contato': typeof ContatoRoute
   '/estrutura': typeof EstruturaRoute
   '/faq': typeof FaqRoute
+  '/orientacao-tdah': typeof OrientacaoTdahRoute
   '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
   '/psicologia': typeof PsicologiaRoute
   '/servicos': typeof ServicosRoute
@@ -306,6 +313,7 @@ export interface FileRoutesByTo {
   '/contato': typeof ContatoRoute
   '/estrutura': typeof EstruturaRoute
   '/faq': typeof FaqRoute
+  '/orientacao-tdah': typeof OrientacaoTdahRoute
   '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
   '/psicologia': typeof PsicologiaRoute
   '/servicos': typeof ServicosRoute
@@ -349,6 +357,7 @@ export interface FileRoutesById {
   '/contato': typeof ContatoRoute
   '/estrutura': typeof EstruturaRoute
   '/faq': typeof FaqRoute
+  '/orientacao-tdah': typeof OrientacaoTdahRoute
   '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
   '/psicologia': typeof PsicologiaRoute
   '/servicos': typeof ServicosRoute
@@ -393,6 +402,7 @@ export interface FileRouteTypes {
     | '/contato'
     | '/estrutura'
     | '/faq'
+    | '/orientacao-tdah'
     | '/politica-de-privacidade'
     | '/psicologia'
     | '/servicos'
@@ -434,6 +444,7 @@ export interface FileRouteTypes {
     | '/contato'
     | '/estrutura'
     | '/faq'
+    | '/orientacao-tdah'
     | '/politica-de-privacidade'
     | '/psicologia'
     | '/servicos'
@@ -476,6 +487,7 @@ export interface FileRouteTypes {
     | '/contato'
     | '/estrutura'
     | '/faq'
+    | '/orientacao-tdah'
     | '/politica-de-privacidade'
     | '/psicologia'
     | '/servicos'
@@ -519,6 +531,7 @@ export interface RootRouteChildren {
   ContatoRoute: typeof ContatoRoute
   EstruturaRoute: typeof EstruturaRoute
   FaqRoute: typeof FaqRoute
+  OrientacaoTdahRoute: typeof OrientacaoTdahRoute
   PoliticaDePrivacidadeRoute: typeof PoliticaDePrivacidadeRoute
   PsicologiaRoute: typeof PsicologiaRoute
   ServicosRoute: typeof ServicosRoute
@@ -584,6 +597,13 @@ declare module '@tanstack/react-router' {
       path: '/faq'
       fullPath: '/faq'
       preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/orientacao-tdah': {
+      id: '/orientacao-tdah'
+      path: '/orientacao-tdah'
+      fullPath: '/orientacao-tdah'
+      preLoaderRoute: typeof OrientacaoTdahRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/politica-de-privacidade': {
@@ -917,6 +937,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContatoRoute: ContatoRoute,
   EstruturaRoute: EstruturaRoute,
   FaqRoute: FaqRoute,
+  OrientacaoTdahRoute: OrientacaoTdahRoute,
   PoliticaDePrivacidadeRoute: PoliticaDePrivacidadeRoute,
   PsicologiaRoute: PsicologiaRoute,
   ServicosRoute: ServicosRoute,

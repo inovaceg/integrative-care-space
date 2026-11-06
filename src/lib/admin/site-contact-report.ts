@@ -26,6 +26,38 @@ export function buildQuestionnaireReport(contact: Pick<SiteContactReport, "full_
     const answer = answers[key];
     return Array.isArray(answer) ? answer.join(", ") : answer ?? "não informado";
   };
+  if (contact.request_type === "Questionário de orientação sobre TDAH") {
+    const attention = value("tdah_attention");
+    const hyperactivity = value("tdah_hyperactivity");
+    const contexts = value("tdah_contexts");
+    const impact = value("tdah_impact");
+    const summary = [
+      `A orientação é buscada para ${value("tdah_who")}. Foram relatadas dificuldades de atenção ou organização (${attention}) e sinais de inquietação ou impulsividade (${hyperactivity}).`,
+      `Nos últimos seis meses, a frequência foi descrita como ${value("tdah_frequency")}; as dificuldades foram percebidas pela primeira vez ${value("tdah_onset")}.`,
+      `Os contextos mencionados são ${contexts}, com efeitos relatados na rotina: ${impact}.`,
+      `A busca foi motivada por ${value("tdah_motivation")}; o próximo passo desejado é ${value("tdah_next_step")}.`,
+    ];
+    const points = [
+      `Aprofundar exemplos, frequência e impacto das dificuldades de atenção/organização (${attention}) e inquietação/impulsividade (${hyperactivity}).`,
+      `Contextualizar a frequência recente (${value("tdah_frequency")}) e a fase da primeira percepção (${value("tdah_onset")}), considerando o relato e a história de desenvolvimento.`,
+      `Explorar as diferenças entre os contextos (${contexts}) e os efeitos na rotina (${impact}).`,
+      `Considerar o motivo da busca e o passo desejado: ${value("tdah_motivation")} / ${value("tdah_next_step")}.`,
+    ];
+    return [
+      "SÍNTESE INFORMATIVA — ORIENTAÇÃO INICIAL SOBRE TDAH",
+      `Pessoa avaliada: ${contact.full_name}`,
+      `Nascimento / idade: ${contact.birth_date ? formatBirthDateAndAge(contact.birth_date) : "Não informado"}`,
+      `Relatório gerado em: ${new Date().toLocaleString("pt-BR")}`,
+      "",
+      "SÍNTESE DAS RESPOSTAS",
+      ...summary,
+      "",
+      "ASPECTOS A APROFUNDAR NA CONVERSA PROFISSIONAL",
+      ...points.map(point => `• ${point}`),
+      "",
+      "Síntese descritiva para apoiar o primeiro contato. Este questionário não é instrumento diagnóstico e não confirma nem descarta TDAH; a avaliação cabe ao profissional responsável.",
+    ].join("\\n");
+  }
   const areas = value("areas");
   const contexts = value("contexts");
   const impact = value("impact");
