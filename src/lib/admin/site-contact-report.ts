@@ -22,7 +22,6 @@ function formatBirthDateAndAge(value: string) {
 export function buildQuestionnaireReport(contact: Pick<SiteContactReport, "full_name" | "birth_date" | "questionnaire_answers">, questionLabels: Record<string, string>) {
   const generatedAt = new Date().toLocaleString("pt-BR");
   const answers = contact.questionnaire_answers ?? {};
-  const responseLines = Object.entries(answers).flatMap(([key, answer]) => [questionLabels[key] ?? key, Array.isArray(answer) ? answer.join(" · ") : answer, ""]);
   const value = (key: string) => {
     const answer = answers[key];
     return Array.isArray(answer) ? answer.join(", ") : answer ?? "não informado";
@@ -59,8 +58,6 @@ export function buildQuestionnaireReport(contact: Pick<SiteContactReport, "full_
     "ASPECTOS A APROFUNDAR NA AVALIAÇÃO PROFISSIONAL",
     ...focusPoints.map(point => `• ${point}`),
     "",
-    "RESPOSTAS ORIGINAIS",
-    ...(responseLines.length ? responseLines : ["Questionário ainda não concluído; não há respostas registradas."]),
     "Síntese descritiva gerada a partir das respostas fornecidas para apoiar a avaliação profissional. Não constitui laudo, diagnóstico, pontuação ou conclusão clínica automática. A interpretação e as conclusões cabem ao profissional responsável.",
   ].join("\n");
 }
