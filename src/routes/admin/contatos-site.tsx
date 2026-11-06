@@ -89,6 +89,18 @@ function SiteContactsPage() {
     }
   }
 
+  async function deleteContact(item: SiteContact) {
+    if (!window.confirm(`Excluir o contato de ${item.full_name} e todos os dados vinculados a este pedido? Esta ação não pode ser desfeita.`)) return;
+    setError("");
+    const { error: deleteError } = await supabase.from("site_contact_requests").delete().eq("id", item.id);
+    if (deleteError) setError("Não foi possível excluir o contato.");
+    else {
+      setItems(current => current.filter(contact => contact.id !== item.id));
+      setExpandedId(null);
+      setEditingId(null);
+    }
+  }
+
   return <AdminLayout>
     <PageIntro eyebrow="Solicitações recebidas" title="Contatos do site" description="Selecione o nome de um contato para consultar as informações e respostas do questionário." action={<Button variant="outline" onClick={() => void load()} disabled={loading}><RefreshCw className="mr-2 size-4" />Atualizar</Button>} />
     {error && <p role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
@@ -114,6 +126,7 @@ function SiteContactsPage() {
             <time className="text-xs text-slate-400" dateTime={item.created_at}>{new Date(item.created_at).toLocaleString("pt-BR")}</time>
           </div>
           {hasQuestionnaire && (item.questionnaire_answers && Object.keys(item.questionnaire_answers).length > 0 ? <section className="mt-4 rounded-xl border border-[#cce7df] bg-[#f4faf8] p-4"><div className="flex flex-wrap items-center justify-between gap-3"><h3 className="text-sm font-semibold text-[#245f57]">Respostas do questionário para avaliação</h3>{editingId === item.id ? <div className="flex gap-2"><Button size="sm" onClick={() => void saveAnswers(item)} disabled={savingAnswers}><Save className="mr-2 size-4" />{savingAnswers ? "Salvando…" : "Salvar"}</Button><Button size="sm" variant="outline" onClick={() => setEditingId(null)} disabled={savingAnswers}><X className="mr-2 size-4" />Cancelar</Button></div> : <div className="flex gap-2"><Button size="sm" variant="outline" onClick={() => startEditing(item)}><Pencil className="mr-2 size-4" />Editar</Button><Button size="sm" variant="outline" className="border-red-200 text-red-700 hover:bg-red-50" onClick={() => void deleteAnswers(item)}><Trash2 className="mr-2 size-4" />Excluir respostas</Button></div>}</div><dl className="mt-4 grid gap-3 sm:grid-cols-2">{Object.entries(item.questionnaire_answers).map(([key, answer]) => <div key={key} className="rounded-lg bg-white p-3"><dt className="text-xs font-semibold text-slate-500">{questionLabels[key] ?? key}</dt><dd className="mt-1 text-sm leading-6 text-slate-800">{editingId === item.id ? <Textarea aria-label={questionLabels[key] ?? key} value={draftAnswers[key] ?? ""} onChange={event => setDraftAnswers(current => ({ ...current, [key]: event.target.value }))} rows={Array.isArray(answer) ? 3 : 2} /> : Array.isArray(answer) ? answer.join(" · ") : answer}</dd>{editingId === item.id && Array.isArray(answer) && <p className="mt-1 text-xs text-slate-500">Em respostas com múltipla escolha, deixe uma opção por linha.</p>}</div>)}</dl></section> : <p className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">Este contato ainda não tem respostas salvas; o questionário pode não ter sido concluído.</p>)}
+          <div className="mt-5 border-t border-slate-100 pt-4"><Button variant="outline" className="border-red-200 text-red-700 hover:bg-red-50" onClick={() => void deleteContact(item)}><Trash2 className="mr-2 size-4" />Excluir contato</Button></div>
         </div>}
       </CardContent></Card>;
     })}</div>}
