@@ -19,7 +19,7 @@ function formatBirthDateAndAge(value: string) {
   return `${date} · ${age} ${age === 1 ? "ano" : "anos"}`;
 }
 
-export function buildQuestionnaireReport(contact: Pick<SiteContactReport, "full_name" | "birth_date" | "questionnaire_answers">, questionLabels: Record<string, string>) {
+export function buildQuestionnaireReport(contact: Pick<SiteContactReport, "full_name" | "birth_date" | "request_type" | "questionnaire_answers">, questionLabels: Record<string, string>) {
   const generatedAt = new Date().toLocaleString("pt-BR");
   const answers = contact.questionnaire_answers ?? {};
   const value = (key: string) => {
@@ -32,16 +32,20 @@ export function buildQuestionnaireReport(contact: Pick<SiteContactReport, "full_
     const contexts = value("tdah_contexts");
     const impact = value("tdah_impact");
     const summary = [
-      `A orientação é buscada para ${value("tdah_who")}. Foram relatadas dificuldades de atenção ou organização (${attention}) e sinais de inquietação ou impulsividade (${hyperactivity}).`,
-      `Nos últimos seis meses, a frequência foi descrita como ${value("tdah_frequency")}; as dificuldades foram percebidas pela primeira vez ${value("tdah_onset")}.`,
-      `Os contextos mencionados são ${contexts}, com efeitos relatados na rotina: ${impact}.`,
-      `A busca foi motivada por ${value("tdah_motivation")}; o próximo passo desejado é ${value("tdah_next_step")}.`,
+      `Orientação buscada para: ${value("tdah_who")}`,
+      `Atenção e organização: ${attention}`,
+      `Inquietação ou impulsividade: ${hyperactivity}`,
+      `Frequência nos últimos seis meses: ${value("tdah_frequency")}`,
+      `Fase da primeira percepção: ${value("tdah_onset")}`,
+      `Contextos mencionados: ${contexts}`,
+      `Efeitos percebidos na rotina: ${impact}`,
+      `Motivo da busca: ${value("tdah_motivation")}`,
+      `Próximo passo desejado: ${value("tdah_next_step")}`,
     ];
     const points = [
-      `Aprofundar exemplos, frequência e impacto das dificuldades de atenção/organização (${attention}) e inquietação/impulsividade (${hyperactivity}).`,
-      `Contextualizar a frequência recente (${value("tdah_frequency")}) e a fase da primeira percepção (${value("tdah_onset")}), considerando o relato e a história de desenvolvimento.`,
-      `Explorar as diferenças entre os contextos (${contexts}) e os efeitos na rotina (${impact}).`,
-      `Considerar o motivo da busca e o passo desejado: ${value("tdah_motivation")} / ${value("tdah_next_step")}.`,
+      "Pedir exemplos concretos e esclarecer frequência, duração e repercussão dos comportamentos descritos.",
+      "Aprofundar a história de desenvolvimento e em que momento os sinais foram percebidos pela primeira vez.",
+      "Compreender como as dificuldades variam entre contextos e quais apoios já ajudam na rotina.",
     ];
     return [
       "SÍNTESE INFORMATIVA — ORIENTAÇÃO INICIAL SOBRE TDAH",
@@ -56,7 +60,7 @@ export function buildQuestionnaireReport(contact: Pick<SiteContactReport, "full_
       ...points.map(point => `• ${point}`),
       "",
       "Síntese descritiva para apoiar o primeiro contato. Este questionário não é instrumento diagnóstico e não confirma nem descarta TDAH; a avaliação cabe ao profissional responsável.",
-    ].join("\\n");
+    ].join("\n");
   }
   const areas = value("areas");
   const contexts = value("contexts");
@@ -125,12 +129,12 @@ export function printSiteContactReport(contact: SiteContactReport, questionLabel
 
   const subtitle = printWindow.document.createElement("p");
   subtitle.className = "subtle";
-  subtitle.textContent = "Questionário de orientação sobre avaliação neuropsicológica";
+  subtitle.textContent = contact.request_type === "Questionário de orientação sobre TDAH" ? "Orientação inicial sobre TDAH" : "Questionário de orientação sobre avaliação neuropsicológica";
   printWindow.document.body.appendChild(subtitle);
 
   const notice = printWindow.document.createElement("p");
   notice.className = "notice";
-  notice.textContent = "Registro informativo baseado nas respostas fornecidas. Não constitui laudo, diagnóstico ou conclusão clínica automática.";
+  notice.textContent = contact.request_type === "Questionário de orientação sobre TDAH" ? "Síntese informativa para apoiar o primeiro contato. Este questionário não gera diagnóstico." : "Registro informativo baseado nas respostas fornecidas. Não constitui laudo, diagnóstico ou conclusão clínica automática.";
   printWindow.document.body.appendChild(notice);
 
   const details = printWindow.document.createElement("section");

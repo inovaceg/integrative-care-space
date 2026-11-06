@@ -32,6 +32,15 @@ const questionLabels: Record<string, string> = {
   factors: "O que coincidiu com o início ou a piora?",
   reason: "Motivo da busca por orientação",
   goal: "Como prefere seguir?",
+  tdah_who: "Para quem busca orientação",
+  tdah_attention: "Dificuldades de atenção ou organização",
+  tdah_hyperactivity: "Sinais de inquietação ou impulsividade",
+  tdah_frequency: "Frequência nos últimos seis meses",
+  tdah_onset: "Fase da primeira percepção",
+  tdah_contexts: "Contextos em que aparecem",
+  tdah_impact: "Efeitos na rotina",
+  tdah_motivation: "Motivo da busca",
+  tdah_next_step: "Próximo passo desejado",
 };
 
 function formatBirthDateAndAge(value: string) {
@@ -41,6 +50,22 @@ function formatBirthDateAndAge(value: string) {
   if (today.getMonth() + 1 < month || (today.getMonth() + 1 === month && today.getDate() < day)) age -= 1;
   const date = new Date(`${value}T00:00:00Z`).toLocaleDateString("pt-BR", { timeZone: "UTC" });
   return `${date} · ${age} ${age === 1 ? "ano" : "anos"}`;
+}
+
+function ReportContent({ report }: { report: string }) {
+  const sectionTitles = new Set(["SÍNTESE DAS RESPOSTAS", "ASPECTOS A APROFUNDAR NA CONVERSA PROFISSIONAL", "ASPECTOS A APROFUNDAR NA AVALIAÇÃO PROFISSIONAL"]);
+  return <div className="mt-4 space-y-3 rounded-lg bg-white p-4 text-sm leading-6 text-slate-700">
+    {report.split("\n").filter(Boolean).map((line, index) => {
+      if (index === 0) return <h4 key={line} className="font-semibold text-slate-900">{line}</h4>;
+      if (sectionTitles.has(line)) return <h5 key={line} className="border-b border-slate-100 pb-1 pt-2 text-xs font-bold uppercase tracking-wide text-[#26786e]">{line}</h5>;
+      if (line.startsWith("Pessoa avaliada:") || line.startsWith("Nascimento / idade:") || line.startsWith("Relatório gerado em:")) return <p key={`${line}-${index}`} className="text-xs text-slate-500">{line}</p>;
+      if (line.startsWith("• ")) return <p key={`${line}-${index}`} className="rounded-md border-l-2 border-[#72c7b5] bg-[#f7fbfa] px-3 py-2">{line.slice(2)}</p>;
+      if (line.startsWith("Síntese descritiva")) return <p key={line} className="border-t border-slate-100 pt-3 text-xs text-slate-500">{line}</p>;
+      const colon = line.indexOf(":");
+      if (colon > 0) return <p key={`${line}-${index}`}><strong className="font-semibold text-slate-800">{line.slice(0, colon)}:</strong>{line.slice(colon + 1)}</p>;
+      return <p key={`${line}-${index}`}>{line}</p>;
+    })}
+  </div>;
 }
 
 function SiteContactsPage() {
@@ -67,7 +92,8 @@ function SiteContactsPage() {
       const contacts = (data as SiteContact[] | null) ?? [];
       const prepared = await Promise.all(contacts.map(async item => {
         const contact = { ...item, questionnaire_answers: item.questionnaire_answers ? Object.fromEntries(Object.entries(item.questionnaire_answers).filter(([key]) => key !== "age")) : null };
-        if ((!contact.questionnaire_report?.includes("SÍNTESE DAS RESPOSTAS") || contact.questionnaire_report.includes("RESPOSTAS ORIGINAIS")) && contact.questionnaire_answers && Object.keys(contact.questionnaire_answers).length > 0) {
+        const malformedTdahReport = contact.request_type === "Questionário de orientação sobre TDAH" && Boolean(contact.questionnaire_report?.includes("\\n"));
+        if ((!contact.questionnaire_report?.includes("SÍNTESE DAS RESPOSTAS") || contact.questionnaire_report.includes("RESPOSTAS ORIGINAIS") || malformedTdahReport) && contact.questionnaire_answers && Object.keys(contact.questionnaire_answers).length > 0) {
           const report = buildQuestionnaireReport(contact, questionLabels);
           let reportUpdate = supabase.from("site_contact_requests").update({ questionnaire_report: report }).eq("id", item.id);
           reportUpdate = contact.questionnaire_report ? reportUpdate.eq("questionnaire_report", contact.questionnaire_report) : reportUpdate.is("questionnaire_report", null);
@@ -108,7 +134,7 @@ function SiteContactsPage() {
       setError("Informe um WhatsApp válido com DDD.");
       return;
     }
-    if ((item.request_type === "Questionário de orientação neuropsicológica" && !birthDate) || (birthDate && (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate) || Number.isNaN(new Date(`${birthDate}T00:00:00.000Z`).getTime()) || new Date(`${birthDate}T00:00:00.000Z`).toISOString().slice(0, 10) !== birthDate || birthDate > new Date().toISOString().slice(0, 10)))) {
+    if (((item.request_type === "Questionário de orientação neuropsicológica" || item.request_type === "Questionário de orientação sobre TDAH") && !birthDate) || (birthDate && (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate) || Number.isNaN(new Date(`${birthDate}T00:00:00.000Z`).getTime()) || new Date(`${birthDate}T00:00:00.000Z`).toISOString().slice(0, 10) !== birthDate || birthDate > new Date().toISOString().slice(0, 10)))) {
       setError("Informe uma data de nascimento válida.");
       return;
     }
@@ -192,7 +218,7 @@ function SiteContactsPage() {
     {error && <p role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
     {loading ? <p className="text-sm text-slate-500">Carregando solicitações…</p> : items.length === 0 ? <Card><CardContent className="py-12 text-center text-sm text-slate-500">Ainda não há solicitações de contato.</CardContent></Card> : <div className="space-y-2">{items.map(item => {
       const expanded = expandedId === item.id;
-      const hasQuestionnaire = item.request_type === "Questionário de orientação neuropsicológica";
+      const hasQuestionnaire = item.request_type === "Questionário de orientação neuropsicológica" || item.request_type === "Questionário de orientação sobre TDAH";
       return <Card key={item.id} className="border-slate-200/80 shadow-sm"><CardContent className="p-0">
         <div className="flex flex-col justify-between gap-3 p-4 sm:flex-row sm:items-center sm:p-5">
           <div className="min-w-0 flex-1">
@@ -210,7 +236,7 @@ function SiteContactsPage() {
         {expanded && <div className="border-t border-slate-100 px-4 pb-5 pt-4 sm:px-5">
           {editingContactId === item.id ? <section className="rounded-xl border border-slate-200 bg-slate-50 p-4"><div className="grid gap-4 sm:grid-cols-3"><div className="grid gap-2"><Label htmlFor={`contact-name-${item.id}`}>Nome</Label><Input id={`contact-name-${item.id}`} value={contactDraft.full_name} maxLength={100} onChange={event => setContactDraft(current => ({ ...current, full_name: event.target.value }))} /></div><div className="grid gap-2"><Label htmlFor={`contact-phone-${item.id}`}>WhatsApp</Label><Input id={`contact-phone-${item.id}`} type="tel" inputMode="tel" value={contactDraft.whatsapp} maxLength={20} onChange={event => setContactDraft(current => ({ ...current, whatsapp: event.target.value }))} /></div><div className="grid gap-2"><Label htmlFor={`contact-birth-${item.id}`}>Data de nascimento</Label><Input id={`contact-birth-${item.id}`} type="date" value={contactDraft.birth_date} max={new Date().toISOString().slice(0, 10)} onChange={event => setContactDraft(current => ({ ...current, birth_date: event.target.value }))} /></div></div><div className="mt-4 flex flex-wrap gap-2"><Button size="sm" onClick={() => void saveContact(item)} disabled={savingContact}><Save className="mr-2 size-4" />{savingContact ? "Salvando…" : "Salvar dados"}</Button><Button size="sm" variant="outline" onClick={() => setEditingContactId(null)} disabled={savingContact}><X className="mr-2 size-4" />Cancelar</Button></div></section> : <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex flex-wrap items-center gap-4"><a href={`https://wa.me/${item.whatsapp}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm text-[#26786e] underline"><MessageCircle className="size-4" />{item.whatsapp}</a>{item.birth_date && <p className="text-sm text-slate-600"><strong className="font-medium">Data de nascimento:</strong> {formatBirthDateAndAge(item.birth_date)}</p>}</div><div className="flex items-center gap-3"><time className="text-xs text-slate-400" dateTime={item.created_at}>{new Date(item.created_at).toLocaleString("pt-BR")}</time><Button size="sm" variant="outline" onClick={() => startEditingContact(item)}><Pencil className="mr-2 size-4" />Editar dados</Button></div></div>}
           {hasQuestionnaire && (item.questionnaire_answers && Object.keys(item.questionnaire_answers).length > 0 ? <section className="mt-4 rounded-xl border border-[#cce7df] bg-[#f4faf8] p-4"><div className="flex flex-wrap items-center justify-between gap-3"><h3 className="text-sm font-semibold text-[#245f57]">Respostas do questionário para avaliação</h3>{editingId === item.id ? <div className="flex gap-2"><Button size="sm" onClick={() => void saveAnswers(item)} disabled={savingAnswers}><Save className="mr-2 size-4" />{savingAnswers ? "Salvando…" : "Salvar"}</Button><Button size="sm" variant="outline" onClick={() => setEditingId(null)} disabled={savingAnswers}><X className="mr-2 size-4" />Cancelar</Button></div> : <div className="flex gap-2"><Button size="sm" variant="outline" onClick={() => startEditing(item)}><Pencil className="mr-2 size-4" />Editar</Button><Button size="sm" variant="outline" className="border-red-200 text-red-700 hover:bg-red-50" onClick={() => void deleteAnswers(item)}><Trash2 className="mr-2 size-4" />Excluir respostas</Button></div>}</div><dl className="mt-4 grid gap-3 sm:grid-cols-2">{Object.entries(item.questionnaire_answers).map(([key, answer]) => <div key={key} className="rounded-lg bg-white p-3"><dt className="text-xs font-semibold text-slate-500">{questionLabels[key] ?? key}</dt><dd className="mt-1 text-sm leading-6 text-slate-800">{editingId === item.id ? <Textarea aria-label={questionLabels[key] ?? key} value={draftAnswers[key] ?? ""} onChange={event => setDraftAnswers(current => ({ ...current, [key]: event.target.value }))} rows={Array.isArray(answer) ? 3 : 2} /> : Array.isArray(answer) ? answer.join(" · ") : answer}</dd>{editingId === item.id && Array.isArray(answer) && <p className="mt-1 text-xs text-slate-500">Em respostas com múltipla escolha, deixe uma opção por linha.</p>}</div>)}</dl></section> : <p className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">Este contato ainda não tem respostas salvas; o questionário pode não ter sido concluído.</p>)}
-          {item.questionnaire_report && <section className="mt-4 rounded-xl border border-[#cce7df] bg-[#f4faf8] p-4"><h3 className="text-sm font-semibold text-[#245f57]">Relatório gerado e salvo no contato</h3><pre className="mt-3 whitespace-pre-wrap font-sans text-sm leading-6 text-slate-700">{item.questionnaire_report}</pre></section>}
+          {item.questionnaire_report && <section className="mt-4 rounded-xl border border-[#cce7df] bg-[#f4faf8] p-4"><h3 className="text-sm font-semibold text-[#245f57]">Relatório gerado e salvo no contato</h3><ReportContent report={item.questionnaire_report} /></section>}
           <section className="mt-4 rounded-xl border border-slate-200 bg-white p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="text-sm font-semibold text-slate-800">Observações privadas do profissional</h3><p className="mt-1 text-xs text-slate-500">Incluídas no relatório individual. Somente a equipe autorizada pode consultar.</p></div><Button size="sm" onClick={() => void saveProfessionalNotes(item)} disabled={savingNotesId === item.id}><Save className="mr-2 size-4" />{savingNotesId === item.id ? "Salvando…" : "Salvar observações"}</Button></div><Textarea className="mt-3" aria-label={`Observações privadas do profissional para ${item.full_name}`} value={noteDrafts[item.id] ?? item.professional_notes ?? ""} maxLength={5000} rows={4} onChange={event => setNoteDrafts(current => ({ ...current, [item.id]: event.target.value }))} /></section>
           <div className="mt-5 border-t border-slate-100 pt-4"><Button variant="outline" className="border-red-200 text-red-700 hover:bg-red-50" onClick={() => void deleteContact(item)}><Trash2 className="mr-2 size-4" />Excluir contato</Button></div>
         </div>}
