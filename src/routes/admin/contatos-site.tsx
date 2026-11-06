@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -47,6 +49,9 @@ function SiteContactsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftAnswers, setDraftAnswers] = useState<Record<string, string>>({});
   const [savingAnswers, setSavingAnswers] = useState(false);
+  const [editingContactId, setEditingContactId] = useState<string | null>(null);
+  const [contactDraft, setContactDraft] = useState({ full_name: "", whatsapp: "", birth_date: "" });
+  const [savingContact, setSavingContact] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -64,6 +69,39 @@ function SiteContactsPage() {
     const { error: updateError } = await supabase.from("site_contact_requests").update({ status }).eq("id", id);
     if (updateError) setError("Não foi possível atualizar o status.");
     else setItems(current => current.map(item => item.id === id ? { ...item, status } : item));
+  }
+
+  function startEditingContact(item: SiteContact) {
+    setContactDraft({ full_name: item.full_name, whatsapp: item.whatsapp, birth_date: item.birth_date ?? "" });
+    setEditingContactId(item.id);
+  }
+
+  async function saveContact(item: SiteContact) {
+    const fullName = contactDraft.full_name.trim().replace(/\s+/g, " ");
+    const phoneDigits = contactDraft.whatsapp.replace(/\D/g, "");
+    const whatsapp = phoneDigits.length === 10 || phoneDigits.length === 11 ? `55${phoneDigits}` : phoneDigits;
+    const birthDate = contactDraft.birth_date;
+    if (fullName.length < 2 || fullName.length > 100) {
+      setError("Informe um nome com pelo menos 2 caracteres.");
+      return;
+    }
+    if (phoneDigits.length < 10 || phoneDigits.length > 13) {
+      setError("Informe um WhatsApp válido com DDD.");
+      return;
+    }
+    if ((item.request_type === "Questionário de orientação neuropsicológica" && !birthDate) || (birthDate && (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate) || Number.isNaN(new Date(`${birthDate}T00:00:00.000Z`).getTime()) || new Date(`${birthDate}T00:00:00.000Z`).toISOString().slice(0, 10) !== birthDate || birthDate > new Date().toISOString().slice(0, 10)))) {
+      setError("Informe uma data de nascimento válida.");
+      return;
+    }
+    setSavingContact(true);
+    setError("");
+    const { error: updateError } = await supabase.from("site_contact_requests").update({ full_name: fullName, whatsapp, birth_date: birthDate || null }).eq("id", item.id);
+    if (updateError) setError("Não foi possível atualizar os dados do contato.");
+    else {
+      setItems(current => current.map(contact => contact.id === item.id ? { ...contact, full_name: fullName, whatsapp, birth_date: birthDate || null } : contact));
+      setEditingContactId(null);
+    }
+    setSavingContact(false);
   }
 
   function startEditing(item: SiteContact) {
@@ -130,10 +168,7 @@ function SiteContactsPage() {
           <Select value={item.status} onValueChange={value => void updateStatus(item.id, value as SiteContact["status"])}><SelectTrigger className="w-full sm:w-44" aria-label={`Status de ${item.full_name}`}><SelectValue /></SelectTrigger><SelectContent>{statuses.map(status => <SelectItem key={status} value={status}>{status}</SelectItem>)}</SelectContent></Select>
         </div>
         {expanded && <div className="border-t border-slate-100 px-4 pb-5 pt-4 sm:px-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-4"><a href={`https://wa.me/${item.whatsapp}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm text-[#26786e] underline"><MessageCircle className="size-4" />{item.whatsapp}</a>{item.birth_date && <p className="text-sm text-slate-600"><strong className="font-medium">Data de nascimento:</strong> {formatBirthDateAndAge(item.birth_date)}</p>}</div>
-            <time className="text-xs text-slate-400" dateTime={item.created_at}>{new Date(item.created_at).toLocaleString("pt-BR")}</time>
-          </div>
+          {editingContactId === item.id ? <section className="rounded-xl border border-slate-200 bg-slate-50 p-4"><div className="grid gap-4 sm:grid-cols-3"><div className="grid gap-2"><Label htmlFor={`contact-name-${item.id}`}>Nome</Label><Input id={`contact-name-${item.id}`} value={contactDraft.full_name} maxLength={100} onChange={event => setContactDraft(current => ({ ...current, full_name: event.target.value }))} /></div><div className="grid gap-2"><Label htmlFor={`contact-phone-${item.id}`}>WhatsApp</Label><Input id={`contact-phone-${item.id}`} type="tel" inputMode="tel" value={contactDraft.whatsapp} maxLength={20} onChange={event => setContactDraft(current => ({ ...current, whatsapp: event.target.value }))} /></div><div className="grid gap-2"><Label htmlFor={`contact-birth-${item.id}`}>Data de nascimento</Label><Input id={`contact-birth-${item.id}`} type="date" value={contactDraft.birth_date} max={new Date().toISOString().slice(0, 10)} onChange={event => setContactDraft(current => ({ ...current, birth_date: event.target.value }))} /></div></div><div className="mt-4 flex flex-wrap gap-2"><Button size="sm" onClick={() => void saveContact(item)} disabled={savingContact}><Save className="mr-2 size-4" />{savingContact ? "Salvando…" : "Salvar dados"}</Button><Button size="sm" variant="outline" onClick={() => setEditingContactId(null)} disabled={savingContact}><X className="mr-2 size-4" />Cancelar</Button></div></section> : <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex flex-wrap items-center gap-4"><a href={`https://wa.me/${item.whatsapp}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm text-[#26786e] underline"><MessageCircle className="size-4" />{item.whatsapp}</a>{item.birth_date && <p className="text-sm text-slate-600"><strong className="font-medium">Data de nascimento:</strong> {formatBirthDateAndAge(item.birth_date)}</p>}</div><div className="flex items-center gap-3"><time className="text-xs text-slate-400" dateTime={item.created_at}>{new Date(item.created_at).toLocaleString("pt-BR")}</time><Button size="sm" variant="outline" onClick={() => startEditingContact(item)}><Pencil className="mr-2 size-4" />Editar dados</Button></div></div>}
           {hasQuestionnaire && (item.questionnaire_answers && Object.keys(item.questionnaire_answers).length > 0 ? <section className="mt-4 rounded-xl border border-[#cce7df] bg-[#f4faf8] p-4"><div className="flex flex-wrap items-center justify-between gap-3"><h3 className="text-sm font-semibold text-[#245f57]">Respostas do questionário para avaliação</h3>{editingId === item.id ? <div className="flex gap-2"><Button size="sm" onClick={() => void saveAnswers(item)} disabled={savingAnswers}><Save className="mr-2 size-4" />{savingAnswers ? "Salvando…" : "Salvar"}</Button><Button size="sm" variant="outline" onClick={() => setEditingId(null)} disabled={savingAnswers}><X className="mr-2 size-4" />Cancelar</Button></div> : <div className="flex gap-2"><Button size="sm" variant="outline" onClick={() => startEditing(item)}><Pencil className="mr-2 size-4" />Editar</Button><Button size="sm" variant="outline" className="border-red-200 text-red-700 hover:bg-red-50" onClick={() => void deleteAnswers(item)}><Trash2 className="mr-2 size-4" />Excluir respostas</Button></div>}</div><dl className="mt-4 grid gap-3 sm:grid-cols-2">{Object.entries(item.questionnaire_answers).map(([key, answer]) => <div key={key} className="rounded-lg bg-white p-3"><dt className="text-xs font-semibold text-slate-500">{questionLabels[key] ?? key}</dt><dd className="mt-1 text-sm leading-6 text-slate-800">{editingId === item.id ? <Textarea aria-label={questionLabels[key] ?? key} value={draftAnswers[key] ?? ""} onChange={event => setDraftAnswers(current => ({ ...current, [key]: event.target.value }))} rows={Array.isArray(answer) ? 3 : 2} /> : Array.isArray(answer) ? answer.join(" · ") : answer}</dd>{editingId === item.id && Array.isArray(answer) && <p className="mt-1 text-xs text-slate-500">Em respostas com múltipla escolha, deixe uma opção por linha.</p>}</div>)}</dl></section> : <p className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">Este contato ainda não tem respostas salvas; o questionário pode não ter sido concluído.</p>)}
           <div className="mt-5 border-t border-slate-100 pt-4"><Button variant="outline" className="border-red-200 text-red-700 hover:bg-red-50" onClick={() => void deleteContact(item)}><Trash2 className="mr-2 size-4" />Excluir contato</Button></div>
         </div>}
