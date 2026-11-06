@@ -16,7 +16,7 @@ export const Route = createFileRoute("/admin/contatos-site")({
 });
 
 type Answers = Record<string, string | string[]>;
-type SiteContact = { id: string; full_name: string; whatsapp: string; request_type: string; status: "Novo" | "Em contato" | "Finalizado"; created_at: string; questionnaire_answers: Answers | null };
+type SiteContact = { id: string; full_name: string; whatsapp: string; birth_date: string | null; request_type: string; status: "Novo" | "Em contato" | "Finalizado"; created_at: string; questionnaire_answers: Answers | null };
 const statuses: SiteContact["status"][] = ["Novo", "Em contato", "Finalizado"];
 const questionLabels: Record<string, string> = {
   who: "Para quem busca informações?",
@@ -43,7 +43,7 @@ function SiteContactsPage() {
   async function load() {
     setLoading(true);
     setError("");
-    const { data, error: queryError } = await supabase.from("site_contact_requests").select("id,full_name,whatsapp,request_type,status,created_at,questionnaire_answers").order("created_at", { ascending: false });
+    const { data, error: queryError } = await supabase.from("site_contact_requests").select("id,full_name,whatsapp,birth_date,request_type,status,created_at,questionnaire_answers").order("created_at", { ascending: false });
     if (queryError) setError("Não foi possível carregar os contatos autorizados.");
     else setItems((data as SiteContact[] | null) ?? []);
     setLoading(false);
@@ -122,7 +122,7 @@ function SiteContactsPage() {
         </div>
         {expanded && <div className="border-t border-slate-100 px-4 pb-5 pt-4 sm:px-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <a href={`https://wa.me/${item.whatsapp}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm text-[#26786e] underline"><MessageCircle className="size-4" />{item.whatsapp}</a>
+            <div className="flex flex-wrap items-center gap-4"><a href={`https://wa.me/${item.whatsapp}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm text-[#26786e] underline"><MessageCircle className="size-4" />{item.whatsapp}</a>{item.birth_date && <p className="text-sm text-slate-600">Nascimento: {new Date(`${item.birth_date}T00:00:00Z`).toLocaleDateString("pt-BR", { timeZone: "UTC" })}</p>}</div>
             <time className="text-xs text-slate-400" dateTime={item.created_at}>{new Date(item.created_at).toLocaleString("pt-BR")}</time>
           </div>
           {hasQuestionnaire && (item.questionnaire_answers && Object.keys(item.questionnaire_answers).length > 0 ? <section className="mt-4 rounded-xl border border-[#cce7df] bg-[#f4faf8] p-4"><div className="flex flex-wrap items-center justify-between gap-3"><h3 className="text-sm font-semibold text-[#245f57]">Respostas do questionário para avaliação</h3>{editingId === item.id ? <div className="flex gap-2"><Button size="sm" onClick={() => void saveAnswers(item)} disabled={savingAnswers}><Save className="mr-2 size-4" />{savingAnswers ? "Salvando…" : "Salvar"}</Button><Button size="sm" variant="outline" onClick={() => setEditingId(null)} disabled={savingAnswers}><X className="mr-2 size-4" />Cancelar</Button></div> : <div className="flex gap-2"><Button size="sm" variant="outline" onClick={() => startEditing(item)}><Pencil className="mr-2 size-4" />Editar</Button><Button size="sm" variant="outline" className="border-red-200 text-red-700 hover:bg-red-50" onClick={() => void deleteAnswers(item)}><Trash2 className="mr-2 size-4" />Excluir respostas</Button></div>}</div><dl className="mt-4 grid gap-3 sm:grid-cols-2">{Object.entries(item.questionnaire_answers).map(([key, answer]) => <div key={key} className="rounded-lg bg-white p-3"><dt className="text-xs font-semibold text-slate-500">{questionLabels[key] ?? key}</dt><dd className="mt-1 text-sm leading-6 text-slate-800">{editingId === item.id ? <Textarea aria-label={questionLabels[key] ?? key} value={draftAnswers[key] ?? ""} onChange={event => setDraftAnswers(current => ({ ...current, [key]: event.target.value }))} rows={Array.isArray(answer) ? 3 : 2} /> : Array.isArray(answer) ? answer.join(" · ") : answer}</dd>{editingId === item.id && Array.isArray(answer) && <p className="mt-1 text-xs text-slate-500">Em respostas com múltipla escolha, deixe uma opção por linha.</p>}</div>)}</dl></section> : <p className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">Este contato ainda não tem respostas salvas; o questionário pode não ter sido concluído.</p>)}

@@ -70,6 +70,13 @@ serve(async request => {
   if (!requestTypes.includes(requestType) || input.consent !== true) {
     return Response.json({ error: "Confirme o pedido de contato para continuar." }, { status: 400, headers: corsHeaders });
   }
+  const birthDate = typeof input.birthDate === "string" ? input.birthDate : "";
+  if (requestType === "Questionário de orientação neuropsicológica") {
+    const parsedBirthDate = /^\d{4}-\d{2}-\d{2}$/.test(birthDate) ? new Date(`${birthDate}T00:00:00.000Z`) : null;
+    if (!parsedBirthDate || Number.isNaN(parsedBirthDate.getTime()) || parsedBirthDate.toISOString().slice(0, 10) !== birthDate || birthDate > new Date().toISOString().slice(0, 10)) {
+      return Response.json({ error: "Informe uma data de nascimento válida." }, { status: 400, headers: corsHeaders });
+    }
+  }
 
   const tokenBytes = requestType === "Questionário de orientação neuropsicológica" ? crypto.getRandomValues(new Uint8Array(32)) : null;
   const questionnaireToken = tokenBytes ? toHex(tokenBytes) : null;
@@ -78,6 +85,7 @@ serve(async request => {
     full_name: fullName,
     whatsapp,
     request_type: requestType,
+    birth_date: requestType === "Questionário de orientação neuropsicológica" ? birthDate : null,
     questionnaire_token_hash: questionnaireTokenHash,
   });
   if (error) return Response.json({ error: "Não foi possível registrar o pedido agora. Tente novamente." }, { status: 500, headers: corsHeaders });
