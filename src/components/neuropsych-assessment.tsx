@@ -15,7 +15,6 @@ const infoChoice = "Quero apenas entender como funciona a avaliação";
 const openAnswers = new Set(["Prefiro não responder", "Prefiro não informar", "Não sei dizer", "Percebi há pouco tempo ou ainda não consigo comparar", "Ainda não identifiquei uma dificuldade específica", "Ainda não identifiquei em quais situações acontece", "Ainda não consigo avaliar"]);
 const questions: Question[] = [
   { id: "who", title: "Para quem você está buscando informações?", options: ["Para mim", "Para meu filho ou minha filha", "Para outra pessoa da família", "Para outra pessoa que acompanho"] },
-  { id: "age", title: "Qual é a faixa etária da pessoa?", options: ["Até 11 anos", "De 12 a 17 anos", "De 18 a 59 anos", "60 anos ou mais", "Prefiro não informar"] },
   { id: "reason", title: "O que motivou sua busca?", multiple: true, exclusive: [infoChoice, "Prefiro não responder"], options: ["Percebi dificuldades ou mudanças no dia a dia", "Alguém da família, da escola ou do trabalho comentou sobre uma dificuldade ou mudança", "Um profissional sugeriu ou encaminhou para uma avaliação", "Percebi mudanças depois de um acontecimento relacionado à saúde", infoChoice, "Prefiro não responder"] },
   { id: "areas", title: "O que você tem observado?", multiple: true, exclusive: ["Ainda não identifiquei uma dificuldade específica", "Prefiro não responder"], options: ["Distração ou dificuldade para manter a atenção", "Esquecimento de conversas, instruções ou compromissos", "Dificuldade para começar, organizar ou terminar tarefas", "Necessidade de mais tempo para entender informações ou responder", "Dificuldade para aprender, ler, escrever ou fazer contas", "Dificuldade para compreender o que foi dito, encontrar palavras ou explicar uma ideia", "Dificuldade para lidar com mudanças de plano ou passar de uma tarefa para outra", "Outra dificuldade", "Ainda não identifiquei uma dificuldade específica", "Prefiro não responder"] },
   { id: "onset", title: "Quando você começou a perceber isso?", options: ["Há menos de 1 mês", "De 1 a 6 meses atrás", "Há mais de 6 meses e menos de 1 ano", "Há 1 ano ou mais", "Não sei dizer", "Prefiro não responder"] },
@@ -44,7 +43,7 @@ function buildFeedback(answers: Answers) {
   const hasDetails = areas.some(area => area !== "Outra dificuldade");
   const referral = selectedValues(answers.reason).includes("Um profissional sugeriu ou encaminhou para uma avaliação");
   const seeksInformation = selectedValues(answers.reason).includes(infoChoice) || answers.goal === "Entender como funcionam as etapas da avaliação e a devolutiva";
-  const hasOpenResponse = [...areas, ...contexts, String(answers.age ?? ""), String(answers.onset ?? ""), String(answers.change ?? ""), String(answers.impact ?? ""), ...selectedValues(answers.reason)].some(value => openAnswers.has(value));
+  const hasOpenResponse = [...areas, ...contexts, String(answers.onset ?? ""), String(answers.change ?? ""), String(answers.impact ?? ""), ...selectedValues(answers.reason)].some(value => openAnswers.has(value));
   const forAnotherPerson = Boolean(answers.who && answers.who !== "Para mim");
   const sentences: string[] = [];
 
@@ -84,7 +83,7 @@ export function NeuropsychAssessment() {
   const [answerSaveError, setAnswerSaveError] = useState("");
 
   const skipDetails = selectedValues(answers.reason).includes(infoChoice);
-  const path = useMemo(() => skipDetails ? [...allQuestionIds.slice(0, 3), "goal"] : allQuestionIds, [skipDetails]);
+  const path = useMemo(() => skipDetails ? ["who", "reason", "goal"] : allQuestionIds, [skipDetails]);
   useEffect(() => {
     if (!skipDetails) return;
     setAnswers(current => {
