@@ -21,14 +21,16 @@ type Answers = Record<string, string | string[]>;
 type SiteContact = { id: string; full_name: string; whatsapp: string; birth_date: string | null; request_type: string; status: "Novo" | "Em contato" | "Finalizado"; created_at: string; questionnaire_answers: Answers | null };
 const statuses: SiteContact["status"][] = ["Novo", "Em contato", "Finalizado"];
 const questionLabels: Record<string, string> = {
-  who: "Para quem busca informações?",
-  reason: "Motivo da busca",
-  areas: "O que tem observado?",
-  onset: "Quando começou a perceber?",
-  change: "O que percebeu desde então?",
-  contexts: "Situações em que percebe",
-  impact: "Impacto na rotina",
-  goal: "Próximo passo desejado",
+  who: "Para quem você está buscando orientação?",
+  areas: "Dificuldades ou mudanças observadas",
+  onset: "Quando percebeu pela primeira vez?",
+  onset_type: "Como começaram?",
+  change: "Como evoluíram?",
+  contexts: "Situações em que ficam mais perceptíveis",
+  impact: "Efeitos na rotina",
+  factors: "O que coincidiu com o início ou a piora?",
+  reason: "Motivo da busca por orientação",
+  goal: "Como prefere seguir?",
 };
 
 function formatBirthDateAndAge(value: string) {
