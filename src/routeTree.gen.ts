@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AvaliacaoNeuropsicologicaRouteImport } from './routes/avaliacao-neuropsicologica'
 import { Route as BiomedicinaRouteImport } from './routes/biomedicina'
 import { Route as BlogRouteImport } from './routes/blog'
 import { Route as ContatoRouteImport } from './routes/contato'
@@ -29,6 +30,7 @@ import { Route as AdminBibliotecaAlimentarRouteImport } from './routes/admin/bib
 import { Route as AdminBibliotecaNutricionalDemoRouteImport } from './routes/admin/biblioteca-nutricional-demo'
 import { Route as AdminBlogRouteImport } from './routes/admin/blog'
 import { Route as AdminConfiguracoesRouteImport } from './routes/admin/configuracoes'
+import { Route as AdminContatosSiteRouteImport } from './routes/admin/contatos-site'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
 import { Route as AdminEstatisticasRouteImport } from './routes/admin/estatisticas'
 import { Route as AdminEvolucaoCorporalRouteImport } from './routes/admin/evolucao-corporal'
@@ -58,6 +60,12 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AvaliacaoNeuropsicologicaRoute =
+  AvaliacaoNeuropsicologicaRouteImport.update({
+    id: '/avaliacao-neuropsicologica',
+    path: '/avaliacao-neuropsicologica',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const BiomedicinaRoute = BiomedicinaRouteImport.update({
   id: '/biomedicina',
   path: '/biomedicina',
@@ -148,6 +156,11 @@ const AdminBlogRoute = AdminBlogRouteImport.update({
 const AdminConfiguracoesRoute = AdminConfiguracoesRouteImport.update({
   id: '/configuracoes',
   path: '/configuracoes',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminContatosSiteRoute = AdminContatosSiteRouteImport.update({
+  id: '/contatos-site',
+  path: '/contatos-site',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminDashboardRoute = AdminDashboardRouteImport.update({
@@ -246,6 +259,7 @@ const AdminPacientesIdAnamneseRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/avaliacao-neuropsicologica': typeof AvaliacaoNeuropsicologicaRoute
   '/biomedicina': typeof BiomedicinaRoute
   '/blog': typeof BlogRouteWithChildren
   '/contato': typeof ContatoRoute
@@ -263,6 +277,7 @@ export interface FileRoutesByFullPath {
   '/admin/biblioteca-nutricional-demo': typeof AdminBibliotecaNutricionalDemoRoute
   '/admin/blog': typeof AdminBlogRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
+  '/admin/contatos-site': typeof AdminContatosSiteRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/estatisticas': typeof AdminEstatisticasRoute
   '/admin/evolucao-corporal': typeof AdminEvolucaoCorporalRoute
@@ -285,6 +300,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/avaliacao-neuropsicologica': typeof AvaliacaoNeuropsicologicaRoute
   '/biomedicina': typeof BiomedicinaRoute
   '/blog': typeof BlogRouteWithChildren
   '/contato': typeof ContatoRoute
@@ -302,6 +318,7 @@ export interface FileRoutesByTo {
   '/admin/biblioteca-nutricional-demo': typeof AdminBibliotecaNutricionalDemoRoute
   '/admin/blog': typeof AdminBlogRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
+  '/admin/contatos-site': typeof AdminContatosSiteRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/estatisticas': typeof AdminEstatisticasRoute
   '/admin/evolucao-corporal': typeof AdminEvolucaoCorporalRoute
@@ -326,6 +343,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/avaliacao-neuropsicologica': typeof AvaliacaoNeuropsicologicaRoute
   '/biomedicina': typeof BiomedicinaRoute
   '/blog': typeof BlogRouteWithChildren
   '/contato': typeof ContatoRoute
@@ -343,6 +361,7 @@ export interface FileRoutesById {
   '/admin/biblioteca-nutricional-demo': typeof AdminBibliotecaNutricionalDemoRoute
   '/admin/blog': typeof AdminBlogRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
+  '/admin/contatos-site': typeof AdminContatosSiteRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/estatisticas': typeof AdminEstatisticasRoute
   '/admin/evolucao-corporal': typeof AdminEvolucaoCorporalRoute
@@ -368,6 +387,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/avaliacao-neuropsicologica'
     | '/biomedicina'
     | '/blog'
     | '/contato'
@@ -385,6 +405,7 @@ export interface FileRouteTypes {
     | '/admin/biblioteca-nutricional-demo'
     | '/admin/blog'
     | '/admin/configuracoes'
+    | '/admin/contatos-site'
     | '/admin/dashboard'
     | '/admin/estatisticas'
     | '/admin/evolucao-corporal'
@@ -407,6 +428,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/avaliacao-neuropsicologica'
     | '/biomedicina'
     | '/blog'
     | '/contato'
@@ -424,6 +446,7 @@ export interface FileRouteTypes {
     | '/admin/biblioteca-nutricional-demo'
     | '/admin/blog'
     | '/admin/configuracoes'
+    | '/admin/contatos-site'
     | '/admin/dashboard'
     | '/admin/estatisticas'
     | '/admin/evolucao-corporal'
@@ -447,6 +470,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/avaliacao-neuropsicologica'
     | '/biomedicina'
     | '/blog'
     | '/contato'
@@ -464,6 +488,7 @@ export interface FileRouteTypes {
     | '/admin/biblioteca-nutricional-demo'
     | '/admin/blog'
     | '/admin/configuracoes'
+    | '/admin/contatos-site'
     | '/admin/dashboard'
     | '/admin/estatisticas'
     | '/admin/evolucao-corporal'
@@ -488,6 +513,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
+  AvaliacaoNeuropsicologicaRoute: typeof AvaliacaoNeuropsicologicaRoute
   BiomedicinaRoute: typeof BiomedicinaRoute
   BlogRoute: typeof BlogRouteWithChildren
   ContatoRoute: typeof ContatoRoute
@@ -516,6 +542,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/avaliacao-neuropsicologica': {
+      id: '/avaliacao-neuropsicologica'
+      path: '/avaliacao-neuropsicologica'
+      fullPath: '/avaliacao-neuropsicologica'
+      preLoaderRoute: typeof AvaliacaoNeuropsicologicaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/biomedicina': {
@@ -642,6 +675,13 @@ declare module '@tanstack/react-router' {
       path: '/configuracoes'
       fullPath: '/admin/configuracoes'
       preLoaderRoute: typeof AdminConfiguracoesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/contatos-site': {
+      id: '/admin/contatos-site'
+      path: '/contatos-site'
+      fullPath: '/admin/contatos-site'
+      preLoaderRoute: typeof AdminContatosSiteRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/dashboard': {
@@ -816,6 +856,7 @@ interface AdminRouteChildren {
   AdminBibliotecaNutricionalDemoRoute: typeof AdminBibliotecaNutricionalDemoRoute
   AdminBlogRoute: typeof AdminBlogRoute
   AdminConfiguracoesRoute: typeof AdminConfiguracoesRoute
+  AdminContatosSiteRoute: typeof AdminContatosSiteRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdminEstatisticasRoute: typeof AdminEstatisticasRoute
   AdminEvolucaoCorporalRoute: typeof AdminEvolucaoCorporalRoute
@@ -839,6 +880,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminBibliotecaNutricionalDemoRoute: AdminBibliotecaNutricionalDemoRoute,
   AdminBlogRoute: AdminBlogRoute,
   AdminConfiguracoesRoute: AdminConfiguracoesRoute,
+  AdminContatosSiteRoute: AdminContatosSiteRoute,
   AdminDashboardRoute: AdminDashboardRoute,
   AdminEstatisticasRoute: AdminEstatisticasRoute,
   AdminEvolucaoCorporalRoute: AdminEvolucaoCorporalRoute,
@@ -869,6 +911,7 @@ const BlogRouteWithChildren = BlogRoute._addFileChildren(BlogRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
+  AvaliacaoNeuropsicologicaRoute: AvaliacaoNeuropsicologicaRoute,
   BiomedicinaRoute: BiomedicinaRoute,
   BlogRoute: BlogRouteWithChildren,
   ContatoRoute: ContatoRoute,

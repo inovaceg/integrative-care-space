@@ -1,6 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageIntro } from "@/components/page-parts";
 import { createSeoHead } from "@/lib/seo";
-export const Route = createFileRoute("/politica-de-privacidade")({ head: () => createSeoHead({ title: "Política de Privacidade | Espaço de Saúde Integrativa", description: "Saiba como o Espaço de Saúde Integrativa trata as informações enviadas pelo formulário de contato.", path: "/politica-de-privacidade", twitterCard: "summary" }), component: Page });
-function Page(){return <><PageIntro eyebrow="LGPD" title="Política de Privacidade" text="Transparência sobre o uso das informações enviadas por você."/><Legal><h2>Informações de contato</h2><p>O formulário solicita nome, telefone, e-mail, área de interesse e uma mensagem para viabilizar o contato e o agendamento. Não envie dados clínicos ou informações sensíveis pelo formulário.</p><h2>Como as informações são utilizadas</h2><p>Ao enviar o formulário, os dados informados são encaminhados ao WhatsApp escolhido pelo visitante. O site não mantém uma base própria com o conteúdo do formulário.</p><h2>Compartilhamento e segurança</h2><p>As informações não são comercializadas. O tratamento posterior da conversa ocorre nos canais de contato utilizados, observadas as medidas de segurança aplicáveis.</p><h2>Direitos do titular</h2><p>Você pode solicitar informações, correção ou exclusão de dados mantidos durante o atendimento entrando em contato pelo telefone (32) 99193-1779.</p><h2>Cookies</h2><p>Este site não utiliza cookies não essenciais para publicidade ou rastreamento. Caso isso mude, esta política e os controles de consentimento deverão ser atualizados.</p></Legal></>}
-function Legal({children}:{children:React.ReactNode}){return <section className="section-space"><article className="container-site prose-legal">{children}</article></section>}
+
+export const Route = createFileRoute("/politica-de-privacidade")({
+  head: () => createSeoHead({ title: "Política de Privacidade | Espaço de Saúde Integrativa", description: "Saiba como o Espaço de Saúde Integrativa trata as informações enviadas pelos formulários do site.", path: "/politica-de-privacidade", twitterCard: "summary" }),
+  component: Page,
+});
+
+function Page() {
+  return <><PageIntro eyebrow="LGPD" title="Política de Privacidade" text="Transparência sobre o uso das informações enviadas por você." /><section className="section-space"><article className="container-site prose-legal">
+    <h2>Informações de contato</h2>
+    <p>O formulário geral de contato abre uma conversa no WhatsApp e não grava os dados no banco de dados do site. No questionário de orientação sobre avaliação neuropsicológica, as respostas permanecem somente na memória da página durante a visita: não são enviadas, gravadas, incluídas em URL, logs ou ferramentas de análise.</p>
+    <p>Se você optar por solicitar contato ao final do questionário e autorizar o retorno pelo WhatsApp, o site registra somente seu primeiro nome, WhatsApp, tipo de retorno solicitado, data e status do atendimento. As respostas ao questionário não são associadas ao cadastro.</p>
+    <h2>Como as informações são utilizadas</h2>
+    <p>Os dados mínimos de contato são utilizados exclusivamente para responder ao pedido enviado. O acesso aos contatos registrados é restrito à equipe autorizada do Espaço de Saúde Integrativa.</p>
+    <h2>Compartilhamento e segurança</h2>
+    <p>As informações não são comercializadas. São aplicadas medidas técnicas e organizacionais para limitar o acesso aos dados de contato às pessoas autorizadas.</p>
+    <h2>Direitos do titular</h2>
+    <p>Você pode solicitar informações, correção ou exclusão dos dados de contato mantidos durante o atendimento pelo telefone (32) 99193-1779.</p>
+    <h2>Cookies e análise</h2>
+    <p>As respostas do questionário de orientação não são enviadas para análise ou publicidade. Para informações sobre cookies e demais tecnologias, entre em contato com a equipe.</p>
+  </article></section></>;
+}
