@@ -23,12 +23,21 @@ const questionLabels: Record<string, string> = {
 };
 const toHex = (bytes: Uint8Array) => Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
 
+function formatBirthDateAndAge(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
+  const today = new Date();
+  let age = today.getUTCFullYear() - year;
+  if (today.getUTCMonth() + 1 < month || (today.getUTCMonth() + 1 === month && today.getUTCDate() < day)) age -= 1;
+  const date = new Date(`${value}T00:00:00Z`).toLocaleDateString("pt-BR", { timeZone: "UTC" });
+  return `${date} · ${age} ${age === 1 ? "ano" : "anos"}`;
+}
+
 function buildQuestionnaireReport(fullName: string, birthDate: string | null, answers: Record<string, string | string[]>) {
   const responseLines = Object.entries(answers).flatMap(([key, answer]) => [questionLabels[key] ?? key, Array.isArray(answer) ? answer.join(" · ") : answer, ""]);
   return [
     "RELATÓRIO INFORMATIVO — QUESTIONÁRIO DE ORIENTAÇÃO SOBRE AVALIAÇÃO NEUROPSICOLÓGICA",
     `Pessoa avaliada: ${fullName}`,
-    `Data de nascimento: ${birthDate ? new Date(`${birthDate}T00:00:00Z`).toLocaleDateString("pt-BR", { timeZone: "UTC" }) : "Não informada"}`,
+    `Nascimento / idade: ${birthDate ? formatBirthDateAndAge(birthDate) : "Não informada"}`,
     `Relatório gerado em: ${new Date().toLocaleString("pt-BR")}`,
     "",
     "RESPOSTAS",
