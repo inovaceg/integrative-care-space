@@ -9,7 +9,33 @@ const corsHeaders = {
 const requestTypes = ["Tirar dúvidas sobre a avaliação", "Consultar valores e horários", "Solicitar uma conversa inicial", "Questionário de orientação neuropsicológica"];
 const answerKeys = new Set(["who", "areas", "onset", "onset_type", "change", "contexts", "impact", "factors", "reason", "goal"]);
 const maxBodyLength = 4096;
+const questionLabels: Record<string, string> = {
+  who: "Para quem você está buscando orientação?",
+  areas: "Quais dificuldades ou mudanças você tem observado?",
+  onset: "Quando você percebeu essas dificuldades pela primeira vez?",
+  onset_type: "Como essas dificuldades começaram?",
+  change: "Como as dificuldades evoluíram desde que começaram?",
+  contexts: "Em quais situações as dificuldades ficam mais perceptíveis?",
+  impact: "Que efeitos essas dificuldades têm na rotina?",
+  factors: "Você percebeu algo que coincidiu com o início ou a piora das dificuldades?",
+  reason: "O que motivou você a buscar orientação agora?",
+  goal: "Como você prefere seguir?",
+};
 const toHex = (bytes: Uint8Array) => Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
+
+function buildQuestionnaireReport(fullName: string, birthDate: string | null, answers: Record<string, string | string[]>) {
+  const responseLines = Object.entries(answers).flatMap(([key, answer]) => [questionLabels[key] ?? key, Array.isArray(answer) ? answer.join(" · ") : answer, ""]);
+  return [
+    "RELATÓRIO INFORMATIVO — QUESTIONÁRIO DE ORIENTAÇÃO SOBRE AVALIAÇÃO NEUROPSICOLÓGICA",
+    `Pessoa avaliada: ${fullName}`,
+    `Data de nascimento: ${birthDate ? new Date(`${birthDate}T00:00:00Z`).toLocaleDateString("pt-BR", { timeZone: "UTC" }) : "Não informada"}`,
+    `Relatório gerado em: ${new Date().toLocaleString("pt-BR")}`,
+    "",
+    "RESPOSTAS",
+    ...responseLines,
+    "Este registro organiza as informações fornecidas e não constitui laudo, diagnóstico ou conclusão clínica automática. A interpretação cabe ao profissional responsável.",
+  ].join("\n");
+}
 
 serve(async request => {
   if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -45,14 +71,18 @@ serve(async request => {
     const tokenBytes = new Uint8Array(32);
     for (let index = 0; index < tokenBytes.length; index += 1) tokenBytes[index] = Number.parseInt(questionnaireToken.slice(index * 2, index * 2 + 2), 16);
     const tokenHash = toHex(new Uint8Array(await crypto.subtle.digest("SHA-256", tokenBytes)));
-    const { data, error } = await supabase.from("site_contact_requests")
-      .update({ questionnaire_answers: answers })
+    const { data: contact, error: lookupError } = await supabase.from("site_contact_requests")
+      .select("id,full_name,birth_date")
       .eq("questionnaire_token_hash", tokenHash)
       .eq("request_type", "Questionário de orientação neuropsicológica")
-      .select("id")
       .maybeSingle();
+    if (lookupError) return Response.json({ error: "Não foi possível salvar as respostas." }, { status: 500, headers: corsHeaders });
+    if (!contact) return Response.json({ error: "Solicitação não encontrada." }, { status: 404, headers: corsHeaders });
+    const questionnaireReport = buildQuestionnaireReport(contact.full_name, contact.birth_date, answers as Record<string, string | string[]>);
+    const { error } = await supabase.from("site_contact_requests")
+      .update({ questionnaire_answers: answers, questionnaire_report: questionnaireReport })
+      .eq("id", contact.id);
     if (error) return Response.json({ error: "Não foi possível salvar as respostas." }, { status: 500, headers: corsHeaders });
-    if (!data) return Response.json({ error: "Solicitação não encontrada." }, { status: 404, headers: corsHeaders });
     return Response.json({ saved: true }, { status: 200, headers: corsHeaders });
   }
 

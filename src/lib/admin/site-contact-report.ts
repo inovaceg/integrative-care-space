@@ -6,6 +6,7 @@ export type SiteContactReport = {
   status: string;
   created_at: string;
   questionnaire_answers: Record<string, string | string[]> | null;
+  questionnaire_report: string | null;
   professional_notes: string | null;
 };
 
@@ -16,6 +17,21 @@ function formatBirthDateAndAge(value: string) {
   if (today.getMonth() + 1 < month || (today.getMonth() + 1 === month && today.getDate() < day)) age -= 1;
   const date = new Date(`${value}T00:00:00Z`).toLocaleDateString("pt-BR", { timeZone: "UTC" });
   return `${date} · ${age} ${age === 1 ? "ano" : "anos"}`;
+}
+
+export function buildQuestionnaireReport(contact: Pick<SiteContactReport, "full_name" | "birth_date" | "questionnaire_answers">, questionLabels: Record<string, string>) {
+  const generatedAt = new Date().toLocaleString("pt-BR");
+  const answers = Object.entries(contact.questionnaire_answers ?? {});
+  return [
+    "RELATÓRIO INFORMATIVO — QUESTIONÁRIO DE ORIENTAÇÃO SOBRE AVALIAÇÃO NEUROPSICOLÓGICA",
+    `Pessoa avaliada: ${contact.full_name}`,
+    `Nascimento / idade: ${contact.birth_date ? formatBirthDateAndAge(contact.birth_date) : "Não informado"}`,
+    `Relatório gerado em: ${generatedAt}`,
+    "",
+    "RESPOSTAS",
+    ...(answers.length ? answers.flatMap(([key, answer]) => [questionLabels[key] ?? key, Array.isArray(answer) ? answer.join(" · ") : answer, ""]) : ["Questionário ainda não concluído; não há respostas registradas."]),
+    "Este registro organiza as informações fornecidas e não constitui laudo, diagnóstico ou conclusão clínica automática. A interpretação cabe ao profissional responsável.",
+  ].join("\n");
 }
 
 export function printSiteContactReport(contact: SiteContactReport, questionLabels: Record<string, string>) {
@@ -79,26 +95,13 @@ export function printSiteContactReport(contact: SiteContactReport, questionLabel
   }
   printWindow.document.body.appendChild(details);
 
-  const responsesTitle = printWindow.document.createElement("h2");
-  responsesTitle.textContent = "Respostas do questionário";
-  printWindow.document.body.appendChild(responsesTitle);
-  const entries = Object.entries(contact.questionnaire_answers ?? {});
-  if (!entries.length) {
-    const empty = printWindow.document.createElement("p");
-    empty.textContent = "Questionário ainda não concluído; não há respostas registradas.";
-    printWindow.document.body.appendChild(empty);
-  } else {
-    for (const [key, answer] of entries) {
-      const answerBlock = printWindow.document.createElement("div");
-      answerBlock.className = "answer";
-      const question = printWindow.document.createElement("strong");
-      question.textContent = questionLabels[key] ?? key;
-      const response = printWindow.document.createElement("p");
-      response.textContent = Array.isArray(answer) ? answer.join(" · ") : answer;
-      answerBlock.append(question, response);
-      printWindow.document.body.appendChild(answerBlock);
-    }
-  }
+  const reportTitle = printWindow.document.createElement("h2");
+  reportTitle.textContent = "Relatório gerado e salvo no contato";
+  printWindow.document.body.appendChild(reportTitle);
+  const reportContent = printWindow.document.createElement("p");
+  reportContent.className = "notes";
+  reportContent.textContent = contact.questionnaire_report ?? buildQuestionnaireReport(contact, questionLabels);
+  printWindow.document.body.appendChild(reportContent);
 
   const notesTitle = printWindow.document.createElement("h2");
   notesTitle.textContent = "Observações do profissional";

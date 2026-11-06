@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
-import { printSiteContactReport } from "@/lib/admin/site-contact-report";
+import { buildQuestionnaireReport, printSiteContactReport } from "@/lib/admin/site-contact-report";
 
 export const Route = createFileRoute("/admin/contatos-site")({
   head: () => ({ meta: [{ title: "Contatos do site | Área Administrativa" }, { name: "robots", content: "noindex, nofollow" }] }),
@@ -19,7 +19,7 @@ export const Route = createFileRoute("/admin/contatos-site")({
 });
 
 type Answers = Record<string, string | string[]>;
-type SiteContact = { id: string; full_name: string; whatsapp: string; birth_date: string | null; request_type: string; status: "Novo" | "Em contato" | "Finalizado"; created_at: string; questionnaire_answers: Answers | null; professional_notes: string | null };
+type SiteContact = { id: string; full_name: string; whatsapp: string; birth_date: string | null; request_type: string; status: "Novo" | "Em contato" | "Finalizado"; created_at: string; questionnaire_answers: Answers | null; questionnaire_report: string | null; professional_notes: string | null };
 const statuses: SiteContact["status"][] = ["Novo", "Em contato", "Finalizado"];
 const questionLabels: Record<string, string> = {
   who: "Para quem você está buscando orientação?",
@@ -61,9 +61,21 @@ function SiteContactsPage() {
   async function load() {
     setLoading(true);
     setError("");
-    const { data, error: queryError } = await supabase.from("site_contact_requests").select("id,full_name,whatsapp,birth_date,request_type,status,created_at,questionnaire_answers,professional_notes").order("created_at", { ascending: false });
+    const { data, error: queryError } = await supabase.from("site_contact_requests").select("id,full_name,whatsapp,birth_date,request_type,status,created_at,questionnaire_answers,questionnaire_report,professional_notes").order("created_at", { ascending: false });
     if (queryError) setError("Não foi possível carregar os contatos autorizados.");
-    else setItems(((data as SiteContact[] | null) ?? []).map(item => ({ ...item, questionnaire_answers: item.questionnaire_answers ? Object.fromEntries(Object.entries(item.questionnaire_answers).filter(([key]) => key !== "age")) : null })));
+    else {
+      const contacts = (data as SiteContact[] | null) ?? [];
+      const prepared = await Promise.all(contacts.map(async item => {
+        const contact = { ...item, questionnaire_answers: item.questionnaire_answers ? Object.fromEntries(Object.entries(item.questionnaire_answers).filter(([key]) => key !== "age")) : null };
+        if (!contact.questionnaire_report && contact.questionnaire_answers && Object.keys(contact.questionnaire_answers).length > 0) {
+          const report = buildQuestionnaireReport(contact, questionLabels);
+          const { error: reportError } = await supabase.from("site_contact_requests").update({ questionnaire_report: report }).eq("id", item.id).is("questionnaire_report", null);
+          if (!reportError) return { ...contact, questionnaire_report: report };
+        }
+        return contact;
+      }));
+      setItems(prepared);
+    }
     setLoading(false);
   }
 
@@ -100,10 +112,12 @@ function SiteContactsPage() {
     }
     setSavingContact(true);
     setError("");
-    const { error: updateError } = await supabase.from("site_contact_requests").update({ full_name: fullName, whatsapp, birth_date: birthDate || null }).eq("id", item.id);
+    const updatedContact = { ...item, full_name: fullName, whatsapp, birth_date: birthDate || null };
+    const questionnaireReport = updatedContact.questionnaire_answers && Object.keys(updatedContact.questionnaire_answers).length > 0 ? buildQuestionnaireReport(updatedContact, questionLabels) : updatedContact.questionnaire_report;
+    const { error: updateError } = await supabase.from("site_contact_requests").update({ full_name: fullName, whatsapp, birth_date: birthDate || null, questionnaire_report: questionnaireReport }).eq("id", item.id);
     if (updateError) setError("Não foi possível atualizar os dados do contato.");
     else {
-      setItems(current => current.map(contact => contact.id === item.id ? { ...contact, full_name: fullName, whatsapp, birth_date: birthDate || null } : contact));
+      setItems(current => current.map(contact => contact.id === item.id ? { ...updatedContact, questionnaire_report: questionnaireReport } : contact));
       setEditingContactId(null);
     }
     setSavingContact(false);
@@ -138,10 +152,11 @@ function SiteContactsPage() {
     setSavingAnswers(true);
     setError("");
     const answers = Object.fromEntries(Object.entries(draftAnswers).map(([key, value]) => [key, Array.isArray(item.questionnaire_answers?.[key]) ? value.split("\n").map(answer => answer.trim()).filter(Boolean) : value])) as Answers;
-    const { error: updateError } = await supabase.from("site_contact_requests").update({ questionnaire_answers: answers }).eq("id", item.id);
+    const questionnaireReport = buildQuestionnaireReport({ ...item, questionnaire_answers: answers }, questionLabels);
+    const { error: updateError } = await supabase.from("site_contact_requests").update({ questionnaire_answers: answers, questionnaire_report: questionnaireReport }).eq("id", item.id);
     if (updateError) setError("Não foi possível salvar as alterações das respostas.");
     else {
-      setItems(current => current.map(contact => contact.id === item.id ? { ...contact, questionnaire_answers: answers } : contact));
+      setItems(current => current.map(contact => contact.id === item.id ? { ...contact, questionnaire_answers: answers, questionnaire_report: questionnaireReport } : contact));
       setEditingId(null);
     }
     setSavingAnswers(false);
