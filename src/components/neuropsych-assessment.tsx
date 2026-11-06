@@ -1,4 +1,4 @@
-import { useMemo, useState, type KeyboardEvent } from "react";
+import { useMemo, useState, type FormEvent, type KeyboardEvent } from "react";
 import { ArrowLeft, ArrowRight, Check, ClipboardList, LoaderCircle, MessageCircle, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 type Question = { id: string; title: string; options: string[]; multiple?: boolean; exclusive?: string[] };
 type Answers = Record<string, string | string[]>;
 type NextRequest = "Tirar dúvidas sobre a avaliação" | "Consultar valores e horários" | "Solicitar uma conversa inicial";
+const intakeFunctionUrl = "https://fusqpjescampwoyazceu.supabase.co/functions/v1/neuropsych-contact-intake";
+const intakeFunctionName = new URL(intakeFunctionUrl).pathname.split("/").pop()!;
 
 const questions: Question[] = [
   { id: "who", title: "Para quem você está buscando informações?", options: ["Para mim", "Para meu filho ou minha filha", "Para outro familiar ou pessoa que acompanho"] },
@@ -24,10 +26,6 @@ const questions: Question[] = [
 ];
 const allQuestionIds = questions.map(question => question.id);
 const noAnswer = new Set(["Ainda não sei ou prefiro não informar", "Ainda não identifiquei", "Prefiro não responder"]);
-
-function optionsFor(question: Question, answers: Answers) {
-  return Array.isArray(question.options) ? question.options : [];
-}
 
 function selectedValues(answer: string | string[] | undefined) {
   return Array.isArray(answer) ? answer : answer ? [answer] : [];
@@ -47,12 +45,16 @@ function buildFeedback(answers: Answers) {
   const observation: string[] = [];
   if (areas.length) observation.push(`Você percebe ${areas.slice(0, 2).map(value => value.toLowerCase()).join(" e ")}`);
   if (answers.frequency && !noAnswer.has(String(answers.frequency))) observation.push(`com frequência ${String(answers.frequency).toLowerCase()}`);
-  if (contexts.length) observation.push(`principalmente ${contexts.slice(0, 2).map(value => value.toLowerCase()).join(" e ")}`);
+  if (contexts.length) observation.push(`principalmente ${contexts.map(value => value.toLowerCase()).join(", ")}`);
 
   const tips: string[] = [];
   if (answers.onset && !noAnswer.has(String(answers.onset))) tips.push(`Anote quando isso começou a chamar atenção: ${String(answers.onset).toLowerCase()}.`);
   if (answers.change === "Ficou mais perceptível") tips.push("Pode ajudar comparar um exemplo concreto de uma tarefa de antes com a mesma tarefa hoje.");
-  if (contexts.length > 1) tips.push(`Se puder, leve um exemplo de cada ambiente que mencionou: ${contexts.slice(0, 2).join(" e ")}.`);
+  else if (answers.change === "Varia bastante conforme a situação") tips.push("Anote em quais situações a dificuldade aparece mais e em quais aparece menos.");
+  else if (answers.change === "Tem melhorado") tips.push("Se puder, leve um exemplo de algo que ficou mais fácil e quando percebeu essa mudança.");
+  else if (answers.change === "Continua parecida") tips.push("Um exemplo recente de uma tarefa que continua parecida pode ajudar a explicar a situação.");
+  if (contexts.length > 1) tips.push(`Se puder, leve um exemplo de cada ambiente que mencionou: ${contexts.join(", ")}.`);
+  if (answers.impact && !noAnswer.has(String(answers.impact))) tips.push(`Você informou que ${String(answers.impact).toLowerCase()}. Pense em uma atividade concreta que ilustre esse impacto.`);
   if (answers.reason === "Recebi um encaminhamento profissional") tips.push("Se já tiver o encaminhamento, você pode levá-lo à conversa.");
   if (["Criança até 11 anos", "Adolescente de 12 a 17 anos"].includes(String(answers.age))) {
     tips.push("Para crianças e adolescentes, exemplos observados em casa e na escola podem ajudar, quando disponíveis.");
@@ -115,13 +117,13 @@ export function NeuropsychAssessment() {
     }
   }
 
-  async function submitContact(event: React.FormEvent<HTMLFormElement>) {
+  async function submitContact(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitError("");
     if (!consent) { setSubmitError("Marque a autorização para que a equipe possa entrar em contato pelo WhatsApp."); return; }
     setSubmitting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("neuropsych-contact-intake", {
+      const { data, error } = await supabase.functions.invoke(intakeFunctionName, {
         body: { firstName, whatsapp, requestType, consent },
       });
       if (error || !data?.received) throw new Error("Não foi possível registrar seu pedido agora. Tente novamente mais tarde.");
@@ -143,9 +145,15 @@ export function NeuropsychAssessment() {
           <h2 id="question-title" className="font-display text-2xl font-semibold leading-snug text-slate-900 sm:text-3xl">{question.title}</h2>
           {question.multiple && <p className="mt-2 text-sm text-slate-500">Você pode marcar mais de uma opção.</p>}
           <div className="mt-6 grid gap-3" role={question.multiple ? "group" : "radiogroup"} aria-label={question.title}>
-            {optionsFor(question, answers).map(option => {
+            {question.options.map(option => {
               const selected = selectedValues(answers[question.id]).includes(option);
-              return <button key={option} type="button" role={question.multiple ? "checkbox" : "radio"} aria-checked={selected} onClick={() => setAnswers(current => ({ ...current, [question.id]: toggleChoice(question, current[question.id], option) }))} className={`flex min-h-14 items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left text-base transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2f8f82] focus-visible:ring-offset-2 ${selected ? "border-[#2f8f82] bg-[#eff9f6] text-[#1e625a]" : "border-slate-200 bg-white text-slate-700 hover:border-[#9bcfc3] hover:bg-slate-50"}`}><span>{option}</span>{selected && <Check className="size-5 shrink-0 text-[#2f8f82]" />}</button>;
+              return <button key={option} type="button" role={question.multiple ? "checkbox" : "radio"} aria-checked={selected} onClick={() => setAnswers(current => {
+                const next = { ...current, [question.id]: toggleChoice(question, current[question.id], option) };
+                if (question.id === "reason" && option === "Quero entender como funciona") {
+                  for (const hiddenId of ["areas", "onset", "change", "frequency", "contexts", "impact"]) delete next[hiddenId];
+                }
+                return next;
+              })} className={`flex min-h-14 items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left text-base transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2f8f82] focus-visible:ring-offset-2 ${selected ? "border-[#2f8f82] bg-[#eff9f6] text-[#1e625a]" : "border-slate-200 bg-white text-slate-700 hover:border-[#9bcfc3] hover:bg-slate-50"}`}><span>{option}</span>{selected && <Check className="size-5 shrink-0 text-[#2f8f82]" />}</button>;
             })}
           </div>
           <div className="mt-7 flex flex-wrap justify-between gap-3"><Button variant="outline" onClick={goBack}><ArrowLeft className="mr-2 size-4" />Voltar</Button><Button disabled={question.multiple ? selectedValues(answers[question.id]).length === 0 : !answers[question.id]} onClick={goForward}>Continuar<ArrowRight className="ml-2 size-4" /></Button></div>
@@ -158,6 +166,3 @@ export function NeuropsychAssessment() {
     </div>
   </section>;
 }
-
-void noAnswer;
-void optionsFor;

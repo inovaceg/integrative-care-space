@@ -1,8 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
-const functionUrl = "https://fusqpjescampwoyazceu.supabase.co/functions/v1/neuropsych-contact-intake";
-const functionName = new URL(functionUrl).pathname.split("/").pop()!;
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -23,13 +21,14 @@ serve(async request => {
   if (!body || typeof body !== "object") return Response.json({ error: "Solicitação inválida." }, { status: 400, headers: corsHeaders });
 
   const input = body as Record<string, unknown>;
-  const firstName = typeof input.firstName === "string" ? input.firstName.trim().replace(/\s+/g, " ") : "";
-  const whatsapp = typeof input.whatsapp === "string" ? input.whatsapp.replace(/\D/g, "") : "";
+  const firstName = typeof input.firstName === "string" ? input.firstName.trim().replace(/\s+/g, " ").split(" ")[0] : "";
+  const phoneDigits = typeof input.whatsapp === "string" ? input.whatsapp.replace(/\D/g, "") : "";
+  const whatsapp = phoneDigits.length === 10 || phoneDigits.length === 11 ? `55${phoneDigits}` : phoneDigits;
   const requestType = typeof input.requestType === "string" ? input.requestType : "";
-  if (firstName.length < 2 || firstName.length > 60 || /[<>]/.test(firstName)) {
+  if (firstName.length < 2 || firstName.length > 60 || !/^[\p{L}][\p{L}\p{M}'’.-]*$/u.test(firstName)) {
     return Response.json({ error: "Informe um primeiro nome válido." }, { status: 400, headers: corsHeaders });
   }
-  if (whatsapp.length < 10 || whatsapp.length > 13) {
+  if (phoneDigits.length < 10 || phoneDigits.length > 13) {
     return Response.json({ error: "Informe um WhatsApp válido com DDD." }, { status: 400, headers: corsHeaders });
   }
   if (!requestTypes.includes(requestType) || input.consent !== true) {
@@ -41,5 +40,3 @@ serve(async request => {
   if (error) return Response.json({ error: "Não foi possível registrar o pedido agora. Tente novamente." }, { status: 500, headers: corsHeaders });
   return Response.json({ received: true }, { status: 201, headers: corsHeaders });
 });
-
-void functionName;
