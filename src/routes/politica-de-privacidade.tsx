@@ -10,7 +10,7 @@ export const Route = createFileRoute("/politica-de-privacidade")({
 function Page() {
   return <><PageIntro eyebrow="LGPD" title="Política de Privacidade" text="Transparência sobre o uso das informações enviadas por você." /><section className="section-space"><article className="container-site prose-legal">
     <h2>Informações de contato</h2>
-    <p>Ao enviar o formulário geral de contato e autorizar o retorno, o site registra seu nome, WhatsApp, tipo de pedido, data e status do atendimento. E-mail, área de interesse e mensagem são usados para preparar a conversa no WhatsApp e não são armazenados no site. No questionário de orientação sobre avaliação neuropsicológica, nome, WhatsApp, tipo do pedido, data e status são registrados antes do início, após sua autorização.</p>
+    <p>Ao enviar o formulário geral de contato e autorizar o retorno, o site registra seu nome, WhatsApp, tipo de pedido, data e status do atendimento. E-mail, área de interesse e mensagem são usados para preparar a conversa no WhatsApp e não são armazenados no site. No questionário de orientação sobre avaliação neuropsicológica, se você solicitar contato ao final e autorizar o retorno, o site registra somente seu primeiro nome, WhatsApp, tipo de retorno solicitado, data e status do atendimento.</p>
     <p>As respostas ao questionário ficam somente na memória da página durante a visita: não são enviadas, gravadas, incluídas em URL, logs ou ferramentas de análise, nem associadas aos dados de contato.</p>
     <h2>Como as informações são utilizadas</h2>
     <p>Os dados mínimos de contato são utilizados exclusivamente para responder ao pedido enviado. O acesso aos contatos registrados é restrito à equipe autorizada do Espaço de Saúde Integrativa.</p>
