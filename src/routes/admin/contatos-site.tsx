@@ -67,9 +67,11 @@ function SiteContactsPage() {
       const contacts = (data as SiteContact[] | null) ?? [];
       const prepared = await Promise.all(contacts.map(async item => {
         const contact = { ...item, questionnaire_answers: item.questionnaire_answers ? Object.fromEntries(Object.entries(item.questionnaire_answers).filter(([key]) => key !== "age")) : null };
-        if (!contact.questionnaire_report && contact.questionnaire_answers && Object.keys(contact.questionnaire_answers).length > 0) {
+        if ((!contact.questionnaire_report?.includes("SÍNTESE DAS RESPOSTAS")) && contact.questionnaire_answers && Object.keys(contact.questionnaire_answers).length > 0) {
           const report = buildQuestionnaireReport(contact, questionLabels);
-          const { error: reportError } = await supabase.from("site_contact_requests").update({ questionnaire_report: report }).eq("id", item.id).is("questionnaire_report", null);
+          let reportUpdate = supabase.from("site_contact_requests").update({ questionnaire_report: report }).eq("id", item.id);
+          reportUpdate = contact.questionnaire_report ? reportUpdate.eq("questionnaire_report", contact.questionnaire_report) : reportUpdate.is("questionnaire_report", null);
+          const { error: reportError } = await reportUpdate;
           if (!reportError) return { ...contact, questionnaire_report: report };
         }
         return contact;
