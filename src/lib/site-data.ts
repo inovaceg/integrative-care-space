@@ -14,7 +14,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-export const whatsappNumber = "5532991931779";
+export const whatsappNumber = "5532935027080";
 export const whatsappMessage =
   "Olá! Vim pelo site do Dr. Frederick Parreira e gostaria de informações sobre atendimento.";
 export const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
@@ -60,7 +60,7 @@ export const faqItems = [
   { q: "Onde fica o consultório?", a: "No Edifício Europa Central Tower, Rua Fernando Lobo, 102, sala 704, Centro, Juiz de Fora — MG." },
   { q: "Como funciona a primeira consulta?", a: "A primeira consulta é dedicada à escuta e avaliação da demanda, respeitando as particularidades da área escolhida e de cada pessoa." },
   { q: "Como saber qual atendimento procurar?", a: "Ao entrar em contato, informe apenas a área geral de interesse. Você receberá orientação inicial sem precisar compartilhar informações clínicas sensíveis." },
-  { q: "Como entrar em contato?", a: "Pelo WhatsApp (32) 99193-1779 ou pelo formulário da página de contato." },
+  { q: "Como entrar em contato?", a: "Pelo WhatsApp (32) 93502-7080 ou pelo formulário da página de contato." },
 ];
 
 export const navItems = [

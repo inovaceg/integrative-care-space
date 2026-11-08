@@ -64,7 +64,7 @@ export function Footer() {
             Avenida Barão do Rio Branco, 2555<br />
             Sala 205 — Espaço Humanizze<br />
             Centro — Juiz de Fora/MG<br />
-            <a className="hover:text-footer-foreground" href="tel:+5532991931779">(32) 99193-1779</a>
+            <a className="hover:text-footer-foreground" href="tel:+5532935027080">(32) 93502-7080</a>
           </address>
         </div>
         <div>

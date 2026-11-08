@@ -17,7 +17,7 @@ function Page() {
     <h2>Compartilhamento e segurança</h2>
     <p>As informações não são comercializadas. São aplicadas medidas técnicas e organizacionais para limitar o acesso aos dados de contato às pessoas autorizadas.</p>
     <h2>Direitos do titular</h2>
-    <p>Você pode solicitar informações, correção ou exclusão dos dados de contato mantidos durante o atendimento pelo telefone (32) 99193-1779.</p>
+    <p>Você pode solicitar informações, correção ou exclusão dos dados de contato mantidos durante o atendimento pelo telefone (32) 93502-7080.</p>
     <h2>Cookies e análise</h2>
     <p>As respostas do questionário de orientação não são enviadas para análise ou publicidade. Para informações sobre cookies e demais tecnologias, entre em contato com a equipe.</p>
   </article></section></>;

@@ -53,7 +53,7 @@ export const localBusinessJsonLd = {
       name: "Espaço de Saúde Integrativa Dr. Frederick Parreira",
       url: officialSiteUrl,
       image: officialImageUrl,
-      telephone: "+55 32 99193-1779",
+      telephone: "+55 32 93502-7080",
       address: {
         "@type": "PostalAddress",
         streetAddress: "Rua Fernando Lobo, 102, Sala 704",
