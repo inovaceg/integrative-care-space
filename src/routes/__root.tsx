@@ -85,7 +85,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
           { charSet: "utf-8" },
           { name: "viewport", content: "width=device-width, initial-scale=1" },
-          { name: "theme-color", content: "#2f8f82" },
+          { name: "theme-color", content: "#244f49" },
           { name: "author", content: "Dr. Frederick Parreira" },
           ...(import.meta.env["VITE_GOOGLE_SITE_VERIFICATION"]
             ? [{ name: "google-site-verification", content: import.meta.env["VITE_GOOGLE_SITE_VERIFICATION"] }]
