@@ -92,12 +92,33 @@
   --radius: 1rem;
 }
 
+html, body {
+  width: 100%;
+  min-width: 320px;
+  min-height: 100%;
+}
+
 body {
   margin: 0;
+  overflow-x: clip;
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
 }
+
+main, footer, section, article, header, nav, div { min-width: 0; }
+img, video, iframe { max-width: 100%; }
+
+.container-site {
+  width: min(100% - 2rem, 80rem);
+  margin-inline: auto;
+}
+
+.section-space {
+  padding-block: clamp(3rem, 7vw, 6rem);
+}
+
+.page-intro > div { max-width: 80rem; }
 
 .bg-footer { background-color: var(--footer); }
 .text-footer-foreground { color: var(--footer-foreground); }
