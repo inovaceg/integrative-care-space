@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, HeartHandshake, Leaf, LockKeyhole, Star, UserRoundCheck } from "lucide-react";
+import { ArrowRight, ChevronDown, HeartHandshake, Leaf, LockKeyhole, Star, UserRoundCheck } from "lucide-react";
 import { HomeHeroMotion } from "@/components/home-hero-motion";
 import { HomeScrollReveal } from "@/components/home-scroll-reveal";
 import { Button } from "@/components/ui/button";
@@ -31,13 +31,16 @@ function HomePage() {
         </HomeHeroMotion>
         <HomeHeroMotion className="relative mx-auto w-full max-w-lg pb-6 pl-4" delay={260}>
           <div className="hero-accent absolute -bottom-1 -left-1 h-32 w-32 rounded-3xl" aria-hidden="true" />
-          <img src="/dr-frederick-parreira.png" alt="Dr. Frederick Parreira — Psicólogo e Biomédico" className="hero-image relative aspect-[4/5] w-full object-cover" loading="eager" />
+          <div className="hero-photo-frame relative aspect-[4/5] overflow-hidden rounded-3xl">
+            <img src="/dr-frederick-parreira.png" alt="Dr. Frederick Parreira — Psicólogo e Biomédico" className="hero-image absolute inset-0 h-full w-full object-cover" loading="eager" />
+          </div>
           <div className="absolute bottom-0 left-0 rounded-2xl bg-card p-4 shadow-xl"><p className="font-display text-lg font-semibold text-primary">Psicologia + Biomedicina</p><p className="mt-1 max-w-40 text-xs leading-5 text-muted-foreground">Duas áreas. Um cuidado individualizado.</p></div>
         </HomeHeroMotion>
       </div>
+      <a href="#identificacao" aria-label="Rolar para conhecer o espaço" className="hero-scroll-indicator absolute bottom-3 left-1/2 z-10 grid size-10 place-items-center rounded-full border border-primary/20 bg-background/80 text-primary shadow-sm backdrop-blur transition-colors hover:bg-primary hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"><ChevronDown className="size-5" /></a>
     </section>
 
-    <HomeScrollReveal><IdentificationSection /></HomeScrollReveal>
+    <HomeScrollReveal><div id="identificacao"><IdentificationSection /></div></HomeScrollReveal>
     <HomeScrollReveal delay={70}><SocialProjectSection /></HomeScrollReveal>
     <HomeScrollReveal><section className="section-space bg-card"><div className="container-site"><div className="flex flex-col justify-between gap-6 md:flex-row md:items-end"><div className="max-w-2xl"><span className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Atuação profissional</span><h2 className="mt-4 font-display text-4xl font-semibold md:text-5xl">Cuidado que considera diferentes dimensões da saúde.</h2></div><p className="max-w-sm leading-7 text-muted-foreground">Conheça as duas áreas de atendimento do Espaço de Saúde Integrativa Dr. Frederick Parreira.</p></div><div className="mt-12"><AreaCards /></div></div></section></HomeScrollReveal>
     <HomeScrollReveal><ProfessionalSection /></HomeScrollReveal>
