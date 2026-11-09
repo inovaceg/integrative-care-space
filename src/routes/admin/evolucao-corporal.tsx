@@ -786,7 +786,7 @@ function BodyProgressPage() {
               {editing && user && <PhotoRegistry professionalId={user.id} patientId={patientId} patientName={patients.find((patient) => patient.id === patientId)?.nome ?? ""} evaluation={editing} />}
               {error && <p className="text-sm text-red-600">{error}</p>}
               <div className="flex gap-2">
-                <Button disabled={saving} className="bg-[#2f8f82] hover:bg-[#26796e]">
+                <Button type="submit" disabled={saving} className="bg-[#2f8f82] hover:bg-[#26796e]">
                   {saving ? "Salvando..." : editing ? "Atualizar" : "Salvar avaliação"}
                 </Button>
                 {editing && (
