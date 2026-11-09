@@ -645,11 +645,10 @@ function BodyProgressPage() {
       ? Math.round(weightKg / (heightMeters ** 2) * 10) / 10
       : null;
     setSaving(true);
+    try {
+      const result = await saveEvaluation(user.id, patientId, payload, editingId);
+      if (result.error) throw result.error;
 
-    const result = await saveEvaluation(user.id, patientId, payload, editingId);
-    if (result.error) {
-      setError(result.error.message);
-    } else {
       const savedEvaluation = result.data as BodyEvaluation;
       const evaluationId = savedEvaluation.id;
       setItems((current) => editingId
@@ -681,8 +680,12 @@ function BodyProgressPage() {
       } else {
         resetForm();
       }
+      await loadEvaluations();
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Não foi possível salvar a avaliação. Tente novamente.");
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   }
 
   function editEvaluation(item: BodyEvaluation) {
