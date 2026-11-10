@@ -28,7 +28,7 @@ function HomePage() {
   return <>
     <section className="home-hero relative isolate overflow-hidden border-b border-[#d9e6df] bg-[#f8f6f1]">
       <div className="home-hero-glow pointer-events-none absolute -left-24 -top-28 size-[28rem] rounded-full bg-emerald-100/60 blur-3xl" aria-hidden="true" />
-      <div className="container-site relative z-10 grid items-center gap-8 py-12 sm:py-14 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.86fr)] lg:gap-14 lg:py-20">
+      <div className="container-site relative z-10 grid items-center gap-8 py-12 sm:py-14 md:grid-cols-[minmax(0,1.05fr)_minmax(260px,0.95fr)] md:gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.86fr)] lg:gap-14 lg:py-20">
         <HomeHeroMotion className="max-w-xl" delay={80}>
           <div className="hero-text-step inline-flex items-center gap-3 rounded-full border border-[#d7e7df] bg-white px-4 py-2.5 shadow-sm">
             <span className="size-2 rounded-full bg-[#4b9d7d]" />
@@ -44,7 +44,7 @@ function HomePage() {
             <p className="font-display text-lg font-semibold tracking-tight text-[#173f3a]">Dr. Frederick Parreira</p>
             <p className="mt-1 text-xs leading-5 text-[#687873] sm:text-sm">Psicólogo — CRP 04/86194 <span className="mx-1.5 text-[#c9a96c]">/</span> Biomédico — CRBM 30421</p>
           </div>
-          <div className="hero-text-step mt-8 flex flex-col gap-3 sm:flex-row">
+          <div className="hero-text-step mt-8 flex flex-col gap-3 sm:flex-row md:flex-col lg:flex-row">
             <Button asChild size="lg" className="group h-12 rounded-full bg-[#17675b] px-6 text-white shadow-[0_12px_30px_-14px_rgba(23,103,91,0.7)] hover:bg-[#12574d]">
               <a href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackAnalyticsEvents(["appointment_click", "whatsapp_click"])}>Agende sua consulta <ArrowRight className="transition-transform group-hover:translate-x-1" /></a>
             </Button>
@@ -54,7 +54,7 @@ function HomePage() {
           </div>
         </HomeHeroMotion>
         <div className="overflow-hidden rounded-[1.75rem] bg-[#dce7df] shadow-[0_24px_50px_-28px_rgba(23,63,58,0.55)]">
-          <img src="/dr-frederick-parreira.png" alt="Dr. Frederick Parreira, psicólogo e biomédico, no Espaço de Saúde Integrativa." className="aspect-[4/5] w-full object-cover object-[center_18%] sm:aspect-[5/4] lg:aspect-[4/5] lg:max-h-[640px]" loading="eager" />
+          <img src="/dr-frederick-parreira.png" alt="Dr. Frederick Parreira, psicólogo e biomédico, no Espaço de Saúde Integrativa." className="aspect-[4/5] w-full object-cover object-[center_18%] sm:aspect-[5/4] md:aspect-[4/5] lg:max-h-[640px]" loading="eager" />
         </div>
       </div>
       <a href="#atuacao" aria-label="Rolar para as áreas de atuação" className="hero-scroll-indicator absolute bottom-4 left-1/2 z-30 hidden size-10 -translate-x-1/2 place-items-center rounded-full border border-[#c9d9d0] bg-white/90 text-[#28665a] shadow-sm transition-colors hover:bg-[#17675b] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary lg:grid"><ChevronDown className="size-5" /></a>
