@@ -36,9 +36,9 @@ function HomePage() {
           <div className="hero-text-step mt-7 flex items-center gap-4 border-l border-[#c9a96c] py-1 pl-4"><span className="h-10 w-px bg-gradient-to-b from-[#dfc38e] to-transparent" /><div><p className="font-display text-lg font-semibold tracking-tight text-[#173f3a]">Dr. Frederick Parreira</p><p className="mt-1 text-xs leading-5 text-[#687873] sm:text-sm">Psicólogo — CRP 04/86194 <span className="mx-1.5 text-[#c9a96c]">/</span> Biomédico — CRBM 30421</p></div></div>
           <div className="hero-text-step mt-8 flex flex-col gap-3 sm:flex-row"><Button asChild size="lg" className="group h-12 rounded-full bg-[#17675b] px-6 text-white shadow-[0_12px_30px_-14px_rgba(23,103,91,0.7)] hover:bg-[#12574d]"><a href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackAnalyticsEvents(["appointment_click", "whatsapp_click"])}>Agende sua consulta <ArrowRight className="transition-transform group-hover:translate-x-1" /></a></Button><Button asChild size="lg" variant="outline" className="h-12 rounded-full border-[#b9cec4] bg-white/75 px-6 text-[#23594f] shadow-sm hover:bg-white"><Link to="/sobre">Conheça o Dr. Frederick</Link></Button></div>
         </HomeHeroMotion>
-        <div className="home-hero-mobile-photo relative mt-8 h-[min(78vw,390px)] overflow-hidden rounded-[1.5rem] bg-[#dce7df] shadow-[0_24px_60px_-28px_rgba(20,57,49,0.42)] lg:hidden">
-          <img src="/dr-frederick-parreira.png" alt="Dr. Frederick Parreira — Psicólogo e Biomédico" className="h-full w-full object-cover object-[center_28%]" loading="eager" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#113f39]/35 via-transparent to-white/5" />
+        <div className="home-hero-mobile-photo pointer-events-none absolute right-0 top-32 z-0 h-[min(105vw,460px)] w-[58%] overflow-hidden bg-[#dce7df] lg:hidden" aria-hidden="true">
+          <img src="/dr-frederick-parreira.png" alt="" className="h-full w-full object-cover object-[center_24%]" loading="eager" />
+          <div className="home-hero-mobile-shade absolute inset-0" />
         </div>
       </div>
       <a href="#identificacao" aria-label="Rolar para conhecer o espaço" className="hero-scroll-indicator absolute bottom-3 left-1/2 z-30 hidden size-10 -translate-x-1/2 place-items-center rounded-full border border-[#c9d9d0] bg-white/80 text-[#28665a] shadow-sm backdrop-blur transition-colors hover:bg-[#17675b] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary lg:grid"><ChevronDown className="size-5" /></a>
