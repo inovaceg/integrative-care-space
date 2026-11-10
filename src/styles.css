@@ -178,6 +178,8 @@ img, video, iframe { max-width: 100%; }
 .home-hero { background-image: radial-gradient(ellipse at 74% 42%, rgba(225, 236, 226, .44), transparent 38%); }
 .home-hero-grain { background-image: radial-gradient(rgba(23, 63, 58, .11) .55px, transparent .55px); background-size: 8px 8px; mask-image: linear-gradient(90deg, transparent 20%, black); }
 .hero-title-accent { color: #347d68; }
+.hero-headline-shadow { text-shadow: 0 2px 1px rgba(255, 255, 255, .9), 0 10px 28px rgba(24, 62, 52, .12); }
+.hero-copy-shadow { text-shadow: 0 1px 10px rgba(255, 255, 255, .8); }
 .hero-photo-halo { animation: hero-halo-breathe 9s ease-in-out infinite alternate; }
 @keyframes hero-halo-breathe { from { transform: scale(.96); opacity: .65; } to { transform: scale(1.04); opacity: 1; } }
 .hero-photo-frame { transform: translate3d(calc(var(--neural-x, 0px) * -.28), calc(var(--neural-y, 0px) * -.28), 0); transition: transform 350ms ease-out; }
