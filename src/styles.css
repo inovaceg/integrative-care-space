@@ -187,23 +187,11 @@ img, video, iframe { max-width: 100%; }
 .hero-copy-shadow { text-shadow: 0 1px 10px rgba(255, 255, 255, .8); }
 .hero-photo-halo { animation: hero-halo-breathe 9s ease-in-out infinite alternate; }
 @keyframes hero-halo-breathe { from { transform: scale(.96); opacity: .65; } to { transform: scale(1.04); opacity: 1; } }
-.hero-photo-frame { transform: translate3d(calc(var(--neural-x, 0px) * -.28), calc(var(--neural-y, 0px) * -.28), 0); transition: transform 350ms ease-out; }
 .home-hero-motion.is-visible .hero-image { animation: hero-photo-zoom 18s ease-in-out 700ms infinite alternate; }
 @keyframes hero-photo-zoom {
   from { transform: scale(1); }
   to { transform: scale(1.055); }
 }
-.home-neural-visual { transform: perspective(900px) rotateX(var(--neural-y, 0deg)) rotateY(var(--neural-x, 0deg)); transform-style: preserve-3d; animation: brain-float 7s ease-in-out infinite; transition: transform 450ms cubic-bezier(.2,.7,.2,1); filter: drop-shadow(0 12px 22px rgba(37, 63, 48, .16)); }
-@keyframes brain-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -8px; } }
-.neural-node { transform-box: fill-box; transform-origin: center; animation: neural-pulse 3.6s ease-in-out infinite; }
-@keyframes neural-pulse { 0%, 100% { opacity: .55; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.35); } }
-.neural-particle { position: absolute; width: 4px; height: 4px; border-radius: 50%; background: #f0d69c; box-shadow: 0 0 12px 3px rgba(231, 193, 119, .52); animation: neural-float 7s ease-in-out infinite; }
-.neural-particle-one { left: 12%; top: 35%; }
-.neural-particle-two { right: 18%; top: 28%; animation-delay: -2.5s; }
-.neural-particle-three { right: 28%; bottom: 16%; animation-delay: -4.5s; }
-@keyframes neural-float { 0%, 100% { opacity: .25; transform: translate3d(0, 5px, 0); } 50% { opacity: .9; transform: translate3d(5px, -9px, 0); } }
-.home-brain-canvas { display: block; width: 100%; height: 100%; }
-.hero-photo-caption { transform: translate3d(calc(var(--neural-x, 0px) * .35), calc(var(--neural-y, 0px) * .35), 0); transition: transform 350ms ease-out; }
 .hero-scroll-indicator { animation: hero-scroll-bob 1.8s ease-in-out infinite; }
 @keyframes hero-scroll-bob {
   0%, 100% { transform: translate(-50%, 0); }
@@ -229,14 +217,13 @@ html { scroll-behavior: smooth; }
 .home-reveal.is-visible .home-stagger-item:nth-child(4) { transition-delay: 270ms; }
 
 @media (prefers-reduced-motion: reduce) {
-  .home-hero-motion, .home-reveal, .home-stagger-item, .hero-text-step, .home-neural-visual, .hero-photo-frame, .hero-photo-caption { opacity: 1 !important; transform: none !important; transition: none !important; animation: none !important; }
-  .home-hero-glow, .hero-image, .hero-scroll-indicator, .hero-photo-halo, .neural-particle, .neural-node { animation: none !important; }
+  .home-hero-motion, .home-reveal, .home-stagger-item, .hero-text-step { opacity: 1 !important; transform: none !important; transition: none !important; animation: none !important; }
+  .home-hero-glow, .hero-image, .hero-scroll-indicator, .hero-photo-halo { animation: none !important; }
   html { scroll-behavior: auto; }
 }
 
 @media (max-width: 640px) {
   .home-hero h1 { max-width: 14ch; font-size: clamp(2.15rem, 8vw, 3rem); }
-  .home-hero-mobile-photo .home-neural-visual { top: .75rem; right: -.5rem; width: 62%; }
   .hero-title-accent { text-decoration-thickness: .065em; text-underline-offset: .11em; }
 
   [data-radix-dialog-content],

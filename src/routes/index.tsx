@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, ChevronDown, HeartHandshake, Leaf, LockKeyhole, Star, UserRoundCheck } from "lucide-react";
 import { HomeHeroMotion } from "@/components/home-hero-motion";
-import { HomeNeuralVisual } from "@/components/home-neural-visual";
 import { HomeScrollReveal } from "@/components/home-scroll-reveal";
 import { Button } from "@/components/ui/button";
 import { trackAnalyticsEvents } from "@/lib/analytics";
@@ -24,10 +23,9 @@ function HomePage() {
       <div className="home-hero-glow pointer-events-none absolute -right-24 -top-28 size-[30rem] rounded-full bg-emerald-100/50 blur-3xl" aria-hidden="true" />
       <div className="home-hero-grain pointer-events-none absolute inset-0 opacity-30" aria-hidden="true" />
       <div className="home-hero-desktop-photo absolute inset-y-0 right-0 hidden w-[62%] lg:block">
-        <img src="/dr-frederick-parreira.png" alt="Dr. Frederick Parreira — Psicólogo e Biomédico" className="hero-image h-full w-full object-cover object-[center_30%]" loading="eager" />
-        <div className="home-hero-photo-shade absolute inset-0" aria-hidden="true" />
-        <HomeNeuralVisual />
-      </div>
+      <img src="/dr-frederick-parreira.png" alt="Dr. Frederick Parreira — Psicólogo e Biomédico" className="hero-image h-full w-full object-cover object-[center_30%]" loading="eager" />
+      <div className="home-hero-photo-shade absolute inset-0" aria-hidden="true" />
+    </div>
       <div className="container-site relative z-10 flex min-h-[min(760px,calc(100svh-5rem))] flex-col justify-center py-12 sm:py-14 lg:min-h-[min(760px,calc(100svh-5rem))] lg:py-16">
         <HomeHeroMotion className="relative z-10 max-w-[44rem] lg:w-[49%]" delay={80}>
           <div className="hero-text-step inline-flex items-center gap-3 rounded-full border border-[#d7e7df] bg-white/75 px-4 py-2.5 shadow-sm backdrop-blur"><span className="size-2 rounded-full bg-[#4b9d7d] shadow-[0_0_0_4px_rgba(75,157,125,0.12)]" /><span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#28665a] sm:text-xs">Psicologia · Neurociência · Biomedicina</span></div>
@@ -39,7 +37,6 @@ function HomePage() {
         <div className="home-hero-mobile-photo pointer-events-none absolute right-0 top-32 z-0 h-[min(105vw,460px)] w-[58%] overflow-hidden bg-[#dce7df] lg:hidden" aria-hidden="true">
           <img src="/dr-frederick-parreira.png" alt="" className="h-full w-full object-cover object-[center_24%]" loading="eager" />
           <div className="home-hero-mobile-shade absolute inset-0" />
-          <HomeNeuralVisual />
         </div>
       </div>
       <a href="#identificacao" aria-label="Rolar para conhecer o espaço" className="hero-scroll-indicator absolute bottom-3 left-1/2 z-30 hidden size-10 -translate-x-1/2 place-items-center rounded-full border border-[#c9d9d0] bg-white/80 text-[#28665a] shadow-sm backdrop-blur transition-colors hover:bg-[#17675b] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary lg:grid"><ChevronDown className="size-5" /></a>
