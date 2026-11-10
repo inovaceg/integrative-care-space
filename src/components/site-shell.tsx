@@ -31,10 +31,14 @@ export function Header({ minimal = false }: { minimal?: boolean }) {
           </nav>
           <div className="flex items-center gap-2 xl:hidden">
             <Button asChild size="sm" className="hidden sm:inline-flex"><a href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackAnalyticsEvents(["appointment_click", "whatsapp_click"])}>Agendar</a></Button>
-            <Button variant="ghost" size="icon" onClick={() => setOpen((v) => !v)} aria-label={open ? "Fechar menu" : "Abrir menu"} aria-expanded={open}>{open ? <X /> : <Menu />}</Button>
+            <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setOpen((v) => !v)} aria-label={open ? "Fechar menu" : "Abrir menu"} aria-expanded={open}>{open ? <X /> : <Menu />}</Button>
           </div>
       </div>}
-      {!minimal && open && <nav className="border-t border-border bg-background px-5 py-4 xl:hidden" aria-label="Navegação móvel">
+      {!minimal && <nav className="mx-auto hidden w-[calc(100%-2rem)] max-w-[96rem] flex-wrap items-center justify-center gap-x-1 border-t border-border/70 py-2 md:flex xl:hidden" aria-label="Navegação tablet">
+        {navItems.map(([label, to]) => <Link key={to} to={to} activeProps={{ className: "text-primary" }} className="whitespace-nowrap rounded-md px-2.5 py-2 text-[13px] font-semibold text-foreground/85 transition-colors hover:bg-muted hover:text-primary">{label}</Link>)}
+        <Link to="/admin/login" className="whitespace-nowrap rounded-md px-2.5 py-2 text-[13px] font-semibold text-foreground/85 transition-colors hover:bg-muted hover:text-primary">Área administrativa</Link>
+      </nav>}
+      {!minimal && open && <nav className="border-t border-border bg-background px-5 py-4 md:hidden" aria-label="Navegação móvel">
         <div className="mx-auto grid max-w-xl grid-cols-2 gap-1">
           {navItems.map(([label, to]) => <Link key={to} to={to} onClick={() => setOpen(false)} className="rounded-sm px-3 py-3 text-sm font-semibold text-foreground hover:bg-muted">{label}</Link>)}
           <Link to="/admin/login" onClick={() => setOpen(false)} className="rounded-sm px-3 py-3 text-sm font-semibold text-foreground hover:bg-muted">Área administrativa</Link>
