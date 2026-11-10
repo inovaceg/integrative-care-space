@@ -175,11 +175,26 @@ img, video, iframe { max-width: 100%; }
   to { opacity: 1; transform: translateY(0); }
 }
 .hero-photo-frame { isolation: isolate; }
+.home-hero { background-image: radial-gradient(ellipse at 74% 42%, rgba(225, 236, 226, .44), transparent 38%); }
+.home-hero-grain { background-image: radial-gradient(rgba(23, 63, 58, .11) .55px, transparent .55px); background-size: 8px 8px; mask-image: linear-gradient(90deg, transparent 20%, black); }
+.hero-title-accent { color: #347d68; }
+.hero-photo-halo { animation: hero-halo-breathe 9s ease-in-out infinite alternate; }
+@keyframes hero-halo-breathe { from { transform: scale(.96); opacity: .65; } to { transform: scale(1.04); opacity: 1; } }
+.hero-photo-frame { transform: translate3d(calc(var(--neural-x, 0px) * -.28), calc(var(--neural-y, 0px) * -.28), 0); transition: transform 350ms ease-out; }
 .home-hero-motion.is-visible .hero-image { animation: hero-photo-zoom 18s ease-in-out 700ms infinite alternate; }
 @keyframes hero-photo-zoom {
   from { transform: scale(1); }
-  to { transform: scale(1.07); }
+  to { transform: scale(1.055); }
 }
+.home-neural-visual { transform: translate3d(var(--neural-x, 0px), var(--neural-y, 0px), 0); transition: transform 450ms cubic-bezier(.2,.7,.2,1); filter: drop-shadow(0 12px 22px rgba(37, 63, 48, .16)); }
+.neural-node { transform-box: fill-box; transform-origin: center; animation: neural-pulse 3.6s ease-in-out infinite; }
+@keyframes neural-pulse { 0%, 100% { opacity: .55; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.35); } }
+.neural-particle { position: absolute; width: 4px; height: 4px; border-radius: 50%; background: #f0d69c; box-shadow: 0 0 12px 3px rgba(231, 193, 119, .52); animation: neural-float 7s ease-in-out infinite; }
+.neural-particle-one { left: 12%; top: 35%; }
+.neural-particle-two { right: 18%; top: 28%; animation-delay: -2.5s; }
+.neural-particle-three { right: 28%; bottom: 16%; animation-delay: -4.5s; }
+@keyframes neural-float { 0%, 100% { opacity: .25; transform: translate3d(0, 5px, 0); } 50% { opacity: .9; transform: translate3d(5px, -9px, 0); } }
+.hero-photo-caption { transform: translate3d(calc(var(--neural-x, 0px) * .35), calc(var(--neural-y, 0px) * .35), 0); transition: transform 350ms ease-out; }
 .hero-scroll-indicator { animation: hero-scroll-bob 1.8s ease-in-out infinite; }
 @keyframes hero-scroll-bob {
   0%, 100% { transform: translate(-50%, 0); }
@@ -205,8 +220,8 @@ html { scroll-behavior: smooth; }
 .home-reveal.is-visible .home-stagger-item:nth-child(4) { transition-delay: 270ms; }
 
 @media (prefers-reduced-motion: reduce) {
-  .home-hero-motion, .home-reveal, .home-stagger-item, .hero-text-step { opacity: 1 !important; transform: none !important; transition: none !important; animation: none !important; }
-  .home-hero-glow, .hero-image, .hero-scroll-indicator { animation: none !important; }
+  .home-hero-motion, .home-reveal, .home-stagger-item, .hero-text-step, .home-neural-visual, .hero-photo-frame, .hero-photo-caption { opacity: 1 !important; transform: none !important; transition: none !important; animation: none !important; }
+  .home-hero-glow, .hero-image, .hero-scroll-indicator, .hero-photo-halo, .neural-particle, .neural-node { animation: none !important; }
   html { scroll-behavior: auto; }
 }
 
