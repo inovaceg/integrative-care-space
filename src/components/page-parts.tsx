@@ -1,9 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Check, HeartHandshake, Image, MapPin, MessageCircle, Shield, Sparkles, Star, Users } from "lucide-react";
+import { ArrowRight, Check, HeartHandshake, Image, MapPin, Shield, Sparkles, Star, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { trackAnalyticsEvent, trackAnalyticsEvents } from "@/lib/analytics";
-import { biomedicineServices, faqItems, mapsUrl, socialProjectWhatsappUrl, type Service, whatsappUrl } from "@/lib/site-data";
+import { trackAnalyticsEvent } from "@/lib/analytics";
+import { faqItems, mapsUrl, type Service, whatsappUrl } from "@/lib/site-data";
 
 export function Eyebrow({ children, tone = "neutral" }: { children: React.ReactNode; tone?: "neutral" | "psychology" | "biomedicine" }) {
   void children;
@@ -63,7 +63,33 @@ export function FaqList() {
 }
 
 export function LocationBlock({ gallery = false }: { gallery?: boolean }) {
-  return <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr]"><div><Eyebrow>Localização</Eyebrow><h2 className="mt-4 font-display text-4xl">Um espaço no centro de Juiz de Fora</h2><address className="mt-6 not-italic leading-8 text-muted-foreground"><strong className="text-foreground">Espaço de Saúde Integrativa</strong><br />Edifício Comendador Pedro Procópio R. Valle<br />Avenida Barão do Rio Branco, 2555<br />Sala 205 — Espaço Humanizze<br />Centro — Juiz de Fora/MG</address><p className="mt-4 text-sm font-semibold">Agendamentos: <a href="tel:+5532935027080">(32) 93502-7080</a></p><div className="mt-7 flex flex-wrap gap-3"><Button asChild><a href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackAnalyticsEvent("whatsapp_click")}><MessageCircle /> Falar pelo WhatsApp</a></Button><Button asChild variant="outline"><a href={mapsUrl} target="_blank" rel="noreferrer"><MapPin /> Como chegar</a></Button></div></div><iframe title="Mapa da localização do Espaço de Saúde Integrativa" loading="lazy" className="content-card h-[420px] w-full p-0" src="https://www.google.com/maps?q=Avenida%20Bar%C3%A3o%20do%20Rio%20Branco%2C%202555%2C%20Juiz%20de%20Fora%20MG&output=embed" referrerPolicy="no-referrer-when-downgrade" />{gallery && <div className="lg:col-span-2"><h2 className="font-display text-3xl">Conheça a estrutura</h2><div className="card-grid mt-6">{["Recepção", "Consultório", "Sala de atendimento", "Estrutura"].map((label) => <div key={label} className="content-card grid aspect-[4/3] place-items-center border-dashed"><div className="text-center text-muted-foreground"><Image className="mx-auto size-7 text-primary" /><h3 className="card-title mt-4 text-xl">{label}</h3><span className="mt-2 block text-sm">Foto em breve</span></div></div>)}</div></div>}</div>;
+  return (
+    <div className="grid gap-8">
+      <div className="grid items-center gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+        <div>
+          <span className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Localização</span>
+          <h2 className="mt-4 font-display text-4xl">Um espaço no centro de Juiz de Fora</h2>
+          <address className="mt-6 not-italic leading-8 text-muted-foreground">
+            <strong className="text-foreground">Espaço de Saúde Integrativa</strong><br />
+            Edifício Comendador Pedro Procópio R. Valle<br />
+            Avenida Barão do Rio Branco, 2555<br />
+            Sala 205 — Espaço Humanizze<br />
+            Centro — Juiz de Fora/MG
+          </address>
+          <p className="mt-4 text-sm leading-6 text-muted-foreground">Horários combinados no agendamento. Telefone: <a className="font-semibold text-foreground" href="tel:+5532935027080">(32) 93502-7080</a></p>
+          <div className="mt-7 flex flex-wrap gap-3">
+            <Button asChild><a href={mapsUrl} target="_blank" rel="noreferrer"><MapPin /> Como chegar</a></Button>
+            <Button asChild variant="outline"><Link to="/estrutura">Conheça a estrutura</Link></Button>
+          </div>
+        </div>
+        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-[#e5f4f0] shadow-sm">
+          <img src="/psicologia.png" alt="Consultório de Psicologia do Espaço de Saúde Integrativa, em ambiente reservado." className="aspect-[4/3] h-full w-full object-cover" loading="lazy" />
+        </div>
+      </div>
+      <iframe title="Mapa da localização do Espaço de Saúde Integrativa" loading="lazy" className="h-[420px] w-full rounded-3xl border border-slate-200" src="https://www.google.com/maps?q=Avenida%20Bar%C3%A3o%20do%20Rio%20Branco%2C%202555%2C%20Juiz%20de%20Fora%20MG&output=embed" referrerPolicy="no-referrer-when-downgrade" />
+      {gallery && <div><h2 className="font-display text-3xl">Conheça a estrutura</h2><div className="card-grid mt-6">{["Recepção", "Consultório", "Sala de atendimento", "Estrutura"].map((label) => <div key={label} className="content-card grid aspect-[4/3] place-items-center border-dashed"><div className="text-center text-muted-foreground"><Image className="mx-auto size-7 text-primary" /><h3 className="card-title mt-4 text-xl">{label}</h3><span className="mt-2 block text-sm">Foto em breve</span></div></div>)}</div></div>}
+    </div>
+  );
 }
 
 export function IdentificationSection() {
@@ -110,11 +136,8 @@ export function SocialProjectSection() {
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
               <Button asChild size="lg" className="w-full bg-gold text-gold-foreground shadow-lg shadow-black/10 hover:bg-gold/90 sm:w-auto">
-                <a href={socialProjectWhatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackAnalyticsEvent("whatsapp_click")}>
-                  Quero saber mais sobre o projeto <ArrowRight className="size-4" />
-                </a>
+                <Link to="/contato">Quero saber mais sobre o projeto <ArrowRight className="size-4" /></Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="w-full border-primary-foreground/40 bg-transparent text-primary-foreground hover:bg-primary-foreground hover:text-primary sm:w-auto"><Link to="/contato">Fale conosco</Link></Button>
               <span className="text-sm text-primary-foreground/75 sm:ml-1">Consulte a igreja participante mais próxima.</span>
             </div>
           </div>
@@ -138,11 +161,11 @@ export function ProfessionalSection() {
     <section className="section-space bg-muted/30">
       <div className="container-site grid items-center gap-10 lg:grid-cols-[1.1fr_1fr]">
         <div className="group relative aspect-[4/5] overflow-hidden rounded-3xl border border-slate-200 bg-[#e5f4f0] shadow-xl">
-          <img src="/dr-frederick-parreira.png" alt="Dr. Frederick Parreira — Psicólogo e Biomédico" loading="lazy" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+          <img src="/fred-perfil.png" alt="Dr. Frederick Parreira em seu consultório, no Espaço de Saúde Integrativa." loading="lazy" className="h-full w-full object-cover object-[center_15%] transition-transform duration-700 group-hover:scale-105" />
           <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-white/40 bg-slate-950/70 p-4 text-white backdrop-blur-sm"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#a9e0d3]">Espaço de Saúde Integrativa</p><p className="mt-1 font-display text-lg">Cuidado técnico e humanizado</p></div>
         </div>
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-          <Eyebrow>Profissional</Eyebrow>
+          <span className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Profissional</span>
           <h2 className="mt-4 font-display text-3xl font-semibold leading-tight text-slate-900 md:text-5xl">Conheça o Dr. Frederick Parreira</h2>
           <div className="mt-6 space-y-4 leading-7 text-muted-foreground">
             <p>Dr. Frederick Parreira atua nas áreas de Psicologia e Biomedicina, desenvolvendo um trabalho direcionado à saúde mental, saúde integrativa, estética e bem-estar.</p>
@@ -238,14 +261,14 @@ export function CtaSection() {
   return (
     <section className="section-space bg-primary text-primary-foreground">
       <div className="container-site text-center">
-        <Eyebrow tone="neutral">Agendamento</Eyebrow>
-        <h2 className="mt-4 font-display text-4xl md:text-5xl">Seu cuidado pode começar com uma conversa.</h2>
-        <p className="mt-6 max-w-2xl mx-auto text-lg leading-8 text-primary-foreground/90">
-          Entre em contato para conhecer os atendimentos e encontrar a modalidade mais adequada às suas necessidades.
+        <span className="text-xs font-bold uppercase tracking-[0.16em] text-gold-soft">Próximo passo</span>
+        <h2 className="mt-4 font-display text-4xl md:text-5xl">Veja as áreas antes de escolher o atendimento.</h2>
+        <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-primary-foreground/90">
+          Psicologia, neuropsicologia e biomedicina estão descritas em páginas próprias. O agendamento fica no início da página e no botão do WhatsApp.
         </p>
         <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-          <Button asChild size="lg" className="bg-gold text-gold-foreground hover:bg-gold/90 w-full sm:w-auto"><a href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackAnalyticsEvent("appointment_click")}>Agende sua consulta <ArrowRight className="size-4" /></a></Button>
-          <Button asChild size="lg" variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 w-full sm:w-auto"><Link to="/servicos">Conheça os atendimentos</Link></Button>
+          <Button asChild size="lg" className="w-full bg-gold text-gold-foreground hover:bg-gold/90 sm:w-auto"><Link to="/servicos">Conheça os atendimentos</Link></Button>
+          <Button asChild size="lg" variant="outline" className="w-full border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 sm:w-auto"><Link to="/estrutura">Ver a estrutura</Link></Button>
         </div>
       </div>
     </section>

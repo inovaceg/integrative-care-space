@@ -22,19 +22,19 @@ export function Header({ minimal = false }: { minimal?: boolean }) {
   if (minimal) return null;
   return (
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/95 backdrop-blur-xl">
-      {!minimal && <div className="container-site grid min-h-20 grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+      {!minimal && <div className="mx-auto grid min-h-20 w-[calc(100%-2rem)] max-w-[96rem] grid-cols-[minmax(0,auto)_minmax(0,1fr)] items-center gap-3">
         <Brand />
-          <nav className="hidden items-center gap-1 xl:flex" aria-label="Navegação principal">
-            {navItems.map(([label, to]) => <Link key={to} to={to} activeProps={{ className: "text-primary" }} className="px-3 py-3 text-sm font-semibold text-foreground/85 transition-colors hover:text-primary">{label}</Link>)}
-            <Link to="/admin/login" className="px-3 py-3 text-sm font-semibold text-foreground/85 transition-colors hover:text-primary">Área administrativa</Link>
+          <nav className="hidden min-w-0 items-center justify-end gap-0 2xl:flex" aria-label="Navegação principal">
+            {navItems.map(([label, to]) => <Link key={to} to={to} activeProps={{ className: "text-primary" }} className="whitespace-nowrap px-2 py-3 text-xs font-semibold text-foreground/85 transition-colors hover:text-primary">{label}</Link>)}
+            <Link to="/admin/login" className="whitespace-nowrap px-2 py-3 text-xs font-semibold text-foreground/85 transition-colors hover:text-primary">Área administrativa</Link>
             <Button asChild size="lg" className="ml-2"><a href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackAnalyticsEvents(["appointment_click", "whatsapp_click"])}><MessageCircle className="size-4 mr-2" />Agende sua consulta</a></Button>
           </nav>
-          <div className="flex items-center gap-2 xl:hidden">
+          <div className="flex items-center gap-2 2xl:hidden">
             <Button asChild size="sm" className="hidden sm:inline-flex"><a href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackAnalyticsEvents(["appointment_click", "whatsapp_click"])}>Agendar</a></Button>
             <Button variant="ghost" size="icon" onClick={() => setOpen((v) => !v)} aria-label={open ? "Fechar menu" : "Abrir menu"} aria-expanded={open}>{open ? <X /> : <Menu />}</Button>
           </div>
       </div>}
-      {!minimal && open && <nav className="border-t border-border bg-background px-5 py-4 xl:hidden" aria-label="Navegação móvel">
+      {!minimal && open && <nav className="border-t border-border bg-background px-5 py-4 2xl:hidden" aria-label="Navegação móvel">
         <div className="mx-auto grid max-w-xl grid-cols-2 gap-1">
           {navItems.map(([label, to]) => <Link key={to} to={to} onClick={() => setOpen(false)} className="rounded-sm px-3 py-3 text-sm font-semibold text-foreground hover:bg-muted">{label}</Link>)}
           <Link to="/admin/login" onClick={() => setOpen(false)} className="rounded-sm px-3 py-3 text-sm font-semibold text-foreground hover:bg-muted">Área administrativa</Link>
