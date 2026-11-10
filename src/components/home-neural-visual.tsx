@@ -37,8 +37,8 @@ export function HomeNeuralVisual() {
   };
 
   const resetPointer = (event: ReactPointerEvent<HTMLDivElement>) => {
-    event.currentTarget.style.setProperty("--neural-x", "0");
-    event.currentTarget.style.setProperty("--neural-y", "0");
+    event.currentTarget.style.setProperty("--neural-x", "0deg");
+    event.currentTarget.style.setProperty("--neural-y", "0deg");
   };
 
   return (

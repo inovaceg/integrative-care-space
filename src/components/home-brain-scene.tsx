@@ -1,5 +1,4 @@
-import { Canvas, useFrame } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 import * as THREE from "three";
 
 const neuralNodes = [
@@ -29,8 +28,25 @@ function surfaceZ(x: number, y: number) {
   return 0.63 * Math.sqrt(Math.max(0.04, 1 - (x / 1.04) ** 2 - (y / 1.04) ** 2)) + 0.035;
 }
 
-function NeuralFibers() {
-  const fibers = useMemo(() => Array.from({ length: 14 }, (_, index) => {
+function createBrainModel() {
+  const brain = new THREE.Group();
+  const materials = [
+    new THREE.MeshPhysicalMaterial({ color: "#c9954d", metalness: 0.48, roughness: 0.3, clearcoat: 0.7, clearcoatRoughness: 0.25, emissive: "#6c3f14", emissiveIntensity: 0.14 }),
+    new THREE.MeshPhysicalMaterial({ color: "#dbb36c", metalness: 0.42, roughness: 0.32, clearcoat: 0.72, clearcoatRoughness: 0.22, emissive: "#80501c", emissiveIntensity: 0.12 }),
+  ];
+  const hemispheres = [
+    { geometry: createCortexGeometry(0.4), position: [-0.37, 0, 0] as const, material: materials[0] },
+    { geometry: createCortexGeometry(1.8), position: [0.37, 0, 0] as const, material: materials[1] },
+  ];
+
+  hemispheres.forEach(({ geometry, position, material }) => {
+    const hemisphere = new THREE.Mesh(geometry, material);
+    hemisphere.position.set(...position);
+    hemisphere.scale.set(0.72, 0.95, 0.62);
+    brain.add(hemisphere);
+  });
+
+  for (let index = 0; index < 14; index++) {
     const side = index % 2 === 0 ? -1 : 1;
     const lane = Math.floor(index / 2);
     const start = side < 0 ? -0.83 + lane * 0.105 : 0.15 + lane * 0.105;
@@ -41,61 +57,114 @@ function NeuralFibers() {
       return new THREE.Vector3(x, y, surfaceZ(x, y));
     });
     const curve = new THREE.CatmullRomCurve3(points);
-    return new THREE.TubeGeometry(curve, 36, index % 3 === 0 ? 0.008 : 0.0045, 5, false);
-  }), []);
-  return <group>{fibers.map((geometry, index) => <mesh key={index} geometry={geometry}><meshBasicMaterial color={index % 3 === 0 ? "#ffdf9a" : "#c99c54"} transparent opacity={index % 3 === 0 ? 0.85 : 0.52} /></mesh>)}</group>;
-}
+    const fiber = new THREE.Mesh(
+      new THREE.TubeGeometry(curve, 36, index % 3 === 0 ? 0.008 : 0.0045, 5, false),
+      new THREE.MeshBasicMaterial({ color: index % 3 === 0 ? "#ffdf9a" : "#c99c54", transparent: true, opacity: index % 3 === 0 ? 0.85 : 0.52 }),
+    );
+    brain.add(fiber);
+  }
 
-function NeuralSynapses() {
-  const positions = useMemo(() => neuralNodes.map(([x, y]) => new THREE.Vector3(x, y, surfaceZ(x, y) + 0.015)), []);
-  return <group>{positions.map((position, index) => <mesh key={index} position={position}><sphereGeometry args={[index % 4 === 0 ? 0.027 : 0.016, 12, 12]} /><meshStandardMaterial color="#ffdfa0" emissive="#d99131" emissiveIntensity={2.8} metalness={0.25} roughness={0.22} /></mesh>)}</group>;
-}
-
-function FloatingParticles() {
-  const particles = useRef<THREE.Group>(null);
-  const points = useMemo(() => Array.from({ length: 36 }, (_, index) => {
-    const angle = index * 2.399;
-    const radius = 0.98 + (index % 5) * 0.09;
-    return [Math.cos(angle) * radius, Math.sin(angle * 1.37) * 0.92, Math.sin(angle) * radius * 0.62] as const;
-  }), []);
-  return <group ref={particles}>{points.map(([x, y, z], index) => <mesh key={index} position={[x, y, z]}><sphereGeometry args={[index % 7 === 0 ? 0.018 : 0.009, 8, 8]} /><meshBasicMaterial color="#f4d795" transparent opacity={index % 3 === 0 ? 0.82 : 0.4} /></mesh>)}</group>;
-}
-
-function BrainModel({ reducedMotion }: { reducedMotion: boolean }) {
-  const brain = useRef<THREE.Group>(null);
-  const leftGeometry = useMemo(() => createCortexGeometry(0.4), []);
-  const rightGeometry = useMemo(() => createCortexGeometry(1.8), []);
-
-  useFrame((state, delta) => {
-    if (!brain.current || reducedMotion) return;
-    brain.current.rotation.y = THREE.MathUtils.damp(brain.current.rotation.y, Math.sin(state.clock.elapsedTime * 0.28) * 0.09, 2.2, delta);
-    brain.current.rotation.x = THREE.MathUtils.damp(brain.current.rotation.x, Math.cos(state.clock.elapsedTime * 0.22) * 0.035, 2.2, delta);
-    brain.current.position.y = Math.sin(state.clock.elapsedTime * 0.65) * 0.035;
+  neuralNodes.forEach(([x, y], index) => {
+    const synapse = new THREE.Mesh(
+      new THREE.SphereGeometry(index % 4 === 0 ? 0.027 : 0.016, 12, 12),
+      new THREE.MeshStandardMaterial({ color: "#ffdfa0", emissive: "#d99131", emissiveIntensity: 2.8, metalness: 0.25, roughness: 0.22 }),
+    );
+    synapse.position.set(x, y, surfaceZ(x, y) + 0.015);
+    brain.add(synapse);
   });
 
-  return (
-    <group ref={brain}>
-      <mesh geometry={leftGeometry} position={[-0.37, 0, 0]} scale={[0.72, 0.95, 0.62]}>
-        <meshPhysicalMaterial color="#c9954d" metalness={0.48} roughness={0.3} clearcoat={0.7} clearcoatRoughness={0.25} emissive="#6c3f14" emissiveIntensity={0.14} />
-      </mesh>
-      <mesh geometry={rightGeometry} position={[0.37, 0, 0]} scale={[0.72, 0.95, 0.62]}>
-        <meshPhysicalMaterial color="#dbb36c" metalness={0.42} roughness={0.32} clearcoat={0.72} clearcoatRoughness={0.22} emissive="#80501c" emissiveIntensity={0.12} />
-      </mesh>
-      <NeuralFibers />
-      <NeuralSynapses />
-      <FloatingParticles />
-    </group>
-  );
+  const particlePositions = new Float32Array(36 * 3);
+  for (let index = 0; index < 36; index++) {
+    const angle = index * 2.399;
+    const radius = 0.98 + (index % 5) * 0.09;
+    particlePositions[index * 3] = Math.cos(angle) * radius;
+    particlePositions[index * 3 + 1] = Math.sin(angle * 1.37) * 0.92;
+    particlePositions[index * 3 + 2] = Math.sin(angle) * radius * 0.62;
+  }
+  const particleGeometry = new THREE.BufferGeometry();
+  particleGeometry.setAttribute("position", new THREE.BufferAttribute(particlePositions, 3));
+  const particles = new THREE.Points(particleGeometry, new THREE.PointsMaterial({ color: "#f4d795", size: 0.035, transparent: true, opacity: 0.66, sizeAttenuation: true }));
+  brain.add(particles);
+
+  return brain;
 }
 
 export default function HomeBrainScene({ reducedMotion, onReady }: { reducedMotion: boolean; onReady: () => void }) {
-  return (
-    <Canvas onCreated={onReady} camera={{ position: [0, 0, 3.65], fov: 38 }} dpr={[1, 1.4]} frameloop={reducedMotion ? "demand" : "always"} gl={{ alpha: true, antialias: true, powerPreference: "low-power" }}>
-      <ambientLight intensity={0.85} />
-      <directionalLight position={[-2.5, 3, 4]} intensity={2.2} color="#fff1d0" />
-      <pointLight position={[2, 1, 2]} intensity={28} color="#ffc76a" distance={7} />
-      <pointLight position={[-2, -1, -1]} intensity={15} color="#b78239" distance={6} />
-      <BrainModel reducedMotion={reducedMotion} />
-    </Canvas>
-  );
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const onReadyRef = useRef(onReady);
+  onReadyRef.current = onReady;
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const container = canvas?.parentElement;
+    if (!canvas || !container) return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
+    camera.position.set(0, 0, 3.65);
+
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: "low-power" });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.4));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.12;
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.85));
+    const keyLight = new THREE.DirectionalLight("#fff1d0", 2.2);
+    keyLight.position.set(-2.5, 3, 4);
+    scene.add(keyLight);
+    const goldLight = new THREE.PointLight("#ffc76a", 28, 7);
+    goldLight.position.set(2, 1, 2);
+    scene.add(goldLight);
+    const rimLight = new THREE.PointLight("#b78239", 15, 6);
+    rimLight.position.set(-2, -1, -1);
+    scene.add(rimLight);
+
+    const brain = createBrainModel();
+    scene.add(brain);
+
+    const resize = () => {
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+      if (!width || !height) return;
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.setSize(width, height, false);
+      renderer.render(scene, camera);
+    };
+    const observer = new ResizeObserver(resize);
+    observer.observe(container);
+    resize();
+    onReadyRef.current();
+
+    let animationFrame = 0;
+    const animate = (time: number) => {
+      const seconds = time * 0.001;
+      brain.rotation.y = Math.sin(seconds * 0.28) * 0.09;
+      brain.rotation.x = Math.cos(seconds * 0.22) * 0.035;
+      brain.position.y = Math.sin(seconds * 0.65) * 0.035;
+      renderer.render(scene, camera);
+      animationFrame = window.requestAnimationFrame(animate);
+    };
+    if (!reducedMotion) animationFrame = window.requestAnimationFrame(animate);
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      observer.disconnect();
+      brain.traverse((object) => {
+        if (object instanceof THREE.Mesh) {
+          object.geometry.dispose();
+          if (Array.isArray(object.material)) object.material.forEach((material) => material.dispose());
+          else object.material.dispose();
+        }
+        if (object instanceof THREE.Points) {
+          object.geometry.dispose();
+          object.material.dispose();
+        }
+      });
+      renderer.dispose();
+    };
+  }, [reducedMotion]);
+
+  return <canvas ref={canvasRef} className="home-brain-canvas" />;
 }
