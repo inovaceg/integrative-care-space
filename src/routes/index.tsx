@@ -20,29 +20,28 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   return <>
-    <section className="home-hero relative isolate overflow-hidden border-b border-[#d9e6df] bg-[#f8f8f3]">
-      <div className="home-hero-glow pointer-events-none absolute -right-24 -top-28 size-[30rem] rounded-full bg-emerald-100/70 blur-3xl" aria-hidden="true" />
-      <div className="home-hero-grain pointer-events-none absolute inset-0 opacity-40" aria-hidden="true" />
-      <div className="container-site relative grid min-h-[min(860px,calc(100svh-5rem))] items-center gap-8 py-12 sm:py-14 lg:grid-cols-[.94fr_1.06fr] lg:gap-8 lg:py-16">
-        <HomeHeroMotion className="relative z-10 max-w-[42rem]" delay={80}>
+    <section className="home-hero relative isolate overflow-hidden border-b border-[#d9e6df] bg-[#f8f6f1] lg:min-h-[min(760px,calc(100svh-5rem))]">
+      <div className="home-hero-glow pointer-events-none absolute -right-24 -top-28 size-[30rem] rounded-full bg-emerald-100/50 blur-3xl" aria-hidden="true" />
+      <div className="home-hero-grain pointer-events-none absolute inset-0 opacity-30" aria-hidden="true" />
+      <div className="home-hero-desktop-photo absolute inset-y-0 right-0 hidden w-[62%] lg:block">
+        <img src="/dr-frederick-parreira.png" alt="Dr. Frederick Parreira — Psicólogo e Biomédico" className="hero-image h-full w-full object-cover object-[center_30%]" loading="eager" />
+        <div className="home-hero-photo-shade absolute inset-0" aria-hidden="true" />
+        <HomeNeuralVisual />
+      </div>
+      <div className="container-site relative z-10 flex min-h-[min(760px,calc(100svh-5rem))] flex-col justify-center py-12 sm:py-14 lg:min-h-[min(760px,calc(100svh-5rem))] lg:py-16">
+        <HomeHeroMotion className="relative z-10 max-w-[44rem] lg:w-[49%]" delay={80}>
           <div className="hero-text-step inline-flex items-center gap-3 rounded-full border border-[#d7e7df] bg-white/75 px-4 py-2.5 shadow-sm backdrop-blur"><span className="size-2 rounded-full bg-[#4b9d7d] shadow-[0_0_0_4px_rgba(75,157,125,0.12)]" /><span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#28665a] sm:text-xs">Psicologia · Neurociência · Biomedicina</span></div>
           <h1 className="hero-text-step hero-headline-shadow mt-6 max-w-[13ch] text-balance font-display text-[clamp(2.55rem,5vw,4.5rem)] font-medium leading-[1.06] tracking-[-0.045em] text-[#173f3a]">Ciência, acolhimento e cuidado <span className="hero-title-accent">para transformar histórias.</span></h1>
           <p className="hero-text-step hero-copy-shadow mt-6 max-w-[35rem] text-base leading-7 text-[#5c6e68] sm:text-lg sm:leading-8">Uma abordagem integrada entre Psicologia, Neuropsicologia e Biomedicina, respeitando a individualidade de cada pessoa.</p>
           <div className="hero-text-step mt-7 flex items-center gap-4 border-l border-[#c9a96c] py-1 pl-4"><span className="h-10 w-px bg-gradient-to-b from-[#dfc38e] to-transparent" /><div><p className="font-display text-lg font-semibold tracking-tight text-[#173f3a]">Dr. Frederick Parreira</p><p className="mt-1 text-xs leading-5 text-[#687873] sm:text-sm">Psicólogo — CRP 04/86194 <span className="mx-1.5 text-[#c9a96c]">/</span> Biomédico — CRBM 30421</p></div></div>
-          <div className="hero-text-step mt-8 flex flex-col gap-3 sm:flex-row"><Button asChild size="lg" className="group h-12 rounded-full bg-[#17675b] px-6 text-white shadow-[0_12px_30px_-14px_rgba(23,103,91,0.7)] hover:bg-[#12574d]"><a href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackAnalyticsEvents(["appointment_click", "whatsapp_click"])}>Agende sua consulta <ArrowRight className="transition-transform group-hover:translate-x-1" /></a></Button><Button asChild size="lg" variant="outline" className="h-12 rounded-full border-[#b9cec4] bg-white/55 px-6 text-[#23594f] hover:bg-white"><Link to="/sobre">Conheça o Dr. Frederick</Link></Button></div>
+          <div className="hero-text-step mt-8 flex flex-col gap-3 sm:flex-row"><Button asChild size="lg" className="group h-12 rounded-full bg-[#17675b] px-6 text-white shadow-[0_12px_30px_-14px_rgba(23,103,91,0.7)] hover:bg-[#12574d]"><a href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackAnalyticsEvents(["appointment_click", "whatsapp_click"])}>Agende sua consulta <ArrowRight className="transition-transform group-hover:translate-x-1" /></a></Button><Button asChild size="lg" variant="outline" className="h-12 rounded-full border-[#b9cec4] bg-white/75 px-6 text-[#23594f] shadow-sm hover:bg-white"><Link to="/sobre">Conheça o Dr. Frederick</Link></Button></div>
         </HomeHeroMotion>
-        <HomeHeroMotion className="relative mx-auto w-full max-w-[38rem] pb-8 pl-2 pt-10 sm:pl-6 lg:pb-10 lg:pt-4" delay={240}>
-          <div className="hero-photo-halo absolute inset-x-8 bottom-1 top-12 rounded-[45%] bg-[radial-gradient(ellipse_at_center,rgba(211,228,215,0.8),rgba(248,248,243,0)_70%)]" aria-hidden="true" />
-          <HomeNeuralVisual />
-          <div className="hero-photo-frame relative ml-auto aspect-[.88/1] w-[94%] max-w-[30rem] overflow-hidden rounded-t-[48%] rounded-b-[2rem] border border-white/80 bg-[#dce7df] shadow-[0_38px_90px_-28px_rgba(20,57,49,0.5)]">
-            <img src="/dr-frederick-parreira.png" alt="Dr. Frederick Parreira — Psicólogo e Biomédico" className="hero-image absolute inset-0 h-full w-full object-cover object-center" loading="eager" />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#113f39]/30 via-transparent to-white/10" />
-          </div>
-          <div className="hero-photo-caption absolute bottom-0 left-0 z-30 rounded-2xl border border-white/70 bg-white/85 px-4 py-3 shadow-[0_18px_45px_-25px_rgba(21,55,47,0.5)] backdrop-blur-md sm:px-5"><p className="font-display text-base font-semibold text-[#174c43]">Cuidado que integra</p><p className="mt-1 text-xs text-[#687873]">Ciência, presença e individualidade</p></div>
-          <div className="hero-image-index absolute right-0 top-[42%] z-30 hidden items-center gap-2 rounded-full border border-white/70 bg-white/75 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#3e6d60] shadow-sm backdrop-blur sm:flex"><span className="size-1.5 rounded-full bg-[#c9a96c]" /> Saúde integrativa</div>
-        </HomeHeroMotion>
+        <div className="home-hero-mobile-photo relative mt-8 h-[min(78vw,390px)] overflow-hidden rounded-[1.5rem] bg-[#dce7df] shadow-[0_24px_60px_-28px_rgba(20,57,49,0.42)] lg:hidden">
+          <img src="/dr-frederick-parreira.png" alt="Dr. Frederick Parreira — Psicólogo e Biomédico" className="h-full w-full object-cover object-[center_28%]" loading="eager" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#113f39]/35 via-transparent to-white/5" />
+        </div>
       </div>
-      <a href="#identificacao" aria-label="Rolar para conhecer o espaço" className="hero-scroll-indicator absolute bottom-3 left-1/2 z-30 grid size-10 place-items-center rounded-full border border-[#c9d9d0] bg-white/80 text-[#28665a] shadow-sm backdrop-blur transition-colors hover:bg-[#17675b] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"><ChevronDown className="size-5" /></a>
+      <a href="#identificacao" aria-label="Rolar para conhecer o espaço" className="hero-scroll-indicator absolute bottom-3 left-1/2 z-30 hidden size-10 -translate-x-1/2 place-items-center rounded-full border border-[#c9d9d0] bg-white/80 text-[#28665a] shadow-sm backdrop-blur transition-colors hover:bg-[#17675b] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary lg:grid"><ChevronDown className="size-5" /></a>
     </section>
 
     <HomeScrollReveal><div id="identificacao"><IdentificationSection /></div></HomeScrollReveal>
