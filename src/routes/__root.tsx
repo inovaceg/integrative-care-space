@@ -130,6 +130,7 @@ function RootComponent() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const isAdmin = pathname === "/admin" || pathname.startsWith("/admin/");
   const isPublicAnamnese = pathname.startsWith("/anamnese/");
+  const isLinkPage = pathname === "/links";
 
   useEffect(() => {
     if (!isAdmin) trackAnalyticsEvent("page_view", pathname);
@@ -138,7 +139,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        {isAdmin || isPublicAnamnese ? (
+        {isAdmin || isPublicAnamnese || isLinkPage ? (
           <Outlet />
         ) : (
           <>
