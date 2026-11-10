@@ -39,6 +39,7 @@ function HomePage() {
         <div className="home-hero-mobile-photo pointer-events-none absolute right-0 top-32 z-0 h-[min(105vw,460px)] w-[58%] overflow-hidden bg-[#dce7df] lg:hidden" aria-hidden="true">
           <img src="/dr-frederick-parreira.png" alt="" className="h-full w-full object-cover object-[center_24%]" loading="eager" />
           <div className="home-hero-mobile-shade absolute inset-0" />
+          <HomeNeuralVisual />
         </div>
       </div>
       <a href="#identificacao" aria-label="Rolar para conhecer o espaço" className="hero-scroll-indicator absolute bottom-3 left-1/2 z-30 hidden size-10 -translate-x-1/2 place-items-center rounded-full border border-[#c9d9d0] bg-white/80 text-[#28665a] shadow-sm backdrop-blur transition-colors hover:bg-[#17675b] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary lg:grid"><ChevronDown className="size-5" /></a>
