@@ -121,7 +121,16 @@ Deno.serve(async (req) => {
         const record = await findRecoveryRecord(admin, email, body.lookupType, body.lookupValue, false)
         if (record) {
           const authClient = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, { auth: { autoRefreshToken: false, persistSession: false } })
-          await authClient.auth.signInWithOtp({ email, options: { shouldCreateUser: true } })
+          const redirectTo = text(body.emailRedirectTo, 2048)
+          const origin = req.headers.get('origin')
+          try {
+            const callback = new URL(redirectTo)
+            if (origin && callback.origin === origin && callback.pathname === '/anamnese-psicologica' && !callback.search && !callback.hash) {
+              await authClient.auth.signInWithOtp({ email, options: { shouldCreateUser: true, emailRedirectTo: callback.href } })
+            }
+          } catch {
+            return Response.json({ sent: true, message: 'Se os dados coincidirem com uma ficha, enviaremos um código ao e-mail cadastrado.' }, { headers: corsHeaders })
+          }
         }
       }
       return Response.json({ sent: true, message: 'Se os dados coincidirem com uma ficha, enviaremos um código ao e-mail cadastrado.' }, { headers: corsHeaders })

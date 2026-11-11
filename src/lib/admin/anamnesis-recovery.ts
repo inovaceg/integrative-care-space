@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { PsychologicalAnswers } from '@/lib/admin/psychological-anamnesis';
 
 const recoveryAuth = createClient('https://fusqpjescampwoyazceu.supabase.co', 'sb_publishable_g7UiDq4z1OWmThE52EZNbQ_aKSUfA1x', {
-  auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
+  auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: true },
 });
 
 type LookupType = 'cpf' | 'name';
@@ -17,8 +17,15 @@ async function invoke<T>(body: Record<string, unknown>, accessToken?: string): P
   return data as T;
 }
 
-export function requestAnamnesisEditCode(lookupType: LookupType, lookupValue: string, email: string) {
-  return invoke<{ sent: true; message: string }>({ action: 'edit-code-request', lookupType, lookupValue, email });
+export function requestAnamnesisEditCode(lookupType: LookupType, lookupValue: string, email: string, emailRedirectTo: string) {
+  return invoke<{ sent: true; message: string }>({ action: 'edit-code-request', lookupType, lookupValue, email, emailRedirectTo });
+}
+
+export async function getVerifiedAnamnesisEditSession() {
+  const { data, error } = await recoveryAuth.auth.getSession();
+  const session = data.session;
+  if (error || !session?.user.email || !session.user.email_confirmed_at) return null;
+  return { accessToken: session.access_token, email: session.user.email.toLowerCase() };
 }
 
 export async function verifyAnamnesisEditCode(email: string, token: string) {
