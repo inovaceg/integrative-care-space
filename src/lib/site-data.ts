@@ -65,6 +65,7 @@ export const faqItems = [
 
 export const navItems = [
   ["Início", "/"], ["Sobre", "/sobre"], ["Psicologia", "/psicologia"],
+  ["Anamnese Psicológica", "/anamnese-psicologica"],
   ["Biomedicina", "/biomedicina"], ["Serviços", "/servicos"], ["Estrutura", "/estrutura"],
   ["Avaliação Neuropsicológica", "/avaliacao-neuropsicologica"], ["Orientação sobre TDAH", "/orientacao-tdah"], ["Blog", "/blog"], ["FAQ", "/faq"], ["Contato", "/contato"],
 ] as const;
