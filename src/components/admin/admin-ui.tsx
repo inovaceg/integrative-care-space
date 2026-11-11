@@ -37,7 +37,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/auth/auth-provider";
 import type { AppointmentStatus } from "@/lib/admin/types";
 
-const navigation = [
+export const adminNavigation = [
   { label: "Visão geral", to: "/admin/dashboard", icon: LayoutDashboard },
   { label: "Agenda", to: "/admin/agenda", icon: CalendarDays },
   { label: "Pacientes", to: "/admin/pacientes", icon: UsersRound },
@@ -93,7 +93,7 @@ export function AdminSidebar({ collapsed, mobileOpen, onClose, onToggle }: { col
         <div className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pt-7", collapsed && "lg:px-3")}>
           <p className={cn("px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45", collapsed && "lg:hidden")}>Menu principal</p>
           <nav className="mt-3 space-y-1" aria-label="Navegação administrativa">
-            {navigation.map(({ label, to, icon: Icon }) => <Link key={to} to={to} onClick={onClose} activeProps={{ className: "bg-[#2f7773] text-white shadow-sm" }} className={cn("group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white", collapsed && "lg:justify-center lg:px-2")} title={collapsed ? label : undefined}><Icon className="size-[18px] shrink-0" /><span className={cn(collapsed && "lg:hidden")}>{label}</span><ChevronRight className={cn("ml-auto size-4 opacity-0 transition-opacity group-hover:opacity-70", collapsed && "lg:hidden")} /></Link>)}
+            {adminNavigation.map(({ label, to, icon: Icon }) => <Link key={to} to={to} onClick={onClose} activeProps={{ className: "bg-[#2f7773] text-white shadow-sm" }} className={cn("group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white", collapsed && "lg:justify-center lg:px-2")} title={collapsed ? label : undefined}><Icon className="size-[18px] shrink-0" /><span className={cn(collapsed && "lg:hidden")}>{label}</span><ChevronRight className={cn("ml-auto size-4 opacity-0 transition-opacity group-hover:opacity-70", collapsed && "lg:hidden")} /></Link>)}
           </nav>
         </div>
         <div className="mt-auto p-4">

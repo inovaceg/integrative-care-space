@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { fetchAppointments, fetchPatients, type AppointmentRecord, type PatientRecord } from "@/lib/admin/records";
 import { DashboardBirthdays } from "@/components/admin/dashboard/dashboard-birthdays";
 import { DailyMotivation } from "@/components/admin/dashboard/daily-motivation";
+import { DashboardNavigationCards } from "@/components/admin/dashboard/dashboard-navigation-cards";
 import { supabase } from "@/integrations/supabase/client";
 import drFrederickImage from "@/assets/dr-frederick-parreira.png";
 
@@ -113,6 +114,7 @@ function DashboardPage() {
         {user && <DailyMotivation />}
       </div>
     </div>
+    <DashboardNavigationCards />
     {error && <p role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">Não foi possível carregar o resumo: {error}</p>}
     {loading || authLoading ? <div className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-12 text-sm text-slate-500"><Loader2 className="mr-2 size-4 animate-spin" /> Carregando resumo...</div> : <>
       <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{stats.map((stat) => <DashboardCard key={stat.label} {...stat} />)}</div>
