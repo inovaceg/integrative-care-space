@@ -90,7 +90,7 @@ function HomePage() {
       <div className="container-site">
         <div className="mb-8 max-w-2xl"><p className="text-xs font-bold uppercase tracking-[.16em] text-[#26786e]">Pensamentos Diários</p><h2 className="mt-3 font-display text-3xl font-semibold text-[#173f3a] sm:text-4xl">Palavras para levar com você.</h2></div>
         <article className="grid overflow-hidden rounded-3xl border border-[#d9e6df] bg-white shadow-sm md:grid-cols-[.9fr_1.1fr]">
-          <img src="/assets/pensamentos-diarios-coragem.png" alt="Arte de Pensamentos Diários com retrato em preto e branco e a frase: Coragem é dar o próximo passo mesmo com medo." className="max-h-[34rem] min-h-72 w-full object-cover object-center" loading="lazy" />
+          <img src="/assets/pensamentos-diarios-coragem.jpeg" alt="Dr. Frederick Parreira sorrindo, usando jaleco branco no Espaço de Saúde Integrativa." className="max-h-[34rem] min-h-72 w-full object-cover object-center" loading="lazy" />
           <div className="flex flex-col justify-center p-6 sm:p-9 lg:p-12"><Sparkles className="size-6 text-[#c09b5a]" /><blockquote className="mt-4 font-display text-2xl font-semibold leading-snug text-[#173f3a] sm:text-3xl">“Coragem é dar o próximo passo mesmo com medo.”</blockquote><p className="mt-5 leading-7 text-[#526760]">Nem sempre precisamos ter todas as respostas para seguir. Às vezes, cuidar de si começa com um gesto pequeno: reconhecer o que sente e permitir-se pedir apoio.</p><Button asChild variant="outline" className="mt-7 w-fit border-[#b9cec4] text-[#23594f]"><Link to="/blog">Ver mais reflexões <ArrowRight className="ml-2 size-4" /></Link></Button></div>
         </article>
       </div>
