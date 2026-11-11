@@ -278,7 +278,7 @@ Q
     const textStream = (letterhead ? [] : lines.filter(line => !['signature-line', 'rule', 'rect', 'line', 'point', 'path'].includes(line.kind ?? ''))).map(line => {
       const hex = (line.color ?? '#17232d').slice(1);
       const color = [0, 2, 4].map(i => (parseInt(hex.slice(i, i + 2), 16) / 255).toFixed(3)).join(' ');
-      const textX = line.align === 'center' ? line.x - measureTextWidth(line.text, line.size, line.bold) / 2 : line.x;
+      const textX = line.align === 'center' ? centeredX(line.text, line.size, line.bold) : line.x;
       return `BT /${line.bold ? 'F2' : 'F1'} ${line.size} Tf ${color} rg 1 0 0 1 ${textX} ${842 - line.y} Tm ${pdfText(line.text)} Tj ET`;
     }).join('\n');
     const shapeCommands = (letterhead ? [] : lines.filter(line => ['rule', 'rect', 'line', 'point', 'path'].includes(line.kind ?? ''))).map(line => {
