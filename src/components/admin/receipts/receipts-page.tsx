@@ -144,7 +144,7 @@ export default function ReceiptsPage() {
 
   async function download() {
     if (!preview) return;
-    try { await downloadDocumentPdf(preview.pages, preview.receipt.receipt_number, true); }
+    try { await downloadDocumentPdf(preview.pages, preview.receipt.receipt_number, false, true); }
     catch (failure) { setError(failure instanceof Error ? failure.message : 'Não foi possível gerar o PDF.'); setPreview(null); }
   }
   function print() {
@@ -201,8 +201,8 @@ export default function ReceiptsPage() {
       setMessage('Cadastro do paciente atualizado com sucesso.');
       setEditingPatientId(null);
     }} />}
-    <Dialog open={!!preview} onOpenChange={open => { if (!open) setPreview(null); }}><DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-4xl"><DialogHeader><DialogTitle>Recibo {preview?.receipt.receipt_number}</DialogTitle><DialogDescription>Confira os dados antes de compartilhar com o paciente. A assinatura deve ser feita pelo profissional responsável.</DialogDescription></DialogHeader>{preview && <><div className="flex flex-wrap gap-2"><Button onClick={download}><Download className="size-4" />Gerar PDF</Button><Button variant="outline" onClick={print}><Printer className="size-4" />Imprimir</Button></div><DocumentPreview pages={preview.pages} showBrand /></>}</DialogContent></Dialog>
+    <Dialog open={!!preview} onOpenChange={open => { if (!open) setPreview(null); }}><DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-4xl"><DialogHeader><DialogTitle>Recibo {preview?.receipt.receipt_number}</DialogTitle><DialogDescription>Confira os dados antes de compartilhar com o paciente. A assinatura deve ser feita pelo profissional responsável.</DialogDescription></DialogHeader>{preview && <><div className="flex flex-wrap gap-2"><Button onClick={download}><Download className="size-4" />Gerar PDF</Button><Button variant="outline" onClick={print}><Printer className="size-4" />Imprimir</Button></div><DocumentPreview pages={preview.pages} /></>}</DialogContent></Dialog>
     {editingReceipt && <ReceiptEditor receipt={editingReceipt} error={error} saving={busy} onClose={() => setEditingReceipt(null)} onSave={input => void editReceipt(input)} />}
-    {printPages.length > 0 && <PrintDocument pages={printPages} showBrand />}
+    {printPages.length > 0 && <PrintDocument pages={printPages} />}
   </AdminLayout>;
 }

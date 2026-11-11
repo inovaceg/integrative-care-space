@@ -2,7 +2,7 @@ import { areaSpecialties, displayDate, professionalAreas, professionalDocumentFo
 import { documentBrandPdf } from './document-brand';
 import { letterheadPreviewJpeg } from './letterhead-art-pdf';
 
-export type DocumentLine = { text: string; x: number; y: number; size: number; bold?: boolean; color?: string; align?: 'left' | 'center' | 'right'; kind?: 'signature-line' | 'rule' | 'rect' | 'line' | 'point' | 'path'; width?: number; height?: number; x2?: number; y2?: number; radius?: number; path?: string; pdfPath?: string };
+export type DocumentLine = { text: string; x: number; y: number; size: number; bold?: boolean; color?: string; align?: 'left' | 'center' | 'right'; kind?: 'signature-line' | 'rule' | 'rect' | 'line' | 'point' | 'path'; width?: number; height?: number; x2?: number; y2?: number; radius?: number; path?: string; pdfPath?: string; strokeWidth?: number };
 export type DocumentPage = DocumentLine[];
 export const signatureAsset = '/assets/professional-signature.png';
 const pageWidth = 595;
@@ -285,7 +285,9 @@ Q
       const hex = (line.color ?? '#72958a').slice(1);
       const color = [0, 2, 4].map(i => (parseInt(hex.slice(i, i + 2), 16) / 255).toFixed(3)).join(' ');
       if (line.kind === 'rule') return `q ${color} RG 0.5 w ${line.x} ${842 - line.y} m ${line.x + (line.width ?? 491)} ${842 - line.y} l S Q`;
-      if (line.kind === 'path') return `q ${color} rg ${line.pdfPath ?? ''} f Q`;
+      if (line.kind === 'path') return line.strokeWidth
+        ? `q ${color} RG ${line.strokeWidth} w 1 J 1 j ${line.pdfPath ?? ''} S Q`
+        : `q ${color} rg ${line.pdfPath ?? ''} f Q`;
       if (line.kind === 'rect') return `q ${color} rg ${line.x} ${842 - line.y - (line.height ?? 0)} ${line.width ?? 0} ${line.height ?? 0} re f Q`;
       if (line.kind === 'point') { const radius = line.radius ?? 2; return `q ${color} rg ${line.x - radius} ${842 - line.y - radius} ${radius * 2} ${radius * 2} re f Q`; }
       return `q ${color} RG 1.5 w ${line.x} ${842 - line.y} m ${line.x2 ?? line.x} ${842 - (line.y2 ?? line.y)} l S Q`;
