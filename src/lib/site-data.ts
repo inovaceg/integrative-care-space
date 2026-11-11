@@ -63,7 +63,7 @@ export const faqItems = [
 ];
 
 export const navItemsBeforeQuestionnaires = [
-  ["Início", "/"], ["Atendimentos", "/servicos"], ["Realidade Virtual", "/realidade-virtual"], ["Sobre", "/sobre"],
+  ["Início", "/"], ["Sobre", "/sobre"], ["Psicologia", "/psicologia"],
 ] as const;
 
 export const questionnaireItems = [
@@ -73,5 +73,6 @@ export const questionnaireItems = [
 ] as const;
 
 export const navItemsAfterQuestionnaires = [
-  ["Pensamentos Diários", "/blog"], ["Contato", "/contato"],
+  ["Biomedicina", "/biomedicina"], ["Serviços", "/servicos"], ["Realidade Virtual", "/realidade-virtual"],
+  ["Estrutura", "/estrutura"], ["Blog", "/blog"], ["FAQ", "/faq"], ["Contato", "/contato"],
 ] as const;
