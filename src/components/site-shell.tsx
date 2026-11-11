@@ -1,9 +1,10 @@
 import { Link } from "@tanstack/react-router";
-import { Instagram, Menu, MessageCircle, X } from "lucide-react";
+import { ChevronDown, Instagram, Menu, MessageCircle, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { trackAnalyticsEvent, trackAnalyticsEvents } from "@/lib/analytics";
-import { navItems, whatsappUrl } from "@/lib/site-data";
+import { navItemsAfterQuestionnaires, navItemsBeforeQuestionnaires, questionnaireItems, whatsappUrl } from "@/lib/site-data";
 
 export function Brand() {
   return (
@@ -17,6 +18,31 @@ export function Brand() {
   );
 }
 
+function QuestionnairesMenu({ variant, onSelect }: { variant: 'desktop' | 'tablet' | 'mobile'; onSelect?: () => void }) {
+  const triggerClasses = {
+    desktop: 'inline-flex items-center gap-1 whitespace-nowrap px-1.5 py-2.5 text-[13px] font-semibold text-foreground/85 transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+    tablet: 'inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2.5 py-2 text-[13px] font-semibold text-foreground/85 transition-colors hover:bg-muted hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+    mobile: 'col-span-2 inline-flex w-full items-center justify-between rounded-sm px-3 py-3 text-sm font-semibold text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger className={triggerClasses[variant]}>
+        Questionários <ChevronDown className="size-4" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align={variant === 'mobile' ? 'start' : 'end'} className="min-w-60">
+        {questionnaireItems.map(([label, to]) => (
+          <DropdownMenuItem key={to} asChild>
+            <Link to={to} onClick={onSelect} className="cursor-pointer px-3 py-2.5 text-sm">
+              {label}
+            </Link>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export function Header({ minimal = false }: { minimal?: boolean }) {
   const [open, setOpen] = useState(false);
   if (minimal) return null;
@@ -25,7 +51,9 @@ export function Header({ minimal = false }: { minimal?: boolean }) {
       {!minimal && <div className="mx-auto grid min-h-20 w-[calc(100%-2rem)] max-w-[96rem] grid-cols-[minmax(0,auto)_minmax(0,1fr)] items-center gap-3">
         <Brand />
           <nav className="hidden min-w-0 flex-wrap items-center justify-end gap-x-0 gap-y-0 xl:flex" aria-label="Navegação principal">
-            {navItems.map(([label, to]) => <Link key={to} to={to} activeProps={{ className: "text-primary" }} className="whitespace-nowrap px-1.5 py-2.5 text-[13px] font-semibold text-foreground/85 transition-colors hover:text-primary">{label}</Link>)}
+            {navItemsBeforeQuestionnaires.map(([label, to]) => <Link key={to} to={to} activeProps={{ className: "text-primary" }} className="whitespace-nowrap px-1.5 py-2.5 text-[13px] font-semibold text-foreground/85 transition-colors hover:text-primary">{label}</Link>)}
+            <QuestionnairesMenu variant="desktop" />
+            {navItemsAfterQuestionnaires.map(([label, to]) => <Link key={to} to={to} activeProps={{ className: "text-primary" }} className="whitespace-nowrap px-1.5 py-2.5 text-[13px] font-semibold text-foreground/85 transition-colors hover:text-primary">{label}</Link>)}
             <Link to="/admin/login" className="whitespace-nowrap px-1.5 py-2.5 text-[13px] font-semibold text-foreground/85 transition-colors hover:text-primary">Área administrativa</Link>
             <Button asChild size="lg" className="ml-2"><a href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackAnalyticsEvents(["appointment_click", "whatsapp_click"])}><MessageCircle className="size-4 mr-2" />Agende sua consulta</a></Button>
           </nav>
@@ -35,12 +63,16 @@ export function Header({ minimal = false }: { minimal?: boolean }) {
           </div>
       </div>}
       {!minimal && <nav className="mx-auto hidden w-[calc(100%-2rem)] max-w-[96rem] flex-wrap items-center justify-center gap-x-1 border-t border-border/70 py-2 md:flex xl:hidden" aria-label="Navegação tablet">
-        {navItems.map(([label, to]) => <Link key={to} to={to} activeProps={{ className: "text-primary" }} className="whitespace-nowrap rounded-md px-2.5 py-2 text-[13px] font-semibold text-foreground/85 transition-colors hover:bg-muted hover:text-primary">{label}</Link>)}
+        {navItemsBeforeQuestionnaires.map(([label, to]) => <Link key={to} to={to} activeProps={{ className: "text-primary" }} className="whitespace-nowrap rounded-md px-2.5 py-2 text-[13px] font-semibold text-foreground/85 transition-colors hover:bg-muted hover:text-primary">{label}</Link>)}
+        <QuestionnairesMenu variant="tablet" />
+        {navItemsAfterQuestionnaires.map(([label, to]) => <Link key={to} to={to} activeProps={{ className: "text-primary" }} className="whitespace-nowrap rounded-md px-2.5 py-2 text-[13px] font-semibold text-foreground/85 transition-colors hover:bg-muted hover:text-primary">{label}</Link>)}
         <Link to="/admin/login" className="whitespace-nowrap rounded-md px-2.5 py-2 text-[13px] font-semibold text-foreground/85 transition-colors hover:bg-muted hover:text-primary">Área administrativa</Link>
       </nav>}
       {!minimal && open && <nav className="border-t border-border bg-background px-5 py-4 md:hidden" aria-label="Navegação móvel">
         <div className="mx-auto grid max-w-xl grid-cols-2 gap-1">
-          {navItems.map(([label, to]) => <Link key={to} to={to} onClick={() => setOpen(false)} className="rounded-sm px-3 py-3 text-sm font-semibold text-foreground hover:bg-muted">{label}</Link>)}
+          {navItemsBeforeQuestionnaires.map(([label, to]) => <Link key={to} to={to} onClick={() => setOpen(false)} className="rounded-sm px-3 py-3 text-sm font-semibold text-foreground hover:bg-muted">{label}</Link>)}
+          <QuestionnairesMenu variant="mobile" onSelect={() => setOpen(false)} />
+          {navItemsAfterQuestionnaires.map(([label, to]) => <Link key={to} to={to} onClick={() => setOpen(false)} className="rounded-sm px-3 py-3 text-sm font-semibold text-foreground hover:bg-muted">{label}</Link>)}
           <Link to="/admin/login" onClick={() => setOpen(false)} className="rounded-sm px-3 py-3 text-sm font-semibold text-foreground hover:bg-muted">Área administrativa</Link>
           <Button asChild className="col-span-2 mt-2"><a href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackAnalyticsEvents(["appointment_click", "whatsapp_click"])}><MessageCircle /> Agende sua consulta</a></Button>
         </div>

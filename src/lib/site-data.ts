@@ -63,9 +63,17 @@ export const faqItems = [
   { q: "Como entrar em contato?", a: "Pelo WhatsApp (32) 93502-7080 ou pelo formulário da página de contato." },
 ];
 
-export const navItems = [
+export const navItemsBeforeQuestionnaires = [
   ["Início", "/"], ["Sobre", "/sobre"], ["Psicologia", "/psicologia"],
-  ["Anamnese Psicológica", "/anamnese-psicologica"],
+] as const;
+
+export const questionnaireItems = [
+  ["Anamnese Psicológica Digital", "/anamnese-psicologica"],
+  ["Avaliação Neuropsicológica", "/avaliacao-neuropsicologica"],
+  ["Orientação sobre TDAH", "/orientacao-tdah"],
+] as const;
+
+export const navItemsAfterQuestionnaires = [
   ["Biomedicina", "/biomedicina"], ["Serviços", "/servicos"], ["Estrutura", "/estrutura"],
-  ["Avaliação Neuropsicológica", "/avaliacao-neuropsicologica"], ["Orientação sobre TDAH", "/orientacao-tdah"], ["Blog", "/blog"], ["FAQ", "/faq"], ["Contato", "/contato"],
+  ["Blog", "/blog"], ["FAQ", "/faq"], ["Contato", "/contato"],
 ] as const;
