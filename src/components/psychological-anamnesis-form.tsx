@@ -47,6 +47,29 @@ function validEmail(value: string) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(va
 function validPhone(value: string) { return /^\d{10,11}$/.test(value.replace(/\D/g, '')); }
 function formatAnswer(value: AnswerValue) { return Array.isArray(value) ? value.join(', ') : String(value); }
 function labelFor(key: string) { return String(anamnesisFieldLabels[key] ?? key); }
+function patientSummary(answers: PsychologicalAnswers) {
+  const rows: { label: string; answer: string }[] = [];
+  const concern = answers['main_concern'];
+  if (typeof concern === 'string' && concern.trim()) rows.push({ label: 'O que motivou o preenchimento', answer: concern.trim() });
+  const symptoms = answers['symptoms'];
+  if (Array.isArray(symptoms) && symptoms.length) rows.push({ label: 'Experiências que você assinalou', answer: symptoms.join(', ') });
+  const scales = [
+    ['anxiety_scale', 'Ansiedade (sua nota de 0 a 10)'],
+    ['stress_scale', 'Estresse (sua nota de 0 a 10)'],
+    ['quality_of_life_scale', 'Qualidade de vida (sua nota de 0 a 10)'],
+    ['self_esteem_scale', 'Autoestima (sua nota de 0 a 10)'],
+    ['life_impact_scale', 'Impacto percebido na vida (sua nota de 0 a 10)'],
+  ] as const;
+  for (const [key, label] of scales) {
+    const answer = answers[key];
+    if (answer !== undefined && answer !== '') rows.push({ label, answer: String(answer) });
+  }
+  const expectation = answers['treatment_expectation'];
+  if (typeof expectation === 'string' && expectation.trim()) rows.push({ label: 'O que espera do acompanhamento', answer: expectation.trim() });
+  const safetyKeys = ['suicidal_thoughts_ever', 'death_thoughts_current', 'death_thoughts_frequency', 'suicide_plan', 'access_to_means', 'protective_factors', 'thoughts_intensity', 'self_harm_ever', 'self_harm_details'];
+  const safetyDiscussed = safetyKeys.some(key => { const answer = answers[key]; return answer !== undefined && answer !== '' && (!Array.isArray(answer) || answer.length > 0); });
+  return { rows, safetyDiscussed };
+}
 
 export function PsychologicalAnamnesisForm() {
   const [birthDate, setBirthDate] = useState('');
@@ -81,8 +104,12 @@ export function PsychologicalAnamnesisForm() {
     fetch(`https://viacep.com.br/ws/${postalCode}/json/`, { signal: controller.signal })
       .then(response => { if (!response.ok) throw new Error(); return response.json(); })
       .then((result: { erro?: boolean; logradouro?: string; bairro?: string; localidade?: string; uf?: string }) => {
-        if (result.erro || typeof result.localidade !== 'string' || typeof result.uf !== 'string') { setCepStatus('CEP não encontrado. Você pode preencher o endereço manualmente.'); return; }
-        setAnswers(current => ({ ...current, street: typeof result.logradouro === 'string' ? result.logradouro : current['street'] ?? '', neighborhood: typeof result.bairro === 'string' ? result.bairro : current['neighborhood'] ?? '', city: result.localidade, state: result.uf }));
+        const city = result.localidade;
+        const state = result.uf;
+        if (result.erro || typeof city !== 'string' || typeof state !== 'string') { setCepStatus('CEP não encontrado. Você pode preencher o endereço manualmente.'); return; }
+        const street = typeof result.logradouro === 'string' ? result.logradouro : '';
+        const neighborhood = typeof result.bairro === 'string' ? result.bairro : '';
+        setAnswers(current => ({ ...current, street: street || current['street'] || '', neighborhood: neighborhood || current['neighborhood'] || '', city, state }));
         setCepStatus('Endereço preenchido pelo CEP.');
       })
       .catch(error => { if (error instanceof Error && error.name !== 'AbortError') setCepStatus('Não foi possível consultar o CEP. Preencha o endereço manualmente.'); });
@@ -136,6 +163,7 @@ export function PsychologicalAnamnesisForm() {
   const currentRisk = value('death_thoughts_current') === 'Sim';
   const riskFollowup = currentRisk || value('suicidal_thoughts_ever') === 'Sim';
   const showAccessQuestion = value('suicide_plan') === 'Sim' || currentRisk;
+  const finalSummary = patientSummary(answers);
 
   function next() {
     setError('');
@@ -163,7 +191,7 @@ export function PsychologicalAnamnesisForm() {
     } catch { setError('Não foi possível enviar a ficha agora. Suas respostas permanecem salvas; tente novamente.'); } finally { setBusy(false); }
   }
 
-  if (screen === 'submitted') return <main className="grid min-h-screen place-items-center bg-[#f5f7f2] px-5 py-12"><section className="w-full max-w-lg rounded-3xl border border-[#d7e4db] bg-white p-8 text-center shadow-xl sm:p-10"><div className="mx-auto grid size-14 place-items-center rounded-full bg-[#e8f3ec] text-[#17675b]"><ShieldCheck className="size-7" /></div><h1 className="mt-5 font-display text-2xl font-semibold text-[#173f3a]">Anamnese encaminhada</h1><p className="mt-3 text-sm leading-7 text-[#65756e]">Sua ficha foi recebida e encaminhada ao profissional. Ela será analisada antes do atendimento. O preenchimento não substitui uma consulta ou avaliação profissional.</p><p className="mt-4 text-xs text-[#82918a]">Protocolo: {submissionId}</p></section></main>;
+  if (screen === 'submitted') return <main className="min-h-screen bg-[#f5f7f2] px-5 py-12"><section className="mx-auto w-full max-w-2xl rounded-3xl border border-[#d7e4db] bg-white p-8 text-center shadow-xl sm:p-10"><div className="mx-auto grid size-14 place-items-center rounded-full bg-[#e8f3ec] text-[#17675b]"><ShieldCheck className="size-7" /></div><h1 className="mt-5 font-display text-2xl font-semibold text-[#173f3a]">Anamnese encaminhada</h1><p className="mt-3 text-sm leading-7 text-[#65756e]">Sua ficha foi recebida e encaminhada ao profissional. Ela será analisada antes do atendimento. O preenchimento não substitui uma consulta ou avaliação profissional.</p><div className="mt-7 rounded-2xl border border-[#d7e4db] bg-[#f8faf7] p-5 text-left"><h2 className="font-display text-lg font-semibold text-[#24584e]">Resumo das suas respostas</h2><p className="mt-1 text-xs leading-5 text-[#65756e]">Este resumo apenas organiza o que você informou; não é diagnóstico nem avaliação clínica. Os valores são suas próprias notas, não uma classificação.</p>{finalSummary.rows.length ? <dl className="mt-4 space-y-4">{finalSummary.rows.map(row => <div key={row.label}><dt className="text-xs font-semibold text-[#65756e]">{row.label}</dt><dd className="mt-1 whitespace-pre-wrap text-sm leading-6 text-[#243f38]">{row.answer}</dd></div>)}</dl> : <p className="mt-4 text-sm text-[#65756e]">Você não registrou respostas nestes campos de resumo.</p>}{finalSummary.safetyDiscussed && <p className="mt-4 rounded-lg border border-[#eadfc9] bg-[#fffdf8] p-3 text-xs leading-5 text-[#675940]">Você respondeu à seção de segurança. As respostas completas serão revisadas pelo profissional; elas não aparecem neste resumo. Esta ficha não é monitorada em tempo real e não substitui atendimento de emergência.</p>}</div><p className="mt-5 text-xs text-[#82918a]">Protocolo: {submissionId}</p></section></main>;
 
   return <main className="min-h-screen bg-[radial-gradient(ellipse_at_top,_rgba(207,230,214,.62),_transparent_38%),#f5f7f2] px-4 py-7 sm:px-6 sm:py-10"><div className="mx-auto max-w-4xl">
     <header className="mb-7 flex items-center justify-between gap-4 rounded-2xl border border-white/80 bg-white/80 p-4 shadow-sm backdrop-blur sm:p-5"><div><p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#a0814d]">Anamnese Psicológica Digital</p><p className="mt-1 font-display text-lg font-semibold text-[#173f3a] sm:text-xl">Dr. Frederick Parreira</p><p className="mt-1 text-xs text-[#687873]">Psicólogo — CRP 04/86194</p></div><span className="hidden size-12 place-items-center rounded-full bg-[#075e54] font-display text-xl text-white sm:grid">Ψ</span></header>
