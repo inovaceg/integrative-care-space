@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { format, subDays, subMonths, subYears } from "date-fns";
 import { Camera, ImagePlus, Maximize2, Pencil, Trash2, FileDown, Printer } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AdminLayout, PageIntro, SectionCard } from "@/components/admin/admin-ui";
 import { BodyPhotoReport } from "@/components/admin/body-photo-report";
 import { BodyProgressDashboard } from "@/components/admin/body-progress-dashboard";
@@ -499,11 +501,11 @@ function ComparisonSection({ items, patientName }: { items: BodyEvaluation[]; pa
   return (
     <SectionCard title="Comparar avaliações" className="min-w-0">
       {!ordered.length ? (
-        <p className="text-sm text-slate-500">Nenhuma avaliação registrada para este paciente.</p>
+        <p className="text-sm text-slate-500">Nenhuma avaliação disponível para comparar no período selecionado.</p>
       ) : (
         <div className="min-w-0 space-y-4">
-          <p className="text-sm text-slate-600">Todas as avaliações em ordem cronológica. A variação total usa o último valor preenchido menos o primeiro valor preenchido de cada medida.</p>
-          {ordered.length === 1 && <p className="text-sm text-slate-500">A variação ficará disponível após registrar uma segunda avaliação.</p>}
+          <p className="text-sm text-slate-600">Avaliações do período selecionado em ordem cronológica. A variação total usa o último valor preenchido menos o primeiro valor preenchido de cada medida.</p>
+          {ordered.length === 1 && <p className="text-sm text-slate-500">A variação requer pelo menos duas avaliações com a medida preenchida neste período. Amplie o filtro para incluir avaliações anteriores.</p>}
           <div className="flex flex-wrap gap-2">
             <Button type="button" variant="outline" disabled={!reportReady} onClick={printReport}><Printer className="mr-2 h-4 w-4" />Imprimir</Button>
             <Button type="button" disabled={!reportReady} onClick={downloadReport}><FileDown className="mr-2 h-4 w-4" />Gerar PDF</Button>
@@ -554,6 +556,18 @@ function BodyProgressPage() {
   const [patients, setPatients] = useState<{ id: string; nome: string }[]>([]);
   const [patientId, setPatientId] = useState(bodyProgressDraftState.patientId);
   const [items, setItems] = useState<BodyEvaluation[]>([]);
+  const [period, setPeriod] = useState("all");
+  const filteredItems = useMemo(() => {
+    if (period === "all") return items;
+    const today = new Date();
+    const start = period === "7d" ? subDays(today, 6)
+      : period === "3m" ? subMonths(today, 3)
+      : period === "6m" ? subMonths(today, 6)
+      : subYears(today, 1);
+    const from = format(start, "yyyy-MM-dd");
+    const to = format(today, "yyyy-MM-dd");
+    return items.filter((item) => item.evaluation_date >= from && item.evaluation_date <= to);
+  }, [items, period]);
   const [editingId, setEditingId] = useState<string | undefined>(bodyProgressDraftState.editingId);
   const [openPhotosId, setOpenPhotosId] = useState<string | null>(null);
   const [date, setDate] = useState(bodyProgressDraftState.date);
@@ -736,6 +750,7 @@ function BodyProgressPage() {
           onChange={(event) => {
             resetForm();
             setPatientId(event.target.value);
+            setPeriod("all");
             setOpenPhotosId(null);
           }}
         >
@@ -805,8 +820,23 @@ function BodyProgressPage() {
           </SectionCard>
 
           <SectionCard title="Histórico">
+            <div className="mb-4 space-y-2 rounded-xl border border-[#2c5f4f]/15 bg-[#faf9f6] p-3">
+              <Label htmlFor="body-progress-period">Período das avaliações</Label>
+              <Select value={period} onValueChange={(value) => { setPeriod(value); setOpenPhotosId(null); }}>
+                <SelectTrigger id="body-progress-period" className="w-full bg-white"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todo o período</SelectItem>
+                  <SelectItem value="7d">Últimos 7 dias</SelectItem>
+                  <SelectItem value="3m">Últimos 3 meses</SelectItem>
+                  <SelectItem value="6m">Últimos 6 meses</SelectItem>
+                  <SelectItem value="1y">Último ano</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-slate-600">Filtra pela data da avaliação e mantém as fotos vinculadas a ela. O comparativo e seu PDF também usam este período.</p>
+              <p role="status" className="text-xs text-[#2c5f4f]">{filteredItems.length} de {items.length} avaliações no período.</p>
+            </div>
             <div className="space-y-3">
-              {items.map((item) => (
+              {filteredItems.map((item) => (
                 <div key={item.id} className="rounded-lg border border-slate-200 p-3">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <strong>{new Date(`${item.evaluation_date}T12:00:00`).toLocaleDateString("pt-BR")}</strong>
@@ -849,15 +879,18 @@ function BodyProgressPage() {
                   )}
                 </div>
               ))}
-              {!items.length && (
-                <p className="text-sm text-slate-500">Nenhuma avaliação registrada.</p>
+              {!filteredItems.length && (
+                <div className="space-y-2">
+                  <p className="text-sm text-slate-500">{items.length ? "Nenhuma avaliação neste período. Amplie o filtro para encontrar as avaliações e fotos anteriores." : "Nenhuma avaliação registrada."}</p>
+                  {period !== "all" && <Button type="button" variant="outline" size="sm" onClick={() => setPeriod("all")}>Ver todo o período</Button>}
+                </div>
               )}
             </div>
           </SectionCard>
         </div>
       )}
 
-      {patientId && <div className="mt-6"><ComparisonSection items={items} patientName={patients.find((patient) => patient.id === patientId)?.nome ?? ""} /></div>}
+      {patientId && <div className="mt-6"><ComparisonSection items={filteredItems} patientName={patients.find((patient) => patient.id === patientId)?.nome ?? ""} /></div>}
     </AdminLayout>
   );
 }
