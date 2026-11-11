@@ -1,39 +1,37 @@
 import type { AnalysisResult } from './anamnese-analysis'
+import type { AnamneseAnswers } from './anamnese'
 import type { DocumentPage } from './document-layout'
 import { displayAnswer } from './anamnese-display'
+import { anamneseDashboardWrap, buildAnamneseDashboard } from './anamnese-dashboard-pdf'
 
 export function buildAnamnesePdf(
   patientName: string,
   completedAt: string,
   sections: Array<[string, Array<[string, unknown]>]>,
   analysis: AnalysisResult,
+  answers: AnamneseAnswers,
 ): DocumentPage[] {
-  const pages: DocumentPage[] = []
+  const pages: DocumentPage[] = buildAnamneseDashboard(patientName, completedAt, answers, analysis)
   let page: DocumentPage = []
   let y = 0
 
   const nextPage = () => {
     page = []
     pages.push(page)
-    page.push({ text: 'FICHA DE ANAMNESE E ANALISE CLINICA', x: 42, y: 62, size: 14, bold: true, color: '#123c3d' })
-    page.push({ text: `Paciente: ${patientName}`, x: 42, y: 88, size: 11, bold: true })
-    page.push({ text: `Preenchida em: ${new Date(completedAt).toLocaleString('pt-BR')}`, x: 42, y: 106, size: 9, color: '#475569' })
-    y = 145
+    page.push({ text: '', x: 24, y: 24, size: 0, kind: 'rect', width: 547, height: 6, color: '#147c74' })
+    page.push({ text: 'FICHA INTEGRAL E ANÁLISE CLÍNICA', x: 42, y: 62, size: 14, bold: true, color: '#12383c' })
+    const nameLines = anamneseDashboardWrap(`Paciente: ${patientName}`, 11, 511, true)
+    nameLines.forEach((text, index) => page.push({ text, x: 42, y: 88 + index * 15, size: 11, bold: true }))
+    const dateY = 106 + (nameLines.length - 1) * 15
+    page.push({ text: `Preenchida em: ${new Date(completedAt).toLocaleString('pt-BR')}`, x: 42, y: dateY, size: 9, color: '#475569' })
+    y = dateY + 30
   }
 
   const addText = (text: string, size: number, bold = false, color = '#334155') => {
-    const words = text.split(/\s+/)
-    let currentLine = ''
-    const lines: string[] = []
-    words.forEach((word) => {
-      if (currentLine && `${currentLine} ${word}`.length > 88) {
-        lines.push(currentLine)
-        currentLine = word
-      } else currentLine = currentLine ? `${currentLine} ${word}` : word
-    })
-    if (currentLine) lines.push(currentLine)
+    const lines = anamneseDashboardWrap(text, size, 511, bold)
+    if (bold && y + (size + 5) * 2 > 730) nextPage()
     lines.forEach((line) => {
-      if (y > 700) nextPage()
+      if (y + size > 730) nextPage()
       page.push({ text: line, x: 42, y, size, bold, color })
       y += size + 5
     })
@@ -92,6 +90,6 @@ export function buildAnamnesePdf(
   addText(`Aviso: ${analysis.disclaimer}`, 8.5, false, '#475569')
   addText(`Motor de analise v${analysis.version} - Gerado em ${new Date(analysis.generatedAt).toLocaleString('pt-BR')}`, 8.5, false, '#64748b')
 
-  pages.forEach((currentPage, index) => currentPage.push({ text: `Pagina ${index + 1} de ${pages.length}`, x: 270, y: 810, size: 8, color: '#64748b', align: 'center' }))
+  pages.forEach((currentPage, index) => currentPage.push({ text: `Pagina ${index + 1} de ${pages.length}`, x: 270, y: 832, size: 8, color: '#64748b', align: 'center' }))
   return pages
 }

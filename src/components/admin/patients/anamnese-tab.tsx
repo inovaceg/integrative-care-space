@@ -47,8 +47,8 @@ export function AnamneseTab({ patient }: { patient: Pick<PatientRecord, 'id' | '
     const pdfSections = [...sections, ['Consentimentos e assinatura', getAnamneseConsents(record)] as [string, Array<[string, unknown]>]]
     const safeName = patient.nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase()
     try {
-      await downloadDocumentPdf(buildAnamnesePdf(patient.nome, record.preenchido_em, pdfSections, analysisResult), `ficha-anamnese-${safeName}`, true)
-      setMessage('PDF da ficha e do relatório de análise clínica gerado.')
+      await downloadDocumentPdf(buildAnamnesePdf(patient.nome, record.preenchido_em, pdfSections, analysisResult, answers), `ficha-anamnese-${safeName}`, false, true)
+      setMessage('PDF do painel da consulta, ficha integral e análise clínica gerado.')
     } catch (failure) {
       setMessage(failure instanceof Error ? failure.message : 'Não foi possível gerar o PDF.')
     }

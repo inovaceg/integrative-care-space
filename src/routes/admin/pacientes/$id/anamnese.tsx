@@ -50,8 +50,9 @@ function CompletedAnamnesePage() {
     const safeName = patient.nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase()
     try {
       await downloadDocumentPdf(
-        buildAnamnesePdf(patient.nome, record.preenchido_em, sections, analysisResult),
+        buildAnamnesePdf(patient.nome, record.preenchido_em, sections, analysisResult, record.respostas ?? {}),
         `ficha-anamnese-${safeName}`,
+        false,
         true,
       )
     } catch (failure) {
