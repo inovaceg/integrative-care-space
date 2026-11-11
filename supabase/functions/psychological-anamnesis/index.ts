@@ -117,13 +117,15 @@ Deno.serve(async (req) => {
       }
 
       const consent = body.consent
-      const signedName = text(consent?.signedName, 200)
+      const signedName = text(consent?.signedName, 200).replace(/\s+/g, ' ')
       if (consent?.accepted !== true || !signedName || signedName !== patientName || ageAtDate(draft.birth_date) < 18) {
-        return Response.json({ error: 'Confirme o termo e assine com o mesmo nome completo informado na identificação.' }, { status: 422, headers: corsHeaders })
+        return Response.json({ error: 'Confirme a ciência do termo e assine com o mesmo nome completo informado na identificação.' }, { status: 422, headers: corsHeaders })
       }
-      if (!patientName || !validBirthDate(draft.birth_date)) return Response.json({ error: 'Complete os dados de identificação antes de enviar.' }, { status: 422, headers: corsHeaders })
+      if (!patientName || !validBirthDate(draft.birth_date) || !contactEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail) || !/^\d{10,11}$/.test(contactPhone.replace(/\D/g, '')) || !text(responses.city, 120) || !/^(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)$/.test(text(responses.state, 2))) {
+        return Response.json({ error: 'Complete os campos obrigatórios de identificação com valores válidos.' }, { status: 422, headers: corsHeaders })
+      }
       const now = new Date().toISOString()
-      const { error } = await admin.from('psychological_anamnesis_submissions').update({
+      const { data: submitted, error } = await admin.from('psychological_anamnesis_submissions').update({
         responses,
         patient_name: patientName,
         contact_email: contactEmail || null,
@@ -131,13 +133,14 @@ Deno.serve(async (req) => {
         risk_review_required: riskReview,
         status: 'submitted',
         signed_name: signedName,
-        consent_version: consentVersion,
+        consent_version: text(consent?.version, 80) || consentVersion,
         consented_at: now,
         submitted_at: now,
         updated_at: now,
-      }).eq('id', draft.id).eq('status', 'draft')
+      }).eq('id', draft.id).eq('status', 'draft').select('id').maybeSingle()
       if (error) throw error
-      return Response.json({ received: true }, { headers: corsHeaders })
+      if (!submitted) return Response.json({ error: 'Esta ficha já foi enviada.' }, { status: 409, headers: corsHeaders })
+      return Response.json({ received: true, id: submitted.id }, { headers: corsHeaders })
     }
 
     if (!await authorizedStaff(req, admin)) return new Response('Unauthorized', { status: 401, headers: corsHeaders })

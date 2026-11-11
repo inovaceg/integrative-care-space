@@ -36,7 +36,7 @@ export async function savePsychologicalAnamnesis(resumeKey: string, responses: P
 }
 
 export async function submitPsychologicalAnamnesis(resumeKey: string, responses: PsychologicalAnswers, signedName: string) {
-  return invoke<{ received: true }>({ action: 'public-submit', resumeKey, responses, consent: { accepted: true, signedName } })
+  return invoke<{ received: true; id: string }>({ action: 'public-submit', resumeKey, responses, consent: { accepted: true, signedName, version: '1.0-2026-11-11' } })
 }
 
 export async function listPsychologicalAnamneses() {
