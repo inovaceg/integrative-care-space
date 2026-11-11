@@ -22,6 +22,7 @@ import { Route as LinksRouteImport } from './routes/links'
 import { Route as OrientacaoTdahRouteImport } from './routes/orientacao-tdah'
 import { Route as PoliticaDePrivacidadeRouteImport } from './routes/politica-de-privacidade'
 import { Route as PsicologiaRouteImport } from './routes/psicologia'
+import { Route as RealidadeVirtualRouteImport } from './routes/realidade-virtual'
 import { Route as ServicosRouteImport } from './routes/servicos'
 import { Route as SobreRouteImport } from './routes/sobre'
 import { Route as TermosDeUsoRouteImport } from './routes/termos-de-uso'
@@ -118,6 +119,11 @@ const PoliticaDePrivacidadeRoute = PoliticaDePrivacidadeRouteImport.update({
 const PsicologiaRoute = PsicologiaRouteImport.update({
   id: '/psicologia',
   path: '/psicologia',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RealidadeVirtualRoute = RealidadeVirtualRouteImport.update({
+  id: '/realidade-virtual',
+  path: '/realidade-virtual',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ServicosRoute = ServicosRouteImport.update({
@@ -294,6 +300,7 @@ export interface FileRoutesByFullPath {
   '/orientacao-tdah': typeof OrientacaoTdahRoute
   '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
   '/psicologia': typeof PsicologiaRoute
+  '/realidade-virtual': typeof RealidadeVirtualRoute
   '/servicos': typeof ServicosRoute
   '/sobre': typeof SobreRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
@@ -339,6 +346,7 @@ export interface FileRoutesByTo {
   '/orientacao-tdah': typeof OrientacaoTdahRoute
   '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
   '/psicologia': typeof PsicologiaRoute
+  '/realidade-virtual': typeof RealidadeVirtualRoute
   '/servicos': typeof ServicosRoute
   '/sobre': typeof SobreRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
@@ -386,6 +394,7 @@ export interface FileRoutesById {
   '/orientacao-tdah': typeof OrientacaoTdahRoute
   '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
   '/psicologia': typeof PsicologiaRoute
+  '/realidade-virtual': typeof RealidadeVirtualRoute
   '/servicos': typeof ServicosRoute
   '/sobre': typeof SobreRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
@@ -434,6 +443,7 @@ export interface FileRouteTypes {
     | '/orientacao-tdah'
     | '/politica-de-privacidade'
     | '/psicologia'
+    | '/realidade-virtual'
     | '/servicos'
     | '/sobre'
     | '/termos-de-uso'
@@ -479,6 +489,7 @@ export interface FileRouteTypes {
     | '/orientacao-tdah'
     | '/politica-de-privacidade'
     | '/psicologia'
+    | '/realidade-virtual'
     | '/servicos'
     | '/sobre'
     | '/termos-de-uso'
@@ -525,6 +536,7 @@ export interface FileRouteTypes {
     | '/orientacao-tdah'
     | '/politica-de-privacidade'
     | '/psicologia'
+    | '/realidade-virtual'
     | '/servicos'
     | '/sobre'
     | '/termos-de-uso'
@@ -572,6 +584,7 @@ export interface RootRouteChildren {
   OrientacaoTdahRoute: typeof OrientacaoTdahRoute
   PoliticaDePrivacidadeRoute: typeof PoliticaDePrivacidadeRoute
   PsicologiaRoute: typeof PsicologiaRoute
+  RealidadeVirtualRoute: typeof RealidadeVirtualRoute
   ServicosRoute: typeof ServicosRoute
   SobreRoute: typeof SobreRoute
   TermosDeUsoRoute: typeof TermosDeUsoRoute
@@ -670,6 +683,13 @@ declare module '@tanstack/react-router' {
       path: '/psicologia'
       fullPath: '/psicologia'
       preLoaderRoute: typeof PsicologiaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/realidade-virtual': {
+      id: '/realidade-virtual'
+      path: '/realidade-virtual'
+      fullPath: '/realidade-virtual'
+      preLoaderRoute: typeof RealidadeVirtualRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/servicos': {
@@ -1003,6 +1023,7 @@ const rootRouteChildren: RootRouteChildren = {
   OrientacaoTdahRoute: OrientacaoTdahRoute,
   PoliticaDePrivacidadeRoute: PoliticaDePrivacidadeRoute,
   PsicologiaRoute: PsicologiaRoute,
+  RealidadeVirtualRoute: RealidadeVirtualRoute,
   ServicosRoute: ServicosRoute,
   SobreRoute: SobreRoute,
   TermosDeUsoRoute: TermosDeUsoRoute,

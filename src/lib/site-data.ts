@@ -63,7 +63,7 @@ export const faqItems = [
 ];
 
 export const navItemsBeforeQuestionnaires = [
-  ["Início", "/"], ["Atendimentos", "/servicos"], ["Sobre", "/sobre"],
+  ["Início", "/"], ["Atendimentos", "/servicos"], ["Realidade Virtual", "/realidade-virtual"], ["Sobre", "/sobre"],
 ] as const;
 
 export const questionnaireItems = [
