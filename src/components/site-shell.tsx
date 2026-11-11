@@ -1,24 +1,35 @@
 import { Link } from "@tanstack/react-router";
-import { Instagram, Menu, MessageCircle, X } from "lucide-react";
+import { ChevronDown, Instagram, Menu, MessageCircle, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { trackAnalyticsEvent, trackAnalyticsEvents } from "@/lib/analytics";
-import { navItemsAfterQuestionnaires, navItemsBeforeQuestionnaires, whatsappUrl } from "@/lib/site-data";
+import { navItemsAfterQuestionnaires, navItemsBeforeQuestionnaires, questionnaireItems, whatsappUrl } from "@/lib/site-data";
 
 export function Brand() {
   return <Link to="/" className="group flex min-w-0 items-center gap-3" aria-label="Ir para o início"><span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-primary font-display text-2xl text-primary-foreground transition-transform group-hover:-rotate-3">Ψ</span><span className="min-w-0 leading-tight"><strong className="block truncate font-display text-base font-semibold text-foreground">Dr. Frederick Parreira</strong><span className="block truncate text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Espaço de Saúde Integrativa</span></span></Link>;
 }
 
+function QuestionnairesMenu({ mobile = false, onSelect }: { mobile?: boolean; onSelect?: () => void }) {
+  return <DropdownMenu>
+    <DropdownMenuTrigger className={mobile ? "inline-flex w-full items-center justify-between rounded-sm px-3 py-3 text-sm font-semibold text-foreground hover:bg-muted" : "inline-flex items-center gap-1 whitespace-nowrap px-1 py-2.5 text-sm font-semibold text-foreground/85 transition-colors hover:text-primary"}>
+      Questionários <ChevronDown className="size-4" />
+    </DropdownMenuTrigger>
+    <DropdownMenuContent align={mobile ? "start" : "end"} className="min-w-60">
+      {questionnaireItems.map(([label, to]) => <DropdownMenuItem key={to} asChild><Link to={to} onClick={onSelect} className="cursor-pointer px-3 py-2.5 text-sm">{label}</Link></DropdownMenuItem>)}
+    </DropdownMenuContent>
+  </DropdownMenu>;
+}
+
 export function Header({ minimal = false }: { minimal?: boolean }) {
   const [open, setOpen] = useState(false);
   if (minimal) return null;
-  const links = [...navItemsBeforeQuestionnaires, ...navItemsAfterQuestionnaires];
   return <header className="sticky top-0 z-50 border-b border-border/70 bg-background/95 backdrop-blur-xl">
     <div className="mx-auto flex min-h-20 w-[calc(100%-2rem)] max-w-[96rem] items-center justify-between gap-4"><Brand />
-      <nav className="hidden items-center gap-3 xl:flex" aria-label="Navegação principal">{links.map(([label, to]) => <Link key={to} to={to} activeProps={{ className: "text-primary" }} className="whitespace-nowrap px-1 py-2.5 text-sm font-semibold text-foreground/85 transition-colors hover:text-primary">{label}</Link>)}<Button asChild className="ml-2"><a href={whatsappUrl} target="_blank" rel="noopener noreferrer" onClick={() => trackAnalyticsEvents(["appointment_click", "whatsapp_click"])}>Agendar</a></Button></nav>
+      <nav className="hidden items-center gap-3 xl:flex" aria-label="Navegação principal">{navItemsBeforeQuestionnaires.map(([label, to]) => <Link key={to} to={to} activeProps={{ className: "text-primary" }} className="whitespace-nowrap px-1 py-2.5 text-sm font-semibold text-foreground/85 transition-colors hover:text-primary">{label}</Link>)}<QuestionnairesMenu />{navItemsAfterQuestionnaires.map(([label, to]) => <Link key={to} to={to} activeProps={{ className: "text-primary" }} className="whitespace-nowrap px-1 py-2.5 text-sm font-semibold text-foreground/85 transition-colors hover:text-primary">{label}</Link>)}<Button asChild className="ml-2"><a href={whatsappUrl} target="_blank" rel="noopener noreferrer" onClick={() => trackAnalyticsEvents(["appointment_click", "whatsapp_click"])}>Agendar</a></Button></nav>
       <div className="flex items-center gap-2 xl:hidden"><Button asChild size="sm" className="hidden sm:inline-flex"><a href={whatsappUrl} target="_blank" rel="noopener noreferrer" onClick={() => trackAnalyticsEvents(["appointment_click", "whatsapp_click"])}>Agendar</a></Button><Button variant="ghost" size="icon" onClick={() => setOpen(value => !value)} aria-label={open ? "Fechar menu" : "Abrir menu"} aria-expanded={open}>{open ? <X /> : <Menu />}</Button></div>
     </div>
-    {open && <nav className="border-t border-border bg-background px-5 py-4 xl:hidden" aria-label="Navegação móvel"><div className="mx-auto grid max-w-xl grid-cols-2 gap-1">{links.map(([label, to]) => <Link key={to} to={to} onClick={() => setOpen(false)} className="rounded-sm px-3 py-3 text-sm font-semibold text-foreground hover:bg-muted">{label}</Link>)}<Link to="/biomedicina" onClick={() => setOpen(false)} className="rounded-sm px-3 py-3 text-sm font-semibold text-foreground hover:bg-muted">Biomedicina</Link><Button asChild className="col-span-2 mt-2"><a href={whatsappUrl} target="_blank" rel="noopener noreferrer" onClick={() => trackAnalyticsEvents(["appointment_click", "whatsapp_click"])}><MessageCircle className="mr-2 size-4" />Agendar pelo WhatsApp</a></Button></div></nav>}
+    {open && <nav className="border-t border-border bg-background px-5 py-4 xl:hidden" aria-label="Navegação móvel"><div className="mx-auto grid max-w-xl grid-cols-2 gap-1">{navItemsBeforeQuestionnaires.map(([label, to]) => <Link key={to} to={to} onClick={() => setOpen(false)} className="rounded-sm px-3 py-3 text-sm font-semibold text-foreground hover:bg-muted">{label}</Link>)}<QuestionnairesMenu mobile onSelect={() => setOpen(false)} />{navItemsAfterQuestionnaires.map(([label, to]) => <Link key={to} to={to} onClick={() => setOpen(false)} className="rounded-sm px-3 py-3 text-sm font-semibold text-foreground hover:bg-muted">{label}</Link>)}<Link to="/biomedicina" onClick={() => setOpen(false)} className="rounded-sm px-3 py-3 text-sm font-semibold text-foreground hover:bg-muted">Biomedicina</Link><Button asChild className="col-span-2 mt-2"><a href={whatsappUrl} target="_blank" rel="noopener noreferrer" onClick={() => trackAnalyticsEvents(["appointment_click", "whatsapp_click"])}><MessageCircle className="mr-2 size-4" />Agendar pelo WhatsApp</a></Button></div></nav>}
   </header>;
 }
 
