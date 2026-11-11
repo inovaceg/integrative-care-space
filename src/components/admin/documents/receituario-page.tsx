@@ -11,7 +11,7 @@ import { ProfessionalAreaSelector, DocumentTypeSelector } from './document-selec
 import { DocumentPreview, PrintDocument } from './document-preview';
 import { DocumentHistory } from './document-history';
 import { deleteDocument, emptyContent, getDocuments, professionalDocumentFooter, saveDocument, professionalAreas, today, type DocumentContent, type DocumentType, type ProfessionalArea, type ProfessionalDocument } from '@/lib/admin/documents';
-import { documentFilename, downloadDocumentPdf, layoutDocument } from '@/lib/admin/document-layout';
+import { documentFilename, downloadDocumentPdf, layoutDocument, type DocumentPage } from '@/lib/admin/document-layout';
 import { fetchPatient, fetchPatientOptions } from '@/lib/admin/records';
 
 let receituarioDraftState = {

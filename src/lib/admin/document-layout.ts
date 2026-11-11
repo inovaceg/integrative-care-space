@@ -18,20 +18,19 @@ function measureTextWidth(text: string, size: number, bold = false): number {
 }
 
 function wrap(text: string, size: number, bold = false, maxW = width): string[] {
-  if (typeof document === 'undefined') return [text];
-  const canvas = document.createElement('canvas');
-  const context = canvas.getContext('2d')!;
-  context.font = `${bold ? 'bold' : 'normal'} ${size}px Arial`;
+  const context = typeof document === 'undefined' ? null : document.createElement('canvas').getContext('2d');
+  if (context) context.font = `${bold ? 'bold' : 'normal'} ${size}px Arial`;
+  const measure = (value: string) => context ? context.measureText(value).width : value.length * size * 0.55;
   return text.replace(/\r/g, '').split('\n').flatMap(paragraph => {
     if (!paragraph) return [''];
     const lines: string[] = [];
     let line = '';
     for (const word of paragraph.split(/\s+/)) {
-      if (context.measureText(line ? `${line} ${word}` : word).width <= maxW) { line = line ? `${line} ${word}` : word; continue; }
+      if (measure(line ? `${line} ${word}` : word) <= maxW) { line = line ? `${line} ${word}` : word; continue; }
       if (line) lines.push(line);
       line = '';
       for (const char of word) {
-        if (context.measureText(line + char).width > maxW) { lines.push(line); line = ''; }
+        if (measure(line + char) > maxW) { lines.push(line); line = ''; }
         line += char;
       }
     }
@@ -112,12 +111,17 @@ export function layoutDocument(area: ProfessionalArea, type: DocumentType, conte
     y = bodyStart;
   }
 
-  function block(parts: { text: string; bold?: boolean; size?: number; align?: 'left' | 'center' }[], gap = 13) {
-    const lines = parts.flatMap(part => wrap(part.text, part.size ?? 11, part.bold).map(text => ({ text, bold: part.bold ?? false, size: part.size ?? 11, align: part.align })));
+  function block(parts: { text: string; bold?: boolean; size?: number; align?: 'left' | 'center' }[], gap = 13, keepTogether = true, reserveSignature = false) {
+    const lines = parts.flatMap(part => wrap(part.text.trim(), part.size ?? 11, part.bold).map(text => ({ text, bold: part.bold ?? false, size: part.size ?? 11, align: part.align })));
     const height = lines.reduce((sum, line) => sum + line.size * 1.5, 0);
-    if (height <= 735 - bodyStart && y + height > 730) newPage();
-    for (const line of lines) {
-      if (y + line.size * 1.5 > 730) newPage();
+    if (keepTogether && height <= 730 - bodyStart && y + height > 730) newPage();
+    for (const [index, line] of lines.entries()) {
+      // Keep a few final lines with the signature, rather than creating a signature-only page.
+      const remainingHeight = reserveSignature && lines.length - index <= 3
+        ? lines.slice(index).reduce((sum, item) => sum + item.size * 1.5, 0) + gap + 123
+        : line.size * 1.5;
+      if (y + remainingHeight > 730) newPage();
+      if (!line.text.trim() && y === bodyStart) continue;
       const xPos = line.align === 'center' ? centeredX(line.text, line.size, line.bold) : 42;
       page.push({ ...line, align: line.align ?? 'left', x: xPos, y });
       y += line.size * 1.5;
@@ -147,17 +151,17 @@ export function layoutDocument(area: ProfessionalArea, type: DocumentType, conte
   } else if (type === 'Solicitação de Exames') {
     content.exams.forEach((exam, i) => block([{ text: `${i + 1}. ${exam.name}`, bold: true }, ...(exam.notes ? [{ text: exam.notes }] : [])]));
     if (content.clinicalNotes) block([{ text: 'OBSERVAÇÕES CLÍNICAS', bold: true }, { text: content.clinicalNotes }]);
-  } else if (content.text) {
-    block([{ text: content.text }]);
+  } else if (content.text.trim()) {
+    block([{ text: content.text }], 13, false, !content.guidance.trim());
   }
 
-  if (content.guidance) {
-    block([{ text: 'ORIENTAÇÕES ADICIONAIS', bold: true }, { text: content.guidance }]);
+  if (content.guidance.trim()) {
+    block([{ text: 'ORIENTAÇÕES ADICIONAIS', bold: true }, { text: content.guidance }], 13, false, true);
   }
 
-  // Signature Block (Centered)
-  if (Math.max(y + 110, 680) + 43 > 725) newPage();
-  y = Math.max(y + 110, 680);
+  // The image extends 80 points above its baseline; keep it clear of the text and footer.
+  if (y + 123 > 730) newPage();
+  y = Math.max(y + 80, 680);
   
   const signLine = '_____________________________________________';
   const signName = professionalName;
