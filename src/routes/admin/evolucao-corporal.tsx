@@ -5,6 +5,7 @@ import { Camera, ImagePlus, Maximize2, Pencil, Trash2, FileDown, Printer } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AdminLayout, PageIntro, SectionCard } from "@/components/admin/admin-ui";
 import { BodyPhotoReport } from "@/components/admin/body-photo-report";
+import { BodyPhotoDateSearch } from "@/components/admin/body-photo-date-search";
 import { BodyProgressDashboard } from "@/components/admin/body-progress-dashboard";
 import { PrintDocument } from "@/components/admin/documents/document-preview";
 import { downloadDocumentPdf } from "@/lib/admin/document-layout";
@@ -276,6 +277,8 @@ function PhotoRegistry({
                 />
               </div>
 
+              <BodyPhotoDateSearch professionalId={professionalId} patientId={patientId} stage={stage} refreshKey={photos} id={`${evaluation.id}-${stage}-search-period`} />
+              <p className="mb-3 text-xs font-medium text-slate-600">Fotos vinculadas a esta avaliação</p>
               <div className="grid gap-4 sm:grid-cols-3">
                 {views.map((view) => {
                   const key = photoKey(stage, view);
@@ -382,10 +385,14 @@ function DraftPhotoRegistry({
   draft,
   onChange,
   onError,
+  professionalId,
+  patientId,
 }: {
   draft: DraftPhotoState;
   onChange: (next: DraftPhotoState) => void;
   onError: (message: string) => void;
+  professionalId?: string;
+  patientId: string;
 }) {
   function selectFile(stage: PhotoStage, view: PhotoView, file: File) {
     if (!validDraftPhoto(file)) {
@@ -402,6 +409,8 @@ function DraftPhotoRegistry({
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
       <div className="mb-4 flex items-start gap-3"><Camera className="mt-1 h-5 w-5 text-[#2f8f82]" /><div><h3 className="font-semibold text-slate-900">Registro Fotográfico</h3><p className="text-sm text-slate-500">JPEG, PNG ou WebP, até 15 MB. As fotos serão enviadas ao salvar.</p></div></div>
+      {professionalId && <div className="grid gap-5 xl:grid-cols-2">{stages.map((stage) => <BodyPhotoDateSearch key={`${patientId}-${stage}`} professionalId={professionalId} patientId={patientId} stage={stage} id={`draft-${stage}-search-period`} />)}</div>}
+      <p className="mb-3 text-xs text-slate-600">As datas abaixo identificam as novas fotos que serão enviadas; não são filtros de busca.</p>
       <div className="grid gap-5 xl:grid-cols-2">
         {stages.map((stage) => <div key={stage} className="rounded-xl border border-slate-200 bg-white p-4"><div className="mb-4 flex items-center justify-between"><Label htmlFor={`draft-${stage}-date`}>{stageLabels[stage]} · Data</Label><Input id={`draft-${stage}-date`} className="w-44" type="date" required value={draft.dates[stage]} onChange={(e) => onChange({ ...draft, dates: { ...draft.dates, [stage]: e.target.value } })} /></div><div className="grid gap-4 sm:grid-cols-3">{views.map((view) => { const key = photoKey(stage, view); const selected = draft.files[key]; const inputId = `draft-${key}-file`; return <div key={view} className="space-y-2"><Label className="text-xs">{viewLabels[view]}</Label><div className="aspect-[3/4] overflow-hidden rounded-lg border bg-slate-100">{selected ? <PhotoPreviewDialog url={selected.url} alt={`Prévia ${viewLabels[view]}`} stage={stage} view={view} caption={draft.captions[key]} /> : <div className="flex h-full items-center justify-center text-xs text-slate-400"><ImagePlus className="mr-1 h-5 w-5" />Sem foto</div>}</div><Input aria-label={`Legenda ${viewLabels[view]} ${stageLabels[stage]}`} placeholder="Legenda opcional" value={draft.captions[key] ?? ""} onChange={(e) => onChange({ ...draft, captions: { ...draft.captions, [key]: e.target.value } })} /><input id={inputId} className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => { const file = e.target.files?.[0]; if (file) selectFile(stage, view, file); e.currentTarget.value = ""; }} /><label htmlFor={inputId} className="flex h-9 cursor-pointer items-center justify-center rounded-md border bg-white px-3 text-xs font-medium">{selected ? "Substituir foto" : "Adicionar foto"}</label></div>; })}</div></div>)}
       </div>
@@ -803,7 +812,7 @@ function BodyProgressPage() {
                   ))}
               </div>
 
-              <DraftPhotoRegistry draft={draft} onChange={setDraft} onError={setError} />
+              <DraftPhotoRegistry draft={draft} onChange={setDraft} onError={setError} professionalId={user?.id} patientId={patientId} />
               {editing && user && <PhotoRegistry professionalId={user.id} patientId={patientId} patientName={patients.find((patient) => patient.id === patientId)?.nome ?? ""} evaluation={editing} />}
               {error && <p className="text-sm text-red-600">{error}</p>}
               <div className="flex gap-2">
