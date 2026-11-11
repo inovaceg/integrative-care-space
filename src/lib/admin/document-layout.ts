@@ -2,7 +2,7 @@ import { areaSpecialties, displayDate, professionalAreas, professionalDocumentFo
 import { documentBrandPdf } from './document-brand';
 import { letterheadPreviewJpeg } from './letterhead-art-pdf';
 
-export type DocumentLine = { text: string; x: number; y: number; size: number; bold?: boolean; color?: string; align?: 'left' | 'center' | 'right'; kind?: 'signature-line' | 'rule'; width?: number };
+export type DocumentLine = { text: string; x: number; y: number; size: number; bold?: boolean; color?: string; align?: 'left' | 'center' | 'right'; kind?: 'signature-line' | 'rule' | 'rect' | 'line' | 'point'; width?: number; height?: number; x2?: number; y2?: number; radius?: number };
 export type DocumentPage = DocumentLine[];
 export const signatureAsset = '/assets/professional-signature.png';
 const pageWidth = 595;
@@ -258,7 +258,7 @@ export async function downloadDocumentPdf(pages: DocumentPage[], filename: strin
     
     let drawCommands = letterhead ? 'q 595 0 0 842 0 0 cm /Im1 Do Q' : cleanPage ? (showBrand ? documentBrandPdf : '') : `${showBrand ? documentBrandPdf : `q
 0.184 0.561 0.510 rg
-297.5 818 10 0 360 arc fill
+307.5 818 m 307.5 823.523 303.023 828 297.5 828 c 291.977 828 287.5 823.523 287.5 818 c 287.5 812.477 291.977 808 297.5 808 c 303.023 808 307.5 812.477 307.5 818 c f
 1 1 1 rg
 296 812 3 12 re fill
 291.5 816.5 12 3 re fill
@@ -271,7 +271,7 @@ ${showBrand ? '42 112 m 553 112 l S' : '42 75 m 553 75 l S'}
 Q
 `;
 
-    const textStream = (letterhead ? [] : lines.filter(line => line.kind !== 'signature-line' && line.kind !== 'rule')).map(line => {
+    const textStream = (letterhead ? [] : lines.filter(line => !['signature-line', 'rule', 'rect', 'line', 'point'].includes(line.kind ?? ''))).map(line => {
       const hex = (line.color ?? '#17232d').slice(1);
       const color = [0, 2, 4].map(i => (parseInt(hex.slice(i, i + 2), 16) / 255).toFixed(3)).join(' ');
       const textX = line.align === 'center' ? line.x - measureTextWidth(line.text, line.size, line.bold) / 2 : line.x;
@@ -282,10 +282,17 @@ Q
       const color = [0, 2, 4].map(i => (parseInt(hex.slice(i, i + 2), 16) / 255).toFixed(3)).join(' ');
       return `q ${color} RG 0.5 w ${line.x} ${842 - line.y} m ${line.x + (line.width ?? 491)} ${842 - line.y} l S Q`;
     }).join('\n');
+    const shapeCommands = (letterhead ? [] : lines.filter(line => ['rect', 'line', 'point'].includes(line.kind ?? ''))).map(line => {
+      const hex = (line.color ?? '#72958a').slice(1);
+      const color = [0, 2, 4].map(i => (parseInt(hex.slice(i, i + 2), 16) / 255).toFixed(3)).join(' ');
+      if (line.kind === 'rect') return `q ${color} rg ${line.x} ${842 - line.y - (line.height ?? 0)} ${line.width ?? 0} ${line.height ?? 0} re f Q`;
+      if (line.kind === 'point') { const radius = line.radius ?? 2; return `q ${color} rg ${line.x - radius} ${842 - line.y - radius} ${radius * 2} ${radius * 2} re f Q`; }
+      return `q ${color} RG 1.5 w ${line.x} ${842 - line.y} m ${line.x2 ?? line.x} ${842 - (line.y2 ?? line.y)} l S Q`;
+    }).join('\n');
 
     const signatureLine = lines.find(line => line.kind === 'signature-line');
     const signatureCommand = signatureLine ? `q\n180 0 0 90 207.5 ${842 - signatureLine.y - 10} cm /Im1 Do\nQ\n` : '';
-    const fullStream = drawCommands + '\n' + ruleCommands + '\n' + signatureCommand + textStream;
+    const fullStream = drawCommands + '\n' + ruleCommands + '\n' + shapeCommands + '\n' + signatureCommand + textStream;
 
     objects.push(
       `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> ${hasSignature || letterheadJpeg ? `/XObject << /Im1 ${imageId} 0 R >>` : ''} >> /Contents ${streamId} 0 R >>`,

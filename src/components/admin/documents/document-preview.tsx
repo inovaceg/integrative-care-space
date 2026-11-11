@@ -17,6 +17,14 @@ export function A4Page({ lines, index, showBrand = false }: { lines: DocumentPag
         <g key={i}>
           <image href={signatureAsset} x="207.5" y={line.y - 80} width="180" height="90" preserveAspectRatio="xMidYMid meet" />
         </g>
+      ) : line.kind === 'rule' ? (
+        <line key={i} x1={line.x} x2={line.x + (line.width ?? 491)} y1={line.y} y2={line.y} stroke={line.color ?? '#72958a'} strokeWidth="0.75" />
+      ) : line.kind === 'rect' ? (
+        <rect key={i} x={line.x} y={line.y} width={line.width ?? 0} height={line.height ?? 0} fill={line.color ?? '#72958a'} />
+      ) : line.kind === 'line' ? (
+        <line key={i} x1={line.x} y1={line.y} x2={line.x2 ?? line.x} y2={line.y2 ?? line.y} stroke={line.color ?? '#72958a'} strokeWidth="1.5" />
+      ) : line.kind === 'point' ? (
+        <circle key={i} cx={line.x} cy={line.y} r={line.radius ?? 2} fill={line.color ?? '#72958a'} />
       ) : <text key={i} x={line.x} y={line.y} fontFamily="Arial, Helvetica, sans-serif" fontSize={line.size} fontWeight={line.bold ? 700 : 400} fill={line.color ?? '#17232d'} xmlSpace="preserve">{line.text}</text>)}
     </svg>
   );

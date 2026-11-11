@@ -1,73 +1,204 @@
 import { professionalName, displayDate } from './documents';
-import type { DocumentPage } from './document-layout';
+import type { DocumentLine, DocumentPage } from './document-layout';
 
-type ReportRow = { label: string; values: string[]; variation: string };
+type ReportRow = { key: string; label: string; values: string[]; variation: string };
+type ChartSeries = { key: string; label: string; color: string };
 
-function centeredX(text: string, size: number, bold = false): number {
-  let width = text.length * size * 0.55;
-  if (typeof document !== 'undefined') {
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-    if (context) {
-      context.font = `${bold ? 'bold' : 'normal'} ${size}px Arial`;
-      width = context.measureText(text).width;
-    }
+const ink = '#1a1a1a';
+const muted = '#6b6b6b';
+const soft = '#92928e';
+const lineColor = '#e8e6e1';
+const accent = '#2c5f4f';
+const gold = '#b08d57';
+
+function text(text: string, x: number, y: number, size = 9, color = ink, bold = false): DocumentLine {
+  return { text, x, y, size, color, bold };
+}
+
+function shape(kind: 'rule' | 'rect' | 'line' | 'point', x: number, y: number, color: string, options: Partial<DocumentLine> = {}): DocumentLine {
+  return { text: '', x, y, size: 0, color, kind, ...options };
+}
+
+function parseValue(value: string | undefined): number | null {
+  if (!value || value === '—') return null;
+  const numeric = Number(value.trim().split(/\s+/)[0]!.replace(/\./g, '').replace(',', '.'));
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
+function compactDate(value: string): string {
+  return value ? `${value.slice(8, 10)}/${value.slice(5, 7)}` : '—';
+}
+
+function header(patientName: string, dates: string[], pageLabel: string): DocumentPage {
+  const first = displayDate(dates[0] ?? '');
+  const last = displayDate(dates.at(-1) ?? '');
+  return [
+    text('RELATÓRIO CLÍNICO', 42, 38, 8, gold, true),
+    text('Evolução Corporal', 42, 66, 21, '#123c3d', true),
+    text(`Paciente: ${patientName}`, 42, 91, 10, ink, true),
+    text(`Período: ${first} a ${last}  ·  ${dates.length} avaliação(ões)`, 42, 108, 8.5, muted),
+    text(pageLabel, 500, 39, 8, soft),
+    shape('rule', 42, 121, lineColor, { width: 511 }),
+  ];
+}
+
+function chart(lines: DocumentPage, title: string, series: ChartSeries[], rows: ReportRow[], dates: string[], x: number, y: number, width: number, height: number) {
+  lines.push(text(title, x, y + 12, 9, ink, true));
+  const top = y + 28;
+  const left = x + 12;
+  const right = x + width - 12;
+  const bottom = y + height - 24;
+  const plotWidth = right - left;
+  const plotHeight = bottom - top;
+  const valuesBySeries = series.map((entry) => ({
+    ...entry,
+    values: rows.find((row) => row.key === entry.key)?.values.map(parseValue) ?? dates.map(() => null),
+  }));
+  const allValues = valuesBySeries.flatMap((entry) => entry.values.filter((value): value is number => value != null));
+  if (!allValues.length) {
+    lines.push(text('Dados insuficientes para exibir a evolução.', left, top + 30, 7, soft));
+    return;
   }
-  return (595 - width) / 2;
+  let min = Math.min(...allValues);
+  let max = Math.max(...allValues);
+  if (min === max) { min -= 1; max += 1; }
+  const pad = (max - min) * 0.12;
+  min -= pad;
+  max += pad;
+  for (let i = 0; i < 3; i += 1) {
+    const gridY = top + (plotHeight * i) / 2;
+    lines.push(shape('rule', left, gridY, '#eeeDEA', { width: plotWidth }));
+  }
+  valuesBySeries.forEach((entry) => {
+    const points = entry.values.map((value, index) => value == null ? null : ({
+      x: dates.length === 1 ? left + plotWidth / 2 : left + (plotWidth * index) / (dates.length - 1),
+      y: bottom - ((value - min) / (max - min)) * plotHeight,
+    }));
+    points.forEach((point, index) => {
+      if (!point) return;
+      const previous = points[index - 1];
+      if (previous) lines.push(shape('line', previous.x, previous.y, entry.color, { x2: point.x, y2: point.y }));
+      lines.push(shape('point', point.x, point.y, entry.color, { radius: 2.2 }));
+    });
+  });
+  const labelStride = Math.max(1, Math.ceil(dates.length / 5));
+  dates.forEach((date, index) => {
+    if (index % labelStride !== 0 && index !== dates.length - 1) return;
+    const label = compactDate(date);
+    const px = dates.length === 1 ? left + plotWidth / 2 : left + (plotWidth * index) / (dates.length - 1);
+    lines.push(text(label, px - 10, bottom + 13, 6.5, soft));
+  });
+  let legendX = x + 12;
+  const legendY = y + height - 3;
+  valuesBySeries.forEach((entry) => {
+    lines.push(shape('line', legendX, legendY - 2, entry.color, { x2: legendX + 13, y2: legendY - 2 }));
+    lines.push(text(entry.label, legendX + 18, legendY, 6.5, muted));
+    legendX += 20 + entry.label.length * 4.2;
+  });
+}
+
+function kpiStrip(lines: DocumentPage, rows: ReportRow[]) {
+  const metrics = [
+    { key: 'weight_kg', label: 'PESO' },
+    { key: 'body_fat_percentage', label: 'GORDURA' },
+    { key: 'muscle_mass_kg', label: 'MÚSCULO' },
+    { key: 'visceral_fat_level', label: 'GORDURA VISCERAL' },
+    { key: 'metabolic_age_years', label: 'IDADE METABÓLICA' },
+  ];
+  const cardWidth = 96;
+  const gap = 8;
+  metrics.forEach((metric, index) => {
+    const x = 42 + index * (cardWidth + gap);
+    const row = rows.find((item) => item.key === metric.key);
+    const valid = row?.values.filter((value) => value !== '—') ?? [];
+    const firstValue = valid[0] ?? '—';
+    const lastValue = valid.at(-1) ?? '—';
+    const variation = row?.variation ?? '—';
+    const delta = variation === '—' ? '—' : variation.replace(/−/g, '-');
+    lines.push(shape('rect', x, 137, '#ffffff', { width: cardWidth, height: 62 }));
+    lines.push(shape('rect', x, 137, lineColor, { width: cardWidth, height: 0.7 }));
+    lines.push(text(metric.label, x + 6, 151, 5.4, soft, true));
+    lines.push(text(delta, x + 6, 169, 11, accent, true));
+    lines.push(text(`${firstValue} / ${lastValue}`, x + 6, 187, 5.8, muted));
+  });
+}
+
+function trendPage(patientName: string, dates: string[], rows: ReportRow[], pageNumber: number, pageCount: number): DocumentPage {
+  const lines = header(patientName, dates, `Página ${pageNumber} de ${pageCount}`);
+  kpiStrip(lines, rows);
+  chart(lines, 'Evolução do peso', [{ key: 'weight_kg', label: 'Peso', color: accent }], rows, dates, 42, 215, 245, 164);
+  chart(lines, 'Circunferências principais', [
+    { key: 'chest_cm', label: 'Busto / tórax', color: accent },
+    { key: 'abdomen_cm', label: 'Abdômen', color: gold },
+    { key: 'hip_cm', label: 'Quadril', color: '#78948a' },
+  ], rows, dates, 308, 215, 245, 164);
+  chart(lines, 'Braços', [
+    { key: 'right_arm_cm', label: 'Direito', color: accent },
+    { key: 'left_arm_cm', label: 'Esquerdo', color: gold },
+  ], rows, dates, 42, 405, 245, 164);
+  chart(lines, 'Coxas', [
+    { key: 'right_thigh_cm', label: 'Direita', color: accent },
+    { key: 'left_thigh_cm', label: 'Esquerda', color: gold },
+  ], rows, dates, 308, 405, 245, 164);
+
+  lines.push(text('Variações regionais no período', 42, 605, 10, '#123c3d', true));
+  const regionalKeys = ['chest_cm', 'right_arm_cm', 'left_arm_cm', 'waist_cm', 'abdomen_cm', 'hip_cm', 'right_thigh_cm', 'left_thigh_cm', 'right_calf_cm', 'left_calf_cm'];
+  const regional = regionalKeys.map((key) => rows.find((row) => row.key === key)).filter((row): row is ReportRow => Boolean(row));
+  regional.forEach((row, index) => {
+    const column = index < 5 ? 0 : 1;
+    const rowIndex = index % 5;
+    const x = 42 + column * 260;
+    const y = 628 + rowIndex * 17;
+    lines.push(text(row.label, x, y, 7.3, muted));
+    lines.push(text(row.variation.replace(/−/g, '-'), x + 166, y, 7.3, accent, true));
+  });
+  lines.push(shape('rule', 42, 735, lineColor, { width: 511 }));
+  lines.push(text(professionalName, 42, 758, 8, '#123c3d', true));
+  lines.push(text('CRP 04/86194  ·  CRBM 30421  ·  Juiz de Fora – MG', 42, 773, 7, muted));
+  lines.push(text('Variações descritivas das medidas registradas; não representam, isoladamente, avaliação de saúde.', 42, 791, 6.6, muted));
+  return lines;
+}
+
+function tablePage(patientName: string, dates: string[], rows: ReportRow[], pageNumber: number, pageCount: number): DocumentPage {
+  const lines = header(patientName, dates, `Página ${pageNumber} de ${pageCount}`);
+  lines.push(text('Histórico completo de avaliações', 42, 148, 12, '#123c3d', true));
+  lines.push(text('Medida', 42, 179, 7, soft, true));
+  const labelWidth = 142;
+  const variationX = 472;
+  const columnsWidth = variationX - 42 - labelWidth;
+  const columnWidth = columnsWidth / dates.length;
+  dates.forEach((date, index) => {
+    const dateLabel = compactDate(date);
+    lines.push(text(dateLabel, 42 + labelWidth + index * columnWidth + 3, 179, 6.8, accent, true));
+  });
+  lines.push(text('Variação', variationX, 179, 6.8, accent, true));
+  lines.push(shape('rule', 42, 188, lineColor, { width: 511 }));
+  rows.forEach((row, rowIndex) => {
+    const y = 207 + rowIndex * 25;
+    if (rowIndex % 2 === 0) lines.push(shape('rect', 42, y - 12, '#fafaf8', { width: 511, height: 19 }));
+    lines.push(text(row.label, 46, y, 7.1, muted));
+    dates.forEach((_, column) => {
+      lines.push(text(row.values[column] ?? '—', 42 + labelWidth + column * columnWidth + 3, y, 6.7, ink));
+    });
+    lines.push(text(row.variation.replace(/−/g, '-'), variationX, y, 7, accent, true));
+  });
+  lines.push(shape('rule', 42, 690, lineColor, { width: 511 }));
+  lines.push(text('— indica medida não registrada. A variação compara o primeiro e o último valor preenchidos.', 42, 708, 7, muted));
+  lines.push(text(professionalName, 42, 758, 8, '#123c3d', true));
+  lines.push(text('CRP 04/86194  ·  CRBM 30421  ·  Juiz de Fora – MG', 42, 773, 7, muted));
+  lines.push(text('Relatório de acompanhamento corporal', 42, 791, 6.6, muted));
+  return lines;
 }
 
 export function bodyProgressReportPages(patientName: string, dates: string[], rows: ReportRow[]): DocumentPage[] {
   if (!dates.length) return [];
-  const pages: DocumentPage[] = [];
-  const perPage = 3;
-  const pageCount = Math.ceil(dates.length / perPage);
-  const firstDate = displayDate(dates[0]!);
-  const lastDate = displayDate(dates[dates.length - 1]!);
-
-  // Divide as datas em blocos para manter todas as avaliações legíveis em A4.
-  for (let start = 0; start < dates.length; start += perPage) {
-    const pageNumber = Math.floor(start / perPage) + 1;
-    const columns = dates.slice(start, start + perPage);
-    const lines: DocumentPage = [
-      { text: professionalName, x: 42, y: 58, size: 14, bold: true, color: '#123c3d' },
-      { text: 'Relatório de Evolução Corporal', x: 42, y: 88, size: 18, bold: true, color: '#123c3d' },
-      { text: `Paciente: ${patientName}`, x: 42, y: 116, size: 11, bold: true },
-      { text: `Período: ${firstDate} a ${lastDate} • ${dates.length} avaliação(ões)`, x: 42, y: 136, size: 10, color: '#475569' },
-      { text: 'Variação total: último valor preenchido menos o primeiro, em todas as páginas.', x: 42, y: 154, size: 8, color: '#475569' },
-      { text: 'Medida', x: 42, y: 182, size: 9, bold: true, color: '#21655f' },
-      { text: 'Variação total', x: 475, y: 182, size: 8, bold: true, color: '#21655f' },
-    ];
-    columns.forEach((date, index) => {
-      const x = 211 + index * 88;
-      lines.push(
-        { text: `${start + index + 1}ª avaliação`, x, y: 176, size: 8, bold: true, color: '#21655f' },
-        { text: displayDate(date), x, y: 189, size: 8, color: '#475569' },
-      );
-    });
-    rows.forEach((row, index) => {
-      const y = 214 + index * 20;
-      lines.push({ text: row.label, x: 42, y, size: 8.5 });
-      columns.forEach((_, column) => {
-        lines.push({ text: row.values[start + column] ?? '—', x: 211 + column * 88, y, size: 8 });
-      });
-      // Helvetica/WinAnsi aceita o hífen, mas não o sinal matemático U+2212.
-      lines.push({ text: row.variation.replace(/−/g, '-'), x: 475, y, size: 8 });
-    });
-    lines.push({ text: '—: medida não informada ou avaliações insuficientes para calcular a variação.', x: 42, y: 578, size: 8, color: '#475569' });
-
-    const professionalRole = 'Dr. em Psicanálise • Psicólogo Clínico • Biomédico Esteta e Integrativo';
-    const registration = 'CRP 04/86194 • CRBM 30421';
-    const contact = 'Telefone: (32) 9 9193-1779 | drfredmartins.com.br';
-    const location = 'Juiz de Fora – MG';
-    lines.push(
-      { text: professionalName, x: centeredX(professionalName, 11, true), y: 610, size: 11, bold: true, color: '#123c3d' },
-      { text: professionalRole, x: centeredX(professionalRole, 8.5), y: 628, size: 8.5, color: '#475569' },
-      { text: registration, x: centeredX(registration, 9, true), y: 644, size: 9, bold: true, color: '#21655f' },
-      { text: contact, x: centeredX(contact, 9), y: 674, size: 9, color: '#475569' },
-      { text: location, x: centeredX(location, 9), y: 691, size: 9, color: '#475569' },
-      { text: `Página ${pageNumber} de ${pageCount}`, x: 475, y: 725, size: 8, color: '#475569' },
-    );
-    pages.push(lines);
+  const tablePages = Math.ceil(dates.length / 5);
+  const pageCount = 1 + tablePages;
+  const pages: DocumentPage[] = [trendPage(patientName, dates, rows, 1, pageCount)];
+  for (let start = 0; start < dates.length; start += 5) {
+    const pageDates = dates.slice(start, start + 5);
+    const pageRows = rows.map((row) => ({ ...row, values: pageDates.map((_, index) => row.values[start + index] ?? '—') }));
+    pages.push(tablePage(patientName, pageDates, pageRows, pages.length + 1, pageCount));
   }
   return pages;
 }
