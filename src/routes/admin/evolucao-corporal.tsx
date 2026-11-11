@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Camera, ImagePlus, Maximize2, Pencil, Trash2, FileDown, Printer } from "lucide-react";
 import { AdminLayout, PageIntro, SectionCard } from "@/components/admin/admin-ui";
 import { BodyPhotoReport } from "@/components/admin/body-photo-report";
+import { BodyProgressDashboard } from "@/components/admin/body-progress-dashboard";
 import { PrintDocument } from "@/components/admin/documents/document-preview";
 import { downloadDocumentPdf } from "@/lib/admin/document-layout";
 import { bodyProgressReportFilename, bodyProgressReportPages } from "@/lib/admin/body-progress-report";
@@ -458,6 +459,7 @@ function ComparisonSection({ items, patientName }: { items: BodyEvaluation[]; pa
     return {
       key,
       label,
+      difference: variation,
       values: ordered.map((item) => formatComparisonValue(item[key], unit)),
       variation: variation == null ? "—" : `${variation >= 0 ? "+" : "−"}${formatComparisonValue(Math.abs(variation), unit)}`,
       indicator: variation == null ? "" : variation > 0 ? "↑" : variation < 0 ? "↓" : "→",
@@ -486,6 +488,8 @@ function ComparisonSection({ items, patientName }: { items: BodyEvaluation[]; pa
       await downloadDocumentPdf(
         reportPages,
         bodyProgressReportFilename(patientName, first.evaluation_date, last.evaluation_date),
+        false,
+        true,
       );
     } catch (downloadError) {
       setReportError(downloadError instanceof Error ? downloadError.message : "Não foi possível gerar o PDF.");
@@ -506,6 +510,8 @@ function ComparisonSection({ items, patientName }: { items: BodyEvaluation[]; pa
           </div>
           {reportError && <p role="alert" className="text-sm text-red-600">{reportError}</p>}
           {reportReady && <PrintDocument pages={reportPages} />}
+          <BodyProgressDashboard rows={rows} dates={ordered.map((item) => item.evaluation_date)} />
+          <h3 className="font-display text-lg font-semibold text-[#2c5f4f]">Histórico completo de avaliações</h3>
           <div className="overflow-x-auto rounded-lg border border-slate-200" role="region" aria-label="Histórico comparativo de avaliações" tabIndex={0}>
             <table className="w-full min-w-[620px] text-sm">
               <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
@@ -527,7 +533,7 @@ function ComparisonSection({ items, patientName }: { items: BodyEvaluation[]; pa
               </tbody>
             </table>
           </div>
-          <p className="text-xs text-slate-500">Role a tabela horizontalmente para ver todas as datas. Se faltar uma medida na primeira ou na última avaliação, a variação será exibida como —.</p>
+          <p className="text-xs text-slate-500">Role a tabela horizontalmente para ver todas as datas. A variação usa o primeiro e o último valor preenchidos de cada medida; com menos de dois registros, é exibido —.</p>
         </div>
       )}
     </SectionCard>

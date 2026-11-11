@@ -25,6 +25,8 @@ export function A4Page({ lines, index, showBrand = false }: { lines: DocumentPag
         <line key={i} x1={line.x} y1={line.y} x2={line.x2 ?? line.x} y2={line.y2 ?? line.y} stroke={line.color ?? '#72958a'} strokeWidth="1.5" />
       ) : line.kind === 'point' ? (
         <circle key={i} cx={line.x} cy={line.y} r={line.radius ?? 2} fill={line.color ?? '#72958a'} />
+      ) : line.kind === 'path' ? (
+        <path key={i} d={line.path} fill={line.color ?? '#cddbd4'} />
       ) : <text key={i} x={line.x} y={line.y} fontFamily="Arial, Helvetica, sans-serif" fontSize={line.size} fontWeight={line.bold ? 700 : 400} fill={line.color ?? '#17232d'} xmlSpace="preserve">{line.text}</text>)}
     </svg>
   );

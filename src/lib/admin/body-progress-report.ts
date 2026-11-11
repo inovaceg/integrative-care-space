@@ -1,8 +1,26 @@
 import { professionalName, displayDate } from './documents';
 import type { DocumentLine, DocumentPage } from './document-layout';
+import { bodySilhouetteLines, waistHasLargestReduction, type BodyReportRow as ReportRow } from './body-progress-silhouette';
 
-type ReportRow = { key: string; label: string; values: string[]; variation: string };
 type ChartSeries = { key: string; label: string; color: string };
+
+export const bodyProgressCharts: { title: string; series: ChartSeries[] }[] = [
+  { title: 'Evolução do peso (kg)', series: [{ key: 'weight_kg', label: 'Peso', color: '#2c5f4f' }] },
+  { title: 'Circunferências principais (cm)', series: [
+    { key: 'chest_cm', label: 'Tórax', color: '#2c5f4f' },
+    { key: 'waist_cm', label: 'Cintura', color: '#9c6c36' },
+    { key: 'abdomen_cm', label: 'Abdômen', color: '#b08d57' },
+    { key: 'hip_cm', label: 'Quadril', color: '#78948a' },
+  ] },
+  { title: 'Braços (cm)', series: [{ key: 'right_arm_cm', label: 'Direito', color: '#2c5f4f' }, { key: 'left_arm_cm', label: 'Esquerdo', color: '#b08d57' }] },
+  { title: 'Coxas (cm)', series: [{ key: 'right_thigh_cm', label: 'Direita', color: '#2c5f4f' }, { key: 'left_thigh_cm', label: 'Esquerda', color: '#b08d57' }] },
+];
+
+export function bodyProgressChartLines(spec: { title: string; series: ChartSeries[] }, rows: ReportRow[], dates: string[], width = 400, height = 190): DocumentPage {
+  const lines: DocumentPage = [];
+  chart(lines, spec.title, spec.series, rows, dates, 0, 0, width, height);
+  return lines;
+}
 
 const ink = '#1a1a1a';
 const muted = '#6b6b6b';
@@ -45,7 +63,7 @@ function header(patientName: string, dates: string[], pageLabel: string): Docume
 function chart(lines: DocumentPage, title: string, series: ChartSeries[], rows: ReportRow[], dates: string[], x: number, y: number, width: number, height: number) {
   lines.push(text(title, x, y + 12, 9, ink, true));
   const top = y + 28;
-  const left = x + 12;
+  const left = x + 30;
   const right = x + width - 12;
   const bottom = y + height - 24;
   const plotWidth = right - left;
@@ -67,7 +85,9 @@ function chart(lines: DocumentPage, title: string, series: ChartSeries[], rows: 
   max += pad;
   for (let i = 0; i < 3; i += 1) {
     const gridY = top + (plotHeight * i) / 2;
-    lines.push(shape('rule', left, gridY, '#eeeDEA', { width: plotWidth }));
+    const tick = (max - ((max - min) * i) / 2).toLocaleString('pt-BR', { maximumFractionDigits: 1 });
+    lines.push(shape('rule', left, gridY, '#eeedea', { width: plotWidth }));
+    lines.push(text(tick, x, gridY + 2, 6.5, soft));
   }
   valuesBySeries.forEach((entry) => {
     const points = entry.values.map((value, index) => value == null ? null : ({
@@ -124,33 +144,20 @@ function kpiStrip(lines: DocumentPage, rows: ReportRow[]) {
 }
 
 function trendPage(patientName: string, dates: string[], rows: ReportRow[], pageNumber: number, pageCount: number): DocumentPage {
-  const lines = header(patientName, dates, `Página ${pageNumber} de ${pageCount}`);
+  const lines: DocumentPage = [shape('rect', 0, 0, '#f7f6f3', { width: 595, height: 842 }), ...header(patientName, dates, `Página ${pageNumber} de ${pageCount}`)];
   kpiStrip(lines, rows);
-  chart(lines, 'Evolução do peso', [{ key: 'weight_kg', label: 'Peso', color: accent }], rows, dates, 42, 215, 245, 164);
-  chart(lines, 'Circunferências principais', [
-    { key: 'chest_cm', label: 'Busto / tórax', color: accent },
-    { key: 'abdomen_cm', label: 'Abdômen', color: gold },
-    { key: 'hip_cm', label: 'Quadril', color: '#78948a' },
-  ], rows, dates, 308, 215, 245, 164);
-  chart(lines, 'Braços', [
-    { key: 'right_arm_cm', label: 'Direito', color: accent },
-    { key: 'left_arm_cm', label: 'Esquerdo', color: gold },
-  ], rows, dates, 42, 405, 245, 164);
-  chart(lines, 'Coxas', [
-    { key: 'right_thigh_cm', label: 'Direita', color: accent },
-    { key: 'left_thigh_cm', label: 'Esquerda', color: gold },
-  ], rows, dates, 308, 405, 245, 164);
-
-  lines.push(text('Variações regionais no período', 42, 605, 10, '#123c3d', true));
-  const regionalKeys = ['chest_cm', 'right_arm_cm', 'left_arm_cm', 'waist_cm', 'abdomen_cm', 'hip_cm', 'right_thigh_cm', 'left_thigh_cm', 'right_calf_cm', 'left_calf_cm'];
-  const regional = regionalKeys.map((key) => rows.find((row) => row.key === key)).filter((row): row is ReportRow => Boolean(row));
-  regional.forEach((row, index) => {
-    const column = index < 5 ? 0 : 1;
-    const rowIndex = index % 5;
-    const x = 42 + column * 260;
-    const y = 628 + rowIndex * 17;
-    lines.push(text(row.label, x, y, 7.3, muted));
-    lines.push(text(row.variation.replace(/−/g, '-'), x + 166, y, 7.3, accent, true));
+  lines.push(shape('rect', 35, 214, '#ffffff', { width: 205, height: 338 }));
+  lines.push(text('VARIAÇÃO POR REGIÃO', 47, 232, 8, accent, true));
+  lines.push(text('Último valor menos o primeiro registrado', 47, 245, 6, muted));
+  lines.push(...bodySilhouetteLines(rows, 42, 256, 190));
+  if (waistHasLargestReduction(rows)) lines.push(text('Cintura: maior redução entre as circunferências', 47, 542, 6.5, gold, true));
+  bodyProgressCharts.forEach((spec, index) => {
+    const x = index < 2 ? 259 : index === 2 ? 42 : 308;
+    const y = index === 0 ? 219 : index === 1 ? 391 : 576;
+    const width = index < 2 ? 294 : 245;
+    const height = index < 2 ? 150 : 135;
+    lines.push(shape('rect', x - 6, y - 5, '#ffffff', { width: width + 12, height: height + 13 }));
+    chart(lines, spec.title, spec.series, rows, dates, x, y, width, height);
   });
   lines.push(shape('rule', 42, 735, lineColor, { width: 511 }));
   lines.push(text(professionalName, 42, 758, 8, '#123c3d', true));
