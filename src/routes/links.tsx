@@ -21,6 +21,12 @@ const links = [
     primary: true,
   },
   {
+    title: "Anamnese Psicológica Digital",
+    description: "Preencha sua ficha de anamnese online",
+    href: "/anamnese-psicologica",
+    icon: ClipboardCheck,
+  },
+  {
     title: "Avaliação Neuropsicológica",
     description: "Conheça o processo de avaliação",
     href: "https://drfredmartins.com.br/avaliacao-neuropsicologica",
