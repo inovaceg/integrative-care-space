@@ -16,7 +16,7 @@ import {
 
 export const whatsappNumber = "5532935027080";
 export const whatsappMessage =
-  "Olá! Vim pelo site do Dr. Frederick Parreira e gostaria de informações sobre atendimento.";
+  "Olá, gostaria de informações sobre os atendimentos e horários disponíveis.";
 export const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
 export const socialProjectWhatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Olá! Gostaria de saber mais sobre o Projeto Social de Atendimento Psicológico realizado nas igrejas.")}`;
 export const mapsUrl =
@@ -55,16 +55,15 @@ export const biomedicineServices: Service[] = [
 ];
 
 export const faqItems = [
-  { q: "Como faço para agendar?", a: "Entre em contato pelo WhatsApp. A equipe orientará sobre disponibilidade e sobre a área de atendimento adequada à sua procura." },
-  { q: "Quais são as áreas de atendimento?", a: "O espaço reúne duas áreas distintas: Psicologia e Saúde Mental, e Biomedicina Integrativa e Estética. Cada atendimento respeita as competências da respectiva profissão." },
-  { q: "Onde fica o consultório?", a: "No Edifício Europa Central Tower, Rua Fernando Lobo, 102, sala 704, Centro, Juiz de Fora — MG." },
-  { q: "Como funciona a primeira consulta?", a: "A primeira consulta é dedicada à escuta e avaliação da demanda, respeitando as particularidades da área escolhida e de cada pessoa." },
-  { q: "Como saber qual atendimento procurar?", a: "Ao entrar em contato, informe apenas a área geral de interesse. Você receberá orientação inicial sem precisar compartilhar informações clínicas sensíveis." },
-  { q: "Como entrar em contato?", a: "Pelo WhatsApp (32) 93502-7080 ou pelo formulário da página de contato." },
+  { q: "Preciso de encaminhamento?", a: "Se você tem dúvida sobre a necessidade de encaminhamento para o seu caso, fale com a equipe pelo WhatsApp antes de agendar." },
+  { q: "Como funciona a avaliação neuropsicológica?", a: "É um processo profissional para compreender funções cognitivas e a demanda apresentada. A equipe pode explicar as etapas e orientar sobre o agendamento pelo WhatsApp." },
+  { q: "Como faço para agendar?", a: "Fale pelo WhatsApp (32) 93502-7080. A equipe informa os horários disponíveis e orienta sobre o atendimento mais adequado à sua procura." },
+  { q: "Como funciona a primeira consulta?", a: "O primeiro encontro começa com escuta, passa pela compreensão da demanda e termina com a conversa sobre os próximos passos." },
+  { q: "Quais são as áreas de atendimento?", a: "O espaço oferece Psicologia e Saúde Mental, incluindo psicoterapia e avaliação neuropsicológica, além de serviços de Biomedicina em página própria." },
 ];
 
 export const navItemsBeforeQuestionnaires = [
-  ["Início", "/"], ["Sobre", "/sobre"], ["Psicologia", "/psicologia"],
+  ["Início", "/"], ["Atendimentos", "/servicos"], ["Sobre", "/sobre"],
 ] as const;
 
 export const questionnaireItems = [
@@ -74,6 +73,5 @@ export const questionnaireItems = [
 ] as const;
 
 export const navItemsAfterQuestionnaires = [
-  ["Biomedicina", "/biomedicina"], ["Serviços", "/servicos"], ["Estrutura", "/estrutura"],
-  ["Blog", "/blog"], ["FAQ", "/faq"], ["Contato", "/contato"],
+  ["Pensamentos Diários", "/blog"], ["Contato", "/contato"],
 ] as const;
