@@ -40,6 +40,26 @@ function safetyReportEntries(responses: AnamnesisSubmission['responses']) {
   });
 }
 
+const preliminaryReportGroups = [
+  { title: 'Queixa e impacto', keys: ['main_concern', 'onset', 'trigger_event', 'treatment_expectation', 'work_study_impact', 'social_impact', 'family_impact', 'life_impact_scale'] },
+  { title: 'Sintomas e autoavaliações', keys: ['symptoms', 'other_symptoms', 'anxiety_scale', 'stress_scale', 'quality_of_life_scale', 'self_esteem_scale'] },
+  { title: 'Segurança', keys: safetyReportKeys },
+  { title: 'Saúde e tratamentos', keys: ['previous_treatment', 'previous_treatment_details', 'medication_use', 'medication_name_dose', 'medication_duration', 'medication_prescriber', 'medication_adherence', 'medication_benefit', 'physical_health_history', 'hospitalizations', 'hospitalization_details'] },
+  { title: 'História pessoal e familiar', keys: ['childhood_adolescence', 'abuse_experiences', 'abuse_details', 'repeated_patterns', 'adult_professional_life', 'mother_relationship', 'father_relationship', 'parental_presence', 'childhood_warmth', 'critical_figure', 'family_mental_health'] },
+  { title: 'Mundo interno, apoio e mudança', keys: ['loneliness', 'inner_void', 'abandonment_fear', 'inadequacy', 'frustration', 'loss_of_control', 'impulsivity', 'insight', 'support_person', 'immediate_support', 'future_projection', 'desired_change'] },
+  { title: 'Hábitos de vida', keys: ['daily_routine', 'sleep', 'appetite', 'physical_activity', 'leisure', 'substances'] },
+  { title: 'Sexualidade e espiritualidade', keys: ['sexual_orientation', 'gender_identity', 'sexual_activity', 'sexual_satisfaction', 'sexual_difficulties', 'religion_belief', 'spiritual_practice', 'spiritual_frequency', 'spiritual_support'] },
+  { title: 'Observações adicionais', keys: ['additional_observations'] },
+] as const;
+
+function reportEntries(responses: AnamnesisSubmission['responses'], keys: readonly string[]) {
+  return keys.flatMap(key => {
+    const answer = responses?.[key];
+    if (answer === undefined || answer === '' || (Array.isArray(answer) && answer.length === 0)) return [];
+    return [[key, answer] as const];
+  });
+}
+
 function DigitalAnamnesesPage() {
   const { isAdmin, isLoading: authLoading } = useAuth();
   const [items, setItems] = useState<AnamnesisSubmission[]>([]);
@@ -71,6 +91,8 @@ function DigitalAnamnesesPage() {
     } finally { setDetailLoading(false); }
   }
 
+  const reportGroups = selected ? preliminaryReportGroups.map(group => ({ ...group, entries: reportEntries(selected.responses, group.keys) })).filter(group => group.entries.length > 0) : [];
+
   return <AdminLayout>
     <PageIntro eyebrow="Prontuários protegidos" title="Anamneses psicológicas digitais" description="Fichas enviadas pelo formulário digital, acessíveis somente a profissionais autenticados e autorizados." action={<Button variant="outline" onClick={() => void load()} disabled={loading} className="gap-2"><RefreshCw className="size-4" />Atualizar</Button>} />
     <div className="mt-6 space-y-4">
@@ -80,6 +102,7 @@ function DigitalAnamnesesPage() {
         {selected?.id === item.id && <div className="space-y-6 border-t border-slate-200 bg-[#fbfcfb] p-4 sm:p-6">
           {selected.risk_review_required && <section className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950"><div className="flex items-start gap-3"><AlertTriangle className="mt-0.5 size-5 shrink-0" /><div><h3 className="font-semibold">Relatório prévio de respostas de segurança</h3><p className="mt-1 text-sm leading-6">Há resposta(s) afirmativa(s) na seção de segurança. Confira os registros abaixo e revise a ficha completa com prioridade profissional. Este resumo reproduz respostas do paciente; não é diagnóstico nem classificação automática de risco.</p></div></div><dl className="mt-4 space-y-3 border-t border-amber-200 pt-4">{safetyReportEntries(selected.responses).map(([key, answer]) => <div key={key}><dt className="text-xs font-semibold text-amber-900">{anamnesisFieldLabels[key]}</dt><dd className="mt-1 whitespace-pre-wrap text-sm leading-6 text-amber-950">{display(answer)}</dd></div>)}</dl></section>}
           <section className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 text-sm sm:grid-cols-2"><p><strong>Data de nascimento:</strong> {new Date(`${selected.birth_date}T12:00:00`).toLocaleDateString('pt-BR')}</p><p><strong>Telefone:</strong> {selected.contact_phone || 'Não informado'}</p><p><strong>E-mail:</strong> {selected.contact_email || 'Não informado'}</p><p><strong>Assinatura:</strong> {selected.signed_name || '—'}</p><p><strong>Termo aceito:</strong> {selected.consent_version || '—'}</p><p><strong>Consentimento registrado:</strong> {selected.consented_at ? new Date(selected.consented_at).toLocaleString('pt-BR') : '—'}</p></section>
+          <section className="rounded-2xl border border-[#cbded3] bg-white p-4 sm:p-5"><div className="border-b border-slate-200 pb-3"><h3 className="font-display text-lg font-semibold text-[#24584e]">Relatório preliminar — análise descritiva da anamnese</h3><p className="mt-1 text-sm leading-6 text-slate-600">Organiza queixa, impacto, sintomas, segurança e contexto a partir das respostas registradas, para apoiar a leitura profissional. Não infere dados ausentes, não produz diagnóstico nem substitui a análise clínica do profissional.</p></div>{reportGroups.length ? <div className="mt-4 grid gap-4 lg:grid-cols-2">{reportGroups.map(group => <section key={group.title} className="rounded-xl border border-slate-200 bg-[#fbfcfb] p-4"><h4 className="mb-3 font-semibold text-slate-800">{group.title}</h4><dl className="space-y-3">{group.entries.map(([key, answer]) => <div key={key}><dt className="text-xs font-semibold text-slate-500">{anamnesisFieldLabels[key]}</dt><dd className="mt-1 whitespace-pre-wrap text-sm leading-6 text-slate-800">{display(answer)}</dd></div>)}</dl></section>)}</div> : <p className="mt-4 text-sm text-slate-500">Nenhuma resposta clínica foi preenchida para compor esta síntese.</p>}</section>
           {anamnesisSteps.slice(0, 12).map((title, index) => {
             const entries = Object.entries(selected.responses ?? {}).filter(([key, answer]) => key !== 'date_of_birth' && answer !== '' && (!Array.isArray(answer) || answer.length) && sectionFor(key) === index);
             if (!entries.length) return null;
