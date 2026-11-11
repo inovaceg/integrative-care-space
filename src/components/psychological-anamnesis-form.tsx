@@ -45,6 +45,16 @@ function RangeAnswer({ value, onChange, label }: { value: string; onChange: (val
 function normalizePhone(value: string) { return value.replace(/\D/g, '').slice(0, 11); }
 function validEmail(value: string) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim()); }
 function validPhone(value: string) { return /^\d{10,11}$/.test(value.replace(/\D/g, '')); }
+function validCpf(value: string) {
+  const cpf = value.replace(/\D/g, '');
+  if (!/^\d{11}$/.test(cpf) || /^(\d)\1{10}$/.test(cpf)) return false;
+  const digit = (length: number) => {
+    const sum = cpf.slice(0, length).split('').reduce((total, number, index) => total + Number(number) * (length + 1 - index), 0);
+    const remainder = (sum * 10) % 11;
+    return remainder === 10 ? 0 : remainder;
+  };
+  return digit(9) === Number(cpf[9]) && digit(10) === Number(cpf[10]);
+}
 function formatAnswer(value: AnswerValue) { return Array.isArray(value) ? value.join(', ') : String(value); }
 function labelFor(key: string) { return String(anamnesisFieldLabels[key] ?? key); }
 function patientSummary(answers: PsychologicalAnswers) {
@@ -154,6 +164,7 @@ export function PsychologicalAnamnesisForm() {
   }
   function requiredError() {
     if (!value('full_name').trim()) return 'Informe seu nome completo.';
+    if (!validCpf(value('cpf'))) return 'Informe um CPF válido com 11 dígitos.';
     if (!value('phone') || !validPhone(value('phone'))) return 'Informe um WhatsApp válido com DDD.';
     if (!value('email') || !validEmail(value('email'))) return 'Informe um e-mail válido.';
     if (!value('city').trim()) return 'Informe sua cidade.';
@@ -205,7 +216,7 @@ export function PsychologicalAnamnesisForm() {
             {step === 0 && <>
               <Field label="Nome completo" required><Input maxLength={200} autoComplete="name" value={value('full_name')} onChange={event => set('full_name', event.target.value)} className="border-[#d3dfd8]" /></Field>
               <Field label="Data de nascimento" required><Input type="date" value={birthDate} readOnly className="border-[#d3dfd8] bg-[#f4f7f3]" /></Field>
-              <div className="grid gap-6 sm:grid-cols-2"><Field label="CPF"><Input inputMode="numeric" value={value('cpf')} onChange={event => set('cpf', event.target.value.replace(/\D/g,'').slice(0,11))} className="border-[#d3dfd8]" /></Field><Field label="Telefone/WhatsApp" required><Input type="tel" autoComplete="tel" inputMode="tel" placeholder="(00) 00000-0000" value={value('phone')} onChange={event => set('phone', normalizePhone(event.target.value))} className="border-[#d3dfd8]" /></Field><Field label="E-mail" required><Input type="email" autoComplete="email" value={value('email')} onChange={event => set('email', event.target.value)} className="border-[#d3dfd8]" /></Field><Field label="Profissão"><Input value={value('profession')} onChange={event => set('profession', event.target.value)} className="border-[#d3dfd8]" /></Field><Field label="Estado civil"><ChoiceGroup value={value('civil_status')} onChange={next => set('civil_status', next)} options={civilStatusOptions} /></Field></div>
+              <div className="grid gap-6 sm:grid-cols-2"><Field label="CPF" required><Input inputMode="numeric" autoComplete="off" maxLength={11} value={value('cpf')} onChange={event => set('cpf', event.target.value.replace(/\D/g,'').slice(0,11))} className="border-[#d3dfd8]" /></Field><Field label="Telefone/WhatsApp" required><Input type="tel" autoComplete="tel" inputMode="tel" placeholder="(00) 00000-0000" value={value('phone')} onChange={event => set('phone', normalizePhone(event.target.value))} className="border-[#d3dfd8]" /></Field><Field label="E-mail" required><Input type="email" autoComplete="email" value={value('email')} onChange={event => set('email', event.target.value)} className="border-[#d3dfd8]" /></Field><Field label="Profissão"><Input value={value('profession')} onChange={event => set('profession', event.target.value)} className="border-[#d3dfd8]" /></Field><Field label="Estado civil"><ChoiceGroup value={value('civil_status')} onChange={next => set('civil_status', next)} options={civilStatusOptions} /></Field></div>
               <div><h2 className="font-semibold text-[#24584e]">Endereço (opcional)</h2><div className="mt-3 grid gap-4 sm:grid-cols-2"><Field label="CEP" hint={cepStatus}><Input inputMode="numeric" autoComplete="postal-code" maxLength={8} value={value('postal_code')} onChange={event => set('postal_code', event.target.value.replace(/\D/g,'').slice(0,8))} className="border-[#d3dfd8]" /></Field><Field label="Logradouro"><Input value={value('street')} onChange={event => set('street', event.target.value)} className="border-[#d3dfd8]" /></Field><Field label="Bairro"><Input value={value('neighborhood')} onChange={event => set('neighborhood', event.target.value)} className="border-[#d3dfd8]" /></Field><Field label="Número"><Input value={value('street_number')} onChange={event => set('street_number', event.target.value)} className="border-[#d3dfd8]" /></Field><Field label="Complemento"><Input value={value('address_complement')} onChange={event => set('address_complement', event.target.value)} className="border-[#d3dfd8]" /></Field></div></div>
               <div className="grid gap-6 sm:grid-cols-2"><Field label="Cidade" required><Input autoComplete="address-level2" value={value('city')} onChange={event => set('city', event.target.value)} className="border-[#d3dfd8]" /></Field><Field label="Estado" required><select aria-label="Estado" value={value('state')} onChange={event => set('state', event.target.value)} className="h-10 rounded-md border border-[#d3dfd8] bg-white px-3 text-sm"><option value="">Selecione</option>{states.map(state => <option key={state} value={state}>{state} — {stateNames[state]}</option>)}</select></Field></div>
               <Field label="Com quem mora?"><MultiChoice value={selected('household')} onChange={next => set('household', next)} options={householdOptions} exclusive={householdExclusive} /></Field><Field label="Escolaridade"><ChoiceGroup value={value('education')} onChange={next => set('education', next)} options={educationOptions} /></Field>

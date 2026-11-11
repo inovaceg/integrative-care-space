@@ -26,6 +26,17 @@ function ageAtDate(value: string) {
   return age
 }
 
+function validCpf(value: string) {
+  const cpf = value.replace(/\D/g, '')
+  if (!/^\d{11}$/.test(cpf) || /^(\d)\1{10}$/.test(cpf)) return false
+  const digit = (length: number) => {
+    const sum = cpf.slice(0, length).split('').reduce((total, number, index) => total + Number(number) * (length + 1 - index), 0)
+    const remainder = (sum * 10) % 11
+    return remainder === 10 ? 0 : remainder
+  }
+  return digit(9) === Number(cpf[9]) && digit(10) === Number(cpf[10])
+}
+
 function sanitizeAnswers(input: unknown): Answers {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('Respostas inválidas.')
   const source = input as Record<string, unknown>
@@ -121,7 +132,7 @@ Deno.serve(async (req) => {
       if (consent?.accepted !== true || !signedName || signedName !== patientName || ageAtDate(draft.birth_date) < 18) {
         return Response.json({ error: 'Confirme a ciência do termo e assine com o mesmo nome completo informado na identificação.' }, { status: 422, headers: corsHeaders })
       }
-      if (!patientName || !validBirthDate(draft.birth_date) || !contactEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail) || !/^\d{10,11}$/.test(contactPhone.replace(/\D/g, '')) || !text(responses.city, 120) || !/^(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)$/.test(text(responses.state, 2))) {
+      if (!patientName || !validBirthDate(draft.birth_date) || !validCpf(text(responses.cpf, 20)) || !contactEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail) || !/^\d{10,11}$/.test(contactPhone.replace(/\D/g, '')) || !text(responses.city, 120) || !/^(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)$/.test(text(responses.state, 2))) {
         return Response.json({ error: 'Complete os campos obrigatórios de identificação com valores válidos.' }, { status: 422, headers: corsHeaders })
       }
       const now = new Date().toISOString()
