@@ -70,13 +70,17 @@ function isRiskReviewRequired(answers: Answers) {
     || answers.self_harm_ever === 'Sim'
 }
 
-async function authorizedStaff(req: Request, admin: ReturnType<typeof createClient>) {
+async function authorizedStaffUser(req: Request, admin: ReturnType<typeof createClient>) {
   const header = req.headers.get('Authorization')
-  if (!header?.startsWith('Bearer ')) return false
+  if (!header?.startsWith('Bearer ')) return null
   const { data: { user }, error } = await admin.auth.getUser(header.slice(7))
-  if (error || !user) return false
+  if (error || !user) return null
   const { data: role } = await admin.from('user_roles').select('role').eq('user_id', user.id).maybeSingle()
-  return role?.role === 'doctor' || role?.role === 'admin'
+  return role?.role === 'doctor' || role?.role === 'admin' ? user : null
+}
+
+async function authorizedStaff(req: Request, admin: ReturnType<typeof createClient>) {
+  return Boolean(await authorizedStaffUser(req, admin))
 }
 
 function escapeLike(value: string) {
@@ -236,6 +240,44 @@ Deno.serve(async (req) => {
       if (error) throw error
       if (!submitted) return Response.json({ error: 'Esta ficha já foi enviada.' }, { status: 409, headers: corsHeaders })
       return Response.json({ received: true, id: submitted.id }, { headers: corsHeaders })
+    }
+
+    if (body.action === 'admin-update' || body.action === 'admin-delete') {
+      const staff = await authorizedStaffUser(req, admin)
+      if (!staff) return new Response('Unauthorized', { status: 401, headers: corsHeaders })
+      const id = text(body.id, 64)
+      if (!/^[0-9a-f-]{36}$/i.test(id)) return Response.json({ error: 'Ficha inválida.' }, { status: 400, headers: corsHeaders })
+      if (body.action === 'admin-delete') {
+        const { data, error } = await admin.from('psychological_anamnesis_submissions').delete().eq('id', id).eq('status', 'submitted').select('id').maybeSingle()
+        if (error) throw error
+        if (!data) return Response.json({ error: 'Ficha não encontrada.' }, { status: 404, headers: corsHeaders })
+        return Response.json({ deleted: true, id }, { headers: corsHeaders })
+      }
+      const { data: record, error: recordError } = await admin.from('psychological_anamnesis_submissions')
+        .select('id,birth_date,responses,status,signed_name').eq('id', id).eq('status', 'submitted').maybeSingle()
+      if (recordError) throw recordError
+      if (!record) return Response.json({ error: 'Ficha não encontrada.' }, { status: 404, headers: corsHeaders })
+      const responses = sanitizeAnswers(body.responses)
+      const patientName = text(responses.full_name, 200).replace(/\s+/g, ' ')
+      const contactEmail = text(responses.email, 254).toLowerCase()
+      const contactPhone = text(responses.phone, 40)
+      if (contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) return Response.json({ error: 'Informe um e-mail válido ou deixe o campo vazio.' }, { status: 422, headers: corsHeaders })
+      if (text(responses.cpf, 20) && !validCpf(text(responses.cpf, 20))) return Response.json({ error: 'O CPF precisa ser válido.' }, { status: 422, headers: corsHeaders })
+      responses.full_name = patientName
+      responses.email = contactEmail
+      responses.phone = contactPhone
+      responses.date_of_birth = record.birth_date
+      responses.signed_name = record.responses?.signed_name ?? record.signed_name ?? ''
+      responses.consent_accepted = record.responses?.consent_accepted ?? 'true'
+      const { error: historyError } = await admin.from('psychological_anamnesis_revisions').insert({ submission_id: record.id, previous_responses: record.responses, changed_by_user_id: staff.id })
+      if (historyError) throw historyError
+      const { data: updated, error } = await admin.from('psychological_anamnesis_submissions').update({
+        responses, patient_name: patientName || null, contact_email: contactEmail || null, contact_phone: contactPhone || null,
+        risk_review_required: isRiskReviewRequired(responses), updated_at: new Date().toISOString(),
+      }).eq('id', record.id).eq('status', 'submitted').select('id,status,birth_date,patient_name,contact_email,contact_phone,responses,risk_review_required,signed_name,consent_version,consented_at,submitted_at,created_at').maybeSingle()
+      if (error) throw error
+      if (!updated) return Response.json({ error: 'Ficha não encontrada.' }, { status: 404, headers: corsHeaders })
+      return Response.json({ submission: updated }, { headers: corsHeaders })
     }
 
     if (!await authorizedStaff(req, admin)) return new Response('Unauthorized', { status: 401, headers: corsHeaders })

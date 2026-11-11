@@ -46,3 +46,11 @@ export async function listPsychologicalAnamneses() {
 export async function getPsychologicalAnamnesis(id: string) {
   return invoke<{ submission: AnamnesisSubmission }>({ action: 'admin-detail', id })
 }
+
+export async function updatePsychologicalAnamnesis(id: string, responses: PsychologicalAnswers) {
+  return invoke<{ submission: AnamnesisSubmission }>({ action: 'admin-update', id, responses })
+}
+
+export async function deletePsychologicalAnamnesis(id: string) {
+  return invoke<{ deleted: true; id: string }>({ action: 'admin-delete', id })
+}
