@@ -20,6 +20,26 @@ function display(value: unknown) {
   return typeof value === 'string' || typeof value === 'number' ? String(value) : '';
 }
 
+const safetyReportKeys = [
+  'suicidal_thoughts_ever',
+  'death_thoughts_current',
+  'death_thoughts_frequency',
+  'suicide_plan',
+  'access_to_means',
+  'protective_factors',
+  'thoughts_intensity',
+  'self_harm_ever',
+  'self_harm_details',
+];
+
+function safetyReportEntries(responses: AnamnesisSubmission['responses']) {
+  return safetyReportKeys.flatMap(key => {
+    const answer = responses?.[key];
+    if (answer === undefined || answer === '' || (Array.isArray(answer) && answer.length === 0)) return [];
+    return [[key, answer] as const];
+  });
+}
+
 function DigitalAnamnesesPage() {
   const { isAdmin, isLoading: authLoading } = useAuth();
   const [items, setItems] = useState<AnamnesisSubmission[]>([]);
@@ -58,7 +78,7 @@ function DigitalAnamnesesPage() {
       {loading || authLoading ? <div className="flex items-center justify-center rounded-2xl border border-slate-200 bg-white p-12 text-sm text-slate-500"><LoaderCircle className="mr-2 size-4 animate-spin" />Carregando fichas...</div> : items.length === 0 ? <Card className="border-slate-200"><CardContent className="p-10 text-center"><ShieldCheck className="mx-auto size-8 text-[#26786e]" /><h2 className="mt-3 font-medium text-slate-800">Nenhuma ficha enviada</h2><p className="mt-1 text-sm text-slate-500">As novas respostas aparecerão aqui após o envio.</p></CardContent></Card> : items.map(item => <Card key={item.id} className="overflow-hidden border-slate-200 shadow-sm"><CardContent className="p-0"><button type="button" onClick={() => void open(item.id)} className="flex w-full flex-col items-start justify-between gap-3 p-4 text-left hover:bg-slate-50 sm:flex-row sm:items-center sm:p-5"><span className="min-w-0"><span className="block truncate font-semibold text-slate-800">{item.patient_name || 'Nome não informado'}</span><span className="mt-1 block text-sm text-slate-500">Enviada em {item.submitted_at ? new Date(item.submitted_at).toLocaleString('pt-BR') : '—'}</span></span><span className="flex items-center gap-2">{item.risk_review_required && <Badge className="border-amber-200 bg-amber-50 text-amber-900"><AlertTriangle className="mr-1 size-3" />Revisar resposta de segurança</Badge>}{selected?.id === item.id ? <ChevronUp className="size-4 text-slate-500" /> : <ChevronDown className="size-4 text-slate-500" />}</span></button>
         {detailLoading && selected?.id !== item.id && <div className="border-t border-slate-100 px-5 py-4 text-sm text-slate-500"><LoaderCircle className="mr-2 inline size-4 animate-spin" />Carregando resposta…</div>}
         {selected?.id === item.id && <div className="space-y-6 border-t border-slate-200 bg-[#fbfcfb] p-4 sm:p-6">
-          {selected.risk_review_required && <div className="flex gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm leading-6 text-amber-950"><AlertTriangle className="mt-0.5 size-5 shrink-0" /><p><strong>Revisar resposta de segurança.</strong> Esta sinalização privada indica apenas que uma ou mais respostas relacionadas a segurança foram afirmativas; não é diagnóstico nem classificação automática de risco.</p></div>}
+          {selected.risk_review_required && <section className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950"><div className="flex items-start gap-3"><AlertTriangle className="mt-0.5 size-5 shrink-0" /><div><h3 className="font-semibold">Relatório prévio de respostas de segurança</h3><p className="mt-1 text-sm leading-6">Há resposta(s) afirmativa(s) na seção de segurança. Confira os registros abaixo e revise a ficha completa com prioridade profissional. Este resumo reproduz respostas do paciente; não é diagnóstico nem classificação automática de risco.</p></div></div><dl className="mt-4 space-y-3 border-t border-amber-200 pt-4">{safetyReportEntries(selected.responses).map(([key, answer]) => <div key={key}><dt className="text-xs font-semibold text-amber-900">{anamnesisFieldLabels[key]}</dt><dd className="mt-1 whitespace-pre-wrap text-sm leading-6 text-amber-950">{display(answer)}</dd></div>)}</dl></section>}
           <section className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 text-sm sm:grid-cols-2"><p><strong>Data de nascimento:</strong> {new Date(`${selected.birth_date}T12:00:00`).toLocaleDateString('pt-BR')}</p><p><strong>Telefone:</strong> {selected.contact_phone || 'Não informado'}</p><p><strong>E-mail:</strong> {selected.contact_email || 'Não informado'}</p><p><strong>Assinatura:</strong> {selected.signed_name || '—'}</p><p><strong>Termo aceito:</strong> {selected.consent_version || '—'}</p><p><strong>Consentimento registrado:</strong> {selected.consented_at ? new Date(selected.consented_at).toLocaleString('pt-BR') : '—'}</p></section>
           {anamnesisSteps.slice(0, 12).map((title, index) => {
             const entries = Object.entries(selected.responses ?? {}).filter(([key, answer]) => key !== 'date_of_birth' && answer !== '' && (!Array.isArray(answer) || answer.length) && sectionFor(key) === index);
