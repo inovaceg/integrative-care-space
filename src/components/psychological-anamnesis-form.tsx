@@ -64,6 +64,7 @@ export function PsychologicalAnamnesisForm() {
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
   const [submissionId, setSubmissionId] = useState('');
+  const [cepStatus, setCepStatus] = useState('');
   const formRef = useRef<HTMLFormElement>(null);
   const saveQueue = useRef<Promise<void>>(Promise.resolve());
   const birthAge = useMemo(() => ageOnDate(birthDate), [birthDate]);
@@ -71,6 +72,22 @@ export function PsychologicalAnamnesisForm() {
   const set = (key: string, next: AnswerValue) => setAnswers(current => ({ ...current, [key]: next }));
   const selected = (key: string) => Array.isArray(answers[key]) ? answers[key] as string[] : [];
   const progress = screen === 'form' ? (reviewStage ? 100 : ((step + 1) / anamnesisSteps.length) * 100) : 0;
+
+  useEffect(() => {
+    const postalCode = value('postal_code');
+    if (postalCode.length !== 8) { setCepStatus(''); return; }
+    const controller = new AbortController();
+    setCepStatus('Buscando endereço…');
+    fetch(`https://viacep.com.br/ws/${postalCode}/json/`, { signal: controller.signal })
+      .then(response => { if (!response.ok) throw new Error(); return response.json(); })
+      .then((result: { erro?: boolean; logradouro?: string; bairro?: string; localidade?: string; uf?: string }) => {
+        if (result.erro || typeof result.localidade !== 'string' || typeof result.uf !== 'string') { setCepStatus('CEP não encontrado. Você pode preencher o endereço manualmente.'); return; }
+        setAnswers(current => ({ ...current, street: typeof result.logradouro === 'string' ? result.logradouro : current['street'] ?? '', neighborhood: typeof result.bairro === 'string' ? result.bairro : current['neighborhood'] ?? '', city: result.localidade, state: result.uf }));
+        setCepStatus('Endereço preenchido pelo CEP.');
+      })
+      .catch(error => { if (error instanceof Error && error.name !== 'AbortError') setCepStatus('Não foi possível consultar o CEP. Preencha o endereço manualmente.'); });
+    return () => controller.abort();
+  }, [answers['postal_code']]);
 
   useEffect(() => {
     if (!resumeKey || screen !== 'form') return;
@@ -161,7 +178,7 @@ export function PsychologicalAnamnesisForm() {
               <Field label="Nome completo" required><Input maxLength={200} autoComplete="name" value={value('full_name')} onChange={event => set('full_name', event.target.value)} className="border-[#d3dfd8]" /></Field>
               <Field label="Data de nascimento" required><Input type="date" value={birthDate} readOnly className="border-[#d3dfd8] bg-[#f4f7f3]" /></Field>
               <div className="grid gap-6 sm:grid-cols-2"><Field label="CPF"><Input inputMode="numeric" value={value('cpf')} onChange={event => set('cpf', event.target.value.replace(/\D/g,'').slice(0,11))} className="border-[#d3dfd8]" /></Field><Field label="Telefone/WhatsApp" required><Input type="tel" autoComplete="tel" inputMode="tel" placeholder="(00) 00000-0000" value={value('phone')} onChange={event => set('phone', normalizePhone(event.target.value))} className="border-[#d3dfd8]" /></Field><Field label="E-mail" required><Input type="email" autoComplete="email" value={value('email')} onChange={event => set('email', event.target.value)} className="border-[#d3dfd8]" /></Field><Field label="Profissão"><Input value={value('profession')} onChange={event => set('profession', event.target.value)} className="border-[#d3dfd8]" /></Field><Field label="Estado civil"><ChoiceGroup value={value('civil_status')} onChange={next => set('civil_status', next)} options={civilStatusOptions} /></Field></div>
-              <div><h2 className="font-semibold text-[#24584e]">Endereço (opcional)</h2><div className="mt-3 grid gap-4 sm:grid-cols-2"><Field label="CEP"><Input inputMode="numeric" value={value('postal_code')} onChange={event => set('postal_code', event.target.value.replace(/\D/g,'').slice(0,8))} className="border-[#d3dfd8]" /></Field><Field label="Logradouro"><Input value={value('street')} onChange={event => set('street', event.target.value)} className="border-[#d3dfd8]" /></Field><Field label="Bairro"><Input value={value('neighborhood')} onChange={event => set('neighborhood', event.target.value)} className="border-[#d3dfd8]" /></Field><Field label="Número"><Input value={value('street_number')} onChange={event => set('street_number', event.target.value)} className="border-[#d3dfd8]" /></Field><Field label="Complemento"><Input value={value('address_complement')} onChange={event => set('address_complement', event.target.value)} className="border-[#d3dfd8]" /></Field></div></div>
+              <div><h2 className="font-semibold text-[#24584e]">Endereço (opcional)</h2><div className="mt-3 grid gap-4 sm:grid-cols-2"><Field label="CEP" hint={cepStatus}><Input inputMode="numeric" autoComplete="postal-code" maxLength={8} value={value('postal_code')} onChange={event => set('postal_code', event.target.value.replace(/\D/g,'').slice(0,8))} className="border-[#d3dfd8]" /></Field><Field label="Logradouro"><Input value={value('street')} onChange={event => set('street', event.target.value)} className="border-[#d3dfd8]" /></Field><Field label="Bairro"><Input value={value('neighborhood')} onChange={event => set('neighborhood', event.target.value)} className="border-[#d3dfd8]" /></Field><Field label="Número"><Input value={value('street_number')} onChange={event => set('street_number', event.target.value)} className="border-[#d3dfd8]" /></Field><Field label="Complemento"><Input value={value('address_complement')} onChange={event => set('address_complement', event.target.value)} className="border-[#d3dfd8]" /></Field></div></div>
               <div className="grid gap-6 sm:grid-cols-2"><Field label="Cidade" required><Input autoComplete="address-level2" value={value('city')} onChange={event => set('city', event.target.value)} className="border-[#d3dfd8]" /></Field><Field label="Estado" required><select aria-label="Estado" value={value('state')} onChange={event => set('state', event.target.value)} className="h-10 rounded-md border border-[#d3dfd8] bg-white px-3 text-sm"><option value="">Selecione</option>{states.map(state => <option key={state} value={state}>{state} — {stateNames[state]}</option>)}</select></Field></div>
               <Field label="Com quem mora?"><MultiChoice value={selected('household')} onChange={next => set('household', next)} options={householdOptions} exclusive={householdExclusive} /></Field><Field label="Escolaridade"><ChoiceGroup value={value('education')} onChange={next => set('education', next)} options={educationOptions} /></Field>
             </>}
