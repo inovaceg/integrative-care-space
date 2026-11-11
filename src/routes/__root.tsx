@@ -130,6 +130,7 @@ function RootComponent() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const isAdmin = pathname === "/admin" || pathname.startsWith("/admin/");
   const isPublicAnamnese = pathname.startsWith("/anamnese/");
+  const isStandalonePsychologicalAnamnesis = pathname === "/anamnese-psicologica";
   const isLinkPage = pathname === "/links";
 
   useEffect(() => {
@@ -139,7 +140,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        {isAdmin || isPublicAnamnese || isLinkPage ? (
+        {isAdmin || isPublicAnamnese || isStandalonePsychologicalAnamnesis || isLinkPage ? (
           <Outlet />
         ) : (
           <>
