@@ -11,6 +11,7 @@ import { DailyMotivation } from "@/components/admin/dashboard/daily-motivation";
 import { DashboardNavigationCards } from "@/components/admin/dashboard/dashboard-navigation-cards";
 import { supabase } from "@/integrations/supabase/client";
 import drFrederickImage from "@/assets/dr-frederick-parreira.png";
+import { AnimatedBanner } from "@/components/animated-banner";
 
 export const Route = createFileRoute("/admin/dashboard")({ component: DashboardPage });
 
@@ -106,14 +107,16 @@ function DashboardPage() {
 
   return <AdminLayout>
     <PageIntro eyebrow="Resumo do dia" title="Visão geral" description="Acompanhe os dados reais dos seus pacientes e atendimentos." action={<Button asChild variant="outline" className="gap-2 border-slate-200 bg-white"><Link to="/admin/agenda"><CalendarPlus className="size-4" /> Ver agenda</Link></Button>} />
-    <div className="mb-6 flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <img src={drFrederickImage} alt="Foto do Dr. Frederick" className="size-14 shrink-0 rounded-full object-cover object-top" />
+    <AnimatedBanner compact className="mb-6 rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex items-center gap-4">
+      <img src={drFrederickImage} alt="Foto do Dr. Frederick" className="animated-banner__portrait size-14 shrink-0 rounded-full object-cover object-top" />
       <div>
         <p className="text-sm text-slate-500">{greeting},</p>
         <h2 className="font-display text-xl font-semibold text-slate-900">{doctorName}</h2>
         {user && <DailyMotivation />}
       </div>
-    </div>
+      </div>
+    </AnimatedBanner>
     <DashboardNavigationCards />
     {error && <p role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">Não foi possível carregar o resumo: {error}</p>}
     {loading || authLoading ? <div className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-12 text-sm text-slate-500"><Loader2 className="mr-2 size-4 animate-spin" /> Carregando resumo...</div> : <>

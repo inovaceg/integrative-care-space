@@ -5,6 +5,7 @@ import { FaqList } from "@/components/page-parts";
 import { trackAnalyticsEvents } from "@/lib/analytics";
 import { whatsappUrl } from "@/lib/site-data";
 import { createSeoHead } from "@/lib/seo";
+import { AnimatedBanner } from "@/components/animated-banner";
 
 export const Route = createFileRoute("/")({
   head: () => createSeoHead({
@@ -17,7 +18,8 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   return <>
-    <section className="border-b border-[#d9e6df] bg-[#f8f6f1]">
+    <section className="overflow-hidden border-b border-[#d9e6df] bg-[#f8f6f1]">
+      <AnimatedBanner>
       <div className="container-site grid items-center gap-8 py-10 sm:py-14 md:grid-cols-[1.05fr_.95fr] lg:gap-14 lg:py-20">
         <div className="max-w-xl">
           <p className="inline-flex items-center gap-2 rounded-full border border-[#d7e7df] bg-white px-4 py-2 text-xs font-bold uppercase tracking-[.16em] text-[#28665a]"><span className="size-2 rounded-full bg-[#4b9d7d]" /> Psicologia e saúde mental</p>
@@ -29,10 +31,11 @@ function HomePage() {
           </div>
           <p className="mt-6 text-sm text-[#526760]">Dr. Frederick Parreira <span className="mx-1 text-[#c9a96c]">·</span> Psicólogo — CRP 04/86194</p>
         </div>
-        <div className="overflow-hidden rounded-[1.75rem] bg-[#dce7df] shadow-[0_24px_50px_-28px_rgba(23,63,58,.55)]">
+        <div className="animated-banner__portrait overflow-hidden rounded-[1.75rem] bg-[#dce7df] shadow-[0_24px_50px_-28px_rgba(23,63,58,.55)]">
           <img src="/dr-frederick-parreira.png" alt="Dr. Frederick Parreira, psicólogo e biomédico." className="aspect-[4/5] w-full object-cover object-[center_18%] sm:aspect-[5/4] md:aspect-[4/5]" fetchPriority="high" />
         </div>
       </div>
+      </AnimatedBanner>
     </section>
 
     <section id="atendimentos" className="scroll-mt-24 section-space bg-white">
