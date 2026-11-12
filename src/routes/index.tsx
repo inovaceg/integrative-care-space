@@ -21,7 +21,7 @@ function HomePage() {
     <section className="overflow-hidden border-b border-[#d9e6df] bg-[#f8f6f1]">
       <AnimatedBanner>
       <div className="container-site grid items-center gap-8 py-10 sm:py-14 md:grid-cols-[1.05fr_.95fr] lg:gap-14 lg:py-20">
-        <div className="max-w-xl">
+        <div className="animated-banner__sequence max-w-xl">
           <p className="inline-flex items-center gap-2 rounded-full border border-[#d7e7df] bg-white px-4 py-2 text-xs font-bold uppercase tracking-[.16em] text-[#28665a]"><span className="size-2 rounded-full bg-[#4b9d7d]" /> Psicologia e saúde mental</p>
           <h1 className="mt-6 font-display text-[clamp(2.25rem,4.4vw,4rem)] font-medium leading-[1.1] tracking-[-.035em] text-[#173f3a]">Um espaço para entender o que você sente e encontrar caminhos para cuidar da sua saúde mental.</h1>
           <p className="mt-5 max-w-lg text-base leading-7 text-[#526760] sm:text-lg sm:leading-8">Um atendimento profissional começa com escuta, respeito à sua história e atenção ao que você precisa neste momento.</p>

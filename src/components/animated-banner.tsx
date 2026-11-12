@@ -19,7 +19,7 @@ export function AnimatedBanner({ children, className = "", compact = false }: Pr
   }
 
   function move(event: PointerEvent<HTMLDivElement>) {
-    if (event.pointerType !== "mouse" || !window.matchMedia("(prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine)").matches) return;
+    if (compact || event.pointerType !== "mouse" || !window.matchMedia("(prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine)").matches) return;
     const bounds = event.currentTarget.getBoundingClientRect();
     const x = (event.clientX - bounds.left) / bounds.width - 0.5;
     const y = (event.clientY - bounds.top) / bounds.height - 0.5;
