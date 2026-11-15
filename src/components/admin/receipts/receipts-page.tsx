@@ -18,6 +18,7 @@ import { createReceiptDraft, fetchReceipts, finalizeReceipt, paymentMethods, rec
 import { ReceiptHistory } from './receipt-history';
 import { ReceiptEditor } from './receipt-editor';
 import { deleteReceipt, updateReceipt, type ReceiptSnapshotInput } from '@/lib/admin/receipts';
+import { useAdminFormDraft } from '@/lib/admin/use-admin-form-draft';
 
 const selectClass = 'h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm';
 
@@ -59,6 +60,19 @@ export default function ReceiptsPage() {
   const [preview, setPreview] = useState<{ receipt: Receipt; pages: DocumentPage[] } | null>(null);
   const [printPages, setPrintPages] = useState<DocumentPage[]>([]);
   const [editingReceipt, setEditingReceipt] = useState<Receipt | null>(receiptsDraftState.editingReceipt);
+  const [draftReady, setDraftReady] = useState(false);
+  const formDraft = useAdminFormDraft<{ patientId: string; area: ReceiptArea; amount: string; date: string; method: string; notes: string }>(user?.id, 'receipt:new');
+
+  useEffect(() => {
+    if (formDraft.status === 'loading') return;
+    if (formDraft.restoredPayload) {
+      setPatientId(formDraft.restoredPayload.patientId); setArea(formDraft.restoredPayload.area); setAmount(formDraft.restoredPayload.amount); setDate(formDraft.restoredPayload.date); setMethod(formDraft.restoredPayload.method); setNotes(formDraft.restoredPayload.notes);
+    }
+    setDraftReady(true);
+  }, [formDraft.status, formDraft.restoredPayload]);
+  useEffect(() => {
+    if (draftReady && !editingReceipt) formDraft.scheduleSave({ patientId, area, amount, date, method, notes });
+  }, [area, amount, date, draftReady, editingReceipt, formDraft.scheduleSave, method, notes, patientId]);
 
   useEffect(() => {
     receiptsDraftState = { patientId, area, amount, date, method, notes, editingReceipt, editingPatientId };
@@ -102,6 +116,7 @@ export default function ReceiptsPage() {
       setReceipts(rows => [draft, ...rows]); setOffset(value => value + 1);
       setPatientId(''); setAmount(''); setNotes('');
       const receipt = await finalizeReceipt(user.id, draft.id);
+      await formDraft.clear();
       replaceReceipt(receipt); setMessage('Recibo salvo e finalizado. Você já pode gerar o PDF ou imprimir.'); show(receipt);
     } catch (failure) { setError(failure instanceof Error ? failure.message : 'Não foi possível salvar o recibo.'); }
     finally { lock.current = false; setBusy(false); }
@@ -184,6 +199,7 @@ export default function ReceiptsPage() {
           <div className="space-y-3 md:col-span-2 xl:col-span-3">
             {patientError && <p role="alert" className="text-sm text-red-700">{patientError}</p>}
             <p className="text-sm text-slate-500">Confira os dados antes de salvar. PDFs já enviados não serão atualizados. Este documento não substitui obrigações fiscais, como o Receita Saúde, quando aplicável.</p>
+            <p role="status" className="text-xs text-slate-500">{formDraft.status === 'saving' ? 'Salvando rascunho…' : formDraft.status === 'saved' ? 'Rascunho salvo' : formDraft.status === 'error' ? 'Erro ao salvar rascunho' : ''}</p>
             <Button type="submit" disabled={!patient || patientLoading || busy} className="bg-[#2f8f82] hover:bg-[#26796e]">{busy ? 'Salvando...' : 'Salvar e emitir recibo'}</Button>
           </div>
         </fieldset></form>

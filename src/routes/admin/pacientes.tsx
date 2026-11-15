@@ -18,6 +18,7 @@ import { PatientPhoto, PatientPhotoPicker } from "@/components/admin/patients/pa
 import { PatientReports } from "@/components/admin/patients/patient-reports";
 import { ExamAttachments } from "@/components/admin/patients/exam-attachments";
 import { createPatient, deletePatient, fetchPatient, fetchPatients, generatePatientCompletionLink, updatePatient, type PatientInput, type PatientRecord } from "@/lib/admin/records";
+import { useAdminFormDraft } from "@/lib/admin/use-admin-form-draft";
 
 export const Route = createFileRoute("/admin/pacientes")({ component: PatientsRouteComponent });
 
@@ -193,6 +194,19 @@ function PatientFormDialog({ onSaved, patient, trigger }: PatientFormDialogProps
   const [error, setError] = useState("");
   const { user } = useAuth();
   const editing = Boolean(patient);
+  const [draftReady, setDraftReady] = useState(false);
+  const [edited, setEdited] = useState(false);
+  const draft = useAdminFormDraft<PatientInput>(user?.id, patient ? `patient-edit:${patient.id}` : 'patient-new', patient?.id ?? null);
+
+  useEffect(() => {
+    if (draft.status === 'loading') return;
+    if (draft.restoredPayload) setForm(draft.restoredPayload);
+    setEdited(false);
+    setDraftReady(true);
+  }, [draft.status, draft.restoredPayload]);
+  useEffect(() => {
+    if (open && draftReady && edited) draft.scheduleSave(form);
+  }, [draft.scheduleSave, draftReady, edited, form, open]);
 
   useEffect(() => {
     if (!patient) {
@@ -203,6 +217,7 @@ function PatientFormDialog({ onSaved, patient, trigger }: PatientFormDialogProps
 
   function update(field: keyof PatientInput, value: string) {
     const formatted = field === "cpf" ? mask(value, "cpf") : field === "telefone" || field === "contato_emergencia_telefone" ? mask(value, "phone") : field === "cep" ? mask(value, "cep") : value;
+    setEdited(true);
     setForm((current) => ({ ...current, [field]: formatted || null }));
   }
 
@@ -213,8 +228,6 @@ function PatientFormDialog({ onSaved, patient, trigger }: PatientFormDialogProps
     if (!patient) {
       newPatientDialogOpen = next;
       if (!next) {
-        newPatientDraft = { ...emptyPatient };
-        setForm({ ...emptyPatient });
         setError("");
         return;
       }
@@ -264,6 +277,8 @@ function PatientFormDialog({ onSaved, patient, trigger }: PatientFormDialogProps
       setError(saveError.message);
       return;
     }
+    await draft.clear();
+    setEdited(false);
     setForm(emptyPatient);
     newPatientDialogOpen = false;
     newPatientDraft = { ...emptyPatient };
@@ -295,6 +310,7 @@ function PatientFormDialog({ onSaved, patient, trigger }: PatientFormDialogProps
           <div className="rounded-xl border border-slate-100 p-4"><h3 className="mb-4 font-display text-lg font-semibold text-slate-800">2. Endereço</h3><div className="grid gap-3 sm:grid-cols-2"><div className="grid gap-2"><Label htmlFor="patient-complement">Complemento</Label><Input id="patient-complement" value={form.complemento ?? ""} onChange={(event) => update("complemento", event.target.value)} /></div><div className="grid gap-2"><Label htmlFor="patient-neighborhood">Bairro</Label><Input id="patient-neighborhood" value={form.bairro ?? ""} onChange={(event) => update("bairro", event.target.value)} /></div></div></div>
         </fieldset>
         {loadingPatient && <p className="flex items-center text-sm text-slate-500"><Loader2 className="mr-2 size-4 animate-spin" /> Carregando dados do paciente...</p>}
+        <p role="status" className="text-xs text-slate-500">{draft.status === 'saving' ? 'Salvando rascunho…' : draft.status === 'saved' ? 'Rascunho salvo' : draft.status === 'error' ? 'Erro ao salvar rascunho' : ''}</p>
         {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
         <DialogFooter>{editing && patient && <PatientCompletionLinkButton patient={patient} variant="outline" />}<Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={saving || loadingPatient || photoBusy}>Cancelar</Button><Button type="submit" disabled={saving || loadingPatient || photoBusy} className="bg-[#2f8f82] hover:bg-[#26796e]">{saving && <Loader2 className="mr-2 size-4 animate-spin" />} {editing ? "Salvar alterações" : "Salvar paciente"}</Button></DialogFooter>
       </form>

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { BellRing, Building2, Check, ShieldCheck, Stethoscope, UserRound } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminLayout, AdminNotice, PageIntro } from "@/components/admin/admin-ui";
 import { useAuth } from "@/components/auth/auth-provider";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdminFormDraft } from "@/lib/admin/use-admin-form-draft";
 
 export const Route = createFileRoute("/admin/configuracoes")({ component: SettingsPage });
 
@@ -25,6 +26,8 @@ function SettingsPage() {
   const [credentialSaving, setCredentialSaving] = useState(false);
   const [credentialMessage, setCredentialMessage] = useState("");
   const [credentialError, setCredentialError] = useState("");
+  const [draftReady, setDraftReady] = useState(false);
+  const settingsDraft = useAdminFormDraft<{ nutritionistName: string; nutritionistCrn: string }>(user?.id, 'settings:nutritionist-credential');
 
   useEffect(() => {
     if (!user) { setCredentialLoading(false); return; }
@@ -37,6 +40,19 @@ function SettingsPage() {
     });
     return () => { active = false; };
   }, [user]);
+
+  useEffect(() => {
+    if (settingsDraft.status === 'loading' || credentialLoading) return;
+    if (settingsDraft.restoredPayload) {
+      setNutritionistName(settingsDraft.restoredPayload.nutritionistName);
+      setNutritionistCrn(settingsDraft.restoredPayload.nutritionistCrn);
+      setTab(settingsDraft.stage === 1 ? 'nutricionista' : 'perfil');
+    }
+    setDraftReady(true);
+  }, [credentialLoading, settingsDraft.restoredPayload, settingsDraft.stage, settingsDraft.status]);
+  useEffect(() => {
+    if (draftReady && (nutritionistName || nutritionistCrn)) settingsDraft.scheduleSave({ nutritionistName, nutritionistCrn }, tab === 'nutricionista' ? 1 : 0);
+  }, [draftReady, nutritionistCrn, nutritionistName, settingsDraft.scheduleSave, tab]);
 
   function updateSaved() { settingsDraftState.saved = true; setSaved(true); }
   function updateTab(value: string) { settingsDraftState.tab = value; setTab(value); }
@@ -65,6 +81,7 @@ function SettingsPage() {
       setCredentialError("Não foi possível salvar o cadastro da nutricionista. Confira suas permissões e tente novamente.");
       return;
     }
+    await settingsDraft.clear();
     setCredentialMessage("Nome e CRN salvos. O cadastro ainda precisa estar verificado para permitir a aprovação de propostas.");
   }
 

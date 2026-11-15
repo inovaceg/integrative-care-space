@@ -31,6 +31,7 @@ const sectionGuidance: Record<string, string> = {
   'Limitações da avaliação': 'Informe condições que possam limitar o alcance dos resultados. Exemplo: “A análise considerou as informações disponíveis até a data de emissão.”',
   'Identificação e assinatura profissional': 'Confira nome, profissão, número de registro, local e data; assine apenas após revisão final. Exemplo: “Dr(a). Nome Sobrenome · CRP 00/00000 · Município/UF · data.”',
 };
+const sessionDraftKey = '__session_draft';
 const scoreGuidance: Record<string, string> = {
   application_date: 'Data em que o instrumento foi aplicado. Exemplo: 18/03/2025.', version: 'Transcreva a versão usada conforme o material/manual licenciado. Não estime. Exemplo: “edição indicada no protocolo”.', raw_score: 'Registre o valor bruto conforme a correção autorizada. Exemplo ilustrativo: “42”.', standardized_score: 'Registre apenas o valor padronizado fornecido pela correção/manual. Exemplo ilustrativo: “105”.', percentile: 'Transcreva o percentil consultado no manual autorizado. Exemplo ilustrativo: “63”.', classification: 'Informe a classificação exatamente conforme o manual aplicável; não use classificação automática. Exemplo: “classificação indicada pelo manual”.', qualitative_notes: 'Descreva observações qualitativas do profissional. Exemplo: “pediu repetição da instrução antes de iniciar”.', conditions: 'Registre condições que influenciaram a aplicação. Exemplo: “sessão realizada em sala silenciosa; pausa breve solicitada”.',
 };
@@ -89,12 +90,21 @@ export default function NeuropsychReportsPage() {
       const savedReport = reportRows.find((item) => item.id === savedReportId && item.paciente_id === savedPatientId);
       if (savedPatient) setPatientId(savedPatient.id);
       if (savedReport) {
-        setSelected(savedReport); setPatientId(savedReport.paciente_id); setTitle(savedReport.title); setContent(savedReport.sections ?? {});
+        setSelected(savedReport); setPatientId(savedReport.paciente_id); setTitle(savedReport.title); setContent(savedReport.sections ?? {}); restoreSessionDraft(savedReport.sections ?? {});
         void loadRelated(savedReport.id);
       }
     }
   }
   useEffect(() => { restoredSelection.current = false; void load(); }, [user?.id]);
+  function restoreSessionDraft(sectionsData: Record<string, string>) {
+    const raw = sectionsData[sessionDraftKey];
+    if (!raw) { setSessionNotes(''); return; }
+    try {
+      const draft = JSON.parse(raw) as { date?: string; notes?: string };
+      if (draft.date) setSessionDate(draft.date);
+      setSessionNotes(draft.notes ?? '');
+    } catch { setSessionNotes(''); }
+  }
   useEffect(() => {
     if (!user || !restoredSelection.current || typeof window === 'undefined') return;
     const patientKey = `neuropsych:last-patient:${user.id}`;
@@ -116,29 +126,35 @@ export default function NeuropsychReportsPage() {
     setLinkedAssessments((assessments.data ?? []) as {title:string; age_group:string; status:string; instrument_ids:string[]; intake:Record<string,string>}[]);
   }
   function newReport(id: string) { reportDirty.current = 0; setSelected(null); setPatientId(id); setTitle('Laudo Neuropsicológico'); setContent(Object.fromEntries(sections.map((s) => [s, '']))); setSessions([]); setLinkedAssessments([]); setResultId(''); setSessionDate(new Date().toISOString().slice(0,10)); setSessionNotes(''); setScore({ instrument_id: '', instrument_name: '', application_date: new Date().toISOString().slice(0,10), version: '', raw_score: '', standardized_score: '', percentile: '', classification: '', qualitative_notes: '', conditions: '' }); }
-  async function editReport(report: Report) { reportDirty.current = 0; setSelected(report); setPatientId(report.paciente_id); setTitle(report.title); setContent(report.sections ?? {}); await loadRelated(report.id); setNotice(''); }
+  async function editReport(report: Report) { reportDirty.current = 0; setSelected(report); setPatientId(report.paciente_id); setTitle(report.title); setContent(report.sections ?? {}); restoreSessionDraft(report.sections ?? {}); await loadRelated(report.id); setNotice(''); }
 
   async function save(finalize = false, automatic = false) {
     if (!user || !patientId || (selected?.status === 'finalizado' && selected)) return;
     if (automatic && reportAutoSaveInProgress.current) return;
     if (automatic) reportAutoSaveInProgress.current = true;
     const savedRevision = reportDirty.current;
-    if (!automatic) { setBusy(true); setFailure(''); setNotice(''); }
+    const sectionsToSave = { ...content, [sessionDraftKey]: JSON.stringify({ date: sessionDate, notes: sessionNotes }) };
+    if (!automatic) { setBusy(true); setFailure(''); setNotice(''); } else { setFailure(''); setNotice('Salvando rascunho…'); }
     try {
       let reportId = selected?.id;
+      let persistedReport: Report | null = selected;
       if (reportId) {
-        const { data: old } = await supabase.from('neuropsych_reports').select('sections,status').eq('id', reportId).eq('profissional_id', user.id).single();
+        const { data: old, error: loadError } = await supabase.from('neuropsych_reports').select('sections,status,updated_at').eq('id', reportId).eq('profissional_id', user.id).single();
+        if (loadError) throw loadError;
+        if (!old || old.updated_at !== selected?.updated_at) throw new Error('Rascunho alterado em outro local; recarregue antes de salvar.');
         if (old && !automatic) {
           const { count } = await supabase.from('neuropsych_report_versions').select('id', { count: 'exact', head: true }).eq('report_id', reportId).eq('profissional_id', user.id);
           const ver = await supabase.from('neuropsych_report_versions').insert({ report_id: reportId, profissional_id: user.id, version_number: (count ?? 0) + 1, sections: old.sections, status: old.status, created_by: user.id });
           if (ver.error) throw ver.error;
         }
-        const { error } = await supabase.from('neuropsych_reports').update({ title, sections: content, status: finalize ? 'finalizado' : 'rascunho', finalized_at: finalize ? new Date().toISOString() : null, updated_at: new Date().toISOString() }).eq('id', reportId).eq('profissional_id', user.id).eq('status', 'rascunho');
+        const { data: updated, error } = await supabase.from('neuropsych_reports').update({ title, sections: sectionsToSave, status: finalize ? 'finalizado' : 'rascunho', finalized_at: finalize ? new Date().toISOString() : null, updated_at: new Date().toISOString() }).eq('id', reportId).eq('profissional_id', user.id).eq('status', 'rascunho').eq('updated_at', old.updated_at).select('*').single();
         if (error) throw error;
+        persistedReport = updated as Report;
       } else {
-        const { data, error } = await supabase.from('neuropsych_reports').insert({ profissional_id: user.id, paciente_id: patientId, title, sections: content, status: 'rascunho' }).select().single();
+        const { data, error } = await supabase.from('neuropsych_reports').insert({ profissional_id: user.id, paciente_id: patientId, title, sections: sectionsToSave, status: 'rascunho' }).select().single();
         if (error) throw error;
         reportId = data.id;
+        persistedReport = data as Report;
         if (!automatic) {
           const { error: versionError } = await supabase.from('neuropsych_report_versions').insert({ report_id: reportId, profissional_id: user.id, version_number: 1, sections: content, status: data.status, created_by: user.id });
           if (versionError) throw versionError;
@@ -157,24 +173,30 @@ export default function NeuropsychReportsPage() {
         if (!resultId && resultQuery.data) setResultId(resultQuery.data.id);
       }
       if (automatic) {
-        if (reportId) setSelected({ id: reportId, paciente_id: patientId, title, status: 'rascunho', sections: content, updated_at: new Date().toISOString() });
+        if (persistedReport) setSelected(persistedReport);
         if (reportDirty.current === savedRevision) reportDirty.current = 0;
         setNotice('Rascunho salvo automaticamente.');
+        if (reportDirty.current !== savedRevision) window.setTimeout(() => void save(false, true), 2000);
         return;
       }
       setNotice(finalize ? 'Laudo finalizado. A versão final não pode ser editada.' : 'Rascunho salvo com histórico de versão.');
       await load();
       if (finalize && reportId) { const latest = (await supabase.from('neuropsych_reports').select('*').eq('id', reportId).single()).data as Report; if (latest) setSelected(latest); }
-      else if (reportId) setSelected({ id: reportId, paciente_id: patientId, title, status: 'rascunho', sections: content, updated_at: new Date().toISOString() });
+      else if (persistedReport) setSelected(persistedReport);
       if (reportDirty.current === savedRevision) reportDirty.current = 0;
     } catch { setFailure('Não foi possível salvar. Confira a conexão e suas permissões.'); }
     finally { if (automatic) reportAutoSaveInProgress.current = false; else setBusy(false); }
   }
   useEffect(() => {
     if (!patientId || !reportDirty.current || busy || selected?.status === 'finalizado') return;
-    const timer = window.setTimeout(() => { void save(false, true); }, 700);
+    const timer = window.setTimeout(() => { void save(false, true); }, 2000);
     return () => window.clearTimeout(timer);
-  }, [busy, content, patientId, score, selected?.id, selected?.status, title]);
+  }, [busy, content, patientId, score, selected?.id, selected?.status, sessionDate, sessionNotes, title]);
+  useEffect(() => {
+    const retry = () => { if (reportDirty.current) void save(false, true); };
+    window.addEventListener('online', retry);
+    return () => window.removeEventListener('online', retry);
+  }, [content, patientId, score, selected?.id, selected?.status, sessionDate, sessionNotes, title]);
 
   async function addSession() {
     if (!user || !selected || !patientId || !sessionDate) return;

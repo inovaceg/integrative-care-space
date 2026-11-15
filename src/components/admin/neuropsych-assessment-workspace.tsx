@@ -60,6 +60,7 @@ export function NeuropsychAssessmentWorkspace({ instruments, reports, patientId,
   const autoSaveInProgress = useRef(false);
   const [items, setItems] = useState<Assessment[]>([]);
   const [selectedId, setSelectedId] = useState('');
+  const [currentUpdatedAt, setCurrentUpdatedAt] = useState('');
   const [reportId, setReportId] = useState('');
   const [title, setTitle] = useState('Avaliação neuropsicológica');
   const [ageGroup, setAgeGroup] = useState<(typeof ageGroups)[number]>('adulto');
@@ -75,22 +76,22 @@ export function NeuropsychAssessmentWorkspace({ instruments, reports, patientId,
     setItems((data ?? []) as Assessment[]);
   }
   useEffect(() => { void load(); }, [user?.id]);
-  useEffect(() => { dirtyRevision.current = 0; setSelectedId(''); setReportId(''); setTitle('Avaliação neuropsicológica'); setAgeGroup('adulto'); setStatus('rascunho'); setInstrumentIds([]); setIntake({}); }, [patientId]);
+  useEffect(() => { dirtyRevision.current = 0; setSelectedId(''); setCurrentUpdatedAt(''); setReportId(''); setTitle('Avaliação neuropsicológica'); setAgeGroup('adulto'); setStatus('rascunho'); setInstrumentIds([]); setIntake({}); }, [patientId]);
   useEffect(() => { onInstrumentSelectionChange(instrumentIds); }, [instrumentIds, onInstrumentSelectionChange]);
 
   function startNew() {
     dirtyRevision.current = 0;
-    setSelectedId(''); setReportId(''); setTitle('Avaliação neuropsicológica'); setAgeGroup('adulto'); setStatus('rascunho'); setInstrumentIds([]); setIntake({}); setMessage('');
+    setSelectedId(''); setCurrentUpdatedAt(''); setReportId(''); setTitle('Avaliação neuropsicológica'); setAgeGroup('adulto'); setStatus('rascunho'); setInstrumentIds([]); setIntake({}); setMessage('');
   }
   function open(item: Assessment) {
     dirtyRevision.current = 0;
-    setSelectedId(item.id); setReportId(item.report_id ?? ''); setTitle(item.title); setAgeGroup(item.age_group as (typeof ageGroups)[number]); setStatus(item.status); setInstrumentIds(item.instrument_ids ?? []); setIntake(item.intake ?? {}); setMessage('');
+    setSelectedId(item.id); setCurrentUpdatedAt(item.updated_at); setReportId(item.report_id ?? ''); setTitle(item.title); setAgeGroup(item.age_group as (typeof ageGroups)[number]); setStatus(item.status); setInstrumentIds(item.instrument_ids ?? []); setIntake(item.intake ?? {}); setMessage('');
   }
   useEffect(() => {
     if (!user || !patientId || selectedId || !items.length || typeof window === 'undefined') return;
     const savedId = window.sessionStorage.getItem(`neuropsych:last-assessment:${user.id}`);
     const saved = items.find((item) => item.id === savedId && item.paciente_id === patientId);
-    if (saved) { setSelectedId(saved.id); setReportId(saved.report_id ?? ''); setTitle(saved.title); setAgeGroup(saved.age_group as (typeof ageGroups)[number]); setStatus(saved.status); setInstrumentIds(saved.instrument_ids ?? []); setIntake(saved.intake ?? {}); }
+    if (saved) { setSelectedId(saved.id); setCurrentUpdatedAt(saved.updated_at); setReportId(saved.report_id ?? ''); setTitle(saved.title); setAgeGroup(saved.age_group as (typeof ageGroups)[number]); setStatus(saved.status); setInstrumentIds(saved.instrument_ids ?? []); setIntake(saved.intake ?? {}); }
   }, [items, patientId, selectedId, user?.id]);
   useEffect(() => {
     if (!user || !patientId || !items.length || typeof window === 'undefined') return;
@@ -99,24 +100,33 @@ export function NeuropsychAssessmentWorkspace({ instruments, reports, patientId,
   }, [items.length, patientId, selectedId, user?.id]);
   useEffect(() => {
     if (!patientId || !dirtyRevision.current) return;
-    const timer = window.setTimeout(() => { void save(true); }, 700);
+    const timer = window.setTimeout(() => { void save(true); }, 2000);
     return () => window.clearTimeout(timer);
+  }, [ageGroup, intake, instrumentIds, patientId, reportId, selectedId, status, title]);
+  useEffect(() => {
+    const retry = () => { if (dirtyRevision.current) void save(true); };
+    window.addEventListener('online', retry);
+    return () => window.removeEventListener('online', retry);
   }, [ageGroup, intake, instrumentIds, patientId, reportId, selectedId, status, title]);
   async function save(automatic = false) {
     if (!user || !patientId || !title.trim()) { setMessage('Selecione um paciente e informe o título.'); return; }
     if (automatic && autoSaveInProgress.current) return;
-    if (automatic) autoSaveInProgress.current = true;
+    if (automatic) { autoSaveInProgress.current = true; setMessage('Salvando rascunho…'); }
     const savedRevision = dirtyRevision.current;
     const payload = { profissional_id: user.id, paciente_id: patientId, report_id: reportId || null, title: title.trim(), age_group: ageGroup, status, instrument_ids: instrumentIds, intake, updated_at: new Date().toISOString() };
     const query = selectedId
-      ? await supabase.from('neuropsych_assessments').update(payload).eq('id', selectedId).eq('profissional_id', user.id).select().single()
+      ? await supabase.from('neuropsych_assessments').update(payload).eq('id', selectedId).eq('profissional_id', user.id).eq('updated_at', currentUpdatedAt).select().single()
       : await supabase.from('neuropsych_assessments').insert(payload).select().single();
     if (query.error) { if (automatic) autoSaveInProgress.current = false; setMessage('Não foi possível salvar. Confira as permissões do paciente e do laudo associado.'); return; }
     const saved = query.data as Assessment;
     setSelectedId(saved.id);
+    setCurrentUpdatedAt(saved.updated_at);
     if (dirtyRevision.current === savedRevision) dirtyRevision.current = 0;
     setMessage(automatic ? 'Rascunho salvo automaticamente.' : 'Avaliação salva.'); await load();
-    if (automatic) autoSaveInProgress.current = false;
+    if (automatic) {
+      autoSaveInProgress.current = false;
+      if (dirtyRevision.current !== savedRevision) window.setTimeout(() => void save(true), 2000);
+    }
   }
 
   const availableReports = reports.filter((report) => report.paciente_id === patientId);

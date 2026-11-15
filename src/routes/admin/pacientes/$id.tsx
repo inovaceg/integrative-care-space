@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useChildMatches, useParams, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, CalendarPlus, FileText, Loader2, Mail, Phone, Save, ShieldCheck, Trash2 } from "lucide-react";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { AdminLayout, EmptyState, PageIntro, SectionCard, StatusBadge } from "@/components/admin/admin-ui";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { AnamneseTab } from "@/components/admin/patients/anamnese-tab";
 import { PatientPhoto, PatientPhotoPicker } from "@/components/admin/patients/patient-photo";
 import { ExamAttachments } from "@/components/admin/patients/exam-attachments";
 import { deletePatient, fetchAppointments, fetchPatient, generatePatientCompletionLink, updatePatient, type AppointmentRecord, type PatientInput, type PatientRecord } from "@/lib/admin/records";
+import { useAdminFormDraft } from "@/lib/admin/use-admin-form-draft";
 
 export const Route = createFileRoute("/admin/pacientes/$id")({ component: PatientProfileRouteComponent });
 
@@ -32,8 +33,21 @@ function PatientEditForm({ patient, onSaved }: { patient: PatientRecord; onSaved
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [error, setError] = useState("");
+  const [draftReady, setDraftReady] = useState(false);
+  const [edited, setEdited] = useState(false);
+  const draft = useAdminFormDraft<typeof form>(user?.id, `patient-edit:${patient.id}`, patient.id);
 
-  function update(field: keyof typeof form, value: string) { setForm((current) => ({ ...current, [field]: value })); }
+  useEffect(() => {
+    if (draft.status === 'loading') return;
+    if (draft.restoredPayload) setForm(draft.restoredPayload);
+    setEdited(false);
+    setDraftReady(true);
+  }, [draft.status, draft.restoredPayload]);
+  useEffect(() => {
+    if (draftReady && edited) draft.scheduleSave(form);
+  }, [draft.scheduleSave, draftReady, edited, form]);
+
+  function update(field: keyof typeof form, value: string) { setEdited(true); setForm((current) => ({ ...current, [field]: value })); }
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setError("");
     if (!user || !form.nome.trim()) { setError("Informe o nome completo do paciente."); return; }
@@ -44,6 +58,7 @@ function PatientEditForm({ patient, onSaved }: { patient: PatientRecord; onSaved
     const { data, error: updateError } = await updatePatient(user.id, patient.id, input, photo);
     setSaving(false);
     if (updateError || !data) { setError(updateError?.message ?? "Não foi possível atualizar o paciente."); return; }
+    await draft.clear();
     setPhoto(null);
     onSaved(data as PatientRecord);
   }
