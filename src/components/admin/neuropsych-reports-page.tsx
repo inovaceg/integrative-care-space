@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { NeuropsychAssessmentWorkspace } from '@/components/admin/neuropsych-assessment-workspace';
 import { supabase } from '@/integrations/supabase/client';
-import { downloadDocumentPdf, type DocumentPage } from '@/lib/admin/document-layout';
+import { downloadDocumentPdf } from '@/lib/admin/document-layout';
+import { buildNeuropsychReportPages, neuropsychReportFilename } from '@/lib/admin/neuropsych-report-pdf';
 
 type Patient = { id: string; nome: string; data_nascimento: string | null };
 type Report = { id: string; paciente_id: string; title: string; status: 'rascunho' | 'finalizado'; sections: Record<string, string>; updated_at: string };
@@ -153,25 +154,22 @@ export default function NeuropsychReportsPage() {
   }
   async function exportPdf() {
     if (!patient || !selected) return;
-    const lines: DocumentPage = [{ text: 'LAUDO NEUROPSICOLÓGICO', x: 42, y: 50, size: 17, bold: true, color: '#123c3d' }, { text: `Profissional: Dr. Frederick Martins Parreira · CRP 04/86194`, x: 42, y: 78, size: 10 }, { text: `Paciente: ${patient.nome} · Nascimento: ${patient.data_nascimento ?? 'Não informado'}`, x: 42, y: 96, size: 10 }, { text: `Emitido em ${new Date().toLocaleDateString('pt-BR')}`, x: 42, y: 114, size: 9 }];
-    let y = 150;
-    for (const heading of sections) {
-      lines.push({ text: heading.toUpperCase(), x: 42, y, size: 11, bold: true, color: '#21655f' }); y += 18;
-      const body = content[heading] || 'Não informado.';
-      for (const part of body.split('\n')) { lines.push({ text: part.slice(0, 160), x: 42, y, size: 9 }); y += 14; if (y > 760) { lines.push({ text: 'Continuação do conteúdo no editor do laudo.', x:42, y:790, size:8 }); break; } }
-      y += 12;
-    }
-    for (const assessment of linkedAssessments) {
-      lines.push({ text: `AVALIAÇÃO VINCULADA · ${assessment.title} · ${assessment.age_group} · ${assessment.status}`, x: 42, y, size: 10, bold: true, color: '#21655f' }); y += 16;
-      const chosen = instruments.filter((item) => assessment.instrument_ids.includes(item.id)).map((item) => item.name).join(', ');
-      lines.push({ text: `Bateria selecionada: ${chosen || 'não informada'}`, x: 42, y, size: 9 }); y += 14;
-      for (const [key, value] of Object.entries(assessment.intake)) if (value) { lines.push({ text: `${key}: ${value.slice(0, 160)}`, x: 42, y, size: 9 }); y += 14; }
-      y += 10;
-    }
-    for (const session of sessions) { lines.push({ text: `Sessão ${session.session_date}: ${session.notes}`, x: 42, y, size: 9 }); y += 14; }
-    if (score.instrument_name) { lines.push({ text: `Resultado manual · ${score.instrument_name} · ${score.application_date} · versão ${score.version} · bruto ${score.raw_score} · padronizado ${score.standardized_score} · percentil ${score.percentile} · classificação ${score.classification}`, x: 42, y, size: 9 }); y += 14; }
-    lines.push({ text: 'Assinatura: __________________________________________', x: 120, y: Math.min(y + 24, 800), size: 10 }, { text: `Página 1 · ${new Date().toLocaleDateString('pt-BR')}`, x: 240, y: 820, size: 8, color: '#64748b' });
-    await downloadDocumentPdf([lines], `laudo-neuropsicologico-${patient.nome.toLowerCase().replace(/[^a-z0-9]+/g,'-')}.pdf`, false, true);
+    const emittedAt = new Date().toLocaleDateString('pt-BR');
+    const pages = buildNeuropsychReportPages({
+      patientName: patient.nome,
+      birthDate: patient.data_nascimento,
+      reportTitle: title,
+      emittedAt,
+      draft: selected.status !== 'finalizado',
+      sections: sections.map((heading) => [heading, content[heading] ?? '']),
+      linkedAssessments: linkedAssessments.map((assessment) => ({
+        ...assessment,
+        instruments: instruments.filter((item) => assessment.instrument_ids.includes(item.id)).map((item) => item.name),
+      })),
+      sessions,
+      result: score.instrument_name ? score : null,
+    });
+    await downloadDocumentPdf(pages, neuropsychReportFilename(patient.nome), false, true);
   }
   const versions = useMemo(() => reports.filter((report) => report.paciente_id === patientId), [reports, patientId]);
   const visibleInstruments = useMemo(() => instruments.filter((item) => {
