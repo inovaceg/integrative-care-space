@@ -40,6 +40,7 @@ import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
 import { Route as AdminEstatisticasRouteImport } from './routes/admin/estatisticas'
 import { Route as AdminEvolucaoCorporalRouteImport } from './routes/admin/evolucao-corporal'
 import { Route as AdminFinanceiroRouteImport } from './routes/admin/financeiro'
+import { Route as AdminLaudosNeuropsicologicosRouteImport } from './routes/admin/laudos-neuropsicologicos'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
 import { Route as AdminMedicamentosRouteImport } from './routes/admin/medicamentos'
 import { Route as AdminPacientesRouteImport } from './routes/admin/pacientes'
@@ -213,6 +214,12 @@ const AdminFinanceiroRoute = AdminFinanceiroRouteImport.update({
   path: '/financeiro',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminLaudosNeuropsicologicosRoute =
+  AdminLaudosNeuropsicologicosRouteImport.update({
+    id: '/laudos-neuropsicologicos',
+    path: '/laudos-neuropsicologicos',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -317,6 +324,7 @@ export interface FileRoutesByFullPath {
   '/admin/estatisticas': typeof AdminEstatisticasRoute
   '/admin/evolucao-corporal': typeof AdminEvolucaoCorporalRoute
   '/admin/financeiro': typeof AdminFinanceiroRoute
+  '/admin/laudos-neuropsicologicos': typeof AdminLaudosNeuropsicologicosRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/medicamentos': typeof AdminMedicamentosRoute
   '/admin/pacientes': typeof AdminPacientesRouteWithChildren
@@ -363,6 +371,7 @@ export interface FileRoutesByTo {
   '/admin/estatisticas': typeof AdminEstatisticasRoute
   '/admin/evolucao-corporal': typeof AdminEvolucaoCorporalRoute
   '/admin/financeiro': typeof AdminFinanceiroRoute
+  '/admin/laudos-neuropsicologicos': typeof AdminLaudosNeuropsicologicosRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/medicamentos': typeof AdminMedicamentosRoute
   '/admin/pacientes': typeof AdminPacientesRouteWithChildren
@@ -411,6 +420,7 @@ export interface FileRoutesById {
   '/admin/estatisticas': typeof AdminEstatisticasRoute
   '/admin/evolucao-corporal': typeof AdminEvolucaoCorporalRoute
   '/admin/financeiro': typeof AdminFinanceiroRoute
+  '/admin/laudos-neuropsicologicos': typeof AdminLaudosNeuropsicologicosRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/medicamentos': typeof AdminMedicamentosRoute
   '/admin/pacientes': typeof AdminPacientesRouteWithChildren
@@ -460,6 +470,7 @@ export interface FileRouteTypes {
     | '/admin/estatisticas'
     | '/admin/evolucao-corporal'
     | '/admin/financeiro'
+    | '/admin/laudos-neuropsicologicos'
     | '/admin/login'
     | '/admin/medicamentos'
     | '/admin/pacientes'
@@ -506,6 +517,7 @@ export interface FileRouteTypes {
     | '/admin/estatisticas'
     | '/admin/evolucao-corporal'
     | '/admin/financeiro'
+    | '/admin/laudos-neuropsicologicos'
     | '/admin/login'
     | '/admin/medicamentos'
     | '/admin/pacientes'
@@ -553,6 +565,7 @@ export interface FileRouteTypes {
     | '/admin/estatisticas'
     | '/admin/evolucao-corporal'
     | '/admin/financeiro'
+    | '/admin/laudos-neuropsicologicos'
     | '/admin/login'
     | '/admin/medicamentos'
     | '/admin/pacientes'
@@ -811,6 +824,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminFinanceiroRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/laudos-neuropsicologicos': {
+      id: '/admin/laudos-neuropsicologicos'
+      path: '/laudos-neuropsicologicos'
+      fullPath: '/admin/laudos-neuropsicologicos'
+      preLoaderRoute: typeof AdminLaudosNeuropsicologicosRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/login': {
       id: '/admin/login'
       path: '/login'
@@ -961,6 +981,7 @@ interface AdminRouteChildren {
   AdminEstatisticasRoute: typeof AdminEstatisticasRoute
   AdminEvolucaoCorporalRoute: typeof AdminEvolucaoCorporalRoute
   AdminFinanceiroRoute: typeof AdminFinanceiroRoute
+  AdminLaudosNeuropsicologicosRoute: typeof AdminLaudosNeuropsicologicosRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminMedicamentosRoute: typeof AdminMedicamentosRoute
   AdminPacientesRoute: typeof AdminPacientesRouteWithChildren
@@ -986,6 +1007,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminEstatisticasRoute: AdminEstatisticasRoute,
   AdminEvolucaoCorporalRoute: AdminEvolucaoCorporalRoute,
   AdminFinanceiroRoute: AdminFinanceiroRoute,
+  AdminLaudosNeuropsicologicosRoute: AdminLaudosNeuropsicologicosRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminMedicamentosRoute: AdminMedicamentosRoute,
   AdminPacientesRoute: AdminPacientesRouteWithChildren,
