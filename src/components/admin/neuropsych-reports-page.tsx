@@ -11,7 +11,7 @@ import { downloadDocumentPdf, type DocumentPage } from '@/lib/admin/document-lay
 
 type Patient = { id: string; nome: string; data_nascimento: string | null };
 type Report = { id: string; paciente_id: string; title: string; status: 'rascunho' | 'finalizado'; sections: Record<string, string>; updated_at: string };
-type Instrument = { id: string; name: string; area: string; public: string; purpose: string; version: string; satepsi_status: string; license: string };
+type Instrument = { id: string; name: string; area: string; areas: string[]; aliases: string[]; is_active: boolean; public: string; purpose: string; version: string; satepsi_status: string; license: string };
 const sections = ['Identificação','Descrição da demanda','Procedimentos realizados','Histórico clínico e informações relevantes','Instrumentos utilizados','Observações comportamentais','Resultados por domínio cognitivo','Análise integrada','Conclusão','Recomendações e encaminhamentos','Limitações da avaliação','Identificação e assinatura profissional'];
 const areas = ['Inteligência e raciocínio','Atenção e concentração','Memória e aprendizagem','Funções executivas','Desenvolvimento e comportamento adaptativo','TDAH','TEA','Aspectos emocionais e personalidade'];
 
@@ -29,8 +29,12 @@ export default function NeuropsychReportsPage() {
   const [failure, setFailure] = useState('');
   const [catalogName, setCatalogName] = useState('');
   const [catalogArea, setCatalogArea] = useState(areas[0]);
-  const [catalogFields, setCatalogFields] = useState({ public: '', purpose: '', version: '', satepsi_status: 'A conferir', license: '' });
-  const [score, setScore] = useState({ instrument_name: '', application_date: new Date().toISOString().slice(0,10), version: '', raw_score: '', standardized_score: '', percentile: '', classification: '', qualitative_notes: '', conditions: '' });
+  const [catalogFields, setCatalogFields] = useState({ public: '', purpose: '', version: '', satepsi_status: 'Pendente de conferência', license: '' });
+  const [catalogSearch, setCatalogSearch] = useState('');
+  const [catalogAreaFilter, setCatalogAreaFilter] = useState('Todas as áreas');
+  const [catalogStatusFilter, setCatalogStatusFilter] = useState('todos');
+  const [instrumentDrafts, setInstrumentDrafts] = useState<Record<string, Partial<Instrument>>>({});
+  const [score, setScore] = useState({ instrument_id: '', instrument_name: '', application_date: new Date().toISOString().slice(0,10), version: '', raw_score: '', standardized_score: '', percentile: '', classification: '', qualitative_notes: '', conditions: '' });
   const [sessions, setSessions] = useState<{id:string; session_date:string; notes:string; conditions:string}[]>([]);
   const [sessionDate, setSessionDate] = useState(new Date().toISOString().slice(0,10));
   const [sessionNotes, setSessionNotes] = useState('');
@@ -59,7 +63,7 @@ export default function NeuropsychReportsPage() {
     if (!res.error && res.data?.length) setScore((old) => ({ ...old, ...res.data[0] }));
     setSessions(ses.data ?? []);
   }
-  function newReport(id: string) { setSelected(null); setPatientId(id); setTitle('Laudo Neuropsicológico'); setContent(Object.fromEntries(sections.map((s) => [s, '']))); setSessions([]); setScore({ instrument_name: '', application_date: new Date().toISOString().slice(0,10), version: '', raw_score: '', standardized_score: '', percentile: '', classification: '', qualitative_notes: '', conditions: '' }); }
+  function newReport(id: string) { setSelected(null); setPatientId(id); setTitle('Laudo Neuropsicológico'); setContent(Object.fromEntries(sections.map((s) => [s, '']))); setSessions([]); setScore({ instrument_id: '', instrument_name: '', application_date: new Date().toISOString().slice(0,10), version: '', raw_score: '', standardized_score: '', percentile: '', classification: '', qualitative_notes: '', conditions: '' }); }
   async function editReport(report: Report) { setSelected(report); setPatientId(report.paciente_id); setTitle(report.title); setContent(report.sections ?? {}); await loadRelated(report.id); setNotice(''); }
 
   async function save(finalize = false) {
@@ -88,7 +92,7 @@ export default function NeuropsychReportsPage() {
         }
       }
       if (score.instrument_name && reportId) {
-        const { error } = await supabase.from('neuropsych_results').insert({ ...score, report_id: reportId, profissional_id: user.id });
+        const { error } = await supabase.from('neuropsych_results').insert({ ...score, instrument_id: score.instrument_id || null, report_id: reportId, profissional_id: user.id });
         if (error) throw error;
       }
       setNotice(finalize ? 'Laudo finalizado. A versão final não pode ser editada.' : 'Rascunho salvo com histórico de versão.');
@@ -105,13 +109,18 @@ export default function NeuropsychReportsPage() {
   }
   async function saveInstrument() {
     if (!user || !catalogName.trim()) return;
-    const { error } = await supabase.from('neuropsych_instruments').insert({ profissional_id: user.id, name: catalogName.trim(), area: catalogArea, ...catalogFields });
-    if (error) setFailure('Não foi possível adicionar o instrumento.'); else { setCatalogName(''); setCatalogFields({ public:'',purpose:'',version:'',satepsi_status:'A conferir',license:'' }); await load(); }
+    const { error } = await supabase.from('neuropsych_instruments').insert({ profissional_id: user.id, name: catalogName.trim(), area: catalogArea, areas: [catalogArea], ...catalogFields, satepsi_status: 'Pendente de conferência' });
+    if (error) setFailure('Não foi possível adicionar o instrumento.'); else { setCatalogName(''); setCatalogFields({ public:'',purpose:'',version:'',satepsi_status:'Pendente de conferência',license:'' }); await load(); }
   }
-  async function updateInstrument(item: Instrument, field: keyof Instrument, value: string) {
+  function updateInstrument(item: Instrument, field: keyof Instrument, value: string | string[] | boolean) {
+    setInstrumentDrafts((drafts) => ({ ...drafts, [item.id]: { ...drafts[item.id], [field]: value } }));
+  }
+  async function saveInstrumentEdits(item: Instrument) {
     if (!user) return;
-    const { error } = await supabase.from('neuropsych_instruments').update({ [field]: value, updated_at: new Date().toISOString() }).eq('id', item.id).eq('profissional_id', user.id);
-    if (error) setFailure('Não foi possível atualizar o instrumento.'); else await load();
+    const draft = instrumentDrafts[item.id];
+    if (!draft) return;
+    const { error } = await supabase.from('neuropsych_instruments').update({ ...draft, updated_at: new Date().toISOString() }).eq('id', item.id).eq('profissional_id', user.id);
+    if (error) setFailure('Não foi possível atualizar o instrumento.'); else { setInstrumentDrafts((drafts) => { const next = { ...drafts }; delete next[item.id]; return next; }); await load(); }
   }
   async function exportPdf() {
     if (!patient || !selected) return;
@@ -127,6 +136,13 @@ export default function NeuropsychReportsPage() {
     await downloadDocumentPdf([lines], `laudo-neuropsicologico-${patient.nome.toLowerCase().replace(/[^a-z0-9]+/g,'-')}.pdf`, false, true);
   }
   const versions = useMemo(() => reports.filter((report) => report.paciente_id === patientId), [reports, patientId]);
+  const visibleInstruments = useMemo(() => instruments.filter((item) => {
+    const query = catalogSearch.trim().toLocaleLowerCase('pt-BR');
+    const matchesText = !query || [item.name, ...item.aliases, item.area, ...item.areas].some((text) => text.toLocaleLowerCase('pt-BR').includes(query));
+    const matchesArea = catalogAreaFilter === 'Todas as áreas' || item.areas.includes(catalogAreaFilter);
+    const matchesStatus = catalogStatusFilter === 'todos' || (catalogStatusFilter === 'ativos' ? item.is_active : !item.is_active);
+    return matchesText && matchesArea && matchesStatus;
+  }), [catalogAreaFilter, catalogSearch, catalogStatusFilter, instruments]);
 
   return <AdminLayout><PageIntro eyebrow="Documentação clínica" title="Laudos Neuropsicológicos" description="Elaboração manual, registro protegido e exportação de laudos." />
     <div className="mt-5 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4">
@@ -139,9 +155,9 @@ export default function NeuropsychReportsPage() {
       <SectionCard title="Editor do laudo"><div className="space-y-4"><div><Label htmlFor="report-title">Título</Label><Input id="report-title" value={title} onChange={(e) => setTitle(e.target.value)} disabled={selected?.status === 'finalizado'} /></div>{sections.map((name) => <div key={name}><Label htmlFor={`sec-${name}`}>{name}</Label><Textarea id={`sec-${name}`} className="mt-1 min-h-24" value={content[name] ?? ''} onChange={(e) => setContent((old) => ({ ...old, [name]: e.target.value }))} disabled={selected?.status === 'finalizado'} /></div>)}
         <div className="flex flex-wrap gap-2"><Button disabled={busy || selected?.status === 'finalizado'} onClick={() => void save(false)} variant="outline"><Save className="mr-2 size-4"/>Salvar rascunho</Button><Button disabled={busy || selected?.status === 'finalizado'} onClick={() => void save(true)} className="bg-[#176b62] text-white"><ShieldCheck className="mr-2 size-4"/>Finalizar</Button>{selected && <Button variant="outline" onClick={() => void exportPdf()}><Download className="mr-2 size-4"/>Visualizar / exportar PDF</Button>}</div>
       </div></SectionCard>
-      {selected && <SectionCard title="Sessões e resultados"><div className="grid gap-5 lg:grid-cols-2"><div className="space-y-2"><h3 className="font-medium">Sessões de avaliação</h3><Input type="date" value={sessionDate} onChange={(e) => setSessionDate(e.target.value)}/><Textarea placeholder="Notas da sessão" value={sessionNotes} onChange={(e) => setSessionNotes(e.target.value)}/><Button variant="outline" onClick={() => void addSession()}>Registrar sessão</Button>{sessions.map((s) => <p key={s.id} className="text-sm text-slate-600">{s.session_date} · {s.notes}</p>)}</div><div className="space-y-2"><h3 className="font-medium">Resultado registrado manualmente</h3><select className="h-10 w-full rounded-md border px-3" value={score.instrument_name} onChange={(e) => setScore({...score,instrument_name:e.target.value})}><option value="">Selecione instrumento</option>{instruments.map((i) => <option key={i.id} value={i.name}>{i.name}</option>)}</select>{(['application_date','version','raw_score','standardized_score','percentile','classification','qualitative_notes','conditions'] as const).map((field) => <div key={field}><Label>{({application_date:'Data de aplicação',version:'Versão',raw_score:'Escore bruto',standardized_score:'Escore padronizado',percentile:'Percentil',classification:'Classificação conforme manual',qualitative_notes:'Observações qualitativas',conditions:'Condições de aplicação'} as Record<string,string>)[field]}</Label><Input type={field === 'application_date' ? 'date' : 'text'} value={score[field]} onChange={(e) => setScore({...score,[field]:e.target.value})}/></div>)}<p className="text-xs text-slate-500">Escores e classificações são inseridos pelo profissional; nenhum cálculo psicométrico é realizado.</p></div></div></SectionCard>}
+      {selected && <SectionCard title="Sessões e resultados"><div className="grid gap-5 lg:grid-cols-2"><div className="space-y-2"><h3 className="font-medium">Sessões de avaliação</h3><Input type="date" value={sessionDate} onChange={(e) => setSessionDate(e.target.value)}/><Textarea placeholder="Notas da sessão" value={sessionNotes} onChange={(e) => setSessionNotes(e.target.value)}/><Button variant="outline" onClick={() => void addSession()}>Registrar sessão</Button>{sessions.map((s) => <p key={s.id} className="text-sm text-slate-600">{s.session_date} · {s.notes}</p>)}</div><div className="space-y-2"><h3 className="font-medium">Resultado registrado manualmente</h3><select className="h-10 w-full rounded-md border px-3" value={score.instrument_id} onChange={(e) => { const item=instruments.find((i)=>i.id===e.target.value); setScore({...score,instrument_id:item?.id ?? '',instrument_name:item?.name ?? ''}); }}><option value="">Selecione instrumento</option>{instruments.filter((i)=>i.is_active).map((i) => <option key={i.id} value={i.id}>{i.name} · {i.areas.join(', ')}</option>)}</select>{(['application_date','version','raw_score','standardized_score','percentile','classification','qualitative_notes','conditions'] as const).map((field) => <div key={field}><Label>{({application_date:'Data de aplicação',version:'Versão',raw_score:'Escore bruto',standardized_score:'Escore padronizado',percentile:'Percentil',classification:'Classificação conforme manual',qualitative_notes:'Observações qualitativas',conditions:'Condições de aplicação'} as Record<string,string>)[field]}</Label><Input type={field === 'application_date' ? 'date' : 'text'} value={score[field]} onChange={(e) => setScore({...score,[field]:e.target.value})}/></div>)}<p className="text-xs text-slate-500">Escores e classificações são inseridos pelo profissional; nenhum cálculo psicométrico é realizado.</p></div></div></SectionCard>}
     </div>}
-    <SectionCard title={`Catálogo profissional (${instruments.length})`}><p className="mb-4 text-sm text-slate-500">Catálogo individual do profissional. A lista de 55 instrumentos do planejamento não está disponível para carga prévia; cadastre os itens sem inserir conteúdo protegido.</p><div className="grid gap-3 md:grid-cols-2"><Input placeholder="Nome do instrumento" value={catalogName} onChange={(e) => setCatalogName(e.target.value)}/><select className="h-10 rounded-md border px-3" value={catalogArea} onChange={(e) => setCatalogArea(e.target.value)}>{areas.map((a)=><option key={a}>{a}</option>)}</select>{(['public','purpose','version','satepsi_status','license'] as const).map((f)=><Input key={f} placeholder={({public:'Público',purpose:'Finalidade',version:'Versão',satepsi_status:'Situação SATEPSI',license:'Licença'} as Record<string,string>)[f]} value={catalogFields[f]} onChange={(e)=>setCatalogFields({...catalogFields,[f]:e.target.value})}/>)}</div><Button className="mt-3" variant="outline" onClick={()=>void saveInstrument()}>Adicionar instrumento</Button><div className="mt-5 space-y-3">{instruments.map((i)=><div key={i.id} className="rounded-lg border p-3"><p className="font-semibold">{i.name} · {i.area}</p><div className="mt-2 grid gap-2 sm:grid-cols-2">{(['public','purpose','version','satepsi_status','license'] as const).map((f)=><Input key={f} aria-label={`${i.name}: ${f}`} value={i[f]} onChange={(e)=>void updateInstrument(i,f,e.target.value)}/>)}</div></div>)}</div></SectionCard>
+    <SectionCard title={`Catálogo profissional (${instruments.length})`}><p className="mb-4 text-sm text-slate-500">Instrumentos catalogados sem conteúdo protegido. Público, versão, finalidade e licença permanecem em branco até conferência documental.</p><div className="grid gap-3 md:grid-cols-2"><Input placeholder="Nome do instrumento" value={catalogName} onChange={(e) => setCatalogName(e.target.value)}/><select className="h-10 rounded-md border px-3" value={catalogArea} onChange={(e) => setCatalogArea(e.target.value)}>{areas.map((a)=><option key={a}>{a}</option>)}</select></div><Button className="mt-3" variant="outline" onClick={()=>void saveInstrument()}>Adicionar instrumento</Button><div className="mt-5 grid gap-3 md:grid-cols-3"><Input placeholder="Buscar nome ou área" value={catalogSearch} onChange={(e)=>setCatalogSearch(e.target.value)}/><select className="h-10 rounded-md border px-3" value={catalogAreaFilter} onChange={(e)=>setCatalogAreaFilter(e.target.value)}><option>Todas as áreas</option>{areas.map((a)=><option key={a}>{a}</option>)}</select><select className="h-10 rounded-md border px-3" value={catalogStatusFilter} onChange={(e)=>setCatalogStatusFilter(e.target.value)}><option value="todos">Ativos e inativos</option><option value="ativos">Ativos</option><option value="inativos">Inativos</option></select></div><div className="mt-4 space-y-3">{visibleInstruments.map((i)=>{const d={...i,...instrumentDrafts[i.id]}; return <div key={i.id} className="rounded-lg border p-3"><div className="flex flex-wrap items-center justify-between gap-2"><p className="font-semibold">{i.name} <span className="text-sm font-normal text-slate-500">{d.areas.join(' · ')}</span></p><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={d.is_active} onChange={(e)=>updateInstrument(i,'is_active',e.target.checked)}/>Ativo</label></div><div className="mt-2 grid gap-2 sm:grid-cols-2"><Input aria-label={`${i.name}: áreas`} value={d.areas.join(', ')} onChange={(e)=>updateInstrument(i,'areas',e.target.value.split(',').map(v=>v.trim()).filter(Boolean))}/>{(['public','purpose','version','satepsi_status','license'] as const).map((f)=><Input key={f} aria-label={`${i.name}: ${f}`} placeholder={({public:'Público',purpose:'Finalidade',version:'Versão',satepsi_status:'Conferência SATEPSI',license:'Licença'} as Record<string,string>)[f]} value={d[f]} onChange={(e)=>updateInstrument(i,f,e.target.value)}/>)}</div><Button className="mt-2" size="sm" variant="outline" disabled={!instrumentDrafts[i.id]} onClick={()=>void saveInstrumentEdits(i)}>Salvar alterações</Button></div>})}{visibleInstruments.length===0&&<p className="rounded-lg bg-slate-50 p-4 text-sm text-slate-500">Nenhum instrumento corresponde aos filtros.</p>}</div></SectionCard>
     {reports.length > 0 && <SectionCard title="Histórico de versões"><div className="space-y-2">{reports.map((r)=><button key={r.id} className="flex w-full items-center gap-2 rounded-lg border p-3 text-left text-sm hover:bg-slate-50" onClick={()=>void editReport(r)}><History className="size-4 text-[#2f8f82]"/>{patients.find((p)=>p.id===r.paciente_id)?.nome} · {r.title} · {r.status} · {new Date(r.updated_at).toLocaleString('pt-BR')}</button>)}</div></SectionCard>}
   </AdminLayout>;
 }
