@@ -56,6 +56,7 @@ export default function NeuropsychReportsPage() {
   const [catalogPurposeFilter, setCatalogPurposeFilter] = useState('');
   const [catalogStatusFilter, setCatalogStatusFilter] = useState('todos');
   const [instrumentDrafts, setInstrumentDrafts] = useState<Record<string, Partial<Instrument>>>({});
+  const [batteryInstrumentIds, setBatteryInstrumentIds] = useState<string[]>([]);
   const [resultId, setResultId] = useState('');
   const [score, setScore] = useState({ instrument_id: '', instrument_name: '', application_date: new Date().toISOString().slice(0,10), version: '', raw_score: '', standardized_score: '', percentile: '', classification: '', qualitative_notes: '', conditions: '' });
   const [sessions, setSessions] = useState<{id:string; session_date:string; notes:string; conditions:string}[]>([]);
@@ -180,8 +181,8 @@ export default function NeuropsychReportsPage() {
     const matchesPublic = !catalogPublicFilter.trim() || item.public.toLocaleLowerCase('pt-BR').includes(catalogPublicFilter.trim().toLocaleLowerCase('pt-BR'));
     const matchesPurpose = !catalogPurposeFilter.trim() || item.purpose.toLocaleLowerCase('pt-BR').includes(catalogPurposeFilter.trim().toLocaleLowerCase('pt-BR'));
     const matchesStatus = catalogStatusFilter === 'todos' || (catalogStatusFilter === 'ativos' ? item.is_active : !item.is_active);
-    return matchesText && matchesArea && matchesPublic && matchesPurpose && matchesStatus;
-  }), [catalogAreaFilter, catalogPublicFilter, catalogPurposeFilter, catalogSearch, catalogStatusFilter, instruments]);
+    return matchesText && matchesArea && matchesPublic && matchesPurpose && matchesStatus && batteryInstrumentIds.includes(item.id);
+  }), [batteryInstrumentIds, catalogAreaFilter, catalogPublicFilter, catalogPurposeFilter, catalogSearch, catalogStatusFilter, instruments]);
 
   return <AdminLayout><PageIntro eyebrow="Documentação clínica" title="Laudos Neuropsicológicos" description="Elaboração manual, registro protegido e exportação de laudos." />
     <div className="mt-5"><NeuropsychCatalogGuide /></div>
@@ -191,7 +192,7 @@ export default function NeuropsychReportsPage() {
       <div className="min-w-56 flex-1"><Label htmlFor="existing">Laudos anteriores</Label><select id="existing" className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm" value={selected?.id ?? ''} onChange={(e) => { const item = reports.find((r) => r.id === e.target.value); if (item) void editReport(item); }}><option value="">Selecionar laudo salvo</option>{versions.map((r) => <option key={r.id} value={r.id}>{r.title} · {r.status}</option>)}</select></div>
     </div>
     {failure && <p role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{failure}</p>}{notice && <p role="status" className="mt-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{notice}</p>}
-    <div className="mt-5"><NeuropsychAssessmentWorkspace instruments={instruments} reports={reports} patientId={patientId} /></div>
+    <div className="mt-5"><NeuropsychAssessmentWorkspace instruments={instruments} reports={reports} patientId={patientId} onInstrumentSelectionChange={setBatteryInstrumentIds} /></div>
     {patientId && <div className="mt-5 space-y-5">
       <SectionCard title="Editor do laudo"><div className="space-y-4"><div><Label htmlFor="report-title">Título</Label><Input id="report-title" value={title} onChange={(e) => setTitle(e.target.value)} disabled={selected?.status === 'finalizado'} /><p className="mt-1 text-xs text-slate-500">Nome interno para localizar o documento. Exemplo: “Avaliação neuropsicológica — março/2025”.</p></div>{sections.map((name) => <div key={name}><Label htmlFor={`sec-${name}`}>{name}</Label><p className="mt-1 text-xs leading-relaxed text-slate-600">{sectionGuidance[name]}</p><Textarea id={`sec-${name}`} className="mt-1 min-h-24" placeholder="Escreva somente informações revisadas pelo profissional. O exemplo acima é ilustrativo e não é inserido automaticamente." value={content[name] ?? ''} onChange={(e) => setContent((old) => ({ ...old, [name]: e.target.value }))} disabled={selected?.status === 'finalizado'} /></div>)}
         <div className="flex flex-wrap gap-2"><Button disabled={busy || selected?.status === 'finalizado'} onClick={() => void save(false)} variant="outline"><Save className="mr-2 size-4"/>Salvar rascunho</Button><Button disabled={busy || selected?.status === 'finalizado'} onClick={() => void save(true)} className="bg-[#176b62] text-white"><ShieldCheck className="mr-2 size-4"/>Finalizar</Button>{selected && <Button variant="outline" onClick={() => void exportPdf()}><Download className="mr-2 size-4"/>Visualizar / exportar PDF</Button>}</div>

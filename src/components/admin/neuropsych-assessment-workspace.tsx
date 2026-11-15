@@ -54,7 +54,7 @@ const adultResponseExamples: Record<string, string> = {
   'Objetivos da avaliação': 'Exemplo ilustrativo: “Compreender o perfil de funcionamento relacionado à demanda e subsidiar o planejamento de [objetivo acordado].”',
 };
 
-export function NeuropsychAssessmentWorkspace({ instruments, reports, patientId }: { instruments: Instrument[]; reports: Report[]; patientId: string }) {
+export function NeuropsychAssessmentWorkspace({ instruments, reports, patientId, onInstrumentSelectionChange }: { instruments: Instrument[]; reports: Report[]; patientId: string; onInstrumentSelectionChange: (ids: string[]) => void }) {
   const { user } = useAuth();
   const [items, setItems] = useState<Assessment[]>([]);
   const [selectedId, setSelectedId] = useState('');
@@ -74,6 +74,7 @@ export function NeuropsychAssessmentWorkspace({ instruments, reports, patientId 
   }
   useEffect(() => { void load(); }, [user?.id]);
   useEffect(() => { setSelectedId(''); setReportId(''); setTitle('Avaliação neuropsicológica'); setAgeGroup('adulto'); setStatus('rascunho'); setInstrumentIds([]); setIntake({}); }, [patientId]);
+  useEffect(() => { onInstrumentSelectionChange(instrumentIds); }, [instrumentIds, onInstrumentSelectionChange]);
 
   function startNew() {
     setSelectedId(''); setReportId(''); setTitle('Avaliação neuropsicológica'); setAgeGroup('adulto'); setStatus('rascunho'); setInstrumentIds([]); setIntake({}); setMessage('');
