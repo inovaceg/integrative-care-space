@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { NeuropsychAssessmentWorkspace } from '@/components/admin/neuropsych-assessment-workspace';
 import { NeuropsychCatalogGuide } from '@/components/admin/neuropsych-catalog-guide';
-import { Asrs18Questionnaire, asrs18ContentKey, formatAsrs18Responses } from '@/components/admin/asrs18-questionnaire';
+import { Asrs18Questionnaire, asrs18ContentKey, asrs18IdentificationKey, formatAsrs18Identification, formatAsrs18Responses, type Asrs18Identification } from '@/components/admin/asrs18-questionnaire';
 import { supabase } from '@/integrations/supabase/client';
 import { downloadDocumentPdf } from '@/lib/admin/document-layout';
 import { buildNeuropsychReportPages, neuropsychReportFilename } from '@/lib/admin/neuropsych-report-pdf';
@@ -18,6 +18,22 @@ type Report = { id: string; paciente_id: string; title: string; status: 'rascunh
 type Instrument = { id: string; name: string; area: string; areas: string[]; aliases: string[]; is_active: boolean; public: string; purpose: string; version: string; satepsi_status: string; license: string };
 const sections = ['Identificação','Descrição da demanda','Procedimentos realizados','Histórico clínico e informações relevantes','Instrumentos utilizados','Observações comportamentais','Resultados por domínio cognitivo','Análise integrada','Conclusão','Recomendações e encaminhamentos','Limitações da avaliação','Identificação e assinatura profissional'];
 const areas = ['Inteligência e raciocínio','Atenção e concentração','Memória e aprendizagem','Funções executivas','Desenvolvimento e comportamento adaptativo','TDAH','TEA','Aspectos emocionais e personalidade'];
+function patientAge(dateOfBirth: string | null) {
+  if (!dateOfBirth) return '';
+  const birth = new Date(`${dateOfBirth}T00:00:00`);
+  if (Number.isNaN(birth.getTime())) return '';
+  const today = new Date();
+  const age = today.getFullYear() - birth.getFullYear() - (today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate()) ? 1 : 0);
+  return `${age} anos`;
+}
+function readAsrs18Identification(value: string | undefined): Partial<Asrs18Identification> {
+  try {
+    const parsed: unknown = JSON.parse(value ?? '{}');
+    return parsed && typeof parsed === 'object' ? parsed as Partial<Asrs18Identification> : {};
+  } catch {
+    return {};
+  }
+}
 const sectionGuidance: Record<string, string> = {
   'Identificação': 'Registre os dados necessários para identificar a pessoa avaliada e o período da avaliação. Exemplo: nome completo, idade na data da avaliação e escolaridade. Evite dados que não sejam necessários.',
   'Descrição da demanda': 'Descreva quem solicitou a avaliação, a queixa apresentada e a pergunta que a avaliação pretende esclarecer. Exemplo: “A família procurou avaliação devido a dificuldades relatadas de atenção no contexto escolar.”',
@@ -70,6 +86,15 @@ export default function NeuropsychReportsPage() {
   const [sessionNotes, setSessionNotes] = useState('');
   const [linkedAssessments, setLinkedAssessments] = useState<{title:string; age_group:string; status:string; instrument_ids:string[]; intake:Record<string,string>}[]>([]);
   const patient = patients.find((item) => item.id === patientId);
+  const savedAsrs18Identification = readAsrs18Identification(content[asrs18IdentificationKey]);
+  const asrs18Identification: Asrs18Identification = {
+    author: savedAsrs18Identification.author ?? String(user?.user_metadata?.['full_name'] ?? user?.user_metadata?.['name'] ?? user?.email ?? ''),
+    requester: savedAsrs18Identification.requester ?? '',
+    purpose: savedAsrs18Identification.purpose ?? '',
+    patientName: patient?.nome ?? '',
+    birthDate: patient?.data_nascimento ? new Date(`${patient.data_nascimento}T00:00:00`).toLocaleDateString('pt-BR') : '',
+    age: patientAge(patient?.data_nascimento ?? null),
+  };
 
   async function load() {
     if (!user) return;
@@ -233,6 +258,7 @@ export default function NeuropsychReportsPage() {
     const emittedAt = new Date().toLocaleDateString('pt-BR');
     const reportSections: [string, string][] = sections.map((heading) => [heading, content[heading] ?? '']);
     const asrs18Summary = formatAsrs18Responses(content[asrs18ContentKey] ?? '');
+    if (content[asrs18IdentificationKey] || asrs18Summary) reportSections.push(['ASRS-18 — Identificação', formatAsrs18Identification(asrs18Identification)]);
     if (asrs18Summary) reportSections.push(['ASRS-18 — respostas registradas', asrs18Summary]);
     const pages = buildNeuropsychReportPages({
       patientName: patient.nome,
@@ -271,7 +297,7 @@ export default function NeuropsychReportsPage() {
     {failure && <p role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{failure}</p>}{notice && <p role="status" className="mt-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{notice}</p>}
     <div className="mt-5"><NeuropsychAssessmentWorkspace instruments={instruments} reports={reports} patientId={patientId} onInstrumentSelectionChange={setBatteryInstrumentIds} /></div>
     {patientId && <div className="mt-5 space-y-5" onChange={() => { reportDirty.current += 1; }} onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget) && reportDirty.current) void save(false, true); }}>
-      <SectionCard title="Editor do laudo"><div className="space-y-4"><div><Label htmlFor="report-title">Título</Label><Input id="report-title" value={title} onChange={(e) => setTitle(e.target.value)} disabled={selected?.status === 'finalizado'} /><p className="mt-1 text-xs text-slate-500">Nome interno para localizar o documento. Exemplo: “Avaliação neuropsicológica — março/2025”.</p></div>{sections.map((name) => <div key={name}><Label htmlFor={`sec-${name}`}>{name}</Label><p className="mt-1 text-xs leading-relaxed text-slate-600">{sectionGuidance[name]}</p><Textarea id={`sec-${name}`} className="mt-1 min-h-24" placeholder="Escreva somente informações revisadas pelo profissional. O exemplo acima é ilustrativo e não é inserido automaticamente." value={content[name] ?? ''} onChange={(e) => setContent((old) => ({ ...old, [name]: e.target.value }))} disabled={selected?.status === 'finalizado'} /></div>)}<Asrs18Questionnaire value={content[asrs18ContentKey] ?? ''} onChange={(value) => setContent((current) => ({ ...current, [asrs18ContentKey]: value }))} disabled={selected?.status === 'finalizado'} />
+      <SectionCard title="Editor do laudo"><div className="space-y-4"><div><Label htmlFor="report-title">Título</Label><Input id="report-title" value={title} onChange={(e) => setTitle(e.target.value)} disabled={selected?.status === 'finalizado'} /><p className="mt-1 text-xs text-slate-500">Nome interno para localizar o documento. Exemplo: “Avaliação neuropsicológica — março/2025”.</p></div>{sections.map((name) => <div key={name}><Label htmlFor={`sec-${name}`}>{name}</Label><p className="mt-1 text-xs leading-relaxed text-slate-600">{sectionGuidance[name]}</p><Textarea id={`sec-${name}`} className="mt-1 min-h-24" placeholder="Escreva somente informações revisadas pelo profissional. O exemplo acima é ilustrativo e não é inserido automaticamente." value={content[name] ?? ''} onChange={(e) => setContent((old) => ({ ...old, [name]: e.target.value }))} disabled={selected?.status === 'finalizado'} /></div>)}<Asrs18Questionnaire value={content[asrs18ContentKey] ?? ''} onChange={(value) => setContent((current) => ({ ...current, [asrs18ContentKey]: value }))} identification={asrs18Identification} onIdentificationChange={(value) => setContent((current) => ({ ...current, [asrs18IdentificationKey]: JSON.stringify(value) }))} disabled={selected?.status === 'finalizado'} />
         <div className="flex flex-wrap gap-2"><Button disabled={busy || selected?.status === 'finalizado'} onClick={() => void save(false)} variant="outline"><Save className="mr-2 size-4"/>Salvar rascunho</Button><Button disabled={busy || selected?.status === 'finalizado'} onClick={() => void save(true)} className="bg-[#176b62] text-white"><ShieldCheck className="mr-2 size-4"/>Finalizar</Button>{selected && <Button variant="outline" onClick={() => void exportPdf()}><Download className="mr-2 size-4"/>Visualizar / exportar PDF</Button>}</div>
       </div></SectionCard>
       {selected && <SectionCard title="Sessões e resultados"><div className="grid gap-5 lg:grid-cols-2"><div className="space-y-2"><h3 className="font-medium">Sessões de avaliação</h3><p className="text-xs text-slate-600">Data: dia da sessão. Notas: síntese objetiva do que foi realizado, sem dados desnecessários. Exemplo: “18/03/2025 — entrevista de avaliação”.</p><Input type="date" value={sessionDate} onChange={(e) => setSessionDate(e.target.value)}/><Textarea placeholder="Exemplo ilustrativo: entrevista de avaliação e revisão dos documentos apresentados." value={sessionNotes} onChange={(e) => setSessionNotes(e.target.value)}/><Button variant="outline" onClick={() => void addSession()}>Registrar sessão</Button>{sessions.map((s) => <p key={s.id} className="text-sm text-slate-600">{s.session_date} · {s.notes}</p>)}</div><div className="space-y-2"><h3 className="font-medium">Resultado registrado manualmente</h3><p className="text-xs leading-relaxed text-slate-600">Preencha conforme o manual e os registros originais; nada é calculado automaticamente. Exemplos meramente ilustrativos: data “18/03/2025”; versão “conforme identificação do manual”; bruto “42”; padronizado “105”; percentil “63”; classificação “transcrição da categoria do manual”; observações “solicitou repetição da instrução”; condições “sala silenciosa, com pausa breve”. Não use estes exemplos como resultados reais.</p><select className="h-10 w-full rounded-md border px-3" value={score.instrument_id} onChange={(e) => { const item=instruments.find((i)=>i.id===e.target.value); setScore({...score,instrument_id:item?.id ?? '',instrument_name:item?.name ?? ''}); }}><option value="">Selecione instrumento</option>{instruments.filter((i)=>i.is_active).map((i) => <option key={i.id} value={i.id}>{i.name} · {i.areas.join(', ')}</option>)}</select>{(['application_date','version','raw_score','standardized_score','percentile','classification','qualitative_notes','conditions'] as const).map((field) => <div key={field}><Label>{({application_date:'Data de aplicação',version:'Versão',raw_score:'Escore bruto',standardized_score:'Escore padronizado',percentile:'Percentil',classification:'Classificação conforme manual',qualitative_notes:'Observações qualitativas',conditions:'Condições de aplicação'} as Record<string,string>)[field]}</Label><Input type={field === 'application_date' ? 'date' : 'text'} value={score[field]} onChange={(e) => setScore({...score,[field]:e.target.value})}/></div>)}<p className="text-xs text-slate-500">Escores e classificações são inseridos pelo profissional; nenhum cálculo psicométrico é realizado.</p></div></div></SectionCard>}

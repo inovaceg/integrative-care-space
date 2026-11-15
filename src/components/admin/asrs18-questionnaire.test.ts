@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { asrs18Options, asrs18Questions, formatAsrs18Responses } from './asrs18-questionnaire';
+import { asrs18Options, asrs18Questions, formatAsrs18Identification, formatAsrs18Responses } from './asrs18-questionnaire';
 
 describe('questionário ASRS-18', () => {
   test('mantém nove itens em cada parte e cinco frequências', () => {
@@ -17,5 +17,15 @@ describe('questionário ASRS-18', () => {
     expect(output).toContain('10. Com que frequência você fica se mexendo');
     expect(output).toContain('— Muito frequentemente');
     expect(output).toContain('sem cálculo ou interpretação automática');
+  });
+
+  test('inclui identificação do laudo e dados do paciente na seção exportável', () => {
+    const output = formatAsrs18Identification({ author: 'Profissional', requester: 'Paciente', purpose: 'Avaliação clínica', patientName: 'Nome', birthDate: '08/05/1986', age: '40 anos' });
+    expect(output).toContain('Autoria: Profissional');
+    expect(output).toContain('Solicitante: Paciente');
+    expect(output).toContain('Finalidade: Avaliação clínica');
+    expect(output).toContain('Nome');
+    expect(output).toContain('Data de nascimento: 08/05/1986');
+    expect(output).toContain('Idade: 40 anos');
   });
 });
