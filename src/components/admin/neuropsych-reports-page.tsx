@@ -41,6 +41,7 @@ export default function NeuropsychReportsPage() {
   const restoredSelection = useRef(false);
   const reportDirty = useRef(0);
   const reportAutoSaveInProgress = useRef(false);
+  const saveOnExit = useRef<() => void>(() => undefined);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [instruments, setInstruments] = useState<Instrument[]>([]);
@@ -187,6 +188,14 @@ export default function NeuropsychReportsPage() {
     } catch { setFailure('Não foi possível salvar. Confira a conexão e suas permissões.'); }
     finally { if (automatic) reportAutoSaveInProgress.current = false; else setBusy(false); }
   }
+  saveOnExit.current = () => {
+    if (patientId && reportDirty.current && selected?.status !== 'finalizado') void save(false, true);
+  };
+  useEffect(() => {
+    const flush = () => saveOnExit.current();
+    window.addEventListener('pagehide', flush);
+    return () => { window.removeEventListener('pagehide', flush); flush(); };
+  }, []);
   useEffect(() => {
     if (!patientId || !reportDirty.current || busy || selected?.status === 'finalizado') return;
     const timer = window.setTimeout(() => { void save(false, true); }, 2000);
