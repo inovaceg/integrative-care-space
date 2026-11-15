@@ -267,6 +267,8 @@ export default function NeuropsychReportsPage() {
     if (!patient || !selected) return;
     const emittedAt = new Date().toLocaleDateString('pt-BR');
     const asrs18Summary = formatAsrs18Responses(content[asrs18ContentKey] ?? '');
+    const assessmentResponseSummary = linkedAssessments.flatMap((assessment) => Object.entries(assessment.intake ?? {}).filter(([, answer]) => answer.trim()).map(([question, answer]) => `${question}: ${answer}`)).join('\\n');
+    const evidenceForConclusion = [assessmentResponseSummary && `Respostas da anamnese registradas:\\n${assessmentResponseSummary}`, asrs18Summary && `Respostas ASRS-18 registradas (sem interpretação automática):\\n${asrs18Summary}`].filter(Boolean).join('\\n\\n');
     const reportSections: [string, string][] = [
       ['Laudo Psicológico de Avaliação Neuropsicológica', 'Laudo realizado de acordo com as Resoluções 06/2019, 01/2009 e 31/2022, do Conselho Federal de Psicologia (CFP), que orientam a elaboração de documentos escritos decorrentes de avaliação psicológica e o registro documental profissional. A interpretação e análise devem considerar dados obtidos por métodos, técnicas e instrumentos reconhecidos cientificamente para uso profissional.'],
       ['1. Identificação', ''],
@@ -281,7 +283,7 @@ export default function NeuropsychReportsPage() {
       ['4.1.3. Histórico Médico e Psiquiátrico', content['Histórico Médico e Psiquiátrico'] || 'Registre condições prévias, medicações em uso e sintomas relatados.'],
       ['4.1.4. Fatores Psicossociais e Ambientais', content['Fatores Psicossociais e Ambientais'] || 'Descreva fatores de estresse e aspectos culturais ou socioeconômicos pertinentes.'],
       ['4.2. Instrumentos, observações e resultados', [content['Instrumentos utilizados'], content['Observações comportamentais'], content['Resultados por domínio cognitivo'], content['Análise integrada']].filter(Boolean).join('\n\n')],
-      ['5. Conclusão', content['Conclusão'] || 'Descreva os aspectos significativos observados, os principais achados, habilidades preservadas ou dificuldades e a relação com a demanda.'],
+      ['5. Conclusão', [content['Conclusão'] || 'Descreva os aspectos significativos observados, os principais achados, habilidades preservadas ou dificuldades e a relação com a demanda.', evidenceForConclusion && `Respostas registradas para análise profissional (não constituem interpretação automática):\\n${evidenceForConclusion}`].filter(Boolean).join('\\n\\n')],
       ['6. Sugestões de encaminhamento', (content[recommendationsSection] ?? '').split('\n').filter((line) => line.trim()).map((line) => `- ${line}`).join('\n') || '- Encaminhamento 1\n- Encaminhamento 2\n- Encaminhamento 3\n- Encaminhamento 4'],
       ['Observações sobre o documento', '- Não pode ser utilizado para fins diferentes do apontado no item de identificação do documento.\n- Tem caráter sigiloso; o uso após a entrega é de responsabilidade de quem o recebe.\n- A análise isolada deste laudo não tem valor diagnóstico e deve ser considerada em conjunto com os dados clínicos e demais informações pertinentes.'],
       ['7. Referências Bibliográficas', content['Referências Bibliográficas'] || 'Preencha as referências consultadas.'],
