@@ -1,145 +1,142 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowUpRight, CalendarPlus, Loader2 } from "lucide-react";
+import { ArrowUpRight, Bell, CalendarPlus, CheckCircle2, CircleDollarSign, ClipboardCheck, ClipboardList, Clock3, FileClock, Loader2, Sparkles, UserRound, UsersRound } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { AdminLayout, DashboardCard, EmptyState, PageIntro, PatientAvatar, SectionCard, StatusBadge } from "@/components/admin/admin-ui";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { fetchAppointments, fetchPatients, type AppointmentRecord, type PatientRecord } from "@/lib/admin/records";
+import { DashboardCharts } from "@/components/admin/dashboard/dashboard-charts";
 import { DashboardBirthdays } from "@/components/admin/dashboard/dashboard-birthdays";
 import { DailyMotivation } from "@/components/admin/dashboard/daily-motivation";
 import { DashboardNavigationCards } from "@/components/admin/dashboard/dashboard-navigation-cards";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { fetchAppointments, fetchFinancialEntries, fetchPatients, type AppointmentRecord, type PatientRecord } from "@/lib/admin/records";
+import type { FinancialEntry } from "@/lib/admin/types";
 import { supabase } from "@/integrations/supabase/client";
-import drFrederickImage from "@/assets/dr-frederick-parreira.png";
 import { AnimatedBanner } from "@/components/animated-banner";
 
 export const Route = createFileRoute("/admin/dashboard")({ component: DashboardPage });
+type Period = "30" | "90" | "365";
+type CompletedAnamnesis = { paciente_id: string };
+const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 
 function initials(name: string) { return name.split(" ").filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "P"; }
 function appointmentType(notes: string | null) { return notes?.match(/^\[([^\]]+)\]/)?.[1] ?? "Atendimento"; }
+function monthKey(date: Date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`; }
+function inRange(value: string, start: Date, end: Date) { const date = new Date(value); return date >= start && date < end; }
+function activePatient(patient: PatientRecord) { return patient.status?.toLocaleLowerCase("pt-BR") !== "inativo"; }
 
 function DashboardPage() {
   const { user, isLoading: authLoading } = useAuth();
   const [patients, setPatients] = useState<PatientRecord[]>([]);
   const [appointments, setAppointments] = useState<AppointmentRecord[]>([]);
-  const [applications, setApplications] = useState<Array<{ id: string; patient_id: string; current_weight_kg: number; application_date: string; created_at: string }>>([]);
-  const [evaluations, setEvaluations] = useState<Array<{ id: string; patient_id: string; weight_kg: number | null; evaluation_date: string; created_at: string }>>([]);
+  const [entries, setEntries] = useState<FinancialEntry[]>([]);
+  const [completedAnamneses, setCompletedAnamneses] = useState<CompletedAnamnesis[]>([]);
+  const [period, setPeriod] = useState<Period>("30");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!user || authLoading) return;
+    if (authLoading) return;
+    if (!user) { setPatients([]); setAppointments([]); setEntries([]); setCompletedAnamneses([]); setLoading(false); return; }
     let mounted = true;
-    setLoading(true); setError("");
+    setLoading(true);
+    setError("");
     Promise.all([
       fetchPatients(user.id),
       fetchAppointments(user.id),
-      supabase.from("patient_applications").select("id,patient_id,current_weight_kg,application_date,created_at").eq("profissional_id", user.id).order("application_date", { ascending: false }).order("created_at", { ascending: false }),
-      supabase.from("body_evaluations").select("id,patient_id,weight_kg,evaluation_date,created_at").eq("profissional_id", user.id).not("weight_kg", "is", null).order("evaluation_date", { ascending: false }).order("created_at", { ascending: false }),
-    ]).then(([patientResult, appointmentResult, applicationResult, evaluationResult]) => {
+      fetchFinancialEntries(user.id),
+      supabase.from("anamneses").select("paciente_id").eq("profissional_id", user.id).not("preenchido_em", "is", null),
+    ]).then(([patientResult, appointmentResult, financeResult, anamnesisResult]) => {
       if (!mounted) return;
-      if (patientResult.error || appointmentResult.error || applicationResult.error || evaluationResult.error) setError(patientResult.error?.message ?? appointmentResult.error?.message ?? applicationResult.error?.message ?? evaluationResult.error?.message ?? "Não foi possível carregar o resumo.");
+      const queryError = patientResult.error ?? appointmentResult.error ?? financeResult.error ?? anamnesisResult.error;
+      if (queryError) setError(queryError.message);
       setPatients((patientResult.data as PatientRecord[] | null) ?? []);
       setAppointments((appointmentResult.data as AppointmentRecord[] | null) ?? []);
-      setApplications((applicationResult.data as typeof applications | null) ?? []);
-      setEvaluations((evaluationResult.data as typeof evaluations | null) ?? []);
+      setEntries((financeResult.data as FinancialEntry[] | null) ?? []);
+      setCompletedAnamneses((anamnesisResult.data as CompletedAnamnesis[] | null) ?? []);
+      setLoading(false);
+    }).catch((queryError: unknown) => {
+      if (!mounted) return;
+      setError(queryError instanceof Error ? queryError.message : "Não foi possível carregar os dados do painel.");
       setLoading(false);
     });
     return () => { mounted = false; };
   }, [authLoading, user?.id]);
 
-  const upcoming = useMemo(() => {
-    const now = new Date();
-    return appointments
-      .filter((appointment) => (appointment.status === "pending" || appointment.status === "confirmed") && new Date(appointment.start_time) >= now)
-      .sort((a, b) => {
-        const startTimeDifference = new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
-        return startTimeDifference || a.id.localeCompare(b.id);
-      })
-      .slice(0, 4);
-  }, [appointments]);
-  const pendingAppointments = useMemo(() => {
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-    return appointments
-      .filter((appointment) => appointment.status === "pending" && new Date(appointment.start_time) >= startOfToday)
-      .sort((a, b) => {
-        const startTimeDifference = new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
-        return startTimeDifference || a.id.localeCompare(b.id);
-      });
-  }, [appointments]);
-  const pendingAppointmentsTotal = useMemo(() => pendingAppointments
-    .filter((appointment) => Number(appointment.amount_paid ?? 0) > 0)
-    .reduce((total, appointment) => total + Number(appointment.amount_paid ?? 0), 0), [pendingAppointments]);
-  const confirmedAppointments = useMemo(() => {
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-    return appointments.filter((appointment) => {
-      const amount = Number(appointment.amount_paid ?? 0);
-      return new Date(appointment.start_time) >= startOfToday && appointment.status !== "cancelled" && appointment.status === "confirmed" && amount > 0;
-    });
-  }, [appointments]);
-  const confirmedAppointmentsTotal = useMemo(() => confirmedAppointments.reduce((total, appointment) => total + Number(appointment.amount_paid ?? 0), 0), [confirmedAppointments]);
-  const recentPatients = useMemo(() => [...patients].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5), [patients]);
-  const monthAppointments = useMemo(() => { const now = new Date(); return appointments.filter((appointment) => { const date = new Date(appointment.start_time); return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth(); }); }, [appointments]);
-  const weightLossRanking = useMemo(() => {
-    const grouped = new Map<string, typeof evaluations>();
-    evaluations.forEach((evaluation) => grouped.set(evaluation.patient_id, [...(grouped.get(evaluation.patient_id) ?? []), evaluation]));
-    return [...grouped.entries()].flatMap(([patientId, records]) => {
-      const ordered = [...records].sort((a, b) => new Date(a.evaluation_date).getTime() - new Date(b.evaluation_date).getTime() || new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-      if (ordered.length < 2) return [];
-      const previous = ordered[0];
-      const current = ordered[ordered.length - 1];
-      if (previous.weight_kg === null || current.weight_kg === null) return [];
-      const loss = Number(previous.weight_kg) - Number(current.weight_kg);
-      const patient = patients.find((item) => item.id === patientId);
-      const lastApplication = applications.filter((application) => application.patient_id === patientId).sort((a, b) => new Date(b.application_date).getTime() - new Date(a.application_date).getTime() || new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0] ?? null;
-      return loss > 0 && patient ? [{ patient, current: { ...current, application_date: lastApplication?.application_date ?? current.evaluation_date, current_weight_kg: current.weight_kg }, previous: { ...previous, current_weight_kg: previous.weight_kg }, loss }] : [];
-    }).sort((a, b) => b.loss - a.loss).slice(0, 10);
-  }, [applications, evaluations, patients]);
-  const greatestWeightLoss = weightLossRanking[0] ?? null;
-  const stats = [{ label: "Pacientes cadastrados", value: String(patients.length), trend: "Atualizado agora", tone: "teal" as const, note: "cadastros deste profissional" }, { label: "Atendimentos no mês", value: String(monthAppointments.length), trend: "Agenda real", tone: "blue" as const, note: "agendamentos registrados" }, { label: "Próximos atendimentos", value: String(upcoming.length), trend: "Próximos", tone: "amber" as const, note: "não cancelados" }, { label: "Agenda concluída", value: String(appointments.filter((appointment) => appointment.status === "completed").length), trend: "Total", tone: "violet" as const, note: "atendimentos concluídos" }];
-
   const now = new Date();
-  const hour = now.getHours();
-  const greeting = hour >= 5 && hour < 12 ? "Bom dia" : hour >= 12 && hour < 18 ? "Boa tarde" : "Boa noite";
-  const doctorName = "Dr. Frederick Martins Parreira";
+  const range = useMemo(() => {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    start.setDate(start.getDate() - Number(period) + 1);
+    const end = new Date();
+    end.setDate(end.getDate() + 1);
+    end.setHours(0, 0, 0, 0);
+    return { start, end };
+  }, [period]);
+  const rangeAppointments = useMemo(() => appointments.filter((item) => inRange(item.start_time, range.start, range.end)), [appointments, range]);
+  const activePatients = useMemo(() => patients.filter(activePatient), [patients]);
+  const inactivePatients = patients.length - activePatients.length;
+  const completedPatientIds = useMemo(() => new Set(completedAnamneses.map((item) => item.paciente_id)), [completedAnamneses]);
+  const pendingAnamneses = patients.filter((patient) => !completedPatientIds.has(patient.id));
+  const upcoming = useMemo(() => appointments.filter((item) => (item.status === "pending" || item.status === "confirmed") && new Date(item.start_time) >= now).sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()).slice(0, 5), [appointments]);
+  const todaysAppointments = appointments.filter((item) => new Date(item.start_time).toDateString() === now.toDateString());
+  const thisMonthAppointments = appointments.filter((item) => monthKey(new Date(item.start_time)) === monthKey(now));
+  const thisMonthEntries = entries.filter((item) => item.transaction_date.slice(0, 7) === monthKey(now));
+  const monthRevenue = thisMonthEntries.filter((item) => item.transaction_type === "income" && (item.status === "received" || item.status === "paid")).reduce((total, item) => total + Number(item.amount), 0);
+  const receivable = entries.filter((item) => item.transaction_type === "income" && item.status === "pending").reduce((total, item) => total + Number(item.amount), 0);
+  const displayName = user?.user_metadata?.["full_name"] || user?.user_metadata?.["name"] || user?.email?.split("@")[0] || "Profissional";
+  const currentHour = now.getHours();
+  const greeting = currentHour < 12 ? "Bom dia" : currentHour < 18 ? "Boa tarde" : "Boa noite";
+  const stats = [
+    { label: "Total de pacientes", value: String(patients.length), trend: "Base clínica", tone: "teal" as const, note: "Pacientes vinculados à sua conta" },
+    { label: "Pacientes ativos", value: String(activePatients.length), trend: "Em acompanhamento", tone: "blue" as const, note: "Status cadastrado como ativo" },
+    { label: "Atendimentos de hoje", value: String(todaysAppointments.length), trend: "Hoje", tone: "amber" as const, note: "Todos os status na agenda" },
+    { label: "Atendimentos do mês", value: String(thisMonthAppointments.length), trend: "Este mês", tone: "violet" as const, note: "Agendados, concluídos e cancelados" },
+    { label: "Anamneses pendentes", value: String(pendingAnamneses.length), trend: "Revisar", tone: "amber" as const, note: "Pacientes sem ficha preenchida" },
+    { label: "Evoluções pendentes", value: "—", trend: "Indisponível", tone: "blue" as const, note: "O sistema não possui registro de evolução clínica" },
+    { label: "Receitas do mês", value: money.format(monthRevenue), trend: "Recebido", tone: "teal" as const, note: "Lançamentos financeiros recebidos/pagos" },
+    { label: "Contas a receber", value: money.format(receivable), trend: "Pendente", tone: "violet" as const, note: "Receitas financeiras com status pendente" },
+  ];
 
   return <AdminLayout>
-    <PageIntro eyebrow="Resumo do dia" title="Visão geral" description="Acompanhe os dados reais dos seus pacientes e atendimentos." action={<Button asChild variant="outline" className="gap-2 border-slate-200 bg-white"><Link to="/admin/agenda"><CalendarPlus className="size-4" /> Ver agenda</Link></Button>} />
-    <AnimatedBanner compact className="mb-6 rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex items-center gap-4">
-      <img src={drFrederickImage} alt="Foto do Dr. Frederick" className="animated-banner__portrait size-14 shrink-0 rounded-full object-cover object-top" />
-      <div>
-        <p className="text-sm text-slate-500">{greeting},</p>
-        <h2 className="font-display text-xl font-semibold text-slate-900">{doctorName}</h2>
-        {user && <DailyMotivation />}
-      </div>
-      </div>
+    <PageIntro eyebrow="Painel clínico" title="Visão geral" description="Uma visão clara da rotina clínica, dos atendimentos e da saúde financeira." action={<div className="flex gap-2"><Button asChild variant="outline" className="border-slate-200 bg-white"><Link to="/admin/configuracoes"><UserRound className="mr-2 size-4" /> Perfil</Link></Button><Button asChild className="bg-[#176b62] text-white hover:bg-[#12584f]"><Link to="/admin/agenda"><CalendarPlus className="mr-2 size-4" /> Agenda</Link></Button></div>} />
+    <AnimatedBanner compact className="mb-6 rounded-2xl border border-emerald-100 bg-gradient-to-r from-white to-[#eff7f4] shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-sm font-medium text-[#176b62]">{greeting}, {displayName}</p><h2 className="mt-1 font-display text-xl font-semibold text-slate-900">Sua clínica em perspectiva</h2><p className="mt-1 text-sm text-slate-500">{now.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</p>{user && <DailyMotivation />}</div><div className="flex items-center gap-2"><Select value={period} onValueChange={(value) => setPeriod(value as Period)}><SelectTrigger aria-label="Filtrar período" className="w-44 bg-white"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="30">Últimos 30 dias</SelectItem><SelectItem value="90">Últimos 90 dias</SelectItem><SelectItem value="365">Últimos 12 meses</SelectItem></SelectContent></Select><Button asChild size="icon" variant="outline" className="bg-white" aria-label="Ver agenda e notificações"><Link to="/admin/agenda"><Bell className="size-4" /></Link></Button></div></div>
     </AnimatedBanner>
     <DashboardNavigationCards />
-    {error && <p role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">Não foi possível carregar o resumo: {error}</p>}
-    {loading || authLoading ? <div className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-12 text-sm text-slate-500"><Loader2 className="mr-2 size-4 animate-spin" /> Carregando resumo...</div> : <>
+    {error && <p role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">Não foi possível carregar todos os dados: {error}</p>}
+    {loading || authLoading ? <div className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-12 text-sm text-slate-500"><Loader2 className="mr-2 size-4 animate-spin" /> Carregando painel...</div> : <>
       <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{stats.map((stat) => <DashboardCard key={stat.label} {...stat} />)}</div>
-      {weightLossRanking.length > 0 && <SectionCard title="Ranking · 10 pacientes com maior perda de peso" className="mt-6"><div className="divide-y divide-slate-100">{weightLossRanking.map((item, index) => <Link key={item.patient.id} to="/admin/evolucao-corporal" search={{ patientId: item.patient.id }} className="flex flex-wrap items-center gap-3 py-3 first:pt-0 last:pb-0 hover:bg-slate-50"><span className="grid size-8 shrink-0 place-items-center rounded-full bg-emerald-50 text-sm font-semibold text-emerald-800">{index + 1}</span><PatientAvatar initials={initials(item.patient.nome)} /><span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-800">{item.patient.nome}</span><span className="text-right text-sm"><strong className="text-emerald-700">−{item.loss.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg</strong><span className="ml-2 text-slate-500">{Number(item.previous.current_weight_kg).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} → {Number(item.current.current_weight_kg).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg</span></span></Link>)}</div></SectionCard>}
-      {greatestWeightLoss && <Card className="mt-6 overflow-hidden border-emerald-200 bg-gradient-to-r from-emerald-50 to-white shadow-sm"><CardContent className="p-5 sm:p-6"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">Destaque de evolução · maior perda entre aplicações</p><h2 className="mt-2 font-display text-xl font-semibold text-slate-900">{greatestWeightLoss.patient.nome}</h2><div className="mt-4 grid gap-3 text-sm sm:grid-cols-3"><p><span className="text-slate-500">Última aplicação</span><br /><strong>{new Date(`${greatestWeightLoss.current.application_date}T00:00:00`).toLocaleDateString("pt-BR")}</strong></p><p><span className="text-slate-500">Peso anterior</span><br /><strong>{Number(greatestWeightLoss.previous.current_weight_kg).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg</strong></p><p><span className="text-slate-500">Peso atual</span><br /><strong>{Number(greatestWeightLoss.current.current_weight_kg).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg</strong><span className="ml-2 text-emerald-700">−{greatestWeightLoss.loss.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} kg</span></p></div></CardContent></Card>}
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
-        <DashboardCard label="A receber" value={pendingAppointmentsTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} trend="Status pendente" tone="teal" note="Consultas pendentes de hoje e futuras, com valor maior que zero" />
-        <DashboardCard label="Consultas confirmadas" value={confirmedAppointmentsTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} trend="Status confirmado" tone="blue" note="Consultas confirmadas de hoje e futuras, com valor maior que zero" />
-      </div>
-      <div className="mt-6 grid gap-6 xl:grid-cols-[1.35fr_.65fr]">
-        <SectionCard title="Próximos atendimentos" action={<Button asChild variant="ghost" size="sm" className="text-[#2f8f82]"><Link to="/admin/agenda">Ver agenda <ArrowUpRight className="ml-1 size-3.5" /></Link></Button>}>
-          {upcoming.length === 0 ? <EmptyState title="Nenhum próximo atendimento" description="Não há próximos agendamentos pendentes ou confirmados na agenda." /> : <div className="space-y-1">{upcoming.map((appointment) => { const patient = patients.find((item) => item.id === appointment.patient_id); const name = patient?.nome ?? "Paciente"; return <div key={appointment.id} className="flex items-center gap-3 rounded-lg px-2 py-3 hover:bg-slate-50"><div className="w-16 shrink-0 text-center"><p className="font-display text-sm font-semibold text-slate-800">{new Date(appointment.start_time).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p><p className="text-[10px] text-slate-400">{new Date(appointment.start_time).toLocaleDateString("pt-BR")}</p></div><div className="h-10 w-1 rounded-full bg-[#7bc7b7]" /><PatientAvatar initials={initials(name)} /><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-slate-800">{name}</p><p className="truncate text-xs text-slate-500">{appointmentType(appointment.notes)}</p></div><StatusBadge status={appointment.status} /></div>; })}</div>}
+      <DashboardCharts appointments={rangeAppointments} entries={entries.filter((entry) => inRange(`${entry.transaction_date}T00:00:00`, range.start, range.end))} activePatients={activePatients.length} inactivePatients={inactivePatients} />
+      <div className="mt-6 grid gap-5 xl:grid-cols-[1.2fr_.8fr]">
+        <SectionCard title="Próximos atendimentos" action={<Button asChild variant="ghost" size="sm" className="text-[#176b62]"><Link to="/admin/agenda">Abrir agenda <ArrowUpRight className="ml-1 size-3.5" /></Link></Button>}>
+          {upcoming.length === 0 ? <EmptyState title="Agenda livre" description="Não há atendimentos futuros pendentes ou confirmados." action={<Button asChild variant="outline"><Link to="/admin/agenda">Organizar agenda</Link></Button>} /> : <div className="divide-y divide-slate-100">{upcoming.map((appointment) => { const patient = patients.find((item) => item.id === appointment.patient_id); const name = patient?.nome ?? "Paciente"; const date = new Date(appointment.start_time); return <div key={appointment.id} className="flex flex-wrap items-center gap-3 py-3 first:pt-0 last:pb-0"><div className="w-20 shrink-0"><p className="text-sm font-semibold text-slate-800">{date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}</p><p className="text-xs text-slate-500">{date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p></div><PatientAvatar initials={initials(name)} /><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-slate-800">{name}</p><p className="truncate text-xs text-slate-500">{appointmentType(appointment.notes)}</p></div><StatusBadge status={appointment.status} /><Button asChild variant="ghost" size="icon" aria-label={`Abrir cadastro de ${name}`}><Link to="/admin/pacientes/$id" params={{ id: appointment.patient_id }}><ArrowUpRight className="size-4" /></Link></Button></div>; })}</div>}
         </SectionCard>
-        <SectionCard title="Pacientes recentes" action={<Button asChild variant="ghost" size="sm" className="text-[#2f8f82]"><Link to="/admin/pacientes">Ver todos <ArrowUpRight className="ml-1 size-3.5" /></Link></Button>}>
-          {recentPatients.length === 0 ? <EmptyState title="Nenhum paciente cadastrado" description="Os pacientes cadastrados mais recentemente aparecerão aqui." /> : <div className="space-y-4">{recentPatients.map((patient) => <Link key={patient.id} to="/admin/pacientes/$id" params={{ id: patient.id }} className="flex items-center gap-3 rounded-lg p-1 hover:bg-slate-50"><PatientAvatar initials={initials(patient.nome)} /><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-slate-800">{patient.nome}</p><p className="text-xs text-slate-500">Cadastrada em {new Date(patient.created_at).toLocaleDateString("pt-BR")}</p></div></Link>)}</div>}
+        <SectionCard title="Central de pendências" action={<ClipboardCheck className="size-4 text-[#176b62]" />}>
+          <div className="space-y-3">
+            <PendingLink to="/admin/anamneses" icon={<ClipboardList className="size-4" />} title="Anamneses incompletas" count={pendingAnamneses.length} description="Pacientes sem anamnese concluída" />
+            <PendingLink to="/admin/evolucao-corporal" icon={<FileClock className="size-4" />} title="Evoluções clínicas" count={null} description="Não há módulo de registro de evolução clínica" />
+            <PendingLink to="/admin/financeiro" icon={<CircleDollarSign className="size-4" />} title="Pagamentos pendentes" count={entries.filter((item) => item.transaction_type === "income" && item.status === "pending").length} description={money.format(receivable)} />
+            <PendingLink to="/admin/recibos" icon={<CheckCircle2 className="size-4" />} title="Documentos e consentimentos" count={null} description="Acompanhe recibos e documentos" />
+          </div>
+          <p className="mt-4 border-t border-slate-100 pt-3 text-xs leading-5 text-slate-400">A contagem de documentos e termos não está disponível nos dados dos módulos atuais.</p>
         </SectionCard>
       </div>
-      <SectionCard title="Consultas pendentes de hoje e futuras" className="mt-6">
-        {pendingAppointments.length === 0 ? <EmptyState title="Nenhuma consulta pendente de hoje ou futura" description="Não há consultas pendentes de hoje ou futuras com valor previsto maior que zero." /> : <div className="space-y-2">{pendingAppointments.map((appointment) => { const patient = patients.find((item) => item.id === appointment.patient_id); const name = patient?.nome ?? "Paciente"; const date = new Date(appointment.start_time); const amount = Number(appointment.amount_paid ?? 0); return <div key={appointment.id} className="flex flex-col gap-3 rounded-lg border border-slate-100 px-3 py-3 sm:flex-row sm:items-center"><div className="w-28 shrink-0"><p className="text-sm font-semibold text-slate-800">{date.toLocaleDateString("pt-BR")}</p><p className="text-xs text-slate-500">às {date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p></div><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-slate-800">{name}</p><p className="truncate text-xs text-slate-500">{appointmentType(appointment.notes)}</p></div><div className="flex items-center justify-between gap-3 sm:justify-end"><div className="text-right"><p className="text-sm font-semibold text-[#286a60]">{amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p><p className="text-[11px] text-slate-400">valor previsto</p></div><StatusBadge status={appointment.status} /></div></div>; })}</div>}
-      </SectionCard>
-            <DashboardBirthdays />
-            <Card className="mt-6 border-0 bg-[#123c3d] text-white shadow-sm"><CardContent className="flex flex-col items-start justify-between gap-4 p-5 sm:flex-row sm:items-center sm:p-6"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8bd5c4]">Acesso rápido</p><p className="mt-2 font-display text-lg font-medium">Mantenha sua rotina organizada</p><p className="mt-1 text-sm text-white/65">Consulte a agenda e registre pacientes no seu espaço.</p></div><Button asChild className="shrink-0 bg-[#8bd5c4] text-[#123c3d] hover:bg-[#a5e2d4]"><Link to="/admin/pacientes">Gerenciar pacientes</Link></Button></CardContent></Card>
-          </>}
-        </AdminLayout>;
-      }
+      <div className="mt-6 grid gap-5 xl:grid-cols-2">
+        <Card className="overflow-hidden rounded-2xl border-[#d3e7e1] bg-gradient-to-br from-[#f2faf7] to-white shadow-sm"><CardContent className="p-6"><div className="flex items-start gap-4"><span className="grid size-11 shrink-0 place-items-center rounded-xl bg-[#176b62] text-white"><Sparkles className="size-5" /></span><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#176b62]">Assistente de organização</p><h2 className="mt-1 font-display text-lg font-semibold text-slate-900">Planeje com mais clareza</h2><p className="mt-2 text-sm leading-6 text-slate-600">Use os registros já disponíveis para preparar a rotina, identificar fichas a revisar e organizar os próximos atendimentos. Não envie dados identificáveis para ferramentas externas.</p><p className="mt-3 rounded-lg border border-[#d7e8e3] bg-white/80 p-3 text-xs leading-5 text-slate-500">Este painel não gera recomendações clínicas nem substitui avaliação profissional. Revise qualquer resumo ou plano antes de incorporá-lo ao prontuário.</p><Button asChild variant="outline" className="mt-4 border-[#b7d8ce] bg-white text-[#176b62]"><Link to="/admin/anamneses">Revisar registros <ArrowUpRight className="ml-2 size-4" /></Link></Button></div></div></CardContent></Card>
+        <SectionCard title="Resumo da agenda"><div className="grid grid-cols-2 gap-4"><SummaryValue icon={<Clock3 className="size-4" />} label="No período selecionado" value={String(rangeAppointments.length)} /><SummaryValue icon={<CheckCircle2 className="size-4" />} label="Concluídos" value={String(rangeAppointments.filter((item) => item.status === "completed").length)} /><SummaryValue icon={<UsersRound className="size-4" />} label="Confirmações pendentes" value={String(rangeAppointments.filter((item) => item.status === "pending").length)} /><SummaryValue icon={<CalendarPlus className="size-4" />} label="Cancelamentos" value={String(rangeAppointments.filter((item) => item.status === "cancelled").length)} /></div><p className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-400">Horários disponíveis não são calculados: não há grade de disponibilidade cadastrada no sistema.</p></SectionCard>
+      </div>
+      <DashboardBirthdays />
+      <Card className="mt-6 border-0 bg-[#123c3d] text-white shadow-sm"><CardContent className="flex flex-col items-start justify-between gap-4 p-5 sm:flex-row sm:items-center sm:p-6"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8bd5c4]">Acesso rápido</p><p className="mt-2 font-display text-lg font-medium">Mantenha sua rotina organizada</p><p className="mt-1 text-sm text-white/65">Acesse a agenda, os pacientes e os prontuários com rapidez.</p></div><Button asChild className="shrink-0 bg-[#8bd5c4] text-[#123c3d] hover:bg-[#a5e2d4]"><Link to="/admin/pacientes">Gerenciar pacientes</Link></Button></CardContent></Card>
+    </>}
+  </AdminLayout>;
+}
+
+function PendingLink({ to, icon, title, count, description }: { to: string; icon: React.ReactNode; title: string; count: number | null; description: string }) {
+  return <Link to={to} className="flex items-center gap-3 rounded-xl border border-slate-100 p-3 transition-colors hover:border-[#c6e1d9] hover:bg-[#f6faf8]"><span className="grid size-9 shrink-0 place-items-center rounded-lg bg-[#edf6f2] text-[#176b62]">{icon}</span><span className="min-w-0 flex-1"><span className="block text-sm font-medium text-slate-800">{title}</span><span className="block truncate text-xs text-slate-500">{description}</span></span><span className="rounded-full bg-[#eef5f2] px-2.5 py-1 text-sm font-semibold text-[#176b62]">{count ?? "—"}</span></Link>;
+}
+
+function SummaryValue({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return <div className="rounded-xl bg-[#f7f9f8] p-4"><div className="flex items-center gap-2 text-xs text-slate-500">{icon}{label}</div><p className="mt-2 font-display text-2xl font-semibold text-slate-900">{value}</p></div>;
+}
