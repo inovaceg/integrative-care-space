@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { NeuropsychAssessmentWorkspace } from '@/components/admin/neuropsych-assessment-workspace';
+import { NeuropsychCatalogGuide } from '@/components/admin/neuropsych-catalog-guide';
 import { supabase } from '@/integrations/supabase/client';
 import { downloadDocumentPdf } from '@/lib/admin/document-layout';
 import { buildNeuropsychReportPages, neuropsychReportFilename } from '@/lib/admin/neuropsych-report-pdf';
@@ -183,6 +184,7 @@ export default function NeuropsychReportsPage() {
   }), [catalogAreaFilter, catalogPublicFilter, catalogPurposeFilter, catalogSearch, catalogStatusFilter, instruments]);
 
   return <AdminLayout><PageIntro eyebrow="Documentação clínica" title="Laudos Neuropsicológicos" description="Elaboração manual, registro protegido e exportação de laudos." />
+    <div className="mt-5"><NeuropsychCatalogGuide /></div>
     <div className="mt-5 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4">
       <div className="min-w-56 flex-1"><Label htmlFor="laudo-patient">Paciente</Label><select id="laudo-patient" className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm" value={patientId} onChange={(e) => { if (e.target.value) newReport(e.target.value); else { setPatientId(''); setSelected(null); setContent({}); setSessions([]); setLinkedAssessments([]); setResultId(''); } }}><option value="">Selecione um paciente</option>{patients.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}</select></div>
       <Button disabled={!patientId} onClick={() => newReport(patientId)} className="bg-[#2f8f82] text-white"><FilePlus2 className="mr-2 size-4"/>Novo laudo</Button>
