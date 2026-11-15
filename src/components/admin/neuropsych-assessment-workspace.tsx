@@ -82,6 +82,17 @@ export function NeuropsychAssessmentWorkspace({ instruments, reports, patientId,
   function open(item: Assessment) {
     setSelectedId(item.id); setReportId(item.report_id ?? ''); setTitle(item.title); setAgeGroup(item.age_group as (typeof ageGroups)[number]); setStatus(item.status); setInstrumentIds(item.instrument_ids ?? []); setIntake(item.intake ?? {}); setMessage('');
   }
+  useEffect(() => {
+    if (!user || !patientId || selectedId || !items.length || typeof window === 'undefined') return;
+    const savedId = window.sessionStorage.getItem(`neuropsych:last-assessment:${user.id}`);
+    const saved = items.find((item) => item.id === savedId && item.paciente_id === patientId);
+    if (saved) { setSelectedId(saved.id); setReportId(saved.report_id ?? ''); setTitle(saved.title); setAgeGroup(saved.age_group as (typeof ageGroups)[number]); setStatus(saved.status); setInstrumentIds(saved.instrument_ids ?? []); setIntake(saved.intake ?? {}); }
+  }, [items, patientId, selectedId, user?.id]);
+  useEffect(() => {
+    if (!user || !patientId || !items.length || typeof window === 'undefined') return;
+    const key = `neuropsych:last-assessment:${user.id}`;
+    if (selectedId) window.sessionStorage.setItem(key, selectedId); else window.sessionStorage.removeItem(key);
+  }, [selectedId, user?.id]);
   async function save() {
     if (!user || !patientId || !title.trim()) { setMessage('Selecione um paciente e informe o título.'); return; }
     const payload = { profissional_id: user.id, paciente_id: patientId, report_id: reportId || null, title: title.trim(), age_group: ageGroup, status, instrument_ids: instrumentIds, intake, updated_at: new Date().toISOString() };

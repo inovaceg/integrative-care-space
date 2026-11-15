@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Download, FilePlus2, History, Save, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/components/auth/auth-provider';
 import { AdminLayout, PageIntro, SectionCard } from '@/components/admin/admin-ui';
@@ -37,6 +37,7 @@ const scoreGuidance: Record<string, string> = {
 
 export default function NeuropsychReportsPage() {
   const { user } = useAuth();
+  const restoredSelection = useRef(false);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [instruments, setInstruments] = useState<Instrument[]>([]);
@@ -75,9 +76,30 @@ export default function NeuropsychReportsPage() {
     ]);
     const error = p.error || r.error || i.error;
     if (error) { setFailure('Não foi possível carregar os dados. Verifique o acesso e tente novamente.'); return; }
-    setPatients(p.data ?? []); setReports((r.data ?? []) as Report[]); setInstruments((i.data ?? []) as Instrument[]);
+    const patientRows = p.data ?? [];
+    const reportRows = (r.data ?? []) as Report[];
+    setPatients(patientRows); setReports(reportRows); setInstruments((i.data ?? []) as Instrument[]);
+    if (!restoredSelection.current && typeof window !== 'undefined') {
+      restoredSelection.current = true;
+      const savedPatientId = window.sessionStorage.getItem(`neuropsych:last-patient:${user.id}`);
+      const savedReportId = window.sessionStorage.getItem(`neuropsych:last-report:${user.id}`);
+      const savedPatient = patientRows.find((item) => item.id === savedPatientId);
+      const savedReport = reportRows.find((item) => item.id === savedReportId && item.paciente_id === savedPatientId);
+      if (savedPatient) setPatientId(savedPatient.id);
+      if (savedReport) {
+        setSelected(savedReport); setPatientId(savedReport.paciente_id); setTitle(savedReport.title); setContent(savedReport.sections ?? {});
+        void loadRelated(savedReport.id);
+      }
+    }
   }
-  useEffect(() => { void load(); }, [user?.id]);
+  useEffect(() => { restoredSelection.current = false; void load(); }, [user?.id]);
+  useEffect(() => {
+    if (!user || !restoredSelection.current || typeof window === 'undefined') return;
+    const patientKey = `neuropsych:last-patient:${user.id}`;
+    const reportKey = `neuropsych:last-report:${user.id}`;
+    if (patientId) window.sessionStorage.setItem(patientKey, patientId); else window.sessionStorage.removeItem(patientKey);
+    if (selected?.id) window.sessionStorage.setItem(reportKey, selected.id); else window.sessionStorage.removeItem(reportKey);
+  }, [patientId, selected?.id, user?.id]);
 
   async function loadRelated(reportId: string) {
     if (!user) return;
