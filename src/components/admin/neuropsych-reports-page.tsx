@@ -38,6 +38,8 @@ const scoreGuidance: Record<string, string> = {
 export default function NeuropsychReportsPage() {
   const { user } = useAuth();
   const restoredSelection = useRef(false);
+  const reportDirty = useRef(0);
+  const reportAutoSaveInProgress = useRef(false);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [instruments, setInstruments] = useState<Instrument[]>([]);
@@ -113,17 +115,20 @@ export default function NeuropsychReportsPage() {
     setSessions(ses.data ?? []);
     setLinkedAssessments((assessments.data ?? []) as {title:string; age_group:string; status:string; instrument_ids:string[]; intake:Record<string,string>}[]);
   }
-  function newReport(id: string) { setSelected(null); setPatientId(id); setTitle('Laudo Neuropsicológico'); setContent(Object.fromEntries(sections.map((s) => [s, '']))); setSessions([]); setLinkedAssessments([]); setResultId(''); setScore({ instrument_id: '', instrument_name: '', application_date: new Date().toISOString().slice(0,10), version: '', raw_score: '', standardized_score: '', percentile: '', classification: '', qualitative_notes: '', conditions: '' }); }
-  async function editReport(report: Report) { setSelected(report); setPatientId(report.paciente_id); setTitle(report.title); setContent(report.sections ?? {}); await loadRelated(report.id); setNotice(''); }
+  function newReport(id: string) { reportDirty.current = 0; setSelected(null); setPatientId(id); setTitle('Laudo Neuropsicológico'); setContent(Object.fromEntries(sections.map((s) => [s, '']))); setSessions([]); setLinkedAssessments([]); setResultId(''); setSessionDate(new Date().toISOString().slice(0,10)); setSessionNotes(''); setScore({ instrument_id: '', instrument_name: '', application_date: new Date().toISOString().slice(0,10), version: '', raw_score: '', standardized_score: '', percentile: '', classification: '', qualitative_notes: '', conditions: '' }); }
+  async function editReport(report: Report) { reportDirty.current = 0; setSelected(report); setPatientId(report.paciente_id); setTitle(report.title); setContent(report.sections ?? {}); await loadRelated(report.id); setNotice(''); }
 
-  async function save(finalize = false) {
+  async function save(finalize = false, automatic = false) {
     if (!user || !patientId || (selected?.status === 'finalizado' && selected)) return;
-    setBusy(true); setFailure(''); setNotice('');
+    if (automatic && reportAutoSaveInProgress.current) return;
+    if (automatic) reportAutoSaveInProgress.current = true;
+    const savedRevision = reportDirty.current;
+    if (!automatic) { setBusy(true); setFailure(''); setNotice(''); }
     try {
       let reportId = selected?.id;
       if (reportId) {
         const { data: old } = await supabase.from('neuropsych_reports').select('sections,status').eq('id', reportId).eq('profissional_id', user.id).single();
-        if (old) {
+        if (old && !automatic) {
           const { count } = await supabase.from('neuropsych_report_versions').select('id', { count: 'exact', head: true }).eq('report_id', reportId).eq('profissional_id', user.id);
           const ver = await supabase.from('neuropsych_report_versions').insert({ report_id: reportId, profissional_id: user.id, version_number: (count ?? 0) + 1, sections: old.sections, status: old.status, created_by: user.id });
           if (ver.error) throw ver.error;
@@ -134,8 +139,10 @@ export default function NeuropsychReportsPage() {
         const { data, error } = await supabase.from('neuropsych_reports').insert({ profissional_id: user.id, paciente_id: patientId, title, sections: content, status: 'rascunho' }).select().single();
         if (error) throw error;
         reportId = data.id;
-        const { error: versionError } = await supabase.from('neuropsych_report_versions').insert({ report_id: reportId, profissional_id: user.id, version_number: 1, sections: content, status: data.status, created_by: user.id });
-        if (versionError) throw versionError;
+        if (!automatic) {
+          const { error: versionError } = await supabase.from('neuropsych_report_versions').insert({ report_id: reportId, profissional_id: user.id, version_number: 1, sections: content, status: data.status, created_by: user.id });
+          if (versionError) throw versionError;
+        }
         if (finalize) {
           const { error: finalizeError } = await supabase.from('neuropsych_reports').update({ status: 'finalizado', finalized_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('id', reportId).eq('profissional_id', user.id);
           if (finalizeError) throw finalizeError;
@@ -149,13 +156,26 @@ export default function NeuropsychReportsPage() {
         if (resultQuery.error) throw resultQuery.error;
         if (!resultId && resultQuery.data) setResultId(resultQuery.data.id);
       }
+      if (automatic) {
+        if (reportId) setSelected({ id: reportId, paciente_id: patientId, title, status: 'rascunho', sections: content, updated_at: new Date().toISOString() });
+        if (reportDirty.current === savedRevision) reportDirty.current = 0;
+        setNotice('Rascunho salvo automaticamente.');
+        return;
+      }
       setNotice(finalize ? 'Laudo finalizado. A versão final não pode ser editada.' : 'Rascunho salvo com histórico de versão.');
       await load();
       if (finalize && reportId) { const latest = (await supabase.from('neuropsych_reports').select('*').eq('id', reportId).single()).data as Report; if (latest) setSelected(latest); }
       else if (reportId) setSelected({ id: reportId, paciente_id: patientId, title, status: 'rascunho', sections: content, updated_at: new Date().toISOString() });
+      if (reportDirty.current === savedRevision) reportDirty.current = 0;
     } catch { setFailure('Não foi possível salvar. Confira a conexão e suas permissões.'); }
-    finally { setBusy(false); }
+    finally { if (automatic) reportAutoSaveInProgress.current = false; else setBusy(false); }
   }
+  useEffect(() => {
+    if (!patientId || !reportDirty.current || busy || selected?.status === 'finalizado') return;
+    const timer = window.setTimeout(() => { void save(false, true); }, 700);
+    return () => window.clearTimeout(timer);
+  }, [busy, content, patientId, score, selected?.id, selected?.status, title]);
+
   async function addSession() {
     if (!user || !selected || !patientId || !sessionDate) return;
     const { error } = await supabase.from('neuropsych_assessment_sessions').insert({ report_id: selected.id, profissional_id: user.id, paciente_id: patientId, session_date: sessionDate, notes: sessionNotes, conditions: '' });
@@ -215,7 +235,7 @@ export default function NeuropsychReportsPage() {
     </div>
     {failure && <p role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{failure}</p>}{notice && <p role="status" className="mt-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{notice}</p>}
     <div className="mt-5"><NeuropsychAssessmentWorkspace instruments={instruments} reports={reports} patientId={patientId} onInstrumentSelectionChange={setBatteryInstrumentIds} /></div>
-    {patientId && <div className="mt-5 space-y-5">
+    {patientId && <div className="mt-5 space-y-5" onChange={() => { reportDirty.current += 1; }} onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget) && reportDirty.current) void save(false, true); }}>
       <SectionCard title="Editor do laudo"><div className="space-y-4"><div><Label htmlFor="report-title">Título</Label><Input id="report-title" value={title} onChange={(e) => setTitle(e.target.value)} disabled={selected?.status === 'finalizado'} /><p className="mt-1 text-xs text-slate-500">Nome interno para localizar o documento. Exemplo: “Avaliação neuropsicológica — março/2025”.</p></div>{sections.map((name) => <div key={name}><Label htmlFor={`sec-${name}`}>{name}</Label><p className="mt-1 text-xs leading-relaxed text-slate-600">{sectionGuidance[name]}</p><Textarea id={`sec-${name}`} className="mt-1 min-h-24" placeholder="Escreva somente informações revisadas pelo profissional. O exemplo acima é ilustrativo e não é inserido automaticamente." value={content[name] ?? ''} onChange={(e) => setContent((old) => ({ ...old, [name]: e.target.value }))} disabled={selected?.status === 'finalizado'} /></div>)}
         <div className="flex flex-wrap gap-2"><Button disabled={busy || selected?.status === 'finalizado'} onClick={() => void save(false)} variant="outline"><Save className="mr-2 size-4"/>Salvar rascunho</Button><Button disabled={busy || selected?.status === 'finalizado'} onClick={() => void save(true)} className="bg-[#176b62] text-white"><ShieldCheck className="mr-2 size-4"/>Finalizar</Button>{selected && <Button variant="outline" onClick={() => void exportPdf()}><Download className="mr-2 size-4"/>Visualizar / exportar PDF</Button>}</div>
       </div></SectionCard>

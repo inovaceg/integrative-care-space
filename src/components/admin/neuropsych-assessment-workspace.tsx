@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/components/auth/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,6 +56,8 @@ const adultResponseExamples: Record<string, string> = {
 
 export function NeuropsychAssessmentWorkspace({ instruments, reports, patientId, onInstrumentSelectionChange }: { instruments: Instrument[]; reports: Report[]; patientId: string; onInstrumentSelectionChange: (ids: string[]) => void }) {
   const { user } = useAuth();
+  const dirtyRevision = useRef(0);
+  const autoSaveInProgress = useRef(false);
   const [items, setItems] = useState<Assessment[]>([]);
   const [selectedId, setSelectedId] = useState('');
   const [reportId, setReportId] = useState('');
@@ -73,13 +75,15 @@ export function NeuropsychAssessmentWorkspace({ instruments, reports, patientId,
     setItems((data ?? []) as Assessment[]);
   }
   useEffect(() => { void load(); }, [user?.id]);
-  useEffect(() => { setSelectedId(''); setReportId(''); setTitle('Avaliação neuropsicológica'); setAgeGroup('adulto'); setStatus('rascunho'); setInstrumentIds([]); setIntake({}); }, [patientId]);
+  useEffect(() => { dirtyRevision.current = 0; setSelectedId(''); setReportId(''); setTitle('Avaliação neuropsicológica'); setAgeGroup('adulto'); setStatus('rascunho'); setInstrumentIds([]); setIntake({}); }, [patientId]);
   useEffect(() => { onInstrumentSelectionChange(instrumentIds); }, [instrumentIds, onInstrumentSelectionChange]);
 
   function startNew() {
+    dirtyRevision.current = 0;
     setSelectedId(''); setReportId(''); setTitle('Avaliação neuropsicológica'); setAgeGroup('adulto'); setStatus('rascunho'); setInstrumentIds([]); setIntake({}); setMessage('');
   }
   function open(item: Assessment) {
+    dirtyRevision.current = 0;
     setSelectedId(item.id); setReportId(item.report_id ?? ''); setTitle(item.title); setAgeGroup(item.age_group as (typeof ageGroups)[number]); setStatus(item.status); setInstrumentIds(item.instrument_ids ?? []); setIntake(item.intake ?? {}); setMessage('');
   }
   useEffect(() => {
@@ -92,20 +96,31 @@ export function NeuropsychAssessmentWorkspace({ instruments, reports, patientId,
     if (!user || !patientId || !items.length || typeof window === 'undefined') return;
     const key = `neuropsych:last-assessment:${user.id}`;
     if (selectedId) window.sessionStorage.setItem(key, selectedId); else window.sessionStorage.removeItem(key);
-  }, [selectedId, user?.id]);
-  async function save() {
+  }, [items.length, patientId, selectedId, user?.id]);
+  useEffect(() => {
+    if (!patientId || !dirtyRevision.current) return;
+    const timer = window.setTimeout(() => { void save(true); }, 700);
+    return () => window.clearTimeout(timer);
+  }, [ageGroup, intake, instrumentIds, patientId, reportId, selectedId, status, title]);
+  async function save(automatic = false) {
     if (!user || !patientId || !title.trim()) { setMessage('Selecione um paciente e informe o título.'); return; }
+    if (automatic && autoSaveInProgress.current) return;
+    if (automatic) autoSaveInProgress.current = true;
+    const savedRevision = dirtyRevision.current;
     const payload = { profissional_id: user.id, paciente_id: patientId, report_id: reportId || null, title: title.trim(), age_group: ageGroup, status, instrument_ids: instrumentIds, intake, updated_at: new Date().toISOString() };
     const query = selectedId
       ? await supabase.from('neuropsych_assessments').update(payload).eq('id', selectedId).eq('profissional_id', user.id).select().single()
       : await supabase.from('neuropsych_assessments').insert(payload).select().single();
-    if (query.error) { setMessage('Não foi possível salvar. Confira as permissões do paciente e do laudo associado.'); return; }
+    if (query.error) { if (automatic) autoSaveInProgress.current = false; setMessage('Não foi possível salvar. Confira as permissões do paciente e do laudo associado.'); return; }
     const saved = query.data as Assessment;
-    setSelectedId(saved.id); setMessage('Avaliação salva.'); await load();
+    setSelectedId(saved.id);
+    if (dirtyRevision.current === savedRevision) dirtyRevision.current = 0;
+    setMessage(automatic ? 'Rascunho salvo automaticamente.' : 'Avaliação salva.'); await load();
+    if (automatic) autoSaveInProgress.current = false;
   }
 
   const availableReports = reports.filter((report) => report.paciente_id === patientId);
-  return <section className="rounded-xl border border-slate-200 bg-white p-5">
+  return <section className="rounded-xl border border-slate-200 bg-white p-5" onChange={() => { dirtyRevision.current += 1; }} onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget) && dirtyRevision.current) void save(true); }}>
     <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-display text-lg font-semibold">Central de Avaliação</h2><p className="mt-1 text-sm text-slate-600">Baterias e anamneses originais vinculadas ao paciente e, opcionalmente, ao laudo.</p></div><Button variant="outline" onClick={startNew} disabled={!patientId}>Nova avaliação</Button></div>
     {items.length > 0 && <div className="mt-4"><Label htmlFor="assessment-saved">Avaliações salvas</Label><select id="assessment-saved" className="mt-1 h-10 w-full rounded-md border px-3" value={selectedId} onChange={(event) => { const item = items.find((entry) => entry.id === event.target.value); if (item) open(item); else startNew(); }}><option value="">Criar nova avaliação</option>{items.filter((item) => item.paciente_id === patientId).map((item) => <option key={item.id} value={item.id}>{item.title} · {item.age_group} · {item.status}</option>)}</select></div>}
     <div className="mt-4 grid gap-4 md:grid-cols-2">
