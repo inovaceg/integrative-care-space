@@ -57,7 +57,7 @@ const adultResponseExamples: Record<string, string> = {
 export function NeuropsychAssessmentWorkspace({ instruments, reports, patientId, onInstrumentSelectionChange }: { instruments: Instrument[]; reports: Report[]; patientId: string; onInstrumentSelectionChange: (ids: string[]) => void }) {
   const { user } = useAuth();
   const dirtyRevision = useRef(0);
-  const autoSaveInProgress = useRef(false);
+  const saveInProgress = useRef(false);
   const [items, setItems] = useState<Assessment[]>([]);
   const [selectedId, setSelectedId] = useState('');
   const [currentUpdatedAt, setCurrentUpdatedAt] = useState('');
@@ -110,23 +110,26 @@ export function NeuropsychAssessmentWorkspace({ instruments, reports, patientId,
   }, [ageGroup, intake, instrumentIds, patientId, reportId, selectedId, status, title]);
   async function save(automatic = false) {
     if (!user || !patientId || !title.trim()) { setMessage('Selecione um paciente e informe o título.'); return; }
-    if (automatic && autoSaveInProgress.current) return;
-    if (automatic) { autoSaveInProgress.current = true; setMessage('Salvando rascunho…'); }
+    if (saveInProgress.current) return;
+    saveInProgress.current = true;
+    if (automatic) setMessage('Salvando rascunho…');
     const savedRevision = dirtyRevision.current;
     const payload = { profissional_id: user.id, paciente_id: patientId, report_id: reportId || null, title: title.trim(), age_group: ageGroup, status, instrument_ids: instrumentIds, intake, updated_at: new Date().toISOString() };
     const query = selectedId
       ? await supabase.from('neuropsych_assessments').update(payload).eq('id', selectedId).eq('profissional_id', user.id).eq('updated_at', currentUpdatedAt).select().single()
       : await supabase.from('neuropsych_assessments').insert(payload).select().single();
-    if (query.error) { if (automatic) autoSaveInProgress.current = false; setMessage('Não foi possível salvar. Confira as permissões do paciente e do laudo associado.'); return; }
+    if (query.error) {
+      saveInProgress.current = false;
+      setMessage(`Não foi possível salvar: ${query.error.message}`);
+      return;
+    }
     const saved = query.data as Assessment;
     setSelectedId(saved.id);
     setCurrentUpdatedAt(saved.updated_at);
     if (dirtyRevision.current === savedRevision) dirtyRevision.current = 0;
     setMessage(automatic ? 'Rascunho salvo automaticamente.' : 'Avaliação salva.'); await load();
-    if (automatic) {
-      autoSaveInProgress.current = false;
-      if (dirtyRevision.current !== savedRevision) window.setTimeout(() => void save(true), 2000);
-    }
+    saveInProgress.current = false;
+    if (automatic && dirtyRevision.current !== savedRevision) window.setTimeout(() => void save(true), 2000);
   }
 
   const availableReports = reports.filter((report) => report.paciente_id === patientId);
