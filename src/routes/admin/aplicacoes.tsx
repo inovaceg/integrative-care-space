@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowDown, ArrowUp, CalendarDays, FileDown, Loader2, Pencil, Plus, Scale, Trash2, X } from "lucide-react";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { AdminLayout, AdminNotice, EmptyState, PageIntro, SectionCard } from "@/components/admin/admin-ui";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -15,6 +15,7 @@ import { DocumentPreview } from "@/components/admin/documents/document-preview";
 import { downloadDocumentPdf, type DocumentPage } from "@/lib/admin/document-layout";
 import { applicationReportFilename, applicationReportPages } from "@/lib/admin/application-report";
 import { createPatientApplication, deletePatientApplication, fetchApplicationPatients, fetchPatientApplications, updatePatientApplication, type PatientApplication } from "@/lib/admin/patient-applications";
+import { useAdminFormDraft } from "@/lib/admin/use-admin-form-draft";
 
 export const Route = createFileRoute("/admin/aplicacoes")({ component: ApplicationsPage });
 
@@ -68,11 +69,31 @@ function ApplicationsPage() {
   const [editingApplication, setEditingApplication] = useState<PatientApplication | null>(applicationsDraftState.editingApplication);
   const [reportPreview, setReportPreview] = useState<DocumentPage[]>(applicationsDraftState.reportPreview);
   const [error, setError] = useState("");
+  const draftKey = `applications:${patientId || "unassigned"}:${editingApplication?.id ?? "new"}`;
+  const draft = useAdminFormDraft<{ patientId: string; procedureName: string; weight: string; applicationDate: string; notes: string; editingApplicationId: string | null }>(user?.id, draftKey, patientId || null);
+  const hydratedDraftKey = useRef("");
 
   useEffect(() => {
     applicationsDraftState = { patientId, procedureName, weight, applicationDate, notes, editingApplication, reportPreview };
     if (typeof window !== "undefined") window.history.replaceState({ ...window.history.state, applicationsDraft: applicationsDraftState }, "");
   }, [applicationDate, editingApplication, notes, patientId, procedureName, reportPreview, weight]);
+
+  useEffect(() => {
+    if (draft.status === "loading" || loading || hydratedDraftKey.current === draftKey) return;
+    hydratedDraftKey.current = draftKey;
+    const saved = draft.restoredPayload;
+    if (!saved) return;
+    setProcedureName(saved.procedureName);
+    setWeight(saved.weight);
+    setApplicationDate(saved.applicationDate);
+    setNotes(saved.notes);
+    setEditingApplication(applications.find((item) => item.id === saved.editingApplicationId) ?? null);
+  }, [applications, draft.restoredPayload, draft.status, draftKey, loading]);
+
+  useEffect(() => {
+    if (draft.status === "loading" || loading || hydratedDraftKey.current !== draftKey) return;
+    draft.scheduleSave({ patientId, procedureName, weight, applicationDate, notes, editingApplicationId: editingApplication?.id ?? null });
+  }, [applicationDate, draft.scheduleSave, draft.status, draftKey, editingApplication, loading, notes, patientId, procedureName, weight]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -135,6 +156,7 @@ function ApplicationsPage() {
     setApplications((current) => editingApplication
       ? current.map((application) => application.id === editingApplication.id ? result.data as PatientApplication : application)
       : [result.data as PatientApplication, ...current]);
+    await draft.clear();
     setEditingApplication(null);
     setProcedureName("");
     setWeight("");
@@ -184,6 +206,7 @@ function ApplicationsPage() {
             <div className="grid gap-2"><Label htmlFor="application-procedure">Nome do procedimento *</Label><Input id="application-procedure" list="previous-procedures" value={procedureName} onChange={(event) => setProcedureName(event.target.value)} placeholder="Digite ou selecione uma aplicação anterior" required /><datalist id="previous-procedures">{procedureSuggestions.map((procedure) => <option key={procedure} value={procedure} />)}</datalist>{procedureSuggestions.length > 0 && <p className="text-xs text-slate-500">Sugestões baseadas nos procedimentos já registrados.</p>}</div>
             <div className="grid gap-4 sm:grid-cols-2"><div className="grid gap-2"><Label htmlFor="application-weight">Peso atual (kg) *</Label><Input id="application-weight" inputMode="decimal" value={weight} onChange={(event) => setWeight(event.target.value)} placeholder="Ex.: 72,5" required /></div><div className="grid gap-2"><Label htmlFor="application-date">Data da aplicação *</Label><Input id="application-date" type="date" value={applicationDate} onChange={(event) => setApplicationDate(event.target.value)} required /></div></div>
             <div className="grid gap-2"><Label htmlFor="application-notes">Observações</Label><Textarea id="application-notes" value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Opcional" rows={3} /></div>
+            <p className="text-xs text-slate-500" role="status" aria-live="polite">{draft.status === "loading" ? "Recuperando rascunho…" : draft.status === "pending" ? "Alterações pendentes" : draft.status === "saving" ? "Salvando rascunho…" : draft.status === "saved" ? `Rascunho salvo${draft.lastSavedAt ? ` às ${new Date(draft.lastSavedAt).toLocaleTimeString("pt-BR")}` : ""}` : draft.status === "error" ? <>Erro ao salvar. <button type="button" className="underline" onClick={() => draft.flush()}>Tentar novamente</button></> : ""}</p>
             <div className="flex gap-2"><Button type="submit" disabled={saving || patients.length === 0} className="bg-[#2f8f82] text-white hover:bg-[#26796e]">{saving && <Loader2 className="mr-2 size-4 animate-spin" />}{editingApplication ? "Atualizar aplicação" : "Salvar aplicação"}</Button>{editingApplication && <Button type="button" variant="outline" onClick={cancelEdit}>Cancelar</Button>}</div>
             {patients.length === 0 && <p className="text-xs text-slate-500">Cadastre uma paciente antes de registrar uma aplicação.</p>}
           </form>

@@ -1,60 +1,91 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-type DraftStatus = 'loading' | 'idle' | 'saving' | 'saved' | 'error';
-type DraftRow<T> = { id: string; revision: number; payload: T; stage: number };
+type DraftStatus = 'loading' | 'idle' | 'pending' | 'saving' | 'saved' | 'error';
+type DraftRow<T> = { id: string; revision: number; payload: T; stage: number; updated_at: string };
+type DraftPayload<T> = { payload: T; stage: number; changedAt: number };
+
+const pendingDrafts = new Map<string, DraftPayload<unknown>>();
 
 export function useAdminFormDraft<T>(userId: string | undefined, draftKey: string, patientId: string | null = null) {
   const [status, setStatus] = useState<DraftStatus>('loading');
   const [restoredPayload, setRestoredPayload] = useState<T | null>(null);
   const [stage, setStage] = useState(0);
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+  const [readyKey, setReadyKey] = useState("");
   const row = useRef<DraftRow<T> | null>(null);
   const timer = useRef<number | null>(null);
   const queue = useRef<Promise<void>>(Promise.resolve());
-  const latest = useRef<{ payload: T; stage: number } | null>(null);
+  const latest = useRef<DraftPayload<T> | null>(null);
+  const key = userId ? `${userId}:${draftKey}` : '';
 
   useEffect(() => {
     let active = true;
     row.current = null;
+    latest.current = null;
     setRestoredPayload(null);
+    setReadyKey("");
     setStatus('loading');
-    if (!userId) { setStatus('idle'); return; }
-    void supabase.from('admin_form_drafts').select('id,revision,payload,stage').eq('user_id', userId).eq('draft_key', draftKey).maybeSingle().then(({ data, error }) => {
+    if (!userId) { setStatus('idle'); setReadyKey(key); return; }
+    const pending = pendingDrafts.get(key) as DraftPayload<T> | undefined;
+    void supabase.from('admin_form_drafts').select('id,revision,payload,stage,updated_at').eq('user_id', userId).eq('draft_key', draftKey).maybeSingle().then(({ data, error }) => {
       if (!active) return;
-      if (error) { setStatus('error'); return; }
+      if (error) { setStatus('error'); setReadyKey(key); return; }
       if (data) {
         row.current = data as DraftRow<T>;
-        latest.current = { payload: data.payload as T, stage: data.stage };
+        setLastSavedAt(data.updated_at);
+      }
+      if (pending && (!data || pending.changedAt > new Date(data.updated_at).getTime())) {
+        latest.current = pending;
+        setRestoredPayload(pending.payload);
+        setStage(pending.stage);
+        setStatus('pending');
+      } else if (data) {
+        latest.current = { payload: data.payload as T, stage: data.stage, changedAt: new Date(data.updated_at).getTime() };
         setRestoredPayload(data.payload as T);
         setStage(data.stage);
+        setStatus('idle');
+      } else {
+        setStatus('idle');
       }
-      setStatus('idle');
+      setReadyKey(key);
     });
     return () => { active = false; if (timer.current !== null) window.clearTimeout(timer.current); };
-  }, [draftKey, userId]);
+  }, [draftKey, key, userId]);
 
   const flush = useCallback(() => {
-    if (!userId || !latest.current) return;
-    const current = latest.current;
+    const snapshot = latest.current;
+    if (!userId || !snapshot) return;
     queue.current = queue.current.catch(() => undefined).then(async () => {
+      const current = snapshot;
       setStatus('saving');
       const now = new Date().toISOString();
       const existing = row.current;
       const query = existing
-        ? await supabase.from('admin_form_drafts').update({ payload: current.payload, stage: current.stage, patient_id: patientId, revision: existing.revision + 1, updated_at: now }).eq('id', existing.id).eq('user_id', userId).eq('revision', existing.revision).select('id,revision,payload,stage').maybeSingle()
-        : await supabase.from('admin_form_drafts').insert({ user_id: userId, draft_key: draftKey, patient_id: patientId, payload: current.payload, stage: current.stage }).select('id,revision,payload,stage').single();
-      if (query.error || (existing && !query.data)) { setStatus('error'); return; }
+        ? await supabase.from('admin_form_drafts').update({ payload: current.payload, stage: current.stage, patient_id: patientId, revision: existing.revision + 1, updated_at: now }).eq('id', existing.id).eq('user_id', userId).eq('revision', existing.revision).select('id,revision,payload,stage,updated_at').maybeSingle()
+        : await supabase.from('admin_form_drafts').insert({ user_id: userId, draft_key: draftKey, patient_id: patientId, payload: current.payload, stage: current.stage }).select('id,revision,payload,stage,updated_at').single();
+      if (query.error || !query.data) {
+        const { data: remote } = await supabase.from('admin_form_drafts').select('id,revision,payload,stage,updated_at').eq('user_id', userId).eq('draft_key', draftKey).maybeSingle();
+        if (remote) row.current = remote as DraftRow<T>;
+        setStatus('error');
+        return;
+      }
       row.current = query.data as DraftRow<T>;
-      setStatus('saved');
+      setLastSavedAt(query.data.updated_at);
+      if (pendingDrafts.get(key) === current) pendingDrafts.delete(key);
+      if (latest.current === current) setStatus('saved');
+      else setStatus('pending');
     });
-  }, [draftKey, patientId, userId]);
+  }, [draftKey, key, patientId, userId]);
 
   const scheduleSave = useCallback((payload: T, nextStage = stage) => {
-    latest.current = { payload, stage: nextStage };
-    setStatus('idle');
+    const snapshot = { payload, stage: nextStage, changedAt: Date.now() };
+    latest.current = snapshot;
+    pendingDrafts.set(key, snapshot);
+    setStatus('pending');
     if (timer.current !== null) window.clearTimeout(timer.current);
     timer.current = window.setTimeout(flush, 2000);
-  }, [flush, stage]);
+  }, [flush, key, stage]);
 
   useEffect(() => () => {
     if (timer.current !== null) window.clearTimeout(timer.current);
@@ -70,15 +101,18 @@ export function useAdminFormDraft<T>(userId: string | undefined, draftKey: strin
   const clear = useCallback(async () => {
     if (timer.current !== null) window.clearTimeout(timer.current);
     latest.current = null;
+    pendingDrafts.delete(key);
     await queue.current.catch(() => undefined);
     const existing = row.current;
     if (existing && userId) {
-      await supabase.from('admin_form_drafts').delete().eq('id', existing.id).eq('user_id', userId).eq('revision', existing.revision);
+      const { error } = await supabase.from('admin_form_drafts').delete().eq('id', existing.id).eq('user_id', userId).eq('revision', existing.revision);
+      if (error) { setStatus('error'); return; }
     }
     row.current = null;
     setRestoredPayload(null);
+    setLastSavedAt(null);
     setStatus('idle');
-  }, [userId]);
+  }, [key, userId]);
 
-  return { status, restoredPayload, stage, scheduleSave, clear };
+  return { status: readyKey === key ? status : 'loading', restoredPayload, stage, lastSavedAt, scheduleSave, flush, clear };
 }
