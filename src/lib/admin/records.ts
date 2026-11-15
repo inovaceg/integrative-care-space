@@ -51,7 +51,7 @@ export type AppointmentRecord = {
 };
 
 const patientFields = "id, profissional_id, avatar_url, nome, created_at, data_nascimento, email, telefone, status, cpf, cidade_estado, cep, endereco, numero, complemento, bairro, cidade, estado, nome_social, genero, pronomes, area, queixa_principal, data_primeiro_atendimento, como_conheceu, observacoes_iniciais, contato_emergencia_nome, contato_emergencia_parentesco, contato_emergencia_telefone";
-const patientListFields = "id, profissional_id, avatar_url, nome, created_at, data_nascimento, email, telefone, status";
+const patientListFields = "id, profissional_id, avatar_url, nome, created_at, data_nascimento, email, telefone, status, cidade_estado, cidade, estado";
 const appointmentFields = "id, patient_id, doctor_id, start_time, end_time, status, notes, payment_status, amount_paid, payment_date, due_date";
 
 export async function fetchPatients(userId: string) {
