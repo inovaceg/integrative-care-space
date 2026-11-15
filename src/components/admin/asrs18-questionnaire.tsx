@@ -56,28 +56,30 @@ export function formatAsrs18Responses(value: string) {
   return lines.join('\n');
 }
 
-export function Asrs18Questionnaire({ value, onChange, identification, onIdentificationChange, disabled = false }: { value: string; onChange: (value: string) => void; identification: Asrs18Identification; onIdentificationChange: (value: Asrs18Identification) => void; disabled?: boolean }) {
+export function Asrs18IdentificationForm({ value, onChange, disabled = false }: { value: Asrs18Identification; onChange: (value: Asrs18Identification) => void; disabled?: boolean }) {
+  function update(field: 'author' | 'requester' | 'purpose', fieldValue: string) {
+    onChange({ ...value, [field]: fieldValue });
+  }
+
+  return <div className="grid gap-4" aria-label="Identificação do ASRS-18">
+    <div className="grid gap-4 md:grid-cols-2">
+      <label className="grid gap-1.5 text-sm font-medium text-slate-700">Autoria<input value={value.author} onChange={(event) => update('author', event.target.value)} disabled={disabled} className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm font-normal text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2f8f82] disabled:cursor-not-allowed disabled:bg-slate-50" /></label>
+      <label className="grid gap-1.5 text-sm font-medium text-slate-700">Solicitante<input value={value.requester} onChange={(event) => update('requester', event.target.value)} placeholder="Quem solicitou o laudo" disabled={disabled} className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm font-normal text-slate-800 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2f8f82] disabled:cursor-not-allowed disabled:bg-slate-50" /></label>
+      <label className="grid gap-1.5 text-sm font-medium text-slate-700 md:col-span-2">Finalidade<textarea value={value.purpose} onChange={(event) => update('purpose', event.target.value)} placeholder="Relatar o motivo pelo qual o laudo foi solicitado e o contexto em que será utilizado." disabled={disabled} rows={3} className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-normal text-slate-800 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2f8f82] disabled:cursor-not-allowed disabled:bg-slate-50" /></label>
+    </div>
+    <div><h4 className="mb-3 text-sm font-semibold text-slate-800">Identificação do Paciente</h4><div className="grid gap-4 md:grid-cols-2"><label className="grid gap-1.5 text-sm font-medium text-slate-700 md:col-span-2">Nome<input value={value.patientName} readOnly className="h-10 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm font-normal text-slate-700" /></label><label className="grid gap-1.5 text-sm font-medium text-slate-700">Data de nascimento<input value={value.birthDate} readOnly className="h-10 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm font-normal text-slate-700" /></label><label className="grid gap-1.5 text-sm font-medium text-slate-700">Idade<input value={value.age} readOnly className="h-10 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm font-normal text-slate-700" /></label></div></div>
+  </div>;
+}
+
+export function Asrs18Questionnaire({ value, onChange, disabled = false }: { value: string; onChange: (value: string) => void; disabled?: boolean }) {
   const responses = useMemo(() => parseResponses(value), [value]);
 
   function choose(questionIndex: number, optionIndex: number) {
     onChange(JSON.stringify({ ...responses, [questionIndex]: optionIndex }));
   }
 
-  function updateIdentification(field: 'author' | 'requester' | 'purpose', fieldValue: string) {
-    onIdentificationChange({ ...identification, [field]: fieldValue });
-  }
-
   return <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
     <div className="border-b border-slate-200 px-4 py-3"><h3 className="font-semibold text-slate-800">ASRS-18 · autorrelato</h3><p className="mt-1 text-sm leading-6 text-slate-600">Assinale uma frequência para cada item. Registre as respostas para revisão profissional; esta tela não calcula escores nem produz interpretação diagnóstica.</p></div>
-    <section className="grid gap-4 border-b border-slate-200 p-4" aria-labelledby="asrs18-identification-title">
-      <h4 id="asrs18-identification-title" className="font-semibold text-slate-800">Identificação do Laudo</h4>
-      <div className="grid gap-4 md:grid-cols-2">
-        <label className="grid gap-1.5 text-sm font-medium text-slate-700">Autoria<Input value={identification.author} onChange={(event) => updateIdentification('author', event.target.value)} disabled={disabled} /></label>
-        <label className="grid gap-1.5 text-sm font-medium text-slate-700">Solicitante<Input value={identification.requester} onChange={(event) => updateIdentification('requester', event.target.value)} placeholder="Quem solicitou o laudo" disabled={disabled} /></label>
-        <label className="grid gap-1.5 text-sm font-medium text-slate-700 md:col-span-2">Finalidade<textarea value={identification.purpose} onChange={(event) => updateIdentification('purpose', event.target.value)} placeholder="Relatar o motivo pelo qual o laudo foi solicitado e o contexto em que será utilizado." disabled={disabled} rows={3} className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-normal text-slate-800 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2f8f82] disabled:cursor-not-allowed disabled:bg-slate-50" /></label>
-      </div>
-      <div><h5 className="mb-3 text-sm font-semibold text-slate-800">Identificação do Paciente</h5><div className="grid gap-4 md:grid-cols-2"><label className="grid gap-1.5 text-sm font-medium text-slate-700 md:col-span-2">Nome<Input value={identification.patientName} readOnly /></label><label className="grid gap-1.5 text-sm font-medium text-slate-700">Data de nascimento<Input value={identification.birthDate} readOnly /></label><label className="grid gap-1.5 text-sm font-medium text-slate-700">Idade<Input value={identification.age} readOnly /></label></div></div>
-    </section>
     {(['A', 'B'] as const).map((part) => <fieldset key={part} className="border-b border-slate-200 last:border-b-0">
       <legend className="px-4 py-3 font-semibold text-slate-800">{part === 'A' ? 'Parte A (Desatenção)' : 'Parte B (Hiperatividade/Impulsividade)'}</legend>
       <div className="overflow-x-auto">
