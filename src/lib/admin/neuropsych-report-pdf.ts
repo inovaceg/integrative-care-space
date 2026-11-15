@@ -102,9 +102,8 @@ export function buildNeuropsychReportPages(input: {
   pages.forEach((currentPage, index) => {
     currentPage.push(
       { text: '', x: left, y: footerTop, size: 0, kind: 'rule', color: '#d9e4e1', width: bodyWidth },
-      { text: 'Dr. Frederick Martins Parreira', x: left, y: 778, size: 9, bold: true, color: '#123c3d' },
-      { text: 'CRP 04/86194 · CRBM 30421 · Juiz de Fora – MG', x: left, y: 794, size: 8, color: '#64748b' },
-      { text: 'Documento confidencial · Elaborado e revisado pelo profissional responsável.', x: left, y: 810, size: 7.5, color: '#64748b' },
+      { text: 'Documento confidencial · Elaborado e revisado pelo profissional responsável.', x: left, y: 794, size: 8, color: '#64748b' },
+      { text: 'Uso restrito à finalidade indicada na identificação.', x: left, y: 810, size: 7.5, color: '#64748b' },
       { text: `Página ${index + 1} de ${pages.length}`, x: left + bodyWidth - 72, y: 810, size: 7.5, color: '#64748b', align: 'right' },
     );
   });

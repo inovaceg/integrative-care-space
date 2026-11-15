@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { NeuropsychAssessmentWorkspace } from '@/components/admin/neuropsych-assessment-workspace';
 import { NeuropsychCatalogGuide } from '@/components/admin/neuropsych-catalog-guide';
-import { Asrs18IdentificationForm, Asrs18Questionnaire, asrs18ContentKey, asrs18IdentificationKey, formatAsrs18Identification, formatAsrs18Responses, type Asrs18Identification } from '@/components/admin/asrs18-questionnaire';
+import { Asrs18IdentificationForm, Asrs18Questionnaire, asrs18ContentKey, asrs18IdentificationKey, formatAsrs18Responses, type Asrs18Identification } from '@/components/admin/asrs18-questionnaire';
 import { supabase } from '@/integrations/supabase/client';
 import { downloadDocumentPdf } from '@/lib/admin/document-layout';
 import { buildNeuropsychReportPages, neuropsychReportFilename } from '@/lib/admin/neuropsych-report-pdf';
@@ -267,8 +267,26 @@ export default function NeuropsychReportsPage() {
     if (!patient || !selected) return;
     const emittedAt = new Date().toLocaleDateString('pt-BR');
     const asrs18Summary = formatAsrs18Responses(content[asrs18ContentKey] ?? '');
-    const hasAsrs18Data = Boolean(content[asrs18IdentificationKey] || asrs18Summary);
-    const reportSections: [string, string][] = sections.map((heading) => [heading, heading === 'Descrição da demanda' && hasAsrs18Data ? formatAsrs18Identification(asrs18Identification) : heading === recommendationsSection ? (content[heading] ?? '').split('\n').filter((line) => line.trim()).join('\n') : content[heading] ?? '']);
+    const reportSections: [string, string][] = [
+      ['Laudo Psicológico de Avaliação Neuropsicológica', 'Laudo realizado de acordo com as Resoluções 06/2019, 01/2009 e 31/2022, do Conselho Federal de Psicologia (CFP), que orientam a elaboração de documentos escritos decorrentes de avaliação psicológica e o registro documental profissional. A interpretação e análise devem considerar dados obtidos por métodos, técnicas e instrumentos reconhecidos cientificamente para uso profissional.'],
+      ['1. Identificação', ''],
+      ['1.1. Identificação do Laudo', `Autoria: ${asrs18Identification.author || 'Não informada'}${user?.user_metadata?.crp ? ` (CRP ${user.user_metadata.crp})` : ''}\nSolicitante: ${asrs18Identification.requester || 'Preencha aqui'}\nFinalidade: ${asrs18Identification.purpose || 'Preencha aqui'}`],
+      ['1.2. Identificação do Paciente', `Nome: ${patient.nome}\nData de Nascimento: ${asrs18Identification.birthDate || 'Não informada'}\nIdade: ${asrs18Identification.age || 'Não informada'}`],
+      ['2. Descrição da Demanda', content['Descrição da demanda'] || 'Descreva a queixa principal, sintomas ou dificuldades observadas, fonte do relato e contexto.'],
+      ['3. Procedimentos', content['Procedimentos realizados'] || 'Descreva os instrumentos formais e não privativos utilizados, bem como os procedimentos efetivamente realizados.'],
+      ['4. Análise', ''],
+      ['4.1. Anamnese', content['Histórico clínico e informações relevantes'] || ''],
+      ['4.1.1. História Pessoal e Desenvolvimento', content['História Pessoal e Desenvolvimento'] || 'Descreva o desenvolvimento, marcos relevantes, contexto educacional e eventos significativos.'],
+      ['4.1.2. Contexto Familiar e Relacional', content['Contexto Familiar e Relacional'] || 'Descreva a dinâmica familiar, histórico familiar pertinente e relações sociais.'],
+      ['4.1.3. Histórico Médico e Psiquiátrico', content['Histórico Médico e Psiquiátrico'] || 'Registre condições prévias, medicações em uso e sintomas relatados.'],
+      ['4.1.4. Fatores Psicossociais e Ambientais', content['Fatores Psicossociais e Ambientais'] || 'Descreva fatores de estresse e aspectos culturais ou socioeconômicos pertinentes.'],
+      ['4.2. Instrumentos, observações e resultados', [content['Instrumentos utilizados'], content['Observações comportamentais'], content['Resultados por domínio cognitivo'], content['Análise integrada']].filter(Boolean).join('\n\n')],
+      ['5. Conclusão', content['Conclusão'] || 'Descreva os aspectos significativos observados, os principais achados, habilidades preservadas ou dificuldades e a relação com a demanda.'],
+      ['6. Sugestões de encaminhamento', (content[recommendationsSection] ?? '').split('\n').filter((line) => line.trim()).map((line) => `● ${line}`).join('\n') || '● Encaminhamento 1\n● Encaminhamento 2\n● Encaminhamento 3\n● Encaminhamento 4'],
+      ['Assinatura e observações', `______________________________\n${asrs18Identification.author || 'Profissional responsável'}\nCIDADE, ${emittedAt}\n\n● Não pode ser utilizado para fins diferentes do apontado no item de identificação do documento.\n● Tem caráter sigiloso; o uso após a entrega é de responsabilidade de quem o recebe.\n● A análise isolada deste laudo não tem valor diagnóstico e deve ser considerada em conjunto com os dados clínicos e demais informações pertinentes.`],
+      ['7. Referências Bibliográficas', content['Referências Bibliográficas'] || 'Preencha as referências consultadas.'],
+      ['8. Termo de entrega', 'Eu, ________________________________________, portador(a) do documento de identidade nº __________________, declaro que recebi em ____/____/______ o(s) seguinte(s) documento(s)/material(is):\n● ________________________________________\n● ________________________________________\n● ________________________________________\n\nCidade: ______________________   Data: ____/____/______\n______________________________________________\nAssinatura do Responsável\n______________________________________________\nProfissional responsável'],
+    ];
     if (asrs18Summary) reportSections.push(['ASRS-18 — respostas registradas', asrs18Summary]);
     const pages = buildNeuropsychReportPages({
       patientName: patient.nome,
