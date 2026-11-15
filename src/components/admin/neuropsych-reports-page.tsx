@@ -290,7 +290,7 @@ export default function NeuropsychReportsPage() {
       ['8. Termo de entrega', 'Eu, ________________________________________, portador(a) do documento de identidade nº __________________, declaro que recebi em ____/____/______ o(s) seguinte(s) documento(s)/material(is):\n- ________________________________________\n- ________________________________________\n- ________________________________________'],
     ];
     if (asrs18Summary) reportSections.push(['ASRS-18 — respostas registradas', asrs18Summary]);
-    reportSections.push(['Assinaturas', `Cidade: ______________________   Data: ____/____/______\n\n______________________________________________\nAssinatura do Responsável\n\n______________________________________________\n${asrs18Identification.author || 'Profissional responsável'}\nCIDADE, ${emittedAt}`]);
+    reportSections.push(['Assinaturas', `Juiz de Fora - MG, ${emittedAt}\n\n______________________________________________\nAssinatura do Responsável\n\n______________________________________________\nDr. Frederick Martins Parreira\nPsicólogo — CRP 04/86194`]);
     const pages = buildNeuropsychReportPages({
       patientName: patient.nome,
       birthDate: patient.data_nascimento,
