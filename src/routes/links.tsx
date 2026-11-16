@@ -6,7 +6,7 @@ import { createSeoHead } from "@/lib/seo";
 export const Route = createFileRoute("/links")({
   head: () => createSeoHead({
     title: "Links | Dr. Frederick Parreira",
-    description: "Entre em contato com o Dr. Frederick Parreira ou acesse informações sobre avaliação neuropsicológica e orientação sobre TDAH.",
+    description: "Acesse os questionários de anamnese, avaliação neuropsicológica, orientação sobre TDAH e triagem sobre uso de substâncias do Dr. Frederick Parreira.",
     path: "/links",
   }),
   component: LinksPage,
@@ -29,14 +29,20 @@ const links = [
   {
     title: "Avaliação Neuropsicológica",
     description: "Conheça o processo de avaliação",
-    href: "https://drfredmartins.com.br/avaliacao-neuropsicologica",
+    href: "/avaliacao-neuropsicologica",
     icon: ClipboardCheck,
   },
   {
     title: "Orientação sobre TDAH",
     description: "Informações e orientação inicial",
-    href: "https://drfredmartins.com.br/orientacao-tdah",
+    href: "/orientacao-tdah",
     icon: Brain,
+  },
+  {
+    title: "Triagem sobre uso de substâncias",
+    description: "Responda à triagem inicial com privacidade",
+    href: "/triagem-substancias",
+    icon: ClipboardCheck,
   },
 ];
 
