@@ -70,6 +70,7 @@ export const questionnaireItems = [
   ["Anamnese Psicológica Digital", "/anamnese-psicologica"],
   ["Avaliação Neuropsicológica", "/avaliacao-neuropsicologica"],
   ["Orientação sobre TDAH", "/orientacao-tdah"],
+  ["Triagem sobre uso de substâncias", "/triagem-substancias"],
 ] as const;
 
 export const navItemsAfterQuestionnaires = [
