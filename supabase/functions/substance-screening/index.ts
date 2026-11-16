@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
       if (staffError || staff?.length !== 1) return json({ error: 'Não foi possível iniciar a triagem neste momento.' }, 503)
       const professionalId = staff[0].user_id
       const tokenHash = await hashToken(token)
-      const { data, error } = await admin.from('substance_screenings').insert({ professional_id: professionalId, access_token_hash: tokenHash, status: 'draft' }).select('id,status,answers,patient_name,birth_date,age_group,updated_at').single()
+      const { data, error } = await admin.from('substance_screenings').insert({ professional_id: professionalId, access_token_hash: tokenHash, resume_code: token, status: 'draft' }).select('id,status,answers,patient_name,birth_date,age_group,updated_at').single()
       if (error) throw error
       await admin.from('substance_screening_audit').insert({ screening_id: data.id, professional_id: professionalId, action: 'draft_created', details: { modality: 'online' } })
       return json({ screening: data })
