@@ -1,4 +1,7 @@
-import { AlertTriangle, CheckCircle2, MessageCircle, Printer, ShieldCheck } from 'lucide-react';
+import { useState } from 'react';
+import { AlertTriangle, CheckCircle2, Download, MessageCircle, Printer, ShieldCheck } from 'lucide-react';
+import pdfMake from 'pdfmake/build/pdfmake';
+import pdfFonts from 'pdfmake/build/vfs_fonts';
 import { Button } from '@/components/ui/button';
 import { whatsappUrl } from '@/lib/site-data';
 
@@ -84,13 +87,66 @@ function buildRecommendations(answers: Record<string, unknown>, ageGroup: Screen
 }
 
 export function SubstanceScreeningConclusion({ answers, urgent, ageGroup, patientName, birthDate }: ScreeningConclusionProps) {
+  const [pdfError, setPdfError] = useState('');
   const substances = Array.isArray(answers.substances) ? answers.substances.filter((item): item is string => typeof item === 'string') : [];
   const responses = Object.entries(answers).filter(([key, value]) => key !== 'substances' && key !== 'safety' && (typeof value === 'string' || typeof value === 'number') && String(value).trim()).map(([key, value]) => [answerLabel(key, substances), Array.isArray(value) ? value.join(', ') : String(value)] as [string, string]);
   const safety = answers.safety && typeof answers.safety === 'object' ? Object.entries(answers.safety as Record<string, unknown>).filter(([, selected]) => selected === true).map(([key]) => safetyLabels[key]).filter(Boolean) : [];
   const recommendations = buildRecommendations(answers, ageGroup, substances, urgent);
   const ageLabel = ageGroup === 'child' ? 'Criança' : ageGroup === 'adolescent' ? 'Adolescente' : ageGroup === 'adult' ? 'Adulto' : 'Não informada';
 
-  function savePdf() {
+  function downloadPdf() {
+    setPdfError('');
+    const panel = (title: string, content: any[], fillColor = '#ffffff') => ({
+      table: { widths: ['*'], body: [[{ stack: [{ text: title, style: 'panelTitle' }, ...content], fillColor, margin: [14, 12, 14, 12], border: [true, true, true, true], borderColor: ['#d9e6df', '#d9e6df', '#d9e6df', '#d9e6df'] }]] },
+      layout: { hLineWidth: () => 0.7, vLineWidth: () => 0.7, hLineColor: () => '#d9e6df', vLineColor: () => '#d9e6df', paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0 },
+      margin: [0, 0, 0, 12],
+      dontBreakRows: true,
+    });
+    const content: any[] = [
+      { text: 'TRIAGEM INICIAL SOBRE USO DE SUBSTÂNCIAS', style: 'title' },
+      { text: 'Resultado individual · Dr. Frederick Martins Parreira', style: 'subtitle', margin: [0, 4, 0, 16] },
+      panel(urgent ? 'Sua segurança vem primeiro' : 'Obrigado por compartilhar', [
+        { text: urgent ? 'Você sinalizou uma situação que pode precisar de atenção imediata. Procure ajuda presencial agora; não espere retorno por este formulário.' : 'Este resumo reúne apenas as respostas informadas e sugere caminhos de apoio. Não é diagnóstico, não determina grau de dependência e não substitui avaliação clínica ou laudo psicológico.', style: 'body' },
+        ...(urgent ? [{ text: 'Se o risco ou os sintomas estão acontecendo agora, ligue para o SAMU 192 ou vá a uma UPA/pronto-socorro. Se possível, peça a alguém de confiança para acompanhar você.', style: 'urgent', margin: [0, 8, 0, 0] }] : []),
+      ], urgent ? '#fff7f7' : '#ffffff'),
+      panel('Resumo personalizado das suas respostas', [
+        { text: `Faixa etária considerada: ${ageLabel}.`, style: 'body', margin: [0, 0, 0, 8] },
+        { text: `Substâncias selecionadas: ${substances.length ? substances.join(', ') : 'Nenhuma selecionada'}`, style: 'body' },
+        ...(ageGroup === 'child' ? [{ text: 'As informações deste fluxo foram fornecidas por um responsável.', style: 'muted', margin: [0, 6, 0, 0] }] : ageGroup === 'adolescent' ? [{ text: 'As orientações devem considerar segurança, privacidade e apoio de um adulto de confiança quando apropriado.', style: 'muted', margin: [0, 6, 0, 0] }] : []),
+      ]),
+      ...responses.map(([label, value]) => panel(label, [{ text: value, style: 'body' }], '#f4f8f7')),
+    ];
+    if (urgent) content.push({ text: 'Sinais de segurança', style: 'sectionTitle', pageBreak: 'before' }, panel('Itens marcados', safety.map((item) => ({ text: `• ${item}`, style: 'urgent', margin: [0, 0, 0, 4] })), '#fff7f7'));
+    content.push(panel('Próximos passos que podem ajudar', recommendations.map((item) => ({ text: `• ${item}`, style: 'body', margin: [0, 0, 0, 6] }))));
+    content.push(panel('Grupos de apoio mútuo', [
+      { text: 'A participação é voluntária. Grupos oferecem apoio entre pares, mas não substituem atendimento médico ou psicológico. Consulte os sites para localizar reuniões presenciais ou on-line.', style: 'body', margin: [0, 0, 0, 8] },
+      ...supportGroups.map((group) => ({ text: [{ text: `${group.name}: ${group.purpose}. ` }, { text: 'Localizar reuniões e informações', link: group.url, color: '#17675b', decoration: 'underline' }], style: 'body', margin: [0, 0, 0, 5] })),
+    ]));
+    content.push(panel('Atendimento de saúde e acompanhamento', [
+      { text: 'Procure a UBS da sua região para orientação. O CAPS AD pode oferecer cuidado especializado; a UBS ou a Secretaria Municipal de Saúde pode informar como acessar o serviço de referência.', style: 'body', margin: [0, 0, 0, 7] },
+      ...(ageGroup === 'child' ? [{ text: 'Para crianças, procure também avaliação em pediatria ou serviço de saúde especializado e priorize a proteção.', style: 'body', margin: [0, 0, 0, 7] }] : ageGroup === 'adolescent' ? [{ text: 'Para adolescentes, considere segurança, privacidade e apoio de um adulto de confiança junto ao serviço de saúde, quando seguro.', style: 'body', margin: [0, 0, 0, 7] }] : []),
+      { text: 'Uma avaliação individual pode explorar histórico, frequência, sintomas, impactos e preferências de cuidado. Não é preciso esperar a situação piorar para pedir orientação.', style: 'body', margin: [0, 0, 0, 7] },
+      { text: [{ text: 'Falar com a equipe pelo WhatsApp', link: whatsappUrl, color: '#ffffff', bold: true }], fillColor: '#075e54', margin: [10, 10, 10, 10], alignment: 'center' },
+      { text: 'Em emergência, ligue para o SAMU 192 ou vá a uma UPA/pronto-socorro. Não aguarde resposta pelo WhatsApp ou por este formulário.', style: 'urgent', margin: [0, 8, 0, 0] },
+    ]));
+    const safeName = (patientName || 'individual').toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, '');
+    const definition = {
+      pageSize: 'A4',
+      pageMargins: [38, 42, 38, 48],
+      defaultStyle: { font: 'Roboto', fontSize: 9.5, color: '#526760', lineHeight: 1.25 },
+      styles: { title: { fontSize: 16, bold: true, color: '#173f3a' }, subtitle: { fontSize: 9, color: '#71817b' }, panelTitle: { fontSize: 12, bold: true, color: '#173f3a', margin: [0, 0, 0, 8] }, sectionTitle: { fontSize: 12, bold: true, color: '#7f1d1d' }, body: { fontSize: 9.5, color: '#526760' }, muted: { fontSize: 8.5, color: '#71817b' }, urgent: { fontSize: 9.5, bold: true, color: '#991b1b' } },
+      footer: (page: number, pages: number) => ({ text: `Dr. Frederick Martins Parreira · ${page} / ${pages}`, alignment: 'center', margin: [0, 0, 0, 18], fontSize: 8, color: '#71817b' }),
+      content,
+    };
+    try {
+      (pdfMake as any).vfs = pdfFonts;
+      pdfMake.createPdf(definition).download(`resultado-triagem-${safeName}.pdf`);
+    } catch {
+      setPdfError('Não foi possível criar o arquivo PDF. Tente novamente.');
+    }
+  }
+
+  function printScreen() {
     window.print();
   }
 
@@ -101,7 +157,7 @@ export function SubstanceScreeningConclusion({ answers, urgent, ageGroup, patien
       <p className="mt-4 leading-7 text-[#526760]">{urgent ? 'Você sinalizou uma situação que pode precisar de atenção imediata. Procure ajuda presencial agora; não espere retorno por este formulário.' : 'Suas respostas foram enviadas para revisão profissional. O resumo abaixo destaca somente o que você informou e sugere caminhos de apoio.'}</p>
       {urgent && <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-5 text-sm leading-6 text-red-950"><strong className="block">Se o risco ou os sintomas estão acontecendo agora</strong>Ligue para o SAMU pelo <strong>192</strong> ou vá a uma UPA/pronto-socorro. Se possível, peça a alguém de confiança para ficar com você e não dirija. Em risco de suicídio, não fique sozinho(a) e procure atendimento presencial imediatamente.</div>}
       <p className="mt-5 flex items-start gap-2 text-sm leading-6 text-[#526760]"><ShieldCheck className="mt-0.5 size-4 shrink-0 text-[#26786e]"/>Este retorno é uma síntese de triagem. Não emite diagnóstico, não determina grau de dependência e não substitui avaliação clínica ou laudo psicológico.</p>
-      <div className="screening-result__actions mt-6"><Button onClick={savePdf} className="rounded-full bg-[#17675b] text-white hover:bg-[#12574d]"><Printer className="mr-2 size-4"/>Imprimir / Salvar em PDF</Button><p className="mt-2 text-xs text-[#71817b]">Na janela de impressão, em Destino, escolha o “Salvar como PDF” do navegador e clique em “Salvar”. Evite “Microsoft Print to PDF”, que usa o driver de impressão do Windows.</p></div>
+      <div className="screening-result__actions mt-6 flex flex-wrap gap-3"><Button onClick={downloadPdf} className="rounded-full bg-[#17675b] text-white hover:bg-[#12574d]"><Download className="mr-2 size-4"/>Baixar PDF</Button><Button onClick={printScreen} variant="outline" className="rounded-full border-[#b9cec4] text-[#23594f]"><Printer className="mr-2 size-4"/>Imprimir visual da tela</Button><p className="w-full text-xs text-[#71817b]">“Baixar PDF” gera o arquivo diretamente. “Imprimir visual da tela” abre a impressão do navegador.</p>{pdfError && <p role="alert" className="w-full text-sm text-red-700">{pdfError}</p>}</div>
     </section>
 
     <section className="rounded-3xl border border-[#d9e6df] bg-white p-7 shadow-sm sm:p-9">
