@@ -13,11 +13,11 @@ export const Route = createFileRoute("/links")({
 });
 
 const links = [
-  { title: "Fale com o Dr. Frederick", description: "Contato e agendamento pelo WhatsApp", href: whatsappUrl, icon: MessageCircle, primary: true, external: true, tone: "from-[#1d4640] to-[#3f8a7e]" },
-  { title: "Anamnese Psicológica Digital", description: "Preencha sua ficha de anamnese online", href: "/anamnese-psicologica", icon: ClipboardCheck, tone: "from-[#2f6b62] to-[#7fb5a6]" },
-  { title: "Avaliação Neuropsicológica", description: "Conheça o processo de avaliação", href: "/avaliacao-neuropsicologica", icon: Brain, tone: "from-[#1d3f3a] to-[#4a8c80]" },
-  { title: "Orientação sobre TDAH", description: "Informações e orientação inicial", href: "/orientacao-tdah", icon: Brain, tone: "from-[#8a6d2f] to-[#d9b872]" },
-  { title: "Triagem sobre uso de substâncias", description: "Responda à triagem inicial com privacidade", href: "/triagem-substancias", icon: ShieldCheck, tone: "from-[#2a5a66] to-[#6aa3ad]" },
+  { title: "Fale com o Dr. Frederick", description: "Contato e agendamento pelo WhatsApp", href: whatsappUrl, icon: MessageCircle, primary: true, external: true, tone: "from-[#1d4640] to-[#3f8a7e]", image: "/assets/dr-frederick-social-project.jpg", alt: "Dr. Frederick Parreira" },
+  { title: "Anamnese Psicológica Digital", description: "Preencha sua ficha de anamnese online", href: "/anamnese-psicologica", icon: ClipboardCheck, tone: "from-[#2f6b62] to-[#7fb5a6]", image: "/assets/social-project-cover.jpg", alt: "Atuação profissional do Dr. Frederick Parreira" },
+  { title: "Avaliação Neuropsicológica", description: "Conheça o processo de avaliação", href: "/avaliacao-neuropsicologica", icon: Brain, tone: "from-[#1d3f3a] to-[#4a8c80]", image: "/assets/dr-frederick-social-project.jpg", alt: "Dr. Frederick Parreira" },
+  { title: "Orientação sobre TDAH", description: "Informações e orientação inicial", href: "/orientacao-tdah", icon: Brain, tone: "from-[#8a6d2f] to-[#d9b872]", image: "/assets/pensamentos-diarios-coragem.jpeg", alt: "Imagem de apoio e reflexão" },
+  { title: "Triagem sobre uso de substâncias", description: "Responda à triagem inicial com privacidade", href: "/triagem-substancias", icon: ShieldCheck, tone: "from-[#2a5a66] to-[#6aa3ad]", image: "/assets/realidade-virtual-meta-quest.jpg", alt: "Tecnologia aplicada ao cuidado" },
 ];
 
 function LinksPage() {
@@ -37,9 +37,9 @@ function LinksPage() {
         </div>
 
         <nav aria-label="Links principais" className="mt-7 grid w-full gap-3">
-          {links.map(({ title, description, href, icon: Icon, primary, external, tone }) => {
+          {links.map(({ title, description, href, icon: Icon, primary, external, tone, image, alt }) => {
             const className = `group grid w-full grid-cols-[1fr_auto] overflow-hidden rounded-[18px] border text-left no-underline shadow-[0_10px_30px_rgba(36,79,73,.1)] transition duration-200 hover:-translate-y-0.5 hover:border-[#244f49] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#244f49] motion-reduce:transform-none motion-reduce:transition-none ${primary ? "border-[#244f49] bg-[#244f49] text-white" : "border-[#dbe3df] bg-white text-[#16302c]"}`;
-            const card = <><span className={`relative col-span-2 flex h-28 items-center justify-center overflow-hidden bg-gradient-to-br ${tone}`}><span aria-hidden="true" className="absolute -left-8 -top-10 size-36 rounded-full border-[22px] border-white/10"/><span aria-hidden="true" className="absolute -bottom-14 -right-7 size-40 rounded-full border-[26px] border-white/10"/><span className="relative grid size-14 place-items-center rounded-2xl border border-white/30 bg-white/15 text-white"><Icon className="size-7" aria-hidden="true" /></span></span><span className="min-w-0 py-3.5 pl-4"><strong className="block text-[15px] font-semibold">{title}</strong><span className={`mt-0.5 block text-[13px] ${primary ? "text-white/80" : "text-[#5d716d]"}`}>{description}</span></span><ArrowUpRight className={`mr-4 size-[18px] self-center ${primary ? "text-white" : "text-[#5d716d]"}`} aria-hidden="true" /></>;
+            const card = <><span className={`relative col-span-2 block h-[190px] overflow-hidden bg-gradient-to-br ${tone}`}><img src={image} alt={alt} loading="lazy" className="h-full w-full object-cover object-center"/><span aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent"/><span className="absolute bottom-3 right-3 grid size-10 place-items-center rounded-xl border border-white/40 bg-white/20 text-white backdrop-blur-sm"><Icon className="size-5" aria-hidden="true"/></span></span><span className="min-w-0 py-3.5 pl-4"><strong className="block text-[15px] font-semibold">{title}</strong><span className={`mt-0.5 block text-[13px] ${primary ? "text-white/80" : "text-[#5d716d]"}`}>{description}</span></span><ArrowUpRight className={`mr-4 size-[18px] self-center ${primary ? "text-white" : "text-[#5d716d]"}`} aria-hidden="true" /></>;
             return external ? <a key={title} href={href} target="_blank" rel="noopener noreferrer" className={className}>{card}</a> : <Link key={title} to={href} className={className}>{card}</Link>;
           })}
         </nav>
