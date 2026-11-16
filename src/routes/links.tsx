@@ -13,7 +13,7 @@ export const Route = createFileRoute("/links")({
 });
 
 const links = [
-  { title: "Fale com o Dr. Frederick", description: "Contato e agendamento pelo WhatsApp", href: whatsappUrl, icon: MessageCircle, primary: true, external: true, tone: "from-[#1d4640] to-[#3f8a7e]", image: "/assets/dr-frederick-social-project.jpg", alt: "Dr. Frederick Parreira" },
+  { title: "Fale com o Dr. Frederick", description: "Contato e agendamento pelo WhatsApp", href: whatsappUrl, icon: MessageCircle, primary: true, external: true, tone: "from-[#1d4640] to-[#3f8a7e]", image: "/assets/psicologo-escritorio-acolhedor.png", alt: "Dr. Frederick Parreira em escritório acolhedor" },
   { title: "Anamnese Psicológica Digital", description: "Preencha sua ficha de anamnese online", href: "/anamnese-psicologica", icon: ClipboardCheck, tone: "from-[#2f6b62] to-[#7fb5a6]", image: "/assets/social-project-cover.jpg", alt: "Atuação profissional do Dr. Frederick Parreira" },
   { title: "Avaliação Neuropsicológica", description: "Conheça o processo de avaliação", href: "/avaliacao-neuropsicologica", icon: Brain, tone: "from-[#1d3f3a] to-[#4a8c80]", image: "/assets/dr-frederick-social-project.jpg", alt: "Dr. Frederick Parreira" },
   { title: "Orientação sobre TDAH", description: "Informações e orientação inicial", href: "/orientacao-tdah", icon: Brain, tone: "from-[#8a6d2f] to-[#d9b872]", image: "/assets/pensamentos-diarios-coragem.jpeg", alt: "Imagem de apoio e reflexão" },
