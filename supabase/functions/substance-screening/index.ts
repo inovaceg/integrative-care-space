@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
     const token = cleanText(body.token, 100)
     if (!/^[0-9a-f-]{36}$/i.test(token)) return json({ error: 'Chave de retomada inválida.' }, 400)
     const tokenHash = await hashToken(token)
-    const { data: existing, error: lookupError } = await admin.from('substance_screenings').select('id,professional_id,status,answers,patient_name,birth_date,age_group,urgent_alert,consent_version,consented_at,updated_at').eq('access_token_hash', tokenHash).maybeSingle()
+    const { data: existing, error: lookupError } = await admin.from('substance_screenings').select('id,professional_id,status,answers,patient_name,contact_whatsapp,birth_date,age_group,urgent_alert,consent_version,consented_at,updated_at').eq('access_token_hash', tokenHash).maybeSingle()
     if (lookupError || !existing) return json({ error: 'Não foi possível localizar esta triagem neste dispositivo.' }, 404)
 
     if (body.action === 'resume') return json({ screening: existing })
@@ -91,6 +91,7 @@ Deno.serve(async (req) => {
     if (existing.status !== 'draft') return json({ error: 'Esta triagem já foi enviada e não pode ser alterada.' }, 409)
 
     const name = cleanText(body.patient_name, 120)
+    const contactWhatsapp = cleanText(body.contact_whatsapp, 30)
     const birthDate = cleanText(body.birth_date, 10)
     const parsed = new Date(`${birthDate}T00:00:00.000Z`)
     if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate) || Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== birthDate || birthDate > new Date().toISOString().slice(0, 10)) return json({ error: 'Informe uma data de nascimento válida.' }, 400)
@@ -98,12 +99,13 @@ Deno.serve(async (req) => {
     const group = ageGroup(ageOnDate(birthDate))
     if (body.age_group && body.age_group !== group) return json({ error: 'O fluxo de atendimento não corresponde à data de nascimento.' }, 400)
     const urgent = hasUrgentSignal(answers)
-    const submitting = body.action === 'submit' || urgent
-    if (body.consent !== true && !urgent) return json({ error: 'A triagem precisa de consentimento antes de salvar as respostas.' }, 400)
-    if (submitting && !urgent && group === 'child' && !cleanText(answers.guardian_name, 120)) return json({ error: 'Informe o nome do responsável para continuar.' }, 400)
+    const submitting = body.action === 'submit'
+    if (body.consent !== true) return json({ error: 'A triagem precisa de consentimento antes de salvar as respostas.' }, 400)
+    if (submitting && group === 'child' && !cleanText(answers.guardian_name, 120)) return json({ error: 'Informe o nome do responsável para continuar.' }, 400)
 
     const update = {
       patient_name: name,
+      contact_whatsapp: contactWhatsapp,
       birth_date: birthDate,
       age_group: group,
       answers,
