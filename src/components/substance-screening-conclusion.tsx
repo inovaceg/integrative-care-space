@@ -1,8 +1,6 @@
-import { useState } from 'react';
-import { AlertTriangle, CheckCircle2, Download, MessageCircle, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, MessageCircle, Printer, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { whatsappUrl } from '@/lib/site-data';
-import { downloadDocumentPdf, type DocumentPage } from '@/lib/admin/document-layout';
 
 type ScreeningConclusionProps = {
   answers: Record<string, unknown>;
@@ -85,71 +83,25 @@ function buildRecommendations(answers: Record<string, unknown>, ageGroup: Screen
   return recommendations;
 }
 
-function makePdfPages(patientName: string, birthDate: string, ageLabel: string, substances: string[], responses: [string, string][], safety: string[], recommendations: string[], urgent: boolean): DocumentPage[] {
-  const pages: DocumentPage[] = [[]];
-  let page = pages[0];
-  let y = 55;
-  const add = (text: string, bold = false, size = 9.5, color = '#334155') => {
-    const words = text.split(/\s+/);
-    let line = '';
-    const lines: string[] = [];
-    for (const word of words) {
-      const candidate = line ? `${line} ${word}` : word;
-      if (candidate.length > 95 && line) { lines.push(line); line = word; }
-      else line = candidate;
-    }
-    if (line) lines.push(line);
-    for (const item of lines) {
-      if (y > 735) { page = []; pages.push(page); y = 55; }
-      page.push({ text: item, x: 42, y, size, bold, color });
-      y += size * 1.55;
-    }
-  };
-  const heading = (text: string) => { y += 5; add(text, true, 12, '#123c3d'); };
-  add('RESULTADO INDIVIDUAL — TRIAGEM SOBRE USO DE SUBSTÂNCIAS', true, 15, '#123c3d');
-  add('Resumo das respostas e orientações gerais. Não é diagnóstico nem laudo psicológico.', false, 9, '#64748b');
-  heading('Identificação');
-  add(`Nome: ${patientName || 'Não informado'} · Nascimento: ${birthDate || 'Não informado'} · Faixa etária: ${ageLabel}`);
-  heading('Resumo das respostas');
-  add(`Substâncias selecionadas: ${substances.length ? substances.join(', ') : 'Nenhuma selecionada'}`);
-  responses.forEach(([label, value]) => add(`${label}: ${value}`));
-  heading('Segurança');
-  add(urgent ? `Sinais de segurança selecionados: ${safety.join('; ') || 'Requerem atenção imediata'}` : 'Nenhum sinal de segurança foi selecionado. Isso não exclui a necessidade de avaliação profissional quando houver preocupação.');
-  heading('Próximos passos sugeridos');
-  recommendations.forEach((recommendation) => add(recommendation));
-  heading('Grupos de apoio mútuo');
-  supportGroups.forEach((group) => add(`${group.name}: ${group.purpose}. Informações e localização de reuniões: ${group.url}`));
-  add('Grupos de apoio são complementares e não substituem atendimento médico ou psicológico.', false, 9, '#64748b');
-  add('Em emergência, ligue para o SAMU 192 ou procure uma UPA/pronto-socorro. Não aguarde resposta por este questionário.', true, 9, '#991b1b');
-  add('Dr. Frederick Martins Parreira · Psicólogo — CRP 04/86194');
-  return pages;
-}
-
 export function SubstanceScreeningConclusion({ answers, urgent, ageGroup, patientName, birthDate }: ScreeningConclusionProps) {
-  const [pdfError, setPdfError] = useState('');
   const substances = Array.isArray(answers.substances) ? answers.substances.filter((item): item is string => typeof item === 'string') : [];
   const responses = Object.entries(answers).filter(([key, value]) => key !== 'substances' && key !== 'safety' && (typeof value === 'string' || typeof value === 'number') && String(value).trim()).map(([key, value]) => [answerLabel(key, substances), Array.isArray(value) ? value.join(', ') : String(value)] as [string, string]);
   const safety = answers.safety && typeof answers.safety === 'object' ? Object.entries(answers.safety as Record<string, unknown>).filter(([, selected]) => selected === true).map(([key]) => safetyLabels[key]).filter(Boolean) : [];
   const recommendations = buildRecommendations(answers, ageGroup, substances, urgent);
   const ageLabel = ageGroup === 'child' ? 'Criança' : ageGroup === 'adolescent' ? 'Adolescente' : ageGroup === 'adult' ? 'Adulto' : 'Não informada';
 
-  async function savePdf() {
-    setPdfError('');
-    const pages = makePdfPages(patientName, birthDate, ageLabel, substances, responses, safety, recommendations, urgent);
-    const filename = `resultado-triagem-${patientName || 'individual'}`.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9-]+/g, '-');
-    try { await downloadDocumentPdf(pages, filename, false, true); }
-    catch { setPdfError('Não foi possível gerar o PDF direto. Use a opção Imprimir do navegador e escolha Salvar como PDF.'); }
+  function savePdf() {
+    window.print();
   }
 
-  return <main className="min-h-screen bg-[#f8f6f1] px-4 py-12 text-[#173f3a]"><div className="mx-auto max-w-3xl space-y-5">
+  return <main className="screening-result min-h-screen bg-[#f8f6f1] px-4 py-12 text-[#173f3a]"><div className="mx-auto max-w-3xl space-y-5">
     <section className={`rounded-3xl border bg-white p-7 shadow-sm sm:p-10 ${urgent ? 'border-red-200' : 'border-[#d9e6df]'}`}>
       <span className={`grid size-12 place-items-center rounded-2xl ${urgent ? 'bg-red-50 text-red-700' : 'bg-[#e5f4f0] text-[#26786e]'}`}>{urgent ? <AlertTriangle className="size-6"/> : <CheckCircle2 className="size-6"/>}</span>
       <h1 className="mt-5 font-display text-3xl font-semibold">{urgent ? 'Sua segurança vem primeiro' : `Obrigado por compartilhar${patientName ? `, ${patientName}` : ''}`}</h1>
       <p className="mt-4 leading-7 text-[#526760]">{urgent ? 'Você sinalizou uma situação que pode precisar de atenção imediata. Procure ajuda presencial agora; não espere retorno por este formulário.' : 'Suas respostas foram enviadas para revisão profissional. O resumo abaixo destaca somente o que você informou e sugere caminhos de apoio.'}</p>
       {urgent && <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-5 text-sm leading-6 text-red-950"><strong className="block">Se o risco ou os sintomas estão acontecendo agora</strong>Ligue para o SAMU pelo <strong>192</strong> ou vá a uma UPA/pronto-socorro. Se possível, peça a alguém de confiança para ficar com você e não dirija. Em risco de suicídio, não fique sozinho(a) e procure atendimento presencial imediatamente.</div>}
       <p className="mt-5 flex items-start gap-2 text-sm leading-6 text-[#526760]"><ShieldCheck className="mt-0.5 size-4 shrink-0 text-[#26786e]"/>Este retorno é uma síntese de triagem. Não emite diagnóstico, não determina grau de dependência e não substitui avaliação clínica ou laudo psicológico.</p>
-      <Button onClick={() => void savePdf()} className="mt-6 rounded-full bg-[#17675b] text-white hover:bg-[#12574d]"><Download className="mr-2 size-4"/>Baixar resultado em PDF</Button>
-      {pdfError && <p role="alert" className="mt-3 text-sm text-red-700">{pdfError}</p>}
+      <div className="screening-result__actions mt-6"><Button onClick={savePdf} className="rounded-full bg-[#17675b] text-white hover:bg-[#12574d]"><Printer className="mr-2 size-4"/>Salvar resultado em PDF</Button><p className="mt-2 text-xs text-[#71817b]">Na janela de impressão, escolha “Salvar como PDF” para manter o visual desta tela.</p></div>
     </section>
 
     <section className="rounded-3xl border border-[#d9e6df] bg-white p-7 shadow-sm sm:p-9">
