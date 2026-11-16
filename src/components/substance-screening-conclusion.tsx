@@ -134,7 +134,7 @@ export function SubstanceScreeningConclusion({ answers, urgent, ageGroup, patien
         <p>Uma avaliação individual com profissional habilitado pode explorar histórico, frequência, sintomas, impactos, saúde física e emocional e preferências de cuidado. Não é necessário esperar que a situação piore para pedir orientação.</p>
         <p>Para conversar com a equipe do Dr. Frederick Martins Parreira sobre atendimento, use o WhatsApp. A equipe não substitui serviços de urgência.</p>
       </div>
-      <Button asChild className="mt-5 rounded-full bg-[#17675b] text-white hover:bg-[#12574d]"><a href={whatsappUrl} target="_blank" rel="noopener noreferrer"><MessageCircle className="mr-2 size-4"/>Conversar com a equipe</a></Button>
+      <Button asChild className="mt-6 h-14 w-full rounded-xl bg-[#075e54] px-6 text-base font-bold text-white shadow-lg ring-2 ring-[#075e54]/20 transition-all hover:-translate-y-0.5 hover:bg-[#064e46] hover:shadow-xl focus-visible:ring-4"><a href={whatsappUrl} target="_blank" rel="noopener noreferrer"><MessageCircle className="mr-2 size-5"/>Falar com a equipe pelo WhatsApp</a></Button>
       <p className="mt-5 text-xs leading-5 text-[#71817b]">Em emergência atual, ligue para o SAMU 192 ou vá a uma UPA/pronto-socorro. Não aguarde resposta pelo WhatsApp ou por este formulário.</p>
     </section>
   </div></main>;
