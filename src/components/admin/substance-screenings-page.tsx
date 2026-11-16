@@ -22,15 +22,64 @@ const tabs = ['Visão geral', 'Nova triagem', 'Avaliações recebidas', 'Pacient
 type Tab = typeof tabs[number];
 function ageLabel(value: Screening['age_group']) { return value === 'child' ? 'Criança' : value === 'adolescent' ? 'Adolescente' : value === 'adult' ? 'Adulto' : 'Não informada'; }
 function statusLabel(value: Screening['status']) { return value === 'draft' ? 'Rascunho' : value === 'pending' ? 'Pendente' : value === 'in_progress' ? 'Em andamento' : 'Concluída'; }
-function flattenAnswers(value: unknown, prefix = ''): [string, string][] {
+function flattenAnswers(value: unknown, prefix = '', rootAnswers?: Record<string, unknown>): [string, string][] {
   if (!value || typeof value !== 'object') return [];
+  const source = rootAnswers ?? value as Record<string, unknown>;
   return Object.entries(value as Record<string, unknown>).flatMap(([key, answer]) => {
     const label = prefix ? `${prefix} · ${key}` : key;
-    if (answer && typeof answer === 'object' && !Array.isArray(answer)) return flattenAnswers(answer, label);
+    if (answer && typeof answer === 'object' && !Array.isArray(answer)) return flattenAnswers(answer, label, source);
     const text = Array.isArray(answer) ? answer.join(', ') : String(answer ?? '');
-    return text.trim() ? [[label, text] as [string, string]] : [];
+    return text.trim() ? [[questionLabel(label, source), text] as [string, string]] : [];
   });
 }
+const questionLabels: Record<string, string> = {
+  substances: 'Substâncias que deseja abordar',
+  exposure: 'Há suspeita ou relato de exposição a álcool, drogas, nicotina ou medicamentos usados de modo diferente do indicado?',
+  development: 'Há mudanças recentes no desenvolvimento, sono, alimentação ou saúde?',
+  behavior: 'Que mudanças de comportamento foram percebidas? Quando começaram?',
+  family_school: 'Como está o ambiente familiar e escolar? Houve alguma mudança importante?',
+  guardian_observations: 'O que mais o(a) responsável considera importante compartilhar?',
+  experimented: 'Você já experimentou alguma das substâncias selecionadas?',
+  frequency: 'Com que frequência isso aconteceu nos últimos 12 meses?',
+  context: 'Em que situações ou contextos costuma acontecer?',
+  consequences: 'Isso trouxe alguma consequência na escola, em casa, nas amizades ou na saúde?',
+  control: 'Já quis parar ou reduzir e achou difícil?',
+  help: 'Você gostaria de conversar com alguém profissional sobre isso?',
+  history: 'Conte brevemente sobre seu histórico de uso e quando começou.',
+  quantity: 'Se desejar, descreva a quantidade ou padrão de uso.',
+  duration: 'Há quanto tempo esse padrão acontece?',
+  withdrawal: 'Já sentiu sintomas físicos ou emocionais ao reduzir ou interromper?',
+  impacts: 'Que impactos percebeu na saúde, emoções, família, estudos ou trabalho?',
+  treatments: 'Já recebeu algum tipo de cuidado ou tratamento relacionado?',
+  motivation: 'O que gostaria que acontecesse a partir desta avaliação?',
+  reason: 'O que fez você buscar esta avaliação agora?',
+  observations: 'Há algo mais que gostaria que a equipe soubesse?',
+  guardian_name: 'Nome do responsável',
+  guardian_relation: 'Vínculo com a criança',
+  guardian_participation: 'Você se sente seguro(a) para envolver um responsável?',
+  'safety · overdose': 'Suspeita de overdose ou ingestão de quantidade potencialmente perigosa',
+  'safety · intoxication': 'Intoxicação grave neste momento',
+  'safety · breathing': 'Dificuldade para respirar',
+  'safety · unconscious': 'Perda de consciência ou dificuldade para despertar',
+  'safety · seizure': 'Convulsões',
+  'safety · withdrawal': 'Abstinência intensa ou potencialmente grave',
+  'safety · suicide': 'Pensamentos de suicídio ou risco imediato de se machucar',
+  'safety · violence': 'Violência ou ameaça acontecendo neste momento',
+};
+
+function questionLabel(key: string, answers: Record<string, unknown>) {
+  if (questionLabels[key]) return questionLabels[key];
+  for (const prefix of ['frequency_', 'duration_']) {
+    if (key.startsWith(prefix)) {
+      const slug = key.slice(prefix.length);
+      const substances = Array.isArray(answers.substances) ? answers.substances.filter((name): name is string => typeof name === 'string') : [];
+      const substance = substances.find((name) => name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '_').toLowerCase() === slug);
+      return `${prefix === 'frequency_' ? 'Com que frequência ocorre o uso' : 'Há quanto tempo ocorre o uso'}${substance ? ` de ${substance}` : ''}?`;
+    }
+  }
+  return key.replaceAll('_', ' ').replace(/^./, (letter) => letter.toLocaleUpperCase('pt-BR'));
+}
+
 function pdfWrap(text: string, max = 93) {
   return text.split('\n').flatMap((paragraph) => {
     if (!paragraph) return [''];
@@ -65,10 +114,12 @@ function reportPages(item: Screening): DocumentPage[] {
   const answers = item.answers ?? {};
   const substances = Array.isArray(answers.substances) ? answers.substances.join(', ') : 'Não informado';
   add(`Substâncias selecionadas pela pessoa/responsável: ${substances || 'Nenhuma selecionada'}`);
-  const responses = flattenAnswers(answers).filter(([key]) => key !== 'substances' && !key.startsWith('safety'));
-  responses.forEach(([key, value]) => add(`${key.replaceAll('_', ' ')}: ${value}`));
+  const safetyKeys = answers.safety && typeof answers.safety === 'object' ? Object.keys(answers.safety as Record<string, unknown>) : [];
+  const safetyLabels = safetyKeys.map((key) => questionLabel(`safety · ${key}`, answers));
+  const responses = flattenAnswers(answers).filter(([question]) => question !== 'Substâncias que deseja abordar' && !safetyLabels.includes(question));
+  responses.forEach(([question, value]) => add(`${question}: ${value}`));
   heading('3. Indicadores de segurança');
-  const safety = answers.safety && typeof answers.safety === 'object' ? Object.entries(answers.safety as Record<string, unknown>).filter(([, active]) => active).map(([key]) => key.replaceAll('_', ' ')) : [];
+  const safety = answers.safety && typeof answers.safety === 'object' ? Object.entries(answers.safety as Record<string, unknown>).filter(([, active]) => active).map(([key]) => questionLabel(`safety · ${key}`, answers)) : [];
   add(item.urgent_alert ? `Alerta de segurança sinalizado: ${safety.join(', ') || 'requer revisão profissional imediata'}.` : 'Nenhum alerta de segurança foi sinalizado no formulário. A ausência de alerta não substitui avaliação clínica.');
   heading('4. Avaliação profissional');
   add(item.professional_review || 'Avaliação profissional ainda não registrada.');
