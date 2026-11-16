@@ -280,6 +280,7 @@ html { scroll-behavior: smooth; }
   .screening-result p { orphans: 3; widows: 3; }
   .screening-result__actions { display: none !important; }
   .screening-result a { color: #17675b !important; }
+  .screening-result__contact,
   .screening-result__contact a {
     color: #fff !important;
     text-decoration: none !important;

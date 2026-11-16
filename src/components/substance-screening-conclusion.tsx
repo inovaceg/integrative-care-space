@@ -126,7 +126,7 @@ export function SubstanceScreeningConclusion({ answers, urgent, ageGroup, patien
       { text: 'Procure a UBS da sua região para orientação. O CAPS AD pode oferecer cuidado especializado; a UBS ou a Secretaria Municipal de Saúde pode informar como acessar o serviço de referência.', style: 'body', margin: [0, 0, 0, 7] },
       ...(ageGroup === 'child' ? [{ text: 'Para crianças, procure também avaliação em pediatria ou serviço de saúde especializado e priorize a proteção.', style: 'body', margin: [0, 0, 0, 7] }] : ageGroup === 'adolescent' ? [{ text: 'Para adolescentes, considere segurança, privacidade e apoio de um adulto de confiança junto ao serviço de saúde, quando seguro.', style: 'body', margin: [0, 0, 0, 7] }] : []),
       { text: 'Uma avaliação individual pode explorar histórico, frequência, sintomas, impactos e preferências de cuidado. Não é preciso esperar a situação piorar para pedir orientação.', style: 'body', margin: [0, 0, 0, 7] },
-      { text: [{ text: 'Falar com a equipe pelo WhatsApp', link: whatsappUrl, color: '#ffffff', bold: true }], fillColor: '#075e54', margin: [10, 10, 10, 10], alignment: 'center' },
+      { text: [{ text: 'Falar com a equipe pelo WhatsApp', link: whatsappUrl, color: '#ffffff', bold: true, decoration: 'none' }], fillColor: '#075e54', margin: [10, 10, 10, 10], alignment: 'center' },
       { text: 'Em emergência, ligue para o SAMU 192 ou vá a uma UPA/pronto-socorro. Não aguarde resposta pelo WhatsApp ou por este formulário.', style: 'urgent', margin: [0, 8, 0, 0] },
     ]));
     const safeName = (patientName || 'individual').toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, '');
