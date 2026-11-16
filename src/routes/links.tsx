@@ -17,7 +17,7 @@ const links = [
   { title: "Anamnese Psicológica Digital", description: "Preencha sua ficha de anamnese online", href: "/anamnese-psicologica", icon: ClipboardCheck, tone: "from-[#2f6b62] to-[#7fb5a6]", image: "/assets/anamnese-psicologica-consultorio.png", alt: "Formulário de anamnese psicológica no consultório" },
   { title: "Avaliação Neuropsicológica", description: "Conheça o processo de avaliação", href: "/avaliacao-neuropsicologica", icon: Brain, tone: "from-[#1d3f3a] to-[#4a8c80]", image: "/assets/consulta-neuropsicologia-acolhedora.png", alt: "Consulta de avaliação neuropsicológica em ambiente acolhedor" },
   { title: "Orientação sobre TDAH", description: "Informações e orientação inicial", href: "/orientacao-tdah", icon: Brain, tone: "from-[#8a6d2f] to-[#d9b872]", image: "/assets/orientacao-tdah-dr-frederick.png", alt: "Orientação sobre TDAH com Dr. Frederick Parreira" },
-  { title: "Triagem sobre uso de substâncias", description: "Responda à triagem inicial com privacidade", href: "/triagem-substancias", icon: ShieldCheck, tone: "from-[#2a5a66] to-[#6aa3ad]", image: "/assets/realidade-virtual-meta-quest.jpg", alt: "Tecnologia aplicada ao cuidado" },
+  { title: "Triagem sobre uso de substâncias", description: "Responda à triagem inicial com privacidade", href: "/triagem-substancias", icon: ShieldCheck, tone: "from-[#2a5a66] to-[#6aa3ad]", image: "/assets/triagem-uso-substancias.png", alt: "Triagem acolhedora sobre uso de substâncias" },
 ];
 
 function LinksPage() {
