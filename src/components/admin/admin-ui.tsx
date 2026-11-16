@@ -44,7 +44,8 @@ export const adminNavigation = [
   { label: "Pacientes", to: "/admin/pacientes", icon: UsersRound },
   { label: "Ficha de anamnese", to: "/admin/anamneses", icon: ClipboardList },
   { label: "Anamnese psicológica digital", to: "/admin/anamneses-digitais", icon: ClipboardList },
-  { label: "Evolução do Paciente", to: "/admin/evolucao-corporal", icon: Activity },
+  { label: "Núcleo de Avaliação de Substâncias", to: "/admin/nucleo-substancias", icon: ClipboardList },
+  { label: "Evolução do Paciente", to: "/admin/evolucao-corporal", icon: Activity }
   { label: "Aplicações", to: "/admin/aplicacoes", icon: Syringe },
   { label: "Receituário", to: "/admin/receituario", icon: FileText },
   { label: "Protocolos", to: "/admin/protocolos", icon: ClipboardList },
@@ -64,7 +65,8 @@ const pageTitles: Record<string, { title: string; description: string }> = {
   "/admin/pacientes": { title: "Pacientes", description: "Acompanhe sua base de pacientes com privacidade." },
   "/admin/anamneses": { title: "Ficha de anamnese", description: "Acesse as fichas concluídas dos pacientes autorizados." },
   "/admin/anamneses-digitais": { title: "Anamnese psicológica digital", description: "Consulte as fichas digitais protegidas enviadas pelos pacientes." },
-  "/admin/laudos-neuropsicologicos": { title: "Laudos Neuropsicológicos", description: "Elabore, revise e mantenha laudos clínicos com histórico de versões." },
+  "/admin/nucleo-substancias": { title: "Núcleo de Avaliação de Substâncias", description: "Triagem inicial e acompanhamento protegido, sem diagnóstico automático." },
+  "/admin/laudos-neuropsicologicos": { title: "Laudos Neuropsicológicos", description: "Elabore, revise e mantenha laudos clínicos com histórico de versões." }
   "/admin/evolucao-corporal": { title: "Evolução do Paciente", description: "Avaliações corporais, histórico e progresso clínico." },
   "/admin/aplicacoes": { title: "Aplicações", description: "Registre procedimentos e acompanhe o peso das pacientes." },
   "/admin/planejamento-alimentar": { title: "Planejamento Alimentar com IA", description: "Revise dados clínicos e prepare propostas alimentares para avaliação profissional." },

@@ -26,6 +26,7 @@ import { Route as RealidadeVirtualRouteImport } from './routes/realidade-virtual
 import { Route as ServicosRouteImport } from './routes/servicos'
 import { Route as SobreRouteImport } from './routes/sobre'
 import { Route as TermosDeUsoRouteImport } from './routes/termos-de-uso'
+import { Route as TriagemSubstanciasRouteImport } from './routes/triagem-substancias'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAgendaRouteImport } from './routes/admin/agenda'
 import { Route as AdminAnamnesesRouteImport } from './routes/admin/anamneses'
@@ -43,6 +44,7 @@ import { Route as AdminFinanceiroRouteImport } from './routes/admin/financeiro'
 import { Route as AdminLaudosNeuropsicologicosRouteImport } from './routes/admin/laudos-neuropsicologicos'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
 import { Route as AdminMedicamentosRouteImport } from './routes/admin/medicamentos'
+import { Route as AdminNucleoSubstanciasRouteImport } from './routes/admin/nucleo-substancias'
 import { Route as AdminPacientesRouteImport } from './routes/admin/pacientes'
 import { Route as AdminPlanejamentoAlimentarRouteImport } from './routes/admin/planejamento-alimentar'
 import { Route as AdminProtocolosRouteImport } from './routes/admin/protocolos'
@@ -142,6 +144,11 @@ const TermosDeUsoRoute = TermosDeUsoRouteImport.update({
   path: '/termos-de-uso',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TriagemSubstanciasRoute = TriagemSubstanciasRouteImport.update({
+  id: '/triagem-substancias',
+  path: '/triagem-substancias',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -230,6 +237,11 @@ const AdminMedicamentosRoute = AdminMedicamentosRouteImport.update({
   path: '/medicamentos',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminNucleoSubstanciasRoute = AdminNucleoSubstanciasRouteImport.update({
+  id: '/nucleo-substancias',
+  path: '/nucleo-substancias',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminPacientesRoute = AdminPacientesRouteImport.update({
   id: '/pacientes',
   path: '/pacientes',
@@ -311,6 +323,7 @@ export interface FileRoutesByFullPath {
   '/servicos': typeof ServicosRoute
   '/sobre': typeof SobreRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
+  '/triagem-substancias': typeof TriagemSubstanciasRoute
   '/admin/agenda': typeof AdminAgendaRoute
   '/admin/anamneses': typeof AdminAnamnesesRouteWithChildren
   '/admin/anamneses-digitais': typeof AdminAnamnesesDigitaisRoute
@@ -327,6 +340,7 @@ export interface FileRoutesByFullPath {
   '/admin/laudos-neuropsicologicos': typeof AdminLaudosNeuropsicologicosRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/medicamentos': typeof AdminMedicamentosRoute
+  '/admin/nucleo-substancias': typeof AdminNucleoSubstanciasRoute
   '/admin/pacientes': typeof AdminPacientesRouteWithChildren
   '/admin/planejamento-alimentar': typeof AdminPlanejamentoAlimentarRoute
   '/admin/protocolos': typeof AdminProtocolosRoute
@@ -358,6 +372,7 @@ export interface FileRoutesByTo {
   '/servicos': typeof ServicosRoute
   '/sobre': typeof SobreRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
+  '/triagem-substancias': typeof TriagemSubstanciasRoute
   '/admin/agenda': typeof AdminAgendaRoute
   '/admin/anamneses': typeof AdminAnamnesesRouteWithChildren
   '/admin/anamneses-digitais': typeof AdminAnamnesesDigitaisRoute
@@ -374,6 +389,7 @@ export interface FileRoutesByTo {
   '/admin/laudos-neuropsicologicos': typeof AdminLaudosNeuropsicologicosRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/medicamentos': typeof AdminMedicamentosRoute
+  '/admin/nucleo-substancias': typeof AdminNucleoSubstanciasRoute
   '/admin/pacientes': typeof AdminPacientesRouteWithChildren
   '/admin/planejamento-alimentar': typeof AdminPlanejamentoAlimentarRoute
   '/admin/protocolos': typeof AdminProtocolosRoute
@@ -407,6 +423,7 @@ export interface FileRoutesById {
   '/servicos': typeof ServicosRoute
   '/sobre': typeof SobreRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
+  '/triagem-substancias': typeof TriagemSubstanciasRoute
   '/admin/agenda': typeof AdminAgendaRoute
   '/admin/anamneses': typeof AdminAnamnesesRouteWithChildren
   '/admin/anamneses-digitais': typeof AdminAnamnesesDigitaisRoute
@@ -423,6 +440,7 @@ export interface FileRoutesById {
   '/admin/laudos-neuropsicologicos': typeof AdminLaudosNeuropsicologicosRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/medicamentos': typeof AdminMedicamentosRoute
+  '/admin/nucleo-substancias': typeof AdminNucleoSubstanciasRoute
   '/admin/pacientes': typeof AdminPacientesRouteWithChildren
   '/admin/planejamento-alimentar': typeof AdminPlanejamentoAlimentarRoute
   '/admin/protocolos': typeof AdminProtocolosRoute
@@ -457,6 +475,7 @@ export interface FileRouteTypes {
     | '/servicos'
     | '/sobre'
     | '/termos-de-uso'
+    | '/triagem-substancias'
     | '/admin/agenda'
     | '/admin/anamneses'
     | '/admin/anamneses-digitais'
@@ -473,6 +492,7 @@ export interface FileRouteTypes {
     | '/admin/laudos-neuropsicologicos'
     | '/admin/login'
     | '/admin/medicamentos'
+    | '/admin/nucleo-substancias'
     | '/admin/pacientes'
     | '/admin/planejamento-alimentar'
     | '/admin/protocolos'
@@ -504,6 +524,7 @@ export interface FileRouteTypes {
     | '/servicos'
     | '/sobre'
     | '/termos-de-uso'
+    | '/triagem-substancias'
     | '/admin/agenda'
     | '/admin/anamneses'
     | '/admin/anamneses-digitais'
@@ -520,6 +541,7 @@ export interface FileRouteTypes {
     | '/admin/laudos-neuropsicologicos'
     | '/admin/login'
     | '/admin/medicamentos'
+    | '/admin/nucleo-substancias'
     | '/admin/pacientes'
     | '/admin/planejamento-alimentar'
     | '/admin/protocolos'
@@ -552,6 +574,7 @@ export interface FileRouteTypes {
     | '/servicos'
     | '/sobre'
     | '/termos-de-uso'
+    | '/triagem-substancias'
     | '/admin/agenda'
     | '/admin/anamneses'
     | '/admin/anamneses-digitais'
@@ -568,6 +591,7 @@ export interface FileRouteTypes {
     | '/admin/laudos-neuropsicologicos'
     | '/admin/login'
     | '/admin/medicamentos'
+    | '/admin/nucleo-substancias'
     | '/admin/pacientes'
     | '/admin/planejamento-alimentar'
     | '/admin/protocolos'
@@ -601,6 +625,7 @@ export interface RootRouteChildren {
   ServicosRoute: typeof ServicosRoute
   SobreRoute: typeof SobreRoute
   TermosDeUsoRoute: typeof TermosDeUsoRoute
+  TriagemSubstanciasRoute: typeof TriagemSubstanciasRoute
   AnamneseTokenRoute: typeof AnamneseTokenRoute
   CompletarCadastroTokenRoute: typeof CompletarCadastroTokenRoute
 }
@@ -726,6 +751,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermosDeUsoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/triagem-substancias': {
+      id: '/triagem-substancias'
+      path: '/triagem-substancias'
+      fullPath: '/triagem-substancias'
+      preLoaderRoute: typeof TriagemSubstanciasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/': {
       id: '/admin/'
       path: '/'
@@ -843,6 +875,13 @@ declare module '@tanstack/react-router' {
       path: '/medicamentos'
       fullPath: '/admin/medicamentos'
       preLoaderRoute: typeof AdminMedicamentosRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/nucleo-substancias': {
+      id: '/admin/nucleo-substancias'
+      path: '/nucleo-substancias'
+      fullPath: '/admin/nucleo-substancias'
+      preLoaderRoute: typeof AdminNucleoSubstanciasRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/pacientes': {
@@ -984,6 +1023,7 @@ interface AdminRouteChildren {
   AdminLaudosNeuropsicologicosRoute: typeof AdminLaudosNeuropsicologicosRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminMedicamentosRoute: typeof AdminMedicamentosRoute
+  AdminNucleoSubstanciasRoute: typeof AdminNucleoSubstanciasRoute
   AdminPacientesRoute: typeof AdminPacientesRouteWithChildren
   AdminPlanejamentoAlimentarRoute: typeof AdminPlanejamentoAlimentarRoute
   AdminProtocolosRoute: typeof AdminProtocolosRoute
@@ -1010,6 +1050,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminLaudosNeuropsicologicosRoute: AdminLaudosNeuropsicologicosRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminMedicamentosRoute: AdminMedicamentosRoute,
+  AdminNucleoSubstanciasRoute: AdminNucleoSubstanciasRoute,
   AdminPacientesRoute: AdminPacientesRouteWithChildren,
   AdminPlanejamentoAlimentarRoute: AdminPlanejamentoAlimentarRoute,
   AdminProtocolosRoute: AdminProtocolosRoute,
@@ -1049,6 +1090,7 @@ const rootRouteChildren: RootRouteChildren = {
   ServicosRoute: ServicosRoute,
   SobreRoute: SobreRoute,
   TermosDeUsoRoute: TermosDeUsoRoute,
+  TriagemSubstanciasRoute: TriagemSubstanciasRoute,
   AnamneseTokenRoute: AnamneseTokenRoute,
   CompletarCadastroTokenRoute: CompletarCadastroTokenRoute,
 }

@@ -58,6 +58,7 @@ function HomePage() {
         </div>
         <p className="mt-6 text-sm leading-6 text-[#526760]">O espaço também oferece serviços de Biomedicina em uma página própria.</p>
         <Link to="/biomedicina" className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-[#17675b] hover:underline">Conhecer Biomedicina <ArrowRight className="size-4" /></Link>
+        <div className="mt-8 rounded-2xl border border-[#cce7df] bg-[#f4f8f7] p-5 sm:flex sm:items-center sm:justify-between sm:gap-6"><div><p className="font-display text-lg font-semibold text-[#173f3a]">Quer conversar sobre o uso de substâncias?</p><p className="mt-1 text-sm leading-6 text-[#526760]">Uma triagem inicial, privada e sem julgamentos, pode ajudar a organizar os próximos passos.</p></div><Button asChild className="mt-4 shrink-0 rounded-full bg-[#17675b] text-white hover:bg-[#12574d] sm:mt-0"><Link to="/triagem-substancias">Iniciar minha avaliação <ArrowRight className="ml-2 size-4"/></Link></Button></div>
       </div>
     </section>
 
