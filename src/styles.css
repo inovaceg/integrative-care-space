@@ -243,6 +243,10 @@ html { scroll-behavior: smooth; }
 
 @media print {
   @page { size: A4; margin: 12mm; }
+  html, body { height: auto !important; overflow: visible !important; }
+  body:has(.screening-result) header,
+  body:has(.screening-result) footer,
+  body:has(.screening-result) a[aria-label="Agendar pelo WhatsApp"] { display: none !important; }
   body * { visibility: hidden !important; }
   .screening-result, .screening-result * { visibility: visible !important; }
   .screening-result {
