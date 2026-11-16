@@ -44,7 +44,6 @@ export const adminNavigation = [
   { label: "Pacientes", to: "/admin/pacientes", icon: UsersRound },
   { label: "Ficha de anamnese", to: "/admin/anamneses", icon: ClipboardList },
   { label: "Anamnese psicológica digital", to: "/admin/anamneses-digitais", icon: ClipboardList },
-  { label: "Laudos Neuropsicológicos", to: "/admin/laudos-neuropsicologicos", icon: Brain },
   { label: "Evolução do Paciente", to: "/admin/evolucao-corporal", icon: Activity },
   { label: "Aplicações", to: "/admin/aplicacoes", icon: Syringe },
   { label: "Receituário", to: "/admin/receituario", icon: FileText },
