@@ -111,8 +111,8 @@ export function SubstanceScreeningForm() {
 
   useEffect(() => {
     const savedToken = window.sessionStorage.getItem(storageKey);
-    if (savedToken) void resumeScreening(savedToken);
-  }, [resumeScreening]);
+    if (savedToken) setResumeCode(savedToken);
+  }, []);
 
   async function start() {
     setLoading(true);
