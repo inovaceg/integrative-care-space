@@ -45,7 +45,7 @@ export const adminNavigation = [
   { label: "Ficha de anamnese", to: "/admin/anamneses", icon: ClipboardList },
   { label: "Anamnese psicológica digital", to: "/admin/anamneses-digitais", icon: ClipboardList },
   { label: "Núcleo de Avaliação de Substâncias", to: "/admin/nucleo-substancias", icon: ClipboardList },
-  { label: "Evolução do Paciente", to: "/admin/evolucao-corporal", icon: Activity }
+  { label: "Evolução do Paciente", to: "/admin/evolucao-corporal", icon: Activity },
   { label: "Aplicações", to: "/admin/aplicacoes", icon: Syringe },
   { label: "Receituário", to: "/admin/receituario", icon: FileText },
   { label: "Protocolos", to: "/admin/protocolos", icon: ClipboardList },
@@ -56,7 +56,7 @@ export const adminNavigation = [
   { label: "Financeiro", to: "/admin/financeiro", icon: CircleDollarSign },
   { label: "Relatórios", to: "/admin/relatorios", icon: FileBarChart },
   { label: "Estatísticas", to: "/admin/estatisticas", icon: BarChart3 },
-  { label: "Configurações", to: "/admin/configuracoes", icon: Settings },
+  { label: "Configurações", to: "/admin/configuracoes", icon: Settings }
 ] as const;
 
 const pageTitles: Record<string, { title: string; description: string }> = {
@@ -66,7 +66,7 @@ const pageTitles: Record<string, { title: string; description: string }> = {
   "/admin/anamneses": { title: "Ficha de anamnese", description: "Acesse as fichas concluídas dos pacientes autorizados." },
   "/admin/anamneses-digitais": { title: "Anamnese psicológica digital", description: "Consulte as fichas digitais protegidas enviadas pelos pacientes." },
   "/admin/nucleo-substancias": { title: "Núcleo de Avaliação de Substâncias", description: "Triagem inicial e acompanhamento protegido, sem diagnóstico automático." },
-  "/admin/laudos-neuropsicologicos": { title: "Laudos Neuropsicológicos", description: "Elabore, revise e mantenha laudos clínicos com histórico de versões." }
+  "/admin/laudos-neuropsicologicos": { title: "Laudos Neuropsicológicos", description: "Elabore, revise e mantenha laudos clínicos com histórico de versões." },
   "/admin/evolucao-corporal": { title: "Evolução do Paciente", description: "Avaliações corporais, histórico e progresso clínico." },
   "/admin/aplicacoes": { title: "Aplicações", description: "Registre procedimentos e acompanhe o peso das pacientes." },
   "/admin/planejamento-alimentar": { title: "Planejamento Alimentar com IA", description: "Revise dados clínicos e prepare propostas alimentares para avaliação profissional." },
@@ -79,7 +79,7 @@ const pageTitles: Record<string, { title: string; description: string }> = {
   "/admin/financeiro": { title: "Financeiro", description: "Tenha clareza sobre receitas e despesas." },
   "/admin/relatorios": { title: "Relatórios", description: "Insights para acompanhar a evolução do espaço." },
   "/admin/estatisticas": { title: "Estatísticas", description: "Entenda como as pessoas encontram e usam o site." },
-  "/admin/configuracoes": { title: "Configurações", description: "Ajuste as preferências do ambiente administrativo." },
+  "/admin/configuracoes": { title: "Configurações", description: "Ajuste as preferências do ambiente administrativo." }
 };
 
 export function AdminSidebar({ collapsed, mobileOpen, onClose, onToggle }: { collapsed: boolean; mobileOpen: boolean; onClose: () => void; onToggle: () => void }) {
