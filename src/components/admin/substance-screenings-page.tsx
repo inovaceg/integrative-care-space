@@ -5,10 +5,11 @@ import { AdminLayout, PageIntro, SectionCard } from '@/components/admin/admin-ui
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { downloadDocumentPdf, type DocumentPage } from '@/lib/admin/document-layout';
 
-type Screening = { id: string; professional_id: string; patient_name: string; birth_date: string; age_group: 'child' | 'adolescent' | 'adult'; modality: string; status: 'draft' | 'pending' | 'in_progress' | 'completed'; answers: Record<string, unknown>; urgent_alert: boolean; created_at: string; updated_at: string; submitted_at: string | null };
+type Screening = { id: string; professional_id: string; patient_name: string; birth_date: string | null; age_group: 'child' | 'adolescent' | 'adult' | null; modality: string; status: 'draft' | 'pending' | 'in_progress' | 'completed'; answers: Record<string, unknown>; professional_review: string; recommendations: string; urgent_alert: boolean; created_at: string; updated_at: string; submitted_at: string | null };
 type Instrument = { id: string; name: string; version: string; target_audience: string; purpose: string; technical_reference: string; brazilian_validation_status: string; use_license: string; authorized_mode: string; review_status: string };
 const substanceNames = ['Álcool', 'Tabaco e nicotina', 'Maconha e derivados', 'Cocaína', 'Crack', 'Anfetaminas e estimulantes', 'Ecstasy e outras drogas sintéticas', 'Opioides', 'Benzodiazepínicos e sedativos', 'Medicamentos sem prescrição ou usados de modo diferente', 'Inalantes e solventes', 'Alucinógenos', 'Outras substâncias', 'Não sabe identificar'];
 const instrumentDefaults = [
@@ -19,7 +20,7 @@ const instrumentDefaults = [
 ];
 const tabs = ['Visão geral', 'Nova triagem', 'Avaliações recebidas', 'Pacientes em acompanhamento', 'Histórico de avaliações', 'Indicadores de risco', 'Relatórios em PDF', 'Instrumentos de rastreamento', 'Configurações'] as const;
 type Tab = typeof tabs[number];
-function ageLabel(value: Screening['age_group']) { return value === 'child' ? 'Criança' : value === 'adolescent' ? 'Adolescente' : 'Adulto'; }
+function ageLabel(value: Screening['age_group']) { return value === 'child' ? 'Criança' : value === 'adolescent' ? 'Adolescente' : value === 'adult' ? 'Adulto' : 'Não informada'; }
 function statusLabel(value: Screening['status']) { return value === 'draft' ? 'Rascunho' : value === 'pending' ? 'Pendente' : value === 'in_progress' ? 'Em andamento' : 'Concluída'; }
 function flattenAnswers(value: unknown, prefix = ''): [string, string][] {
   if (!value || typeof value !== 'object') return [];
@@ -64,14 +65,17 @@ function reportPages(item: Screening): DocumentPage[] {
   const answers = item.answers ?? {};
   const substances = Array.isArray(answers.substances) ? answers.substances.join(', ') : 'Não informado';
   add(`Substâncias selecionadas pela pessoa/responsável: ${substances || 'Nenhuma selecionada'}`);
-  const responses = flattenAnswers(answers).filter(([key]) => key !== 'substances' && key !== 'safety');
+  const responses = flattenAnswers(answers).filter(([key]) => key !== 'substances' && !key.startsWith('safety'));
   responses.forEach(([key, value]) => add(`${key.replaceAll('_', ' ')}: ${value}`));
   heading('3. Indicadores de segurança');
   const safety = answers.safety && typeof answers.safety === 'object' ? Object.entries(answers.safety as Record<string, unknown>).filter(([, active]) => active).map(([key]) => key.replaceAll('_', ' ')) : [];
   add(item.urgent_alert ? `Alerta de segurança sinalizado: ${safety.join(', ') || 'requer revisão profissional imediata'}.` : 'Nenhum alerta de segurança foi sinalizado no formulário. A ausência de alerta não substitui avaliação clínica.');
-  heading('4. Revisão profissional');
-  add('Respostas da pessoa avalianda ou responsável registradas no formulário. Indicadores de triagem não equivalem a avaliação clínica. Recomenda-se revisar os relatos em contexto profissional e combinar próximos passos com a pessoa e, conforme idade e segurança, seu responsável.');
+  heading('4. Avaliação profissional');
+  add(item.professional_review || 'Avaliação profissional ainda não registrada.');
   add(`Situação do acompanhamento: ${statusLabel(item.status)}.`);
+  heading('5. Recomendações de avaliação profissional');
+  add(item.recommendations || 'Recomenda-se discutir os relatos em contexto profissional e combinar próximos passos com a pessoa e, conforme idade e segurança, seu responsável.');
+  add('Este relatório apresenta respostas de triagem e não constitui laudo psicológico, diagnóstico ou classificação de dependência.');
   add('Juiz de Fora - MG, data de emissão: ' + new Date().toLocaleDateString('pt-BR'));
   y += 24;
   add('______________________________________________');
@@ -95,9 +99,9 @@ export function SubstanceScreeningsPage() {
 
   async function load() {
     if (!userId) return;
-    const { data, error } = await supabase.from('substance_screenings').select('id,professional_id,patient_name,birth_date,age_group,modality,status,answers,urgent_alert,created_at,updated_at,submitted_at').eq('professional_id', userId).order('updated_at', { ascending: false });
+    const { data, error } = await supabase.from('substance_screenings').select('id,professional_id,patient_name,birth_date,age_group,modality,status,answers,professional_review,recommendations,urgent_alert,created_at,updated_at,submitted_at').eq('professional_id', userId).order('updated_at', { ascending: false });
     if (error) { setFailure('Não foi possível carregar as avaliações. Confirme seu acesso profissional.'); return; }
-    setRows((data ?? []) as Screening[]);
+    setRows(((data ?? []) as Screening[]).filter((item) => item.status !== 'draft' || item.patient_name || item.birth_date));
     setFailure('');
   }
   async function loadInstruments() {
@@ -116,7 +120,17 @@ export function SubstanceScreeningsPage() {
   async function changeStatus(item: Screening, status: Screening['status']) {
     const { error } = await supabase.from('substance_screenings').update({ status, updated_at: new Date().toISOString() }).eq('id', item.id).eq('professional_id', userId);
     if (error) { setFailure('Não foi possível atualizar a situação.'); return; }
+    if (selected?.id === item.id) setSelected({ ...selected, status });
     setNotice('Situação atualizada.');
+    await load();
+  }
+  async function saveProfessionalReview() {
+    if (!selected) return;
+    const updatedAt = new Date().toISOString();
+    const { error } = await supabase.from('substance_screenings').update({ professional_review: selected.professional_review, recommendations: selected.recommendations, updated_at: updatedAt }).eq('id', selected.id).eq('professional_id', userId);
+    if (error) { setFailure('Não foi possível salvar a avaliação profissional.'); return; }
+    setSelected({ ...selected, updated_at: updatedAt });
+    setNotice('Avaliação profissional salva.');
     await load();
   }
   async function saveInstrument(item: Instrument) {
@@ -155,6 +169,7 @@ export function SubstanceScreeningsPage() {
       <SectionCard title={tab === 'Relatórios em PDF' ? 'Relatórios individuais' : tab === 'Indicadores de risco' ? 'Alertas sinalizados (não diagnósticos)' : tab === 'Histórico de avaliações' ? 'Histórico' : 'Avaliações'}><div className="grid gap-3 md:grid-cols-5"><div className="md:col-span-2"><Label htmlFor="substance-search">Buscar por nome</Label><div className="relative mt-1"><Search className="absolute left-3 top-2.5 size-4 text-slate-400"/><Input id="substance-search" className="pl-9" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nome"/></div></div><div><Label htmlFor="substance-age-filter">Faixa etária</Label><select id="substance-age-filter" className="mt-1 h-10 w-full rounded-md border px-3 text-sm" value={ageFilter} onChange={(event) => setAgeFilter(event.target.value)}><option value="all">Todas</option><option value="child">Crianças</option><option value="adolescent">Adolescentes</option><option value="adult">Adultos</option></select></div><div><Label htmlFor="substance-name-filter">Substância</Label><select id="substance-name-filter" className="mt-1 h-10 w-full rounded-md border px-3 text-sm" value={substanceFilter} onChange={(event) => setSubstanceFilter(event.target.value)}><option value="all">Todas</option>{substanceNames.map((name) => <option key={name}>{name}</option>)}</select></div><div className="grid grid-cols-2 gap-2"><div><Label htmlFor="substance-from">De</Label><Input id="substance-from" type="date" value={from} onChange={(event) => setFrom(event.target.value)}/></div><div><Label htmlFor="substance-to">Até</Label><Input id="substance-to" type="date" value={to} onChange={(event) => setTo(event.target.value)}/></div></div></div>
         <div className="mt-4 space-y-2">{rowsForTab.map((item) => <article key={item.id} className={`rounded-xl border p-4 ${item.urgent_alert ? 'border-red-200 bg-red-50/50' : 'border-slate-200'}`}><div className="flex flex-wrap items-center justify-between gap-3"><button type="button" className="flex min-w-0 items-start gap-3 text-left" onClick={() => setSelected(selected?.id === item.id ? null : item)}><span className={`mt-1 grid size-9 shrink-0 place-items-center rounded-lg ${item.urgent_alert ? 'bg-red-100 text-red-700' : 'bg-[#e5f4f0] text-[#26786e]'}`}>{item.urgent_alert ? <AlertTriangle className="size-5"/> : <ClipboardList className="size-5"/>}</span><span><strong className="block">{item.patient_name || 'Nome não informado'} · {ageLabel(item.age_group)}</strong><span className="text-xs text-slate-500">{statusLabel(item.status)} · {new Date(item.updated_at).toLocaleString('pt-BR')}{item.urgent_alert ? ' · Alerta de segurança' : ''}</span></span></button><div className="flex flex-wrap gap-2"><select aria-label={`Situação ${item.patient_name}`} className="h-9 rounded-md border bg-white px-2 text-xs" value={item.status} onChange={(event) => void changeStatus(item, event.target.value as Screening['status'])}><option value="pending">Pendente</option><option value="in_progress">Em andamento</option><option value="completed">Concluída</option></select>{(tab === 'Relatórios em PDF' || selected?.id === item.id) && <Button size="sm" variant="outline" onClick={() => void exportPdf(item)}><ArrowDownToLine className="mr-2 size-4"/>PDF</Button>}</div></div>{selected?.id === item.id && <div className="mt-4 border-t border-slate-200 pt-4"><h3 className="font-semibold">Respostas registradas</h3><p className="mt-1 text-xs text-slate-500">Relato da pessoa ou responsável; não representa interpretação clínica.</p>{item.urgent_alert && <p className="mt-3 rounded-lg bg-red-100 p-3 text-sm font-medium text-red-900">Alerta de segurança: priorizar revisão profissional. O formulário exibiu orientação de emergência.</p>}<dl className="mt-3 grid gap-3 sm:grid-cols-2">{flattenAnswers(item.answers).map(([key, value]) => <div key={key} className="rounded-lg bg-slate-50 p-3"><dt className="text-xs font-medium text-slate-500">{key.replaceAll('_', ' ')}</dt><dd className="mt-1 whitespace-pre-wrap text-sm text-slate-800">{value}</dd></div>)}</dl><div className="mt-3 flex gap-2"><Button size="sm" variant="outline" onClick={() => void exportPdf(item)}><ArrowDownToLine className="mr-2 size-4"/>Exportar relatório</Button></div></div>}</article>)}{!rowsForTab.length && <p className="rounded-xl bg-slate-50 p-5 text-sm text-slate-500">Nenhuma triagem corresponde aos filtros.</p>}</div></SectionCard>
     </>}
+    {selected && <SectionCard title="Registro profissional e recomendações"><p className="mb-4 text-sm leading-6 text-slate-600">Separe a análise profissional das respostas fornecidas pela pessoa ou responsável. Não registre diagnóstico automático nem classificação de dependência.</p><div className="space-y-4"><div><Label htmlFor="professional-review">Avaliação profissional</Label><Textarea id="professional-review" className="mt-1 min-h-28" value={selected.professional_review ?? ''} onChange={(event) => setSelected({ ...selected, professional_review: event.target.value })} placeholder="Anotações profissionais revisadas e pertinentes à triagem." /></div><div><Label htmlFor="professional-recommendations">Recomendações de avaliação profissional</Label><Textarea id="professional-recommendations" className="mt-1 min-h-24" value={selected.recommendations ?? ''} onChange={(event) => setSelected({ ...selected, recommendations: event.target.value })} placeholder="Próximos passos acordados com a pessoa avaliada." /></div><Button onClick={() => void saveProfessionalReview()} className="bg-[#17675b] text-white">Salvar avaliação profissional</Button></div></SectionCard>}
   </AdminLayout>;
 }
 

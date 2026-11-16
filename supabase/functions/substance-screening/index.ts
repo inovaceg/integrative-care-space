@@ -70,12 +70,13 @@ Deno.serve(async (req) => {
     if (body.action === 'create') {
       const token = cleanText(body.token, 100)
       if (!/^[0-9a-f-]{36}$/i.test(token)) return json({ error: 'Chave de retomada inválida.' }, 400)
-      const { data: staff, error: staffError } = await admin.from('user_roles').select('user_id').eq('role', 'doctor').limit(1).maybeSingle()
-      if (staffError || !staff?.user_id) return json({ error: 'Não foi possível iniciar a triagem neste momento.' }, 503)
+      const { data: staff, error: staffError } = await admin.from('user_roles').select('user_id').eq('role', 'doctor')
+      if (staffError || staff?.length !== 1) return json({ error: 'Não foi possível iniciar a triagem neste momento.' }, 503)
+      const professionalId = staff[0].user_id
       const tokenHash = await hashToken(token)
-      const { data, error } = await admin.from('substance_screenings').insert({ professional_id: staff.user_id, access_token_hash: tokenHash, status: 'draft' }).select('id,status,answers,patient_name,birth_date,age_group,updated_at').single()
+      const { data, error } = await admin.from('substance_screenings').insert({ professional_id: professionalId, access_token_hash: tokenHash, status: 'draft' }).select('id,status,answers,patient_name,birth_date,age_group,updated_at').single()
       if (error) throw error
-      await admin.from('substance_screening_audit').insert({ screening_id: data.id, professional_id: staff.user_id, action: 'draft_created', details: { modality: 'online' } })
+      await admin.from('substance_screening_audit').insert({ screening_id: data.id, professional_id: professionalId, action: 'draft_created', details: { modality: 'online' } })
       return json({ screening: data })
     }
 
@@ -119,6 +120,6 @@ Deno.serve(async (req) => {
     return json({ screening: data, urgent })
   } catch (error) {
     console.error(`[${functionName}] request failed`, { error: error instanceof Error ? error.message : String(error) })
-    return json({ error: error instanceof Error ? error.message : 'Não foi possível salvar a triagem.' }, 400)
+    return json({ error: 'Não foi possível salvar a triagem agora. Revise os dados e tente novamente.' }, 400)
   }
 })
